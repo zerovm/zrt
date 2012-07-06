@@ -1,0 +1,4 @@
+Sqlite3 dbms library. Ported to ZRT.
+It does not use file system, but Virtual File System interface implemented.
+Currently for I/O used only stdin & stdout channels which are part of ZRT abstraction. 
+ 

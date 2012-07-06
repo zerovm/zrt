@@ -9,12 +9,14 @@ INCLUDE_PATH=-I. -Ilib -Izvm
 
 all: lib/libzrt.a
 
-lib/libzrt.a: ${LIBSQLITE} ${LIBLUA} lib/syscall_manager.S lib/zrt.c zvm/zvm.c
+lib/libzrt.a: ${LIBSQLITE} ${LIBLUA} lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/syscallbacks.c
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c zvm/zvm.c -o zvm/zvm.o -Wall -Wno-long-long -O2 -msse4.1 -m64 ${INCLUDE_PATH}
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/syscall_manager.S -o lib/syscall_manager.o
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrt.c -o lib/zrt.o -Wall -Wno-long-long -O2 -m64 \
 	${MACROS_FLAGS} ${INCLUDE_PATH}
-	@ar rcs lib/libzrt.a lib/syscall_manager.o zvm/zvm.o lib/zrt.o
+	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/syscallbacks.c -o lib/syscallbacks.o -Wall -Wno-long-long -O2 -m64 \
+	${MACROS_FLAGS} ${INCLUDE_PATH}	
+	@ar rcs lib/libzrt.a lib/syscall_manager.o zvm/zvm.o lib/zrt.o lib/syscallbacks.o
 	@mv ${LIBSQLITE} lib
 	@mv ${LIBLUA} lib
 	 

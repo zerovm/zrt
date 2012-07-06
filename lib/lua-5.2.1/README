@@ -1,4 +1,7 @@
 
 This is Lua 5.2.1, released on 08 Jun 2012.
-
 Ported to ZRT.
+Currently for I/O used only stdin & stdout by default opened files in LUA.
+Current version of ZRT don't give networking for LUA, because only allowed 
+pre-opened channels and user can't manualy open network channel as file. 
+It will supported in LUA as soon as ZRT implements it; 
