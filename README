@@ -10,11 +10,9 @@ should be linked with libzrt.a. The main features are: Glibc support, SQLite3 li
 [samples] 
 It contains user code based on ZRT library. More detailed info in samples/README;
 [zvm] 
-zerovm executable and also api for ZRT library: zvm.h, libzvm.a.
+zerovm executable and also api for ZRT library: zvm.h, zvm.o. In next releases zvm.o will replaced by libzvm.a; 
 
 HOW TO RUN:
 In order to launch nexe on zerovm, we are need to pass manifest file as paramenter.
 hello world can be launched in this way:
 zerovm -M../samples/hello/hello.manifest
-
-

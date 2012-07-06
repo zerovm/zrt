@@ -14,7 +14,9 @@ lib/libzrt.a: ${LIBSQLITE} ${LIBLUA} lib/syscall_manager.S lib/zrt.c zvm/zvm.c
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/syscall_manager.S -o lib/syscall_manager.o
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrt.c -o lib/zrt.o -Wall -Wno-long-long -O2 -m64 \
 	${MACROS_FLAGS} ${INCLUDE_PATH}
-	ar r lib/libzrt.a ${LIBSQLITE} ${LIBLUA} lib/syscall_manager.o zvm/zvm.o lib/zrt.o
+	@ar rcs lib/libzrt.a lib/syscall_manager.o zvm/zvm.o lib/zrt.o
+	@mv ${LIBSQLITE} lib
+	@mv ${LIBLUA} lib
 	 
 ${LIBSQLITE}:
 	@PNACL_TOOL=${PNACL_TOOL} make -Clib/sqlite3
@@ -30,9 +32,8 @@ all_samples:
 	@make -Csamples/file_io	
 	@make -Csamples/file_stat
 	@make -Csamples/hello
-	@make -Csamples/lua_scripting
+	@make -Csamples/lua
 	@make -Csamples/malloc
-	@make -Csamples/manifest
 	@make -Csamples/reqrep
 	@make -Csamples/sort
 	@make -Csamples/sort_paging

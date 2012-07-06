@@ -1,7 +1,7 @@
 all: libsqlite3.a
 
 libsqlite3.a: sqlite3.o vfs_channel.o
-	@ar rc libsqlite3.a sqlite3.o vfs_channel.o
+	@ar rcs libsqlite3.a sqlite3.o vfs_channel.o
 
 sqlite3.o:
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o sqlite3.o sqlite3.c \

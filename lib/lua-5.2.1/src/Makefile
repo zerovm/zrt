@@ -60,7 +60,7 @@ o:	$(ALL_O)
 a:	$(ALL_A)
 
 $(LUA_A): $(BASE_O) # $(LUA_O) $(LUAC_O)
-	$(AR) $@ $(BASE_O) #$(LUA_O) $(LUAC_O)
+	@$(AR) $@ $(BASE_O) #$(LUA_O) $(LUAC_O)
 #	$(RANLIB) $@
 
 #do not build native executables
@@ -97,7 +97,7 @@ aix:
 	$(MAKE) $(ALL) CC="xlc" CFLAGS="-O2 -DLUA_USE_POSIX -DLUA_USE_DLOPEN" SYSLIBS="-ldl" SYSLDFLAGS="-brtl -bexpall"
 
 ansi:
-	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_ANSI"
+	@$(MAKE) $(ALL) SYSCFLAGS="-DLUA_ANSI"
 
 bsd:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN" SYSLIBS="-Wl,-E"
