@@ -1,0 +1,27 @@
+[Remove ZRT_LIB macros from files listed below]
+:
+./samples/time/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/hello/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/disort/Makefile:2:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/sqlite/Makefile:9:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
+./samples/sort/Makefile:6:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/lua-scripting/lua-5.2.1/src/Makefile~:26:MYCFLAGS=-I$(ZRT_PATH) -DUSER_SIDE -DZRT_LIB -m64
+./samples/lua-scripting/lua-5.2.1/src/Makefile:26:MYCFLAGS=-I$(ZRT_PATH) -DUSER_SIDE -DZRT_LIB -m64
+./samples/strtol/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/sort_paging/Makefile:6:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/file_io/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/file_stat/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/accessors/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/malloc/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+./samples/reqrep/Makefile:2:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+
+
+[Move common trusted/untrusted code into common repository]
+./lib/zvm.c:11:#define USER_SIDE
+./lib/zvm.c:248:#undef USER_SIDE
+./lib/zvm.h:196:#ifdef USER_SIDE
+./lib/zvm.h:289:#endif /* USER_SIDE */
+./lib/zrt.h:14:#ifdef USER_SIDE /* disabled for trusted code */
+./lib/zrt.h:180:#endif /* USER_SIDE */
+
+
