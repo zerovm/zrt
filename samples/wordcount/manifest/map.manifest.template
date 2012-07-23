@@ -1,0 +1,32 @@
+=====================================================================
+== i/o switches. full list. optional. some switches now meaningless,
+== placed here for completeness and future changes
+=====================================================================
+Channel = {ABS_PATH}data/{NODEID}input.txt, /dev/stdin, 4, 999999, 999999, 0, 0
+Channel = /dev/null, /dev/stdout, 5, 0, 0, 999999, 999999
+Channel = {ABS_PATH}log/map{NODEID}.stderr.log, /dev/stderr, 6, 0, 0, 9999999, 9999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red5, w_map{NODEID}_red5, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red6, w_map{NODEID}_red6, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red7, w_map{NODEID}_red7, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red8, w_map{NODEID}_red8, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red9, w_map{NODEID}_red9, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_map1, w_map{NODEID}_map1, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_map2, w_map{NODEID}_map2, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_map3, w_map{NODEID}_map3, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_map4, w_map{NODEID}_map4, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map1_map{NODEID}, r_map{NODEID}_map1, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map2_map{NODEID}, r_map{NODEID}_map2, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map3_map{NODEID}, r_map{NODEID}_map3, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}debug/zerovm/files/map4_map{NODEID}, r_map{NODEID}_map4, 0, 99999999, 99999999, 99999999, 99999999
+
+CommandLine = {NODEID}
+
+=====================================================================
+== switches for zerovm. some of them used to control nexe, some
+== for the internal zerovm needs
+=====================================================================
+Version = 13072012
+Nexe = {ABS_PATH}map.nexe
+NexeMax = 10000000
+SyscallsMax = 3333333
+SetupCallsMax = 99999999
