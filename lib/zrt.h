@@ -15,7 +15,7 @@
 #include "zvm.h"
 
 /* enabling */
-#define DEBUG 0
+//#define DEBUG 0
 
 /*
  * user program entry point. old style function prototyping

@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <emmintrin.h>
 #include <smmintrin.h>
-#include "zrt.h"
+#include "api/zrt.h"
 
 #if 0
 #				define DEBUG
@@ -419,26 +419,49 @@ void aligned_free(void *ptr)
   free(((void**) ptr)[-1]);
 }
 
+int64_t file_size(char *name)
+{
+  FILE *f;
+
+  f = fopen(name, "rb");
+  if(f == NULL) return -1; /* file open error */
+  if(fseek(f, 0, SEEK_END) != 0) return -1; /* seek error */
+  return ftell(f);
+}
+
 int main(int argc, char **argv)
 {
   uint32_t chunk_size = DEFAULT_CHUNK_SIZE;
   uint32_t cnt; /* elements count */
   uint32_t *d; /* data to sort */
   uint32_t *buf; /* extra space to sort */
-  struct stat fs;
+  int64_t filesize;
+  FILE *in, *out;
 
-  /* get input channel size */
-  if(fstat(fileno(stdin), &fs) == -1)
-  _eoutput("cannot get data size from the input channel\n");
+  /* check command line */
+  if(argc != 3)
+    _eoutput("usage: sort input_file_name output_file_name\n");
+
+  /* open input and output files */
+  in = fopen(argv[1], "rb");
+  out = fopen(argv[2], "wb");
+  if(in == NULL)
+    _eoutput("input file open error\n");
+  if(out == NULL)
+    _eoutput("output file open error\n");
 
   /* allocate data buffer */
-  cnt = fs.st_size / sizeof(*d);
-  d = aligned_malloc(fs.st_size, 16);
-  if(d == NULL ) _eoutput("cannot allocate data buffer\n");
+  filesize = file_size(argv[1]);
+  cnt = filesize / sizeof(*d);
+  d = aligned_malloc(filesize, 16);
+  if(d == NULL) _eoutput("cannot allocate data buffer\n");
+
+  fprintf(stderr, "input handle = %d, output handle = %d\n", fileno(in), fileno(out));
+  fprintf(stderr, "input file size = %lld\n", filesize);
 
   /* allocate extra memory for the sort */
-  buf = aligned_malloc(fs.st_size, 16);
-  if(buf == NULL ) _eoutput("cannot allocate extra buffer\n");
+  buf = aligned_malloc(filesize, 16);
+  if(buf == NULL) _eoutput("cannot allocate extra buffer\n");
 
   /* elements count should be the power of 2 */
   if(cnt & (cnt - 1))
@@ -449,8 +472,8 @@ int main(int argc, char **argv)
   fprintf(stderr, "number of elements = %d\n", cnt);
 
   /* read data */
-  if(fread(d, sizeof(*d), cnt, stdin) != cnt)
-  _eoutput("cannot read data from the input channel\n");
+  if(fread(d, sizeof(*d), cnt, in) != cnt)
+    _eoutput("cannot read data from the input channel\n");
 
   /* Bitonic sort */
   fprintf(stderr, "data sorting.. ");
@@ -458,8 +481,10 @@ int main(int argc, char **argv)
   fprintf(stderr, "done\n");
 
   /* save results */
-  fwrite(d, sizeof(*d), cnt, stdout);
+  fwrite(d, sizeof(*d), cnt, out);
   fprintf(stderr, "sorted data is written\n");
 
+  fclose(in);
+  fclose(out);
   return EXIT_SUCCESS;
 }

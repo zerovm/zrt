@@ -15,6 +15,37 @@ struct UserManifest;
 void zrt_setup( struct UserManifest* manifest );
 
 /*
+ * temporary fix for nacl. stat != nacl_abi_stat
+ * also i had a weird error when tried to use "service_runtime/include/sys/stat.h"
+ */
+struct nacl_abi_stat
+{
+  /* must be renamed when ABI is exported */
+  int64_t   nacl_abi_st_dev;       /* not implemented */
+  uint64_t  nacl_abi_st_ino;       /* not implemented */
+  uint32_t  nacl_abi_st_mode;      /* partially implemented. */
+  uint32_t  nacl_abi_st_nlink;     /* link count */
+  uint32_t  nacl_abi_st_uid;       /* not implemented */
+  uint32_t  nacl_abi_st_gid;       /* not implemented */
+  int64_t   nacl_abi_st_rdev;      /* not implemented */
+  int64_t   nacl_abi_st_size;      /* object size */
+  int32_t   nacl_abi_st_blksize;   /* not implemented */
+  int32_t   nacl_abi_st_blocks;    /* not implemented */
+  int64_t   nacl_abi_st_atime;     /* access time */
+  int64_t   nacl_abi_st_atimensec; /* possibly just pad */
+  int64_t   nacl_abi_st_mtime;     /* modification time */
+  int64_t   nacl_abi_st_mtimensec; /* possibly just pad */
+  int64_t   nacl_abi_st_ctime;     /* inode change time */
+  int64_t   nacl_abi_st_ctimensec; /* possibly just pad */
+};
+
+/* same here */
+struct nacl_abi_timeval {
+  int64_t   nacl_abi_tv_sec;
+  int32_t   nacl_abi_tv_usec;
+};
+
+/*
  * FULL NACL SYSCALL LIST
  * should be moved to the header file
  */
@@ -80,61 +111,28 @@ void zrt_setup( struct UserManifest* manifest );
  */
 /* write() -- nacl syscall via trampoline */
 #define NaCl_write(d, buf, count) ((int32_t (*)(uint32_t, uint32_t, uint32_t)) \
-		(NACL_sys_write * 0x20 + 0x10000))(d, buf, count)
+    (NACL_sys_write * 0x20 + 0x10000))(d, buf, count)
 
 /* mmap() -- nacl syscall via trampoline */
 #define NaCl_mmap(start, length, prot, flags, d, offp) \
-		((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)) \
-				(NACL_sys_mmap * 0x20 + 0x10000))(start, length, prot, flags, d, offp)
+  ((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)) \
+    (NACL_sys_mmap * 0x20 + 0x10000))(start, length, prot, flags, d, offp)
 
 /* munmap() -- nacl syscall via trampoline */
 #define NaCl_munmap(start, length) ((int32_t (*)(uint32_t, uint32_t)) \
-		(NACL_sys_munmap * 0x20 + 0x10000))(start, length)
+    (NACL_sys_munmap * 0x20 + 0x10000))(start, length)
 
 /* sysbrk() -- nacl syscall via trampoline */
 #define NaCl_sysbrk(new_break) ((int32_t (*)(uint32_t)) \
-		(NACL_sys_sysbrk * 0x20 + 0x10000))(new_break)
+    (NACL_sys_sysbrk * 0x20 + 0x10000))(new_break)
 
 /* tls_get() -- nacl syscall via trampoline */
 #define NaCl_tls_get() ((int32_t (*)()) \
-		(NACL_sys_tls_get * 0x20 + 0x10000))()
+    (NACL_sys_tls_get * 0x20 + 0x10000))()
 
 /* invalid syscall */
 #define NaCl_invalid() ((int32_t (*)()) \
-		(999 * 0x20 + 0x10000))()
-
-
-
-/*
- * temporary fix for nacl. stat != nacl_abi_stat
- * also i had a weird error when tried to use "service_runtime/include/sys/stat.h"
- */
-struct nacl_abi_stat
-{
-	/* must be renamed when ABI is exported */
-	int64_t   nacl_abi_st_dev;       /* not implemented */
-	uint64_t  nacl_abi_st_ino;       /* not implemented */
-	uint32_t  nacl_abi_st_mode;      /* partially implemented. */
-	uint32_t  nacl_abi_st_nlink;     /* link count */
-	uint32_t  nacl_abi_st_uid;       /* not implemented */
-	uint32_t  nacl_abi_st_gid;       /* not implemented */
-	int64_t   nacl_abi_st_rdev;      /* not implemented */
-	int64_t   nacl_abi_st_size;      /* object size */
-	int32_t   nacl_abi_st_blksize;   /* not implemented */
-	int32_t   nacl_abi_st_blocks;    /* not implemented */
-	int64_t   nacl_abi_st_atime;     /* access time */
-	int64_t   nacl_abi_st_atimensec; /* possibly just pad */
-	int64_t   nacl_abi_st_mtime;     /* modification time */
-	int64_t   nacl_abi_st_mtimensec; /* possibly just pad */
-	int64_t   nacl_abi_st_ctime;     /* inode change time */
-	int64_t   nacl_abi_st_ctimensec; /* possibly just pad */
-};
-
-/* same here */
-struct nacl_abi_timeval {
-	int64_t   nacl_abi_tv_sec;
-	int32_t   nacl_abi_tv_usec;
-};
+    (999 * 0x20 + 0x10000))()
 
 
 

@@ -1,4 +1,10 @@
 warning: this file is obsolete.
+samples list need to rework to according new zrt api:
+accessors, sort, disort, reqrep, sqlite: old Manifest, 
+malloc: including zvm.h but should not
+manifest: only old format manifest file in repository
+
+
 todo(d'b): update it with a new samples
 -------------------------------------------
 

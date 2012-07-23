@@ -1,0 +1,16 @@
+
+Data flow description of MapReduce 32/128.
+Every Map node has input file, every Reduce node has output file;
+MapReduce Library for every Map node reading input file sequently by configured block size, for example 1MB,
+Next MapReduce Library passed chunk of data into user defined Map function, that parse data and return
+keys, values buffers. Size of key value equal 4byte, size of value can be up to 16bytes for current MapReduce;   
+Next MapReduce Library sorting data by key and applying user defined Combine function that reduces data and
+summarize values with the same key; If user Combine not defined library skiping this step;
+At the next step MapReduce library for every map node creating histogram and send it each to other map nodes;
+Based on resulted histogram array data are distributing to reduce nodes, sending and now map job completed;
+MapReduce Library for every Reduce node receives data from map nodes, if portion of data received from all 
+'leave' map nodes it doing merge for this data, every portion of data sent by mapnode already locally sorted. 
+If MapReduce library handled for Reduce node that received MAP_EXCLUDE flag from Map node, it should exclude 
+this node from list of map nodes whos data are waiting. When all map nodes say to exclude their 
+from waiting data loop, nothing to receive anymore; 
+Next MapReduce Library call user defined Reduce function that reduces data in last step of job.         
