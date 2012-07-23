@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir debug/gcc/files
+mkdir debug/gcc/intermediate_data
 rm data/*.res -f
 rm log/* -f
 

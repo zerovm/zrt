@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir debug/zerovm/files
 rm data/*.res
 rm log/* -f
 rm debug/zerovm/files/* -f
