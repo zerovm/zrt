@@ -1,6 +1,6 @@
 warning: this file is obsolete.
 samples list need to rework to according new zrt api:
-accessors, get_random, sort, disort, reqrep, sqlite: old Manifest, 
+get_random, sort, disort, reqrep, sqlite: old Manifest, 
 malloc: including zvm.h but should not
 
 todo(d'b): update it with a new samples
@@ -8,10 +8,6 @@ todo(d'b): update it with a new samples
 
 this folder contain both samples of zerovm usage and functional tests (especially in "security/" folder)
 
-accessors/
-  test for a new part of zerovm api. this part provided by zrt, so this is not strictly saying "api", but
-  wrappers for UserSetup object.
-  
 command_line/
   demonstrates argc/argv passed via manifest (CommandLine keyword)
 

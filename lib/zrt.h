@@ -12,7 +12,7 @@
 #endif
 
 #include <stdint.h>
-#include "zvm.h"
+//#include "zvm.h"
 
 /* enabling */
 //#define DEBUG 0
@@ -27,8 +27,5 @@
  */
 #define main slave_main
 int slave_main();
-
-/* entry point for zrt library sample (see "syscall_manager.S" file) */
-void syscall_director(void);
 
 #endif /* ZRT_H_ */

@@ -54,9 +54,9 @@
  * todo(d'b): ### must be replaced with zvm api initializer
  */
 
-static struct UserManifest* __manifest;
+static struct UserManifest* s_manifest;
 /* positions of zerovm channels. should be allocated before usage */
-static size_t *__pos_ptr;
+static size_t *s_pos_ptr;
 
 /*
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
@@ -83,8 +83,8 @@ static int32_t zrt_open(uint32_t *args)
 	int handle;
 
 	/* search for name through the channels */
-	for(handle = 0; handle < __manifest->channels_count; ++handle)
-		if(strcmp(__manifest->channels[handle].name, name) == 0)
+	for(handle = 0; handle < s_manifest->channels_count; ++handle)
+		if(strcmp(s_manifest->channels[handle].name, name) == 0)
 			return handle;
 
 	/* todo: check flags and mode against type and limits/counters */
@@ -117,8 +117,8 @@ static int32_t zrt_read(uint32_t *args)
 	int64_t length = (int64_t)args[2];
 
 	/* for the new zvm channels design */
-	length = zvm_pread(file, buf, length, __pos_ptr[file]);
-	if(length > 0) __pos_ptr[file] += length;
+	length = zvm_pread(file, buf, length, s_pos_ptr[file]);
+	if(length > 0) s_pos_ptr[file] += length;
 
 	return length;
 }
@@ -132,8 +132,8 @@ static int32_t zrt_write(uint32_t *args)
 	int64_t length = (int64_t)args[2];
 
 	/* for the new zvm channels design */
-	length = zvm_pwrite(file, buf, length, __pos_ptr[file]);
-	if(length > 0) __pos_ptr[file] += length;
+	length = zvm_pwrite(file, buf, length, s_pos_ptr[file]);
+	if(length > 0) s_pos_ptr[file] += length;
 
 	return length;
 }
@@ -159,11 +159,11 @@ static int32_t zrt_lseek(uint32_t *args)
 	off_t new_pos;
 
 	/* check handle */
-	if(handle < 0 || handle >= __manifest->channels_count) return EBADF;
+	if(handle < 0 || handle >= s_manifest->channels_count) return EBADF;
 
 	/* select channel and make checks */
-	channel = &__manifest->channels[handle];
-	if(channel->position != __pos_ptr[handle]) return EIO;
+	channel = &s_manifest->channels[handle];
+	if(channel->position != s_pos_ptr[handle]) return EIO;
 
 	/* check if channel has random access */
 	if(channel->type == SGetSPut) return ESPIPE;
@@ -187,17 +187,17 @@ static int32_t zrt_lseek(uint32_t *args)
 	{
 	case SEEK_SET:
 		CHECK_NEW_POS(offset);
-		__pos_ptr[handle] = offset;
+		s_pos_ptr[handle] = offset;
 		break;
 	case SEEK_CUR:
-		new_pos = __pos_ptr[handle] + offset;
+		new_pos = s_pos_ptr[handle] + offset;
 		CHECK_NEW_POS(new_pos);
-		__pos_ptr[handle] = new_pos;
+		s_pos_ptr[handle] = new_pos;
 		break;
 	case SEEK_END:
 		new_pos = channel->size + offset;
 		CHECK_NEW_POS(new_pos);
-		__pos_ptr[handle] = new_pos;
+		s_pos_ptr[handle] = new_pos;
 		break;
 	default:
 		errno = EPERM; /* in advanced version should be set to conventional value */
@@ -208,7 +208,7 @@ static int32_t zrt_lseek(uint32_t *args)
 	 * return current position in a special way since 64 bits
 	 * doesn't fit to return code (32 bits)
 	 */
-	*(off_t *)args[1] = __pos_ptr[handle];
+	*(off_t *)args[1] = s_pos_ptr[handle];
 	return 0;
 }
 
@@ -230,8 +230,8 @@ static int32_t zrt_stat(uint32_t *args)
 
   /* calculate handle number */
   if(file == NULL) return -EFAULT;
-  for(handle = STDIN_FILENO; handle < __manifest->channels_count; ++handle)
-    if(!strcmp(file, __manifest->channels[handle].name)) break;
+  for(handle = STDIN_FILENO; handle < s_manifest->channels_count; ++handle)
+    if(!strcmp(file, s_manifest->channels[handle].name)) break;
 
   /* todo(d'b): make difference for random/sequential channels */
 
@@ -243,7 +243,7 @@ static int32_t zrt_stat(uint32_t *args)
   sbuf->nacl_abi_st_uid = 1000;     /* user ID of owner */
   sbuf->nacl_abi_st_gid = 1000;     /* group ID of owner */
   sbuf->nacl_abi_st_rdev = 0;       /* device ID (if special handle) */
-  sbuf->nacl_abi_st_size = __manifest->channels[handle].size; /* size in bytes */
+  sbuf->nacl_abi_st_size = s_manifest->channels[handle].size; /* size in bytes */
   sbuf->nacl_abi_st_blksize = 4096; /* block size for file system I/O */
   sbuf->nacl_abi_st_blocks = /* number of 512B blocks allocated */
       ((sbuf->nacl_abi_st_size + sbuf->nacl_abi_st_blksize - 1)
@@ -269,8 +269,8 @@ static int32_t zrt_fstat(uint32_t *args)
   struct ZVMChannel *channel;
 
   /* check if user request contain the proper file handle */
-  if(handle < STDIN_FILENO || handle >= __manifest->channels_count) return -EBADF;
-  channel = &__manifest->channels[handle];
+  if(handle < STDIN_FILENO || handle >= s_manifest->channels_count) return -EBADF;
+  channel = &s_manifest->channels[handle];
 
   /* return stat object */
   sbuf->nacl_abi_st_dev = 2049; /* ID of device containing handle */
@@ -378,12 +378,12 @@ static int32_t zrt_gettimeofday(uint32_t *args)
   int i;
 
   /* get time stamp from the environment */
-  for(i = 0; __manifest->envp[i] != NULL; ++i)
+  for(i = 0; s_manifest->envp[i] != NULL; ++i)
   {
-    if(strncmp(__manifest->envp[i], TIMESTAMP_STR, TIMESTAMP_STRLEN) != 0)
+    if(strncmp(s_manifest->envp[i], TIMESTAMP_STR, TIMESTAMP_STRLEN) != 0)
       continue;
 
-    stamp = __manifest->envp[i] + TIMESTAMP_STRLEN;
+    stamp = s_manifest->envp[i] + TIMESTAMP_STRLEN;
     break;
   }
 
@@ -587,9 +587,9 @@ int32_t (*zrt_syscalls[])(uint32_t*) = {
 
 
 void zrt_setup( struct UserManifest* manifest ){
-	__manifest = manifest;
+	s_manifest = manifest;
 	/* set up internals */
-	__pos_ptr = calloc(manifest->channels_count, sizeof(manifest->channels_count));
+	s_pos_ptr = calloc(manifest->channels_count, sizeof(manifest->channels_count));
 }
 
 

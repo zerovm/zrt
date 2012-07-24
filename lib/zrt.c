@@ -34,6 +34,9 @@
 // ### revise it
 #undef main /* prevent misuse macro */
 
+/* entry point for zrt library sample (see "syscall_manager.S" file) */
+void syscall_director(void);
+
 /*
  * initialize zerovm api, get the user manifest, install syscallback
  * and invoke user code
