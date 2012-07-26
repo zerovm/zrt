@@ -2,6 +2,16 @@
 == "lua" port of LUA scripting language
 == takes .lua scripts from input
 =====================================================================
+
+Channel = /dev/null, 0, 4, 999999, 999999, 0, 0
+Channel = /dev/null, 0, 5, 0, 0, 999999, 999999
+Channel = ../samples/reqrep/log/test1.stderr.log, /dev/stderr, 6, 0, 0, 999999, 999999
+Channel = ../samples/reqrep/testb, testa, 0, 999999999, 999999999, 999999999, 999999999
+Channel = ../samples/reqrep/testa, testb, 0, 999999999, 999999999, 999999999, 999999999 
+
+
+
+
 Input = hello.lua
 InputMaxGet = 102400
 

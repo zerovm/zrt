@@ -108,7 +108,7 @@ int Combine( const Buffer *keys, const Buffer *values, Buffer *reduced_keys, Buf
 		GetBufferItem( values, i, &value );
 		combined_value += value;
 	}
-	return EMAPRED_OK;
+	return 0;
 }
 
 int Reduce( const Buffer *keys, const Buffer *values ){

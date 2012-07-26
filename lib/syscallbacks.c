@@ -19,15 +19,11 @@
 #include "syscallbacks.h"
 
 
-/* ******************************************************************************8
- * TODO
- * MAX_CHANNELS should be moved into zvm api*/
-
 
 /* ******************************************************************************
  * Syscallbacks debug macros*/
-#if DEBUG
-#define SHOWID do {log_msg((char*)__func__); log_msg("() is called\n");} while(0)
+#ifdef DEBUG
+#define SHOWID {log_msg((char*)__func__); log_msg("() is called\n");}
 #else
 #define SHOWID
 #endif
@@ -45,18 +41,75 @@
 	return code;\
 		}
 
-/* ******************************************************************************
- * Channels: do we need declare it here?*/
-/*
- * user manifest object should be initialized before any usage.
- * memory for the channels should be allocated
- * todo(d'b): how to get number of channels?
- * todo(d'b): ### must be replaced with zvm api initializer
- */
 
+/*manifest should be initialized in zrt main*/
 static struct UserManifest* s_manifest;
 /* positions of zerovm channels. should be allocated before usage */
 static size_t *s_pos_ptr;
+
+
+
+#ifdef DEBUG
+static int s_fd_debug_log = -1;
+void log_msg(const char *msg)
+{
+	const char *fname= ZVM_STDERR;
+	if ( s_fd_debug_log == -1 ){
+		/* search for name through the channels */
+		int handle;
+		for(handle = 0; handle < s_manifest->channels_count; ++handle)
+			if(strcmp(s_manifest->channels[handle].name, fname) == 0)
+				s_fd_debug_log = handle;
+	}
+
+	if ( s_fd_debug_log != -1 ){
+		int length = zvm_pwrite(s_fd_debug_log, msg, strlen(msg), s_pos_ptr[s_fd_debug_log]);
+		if(length > 0) s_pos_ptr[s_fd_debug_log] += length;
+	}
+}
+
+size_t strlen(const char *string) {
+	const char *s;
+	s = string;
+	while (*s)
+		s++;
+	return s - string;
+}
+
+char *strrev(char *str) {
+	char *p1, *p2;
+	if (!str || !*str)
+		return str;
+	for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2) {
+		*p1 ^= *p2;
+		*p2 ^= *p1;
+		*p1 ^= *p2;
+	}
+	return str;
+}
+
+char *itoa(int n, char *s, int b) {
+	static char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+	int i=0, sign;
+	if ((sign = n) < 0)
+		n = -n;
+	do {
+		s[i++] = digits[n % b];
+	} while ((n /= b) > 0);
+	if (sign < 0)
+		s[i++] = '-';
+	s[i] = '\0';
+	return strrev(s);
+}
+
+int log_int(int dec)
+{
+	char log_msg_text[30];
+	itoa(dec, (char*)log_msg_text, 10);
+	log_msg(log_msg_text);
+	return 0;
+}
+#endif
 
 /*
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
@@ -116,9 +169,17 @@ static int32_t zrt_read(uint32_t *args)
 	void *buf = (void*)args[1];
 	int64_t length = (int64_t)args[2];
 
+	/**DEBUG*******************************************/
+	log_msg( "read: length=" ); log_int( length ); log_msg( "\n" );
+	/**DEBUG*******************************************/
+
 	/* for the new zvm channels design */
 	length = zvm_pread(file, buf, length, s_pos_ptr[file]);
 	if(length > 0) s_pos_ptr[file] += length;
+
+	/**DEBUG*******************************************/
+	log_msg( "read: readed=" ); log_int( length ); log_msg( buf ); log_msg( "\n" );
+	/**DEBUG*******************************************/
 
 	return length;
 }
@@ -228,6 +289,10 @@ static int32_t zrt_stat(uint32_t *args)
 //  struct ZVMChannel *channel;
   int handle;
 
+  /**DEBUG*******************************************/
+  log_msg( file ); log_msg( "\n" );
+  /**DEBUG*******************************************/
+
   /* calculate handle number */
   if(file == NULL) return -EFAULT;
   for(handle = STDIN_FILENO; handle < s_manifest->channels_count; ++handle)
@@ -267,6 +332,10 @@ static int32_t zrt_fstat(uint32_t *args)
   int handle = (int)args[0];
   struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
   struct ZVMChannel *channel;
+
+  /**DEBUG*******************************************/
+  log_msg( "fstat: " ); log_int( handle ); log_msg( "\n" );
+  /**DEBUG*******************************************/
 
   /* check if user request contain the proper file handle */
   if(handle < STDIN_FILENO || handle >= s_manifest->channels_count) return -EBADF;

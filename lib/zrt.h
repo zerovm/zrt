@@ -5,17 +5,22 @@
  *      Author: d'b, YaroslavLitvinov
  */
 
-#ifndef ZRT_H_
-#define ZRT_H_
+#ifndef _LIB_ZRT_H_
+#define _LIB_ZRT_H_
 #ifndef USER_SIDE
 #define USER_SIDE
 #endif
 
 #include <stdint.h>
-//#include "zvm.h"
 
-/* enabling */
-//#define DEBUG 0
+
+#ifdef DEBUG
+#  define WRITE_FMT_LOG(fmt, args...) fprintf(stderr, fmt, args)
+#  define WRITE_LOG(str) fprintf(stderr, "%s\n", str)
+#else
+#  define WRITE_FMT_LOG(fmt, args...)
+#  define WRITE_LOG(str)
+#endif
 
 /*
  * user program entry point. old style function prototyping
@@ -28,4 +33,7 @@
 #define main slave_main
 int slave_main();
 
-#endif /* ZRT_H_ */
+/* entry point for zrt library sample (see "syscall_manager.S" file) */
+void syscall_director(void);
+
+#endif /* _LIB_ZRT_H_ */

@@ -11,12 +11,10 @@ Channel = testd, testd, 3, 999999999, 999999999, 999999999, 999999999
 Channel = teste, teste, 4, 999999999, 999999999, 999999999, 999999999 
 
 =====================================================================
-== user side keywords
+== Environment
 =====================================================================
-ContentType = type_name
-TimeStamp = 1337012520
-XObjectMetaTag = the tags list will be given to user "as is"
-UserETag = reserved
+
+Environment = UserETag, 74ebada55, XObjectMetaTag, klaatu_barada_nikto, TEMP, 32/128
 
 =====================================================================
 == report request keywords
@@ -30,7 +28,7 @@ ReportXObjectMetaTag = bump
 =====================================================================
 == zerovm control keywords
 =====================================================================
-Version = 11062012
+Version = 13072012
 Log = full.zerovm.log
 Report = samples/zrt/manifest/manifest.report.log
 Nexe = samples/zrt/manifest/manifest.nexe

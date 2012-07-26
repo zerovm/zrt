@@ -1,0 +1,21 @@
+=====================================================================
+== i/o switches. full list. optional. some switches now meaningless,
+== placed here for completeness and future changes
+=====================================================================
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua.input, /dev/stdin, 4, 999999, 999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua.output, /dev/stdout, 5, 0, 0, 999999, 999999
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua.log, /dev/stderr, 6, 0, 0, 9999999, 9999999
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/all.lua, all.lua, 0, 9999999, 9999999, 0, 0
+
+=='@' should be replaced by '=' in user main, currently zerovm does not supported '=' char in command line
+CommandLine = -e_U@true all.lua
+
+=====================================================================
+== switches for zerovm. some of them used to control nexe, some
+== for the internal zerovm needs
+=====================================================================
+Version = 13072012
+Nexe = /home/yaroslav/git/zrt/tests/lua_test_suite/lua.nexe
+NexeMax = 10000000
+SyscallsMax = 3333333
+SetupCallsMax = 99999999

@@ -12,9 +12,9 @@
 #include "zvm_errors.h"
 
 /* names for reserved channels. not secured */
-//#define STDIN "/dev/stdin"
-//#define STDOUT "/dev/stdout"
-//#define STDERR "/dev/stderr"
+#define ZVM_STDIN "/dev/stdin"
+#define ZVM_STDOUT "/dev/stdout"
+#define ZVM_STDERR "/dev/stderr"
 
 /* channels available for user. very 1st channel must be InputChannel */
 enum AccessType {
@@ -125,7 +125,7 @@ struct UserManifest *zvm_init();
 int32_t zvm_pread(int desc, char *buffer, int32_t size, int64_t offset);
 
 /* wrapper for zerovm "TrapWrite" */
-int32_t zvm_pwrite(int desc, char *buffer, int32_t size, int64_t offset);
+int32_t zvm_pwrite(int desc, const char *buffer, int32_t size, int64_t offset);
 
 /* wrapper for zerovm "TrapExit" */
 int32_t zvm_exit(int32_t code);

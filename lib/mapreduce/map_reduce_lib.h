@@ -7,12 +7,11 @@
 //forward decl
 struct ChannelsConfInterface;
 
-enum { EMAPRED_OK, EMAPRED_NO_INPUT_DATA = 1 };
-
 enum { EMapNode=1, EReduceNode=2 };
 
 typedef uint32_t KeyType;
 #define MIN(a,b) (a < b ? a : b )
+#define SPLIT_FILE_SIZE_BYTES (1024*1024)
 
 
 /*structure intended to wrap key data to get it sortable together with value, because
@@ -21,8 +20,6 @@ struct SortableKeyVal{
 	uint32_t key;
 	int original_index;
 };
-
-#define SPLIT_FILE_SIZE_BYTES (1024*1024)
 
 
 /****************************************************
@@ -95,10 +92,6 @@ void LocalSort( const Buffer *keys, const Buffer *values, Buffer *sorted_keys, B
 size_t MapInputDataProvider( int fd, char **input_buffer, size_t buf_size, int unhandled_data_pos );
 void SummarizeHistograms( Histogram *histograms, int histograms_count, int dividers_count, KeyType *divider_array );
 size_t AllocHistogram( const KeyType *array, const int array_len, int step, Histogram *histogram );
-#ifdef DEBUG
-/*it should be preopened file or stdin=0*/
-void SetInputChannelFd(int fd);
-#endif //DEBUG
 
 
 //MapReduce library functions

@@ -2,21 +2,20 @@
 == i/o switches. full list. optional. some switches now meaningless,
 == placed here for completeness and future changes
 =====================================================================
+Channel = {INPUT_FILE_PATH}, /dev/stdin, 4, 999999, 999999, 0, 0
+Channel = {OUTPUT_FILE_PATH}, /dev/stdout, 5, 0, 0, 999999, 999999
+Channel = {LOG_FILE_PATH}, /dev/stderr, 6, 0, 0, 9999999, 9999999
+Channel = {SCRIPT_FILE_PATH}, script.zsh, 0, 9999999, 9999999, 0, 0
 
-Channel = /dev/null, 0, 4, 999999, 999999, 0, 0
-Channel = /dev/null, 0, 5, 0, 0, 999999, 999999
-Channel = ../samples/reqrep/log/test1.stderr.log, /dev/stderr, 6, 0, 0, 999999, 999999
-Channel = ../samples/reqrep/testb, testa, 0, 999999999, 999999999, 999999999, 999999999
-Channel = ../samples/reqrep/testa, testb, 0, 999999999, 999999999, 999999999, 999999999 
+CommandLine = {COMMAND_LINE}
+Environment = UserETag, 74ebada55, XObjectMetaTag, klaatu_barada_nikto, TEMP, 32/128
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
 Version = 13072012
-Nexe = ../samples/reqrep/test1.nexe
+Nexe = {ABS_PATH}zshell.nexe
 NexeMax = 10000000
-SyscallsMax = 3333
-SetupCallsMax = 99999
-Networking = bump
-
+SyscallsMax = 3333333
+SetupCallsMax = 99999999
