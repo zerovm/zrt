@@ -1,0 +1,19 @@
+=====================================================================
+== i/o switches. full list. optional. some switches now meaningless,
+== placed here for completeness and future changes
+=====================================================================
+Channel = /dev/null, /dev/stdin, 4, 999999, 999999, 0, 0
+Channel = environment_test.stdout, /dev/stdout, 5, 0, 0, 99999, 99999
+Channel = environment_test.stderr, /dev/stderr, 6, 0, 0, 99999, 99999
+
+==Environment= test1, /123/45/234/2/56/2/57///ty/er/ty/ety/wret/[q45123-\59132532, TEST, **********************************************
+
+=====================================================================
+== switches for zerovm. some of them used to control nexe, some
+== for the internal zerovm needs
+=====================================================================
+Version = 13072012
+Nexe = environment_test.nexe
+NexeMax = 10000000
+SyscallsMax = 3333333
+SetupCallsMax = 99999999
