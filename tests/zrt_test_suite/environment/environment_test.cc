@@ -1,7 +1,7 @@
 /*
- * Tests for zerovm network protocol layer
+ * Tests for zrt
  *  Author: YaroslavLitvinov
- *  Date: 7.03.2012
+ *  Date: 26.07.2012
  */
 
 #include "zrt.h"
