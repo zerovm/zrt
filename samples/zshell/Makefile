@@ -3,21 +3,30 @@ DEBUG=-g -DDEBUG
 PNACL_TOOL=~/nacl_sdk/pepper_19/toolchain/linux_x86_glibc
 NACL_GCC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
 ZRT_ROOT=../..
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I$(ZRT_ROOT)/lib/lua-5.2.1/src -I.
+INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I$(ZRT_ROOT)/lib/lua-5.2.1/src -I$(ZRT_ROOT)/lib/sqlite3 -I.
 CFLAGS=-Wall -Wno-long-long -m64 -std=c99
 
-all: createdirs clean zshell.nexe
+all: createdirs clean zshell_gcc #zshell.nexe
 
-zshell.nexe: luaexec.o main.o
-	$(NACL_GCC) -o zshell.nexe  -s -static -T \
-	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 luaexec.o main.o \
-	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -llua -lm $(DEBUG)  
+zshell.nexe: luaexec.o main.o sqlitequery.o
+	$(NACL_GCC) -o zshell.nexe  -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static \
+	-melf64_nacl -m64 luaexec.o main.o sqlitequery.o \
+	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -llua -lm -lsqlite3 $(DEBUG)  
 	
+zshell_gcc:
+	gcc -o zshell_gcc  -static -m64 \
+	main.c sqlitequery.c $(ZRT_ROOT)/lib/sqlite3/sqlite3.c $(ZRT_ROOT)/lib/sqlite3/vfs_channel.c \
+	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -llua -lm -lsqlite3 -lpthread -ldl $(DEBUG)  -D_GNU_SOURCE $(INCLUDE_FLAGS)
+		
 main.o: main.c
-	$(NACL_GCC) -c -o main.o     $(INCLUDE_FLAGS) ${CFLAGS} $(DEBUG) main.c -DUSER_SIDE 
+	$(NACL_GCC) -c -o main.o     $(INCLUDE_FLAGS) ${CFLAGS} $(DEBUG) main.c -DUSER_SIDE -D_GNU_SOURCE
 
 luaexec.o: luaexec.c
 	$(NACL_GCC) -c -o luaexec.o  $(INCLUDE_FLAGS) ${CFLAGS} $(DEBUG) luaexec.c -DUSER_SIDE
+
+sqlitequery.o: sqlitequery.c
+	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o sqlitequery.o -Wall -std=c99 \
+	$(INCLUDE_FLAGS) $(DEBUG) -c -Wno-long-long -O2 -m64 sqlitequery.c 
 
 createdirs:
 	@mkdir -p obj log
@@ -25,6 +34,6 @@ createdirs:
 clean: 
 	@rm -f obj/*.o
 	@rm -f log/*.log
-	@rm -f zshell.nexe
+	@rm -f zshell.nexe zshell_gcc
 	
 

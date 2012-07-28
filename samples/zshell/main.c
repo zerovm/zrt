@@ -13,41 +13,93 @@
 #include <sys/types.h> //temp read file
 #include <sys/stat.h> //temp read file
 #include <fcntl.h> //temp read file
-
-#include "zrt.h"
 #include "zshell.h"
 
-#define SCRIPT_ALIAS_NAME "script.zsh"
+#define DEBUGGER
 
-int main(int argc, char **argv, char **envp){
+#ifndef DEBUGGER
+#include "zrt.h"
 
-	char *test = getenv("TEST");
-	WRITE_FMT_LOG( "getenv(TEST)=%s\n", test );
+/* If provided by manifest, this channel contains data and can be accessed in read/write modes */
+#  define DATA_CHANNEL_ALIAS_NAME "data"
+#else
+#  define WRITE_FMT_LOG(fmt, args...)
+#  define WRITE_LOG(str) printf("%s\n", str)
+#  define DATA_CHANNEL_ALIAS_NAME "/home/yaroslav/git/zrt/samples/zshell/sqlite/data/new.db"
+#endif
 
-	int i = 0;
-	char *env = NULL;
+
+
+#define LUA_ID            "#lua"
+#define SQLITE_ID         "#sqlite"
+
+/**@param fd file decriptor id to load contents
+ * @param buffer pointer to resulted buffer pointer
+ * @return loaded bytes count*/
+int LoadFileToBuffer( int fd, char **buffer ){
+	int buf_size = 4096;
+	*buffer = calloc( 1, buf_size );
+	int readed = 0;
+	int requested = 0;
 	do{
-		env = envp[i++];
-		WRITE_FMT_LOG( "envp[%d]=%s\n", i, env );
-	}while(env);
+		requested += buf_size - readed;
+		readed += read(fd, *buffer+readed, requested);
+		if ( readed == requested )
+		{
+			buf_size = buf_size*2;
+			*buffer = realloc( *buffer, buf_size );
+			assert( *buffer );
+		}
+	}while( readed == requested );
+	return readed;
+}
 
-//	int fd = open(SCRIPT_ALIAS_NAME, O_RDONLY);
-//	char *s = calloc(1, 111111111);
-//	int readed = read( fd, s, 11111111 );
-//	close(fd);
-//	WRITE_FMT_LOG("readed=%d\n", readed);
-//	WRITE_LOG( s );
-//	free(s);
+/*@return new line pos offset*/
+int SearchNewLine( const char *buffer ){
+	const char* bufpos = strchrnul(buffer, '\n' );
+	if ( bufpos != NULL && bufpos != buffer ){
+		return bufpos - buffer +1;
+	}
+	else
+		return -1;
+}
 
-//	char *s = calloc(1, 111111111);
-//	FILE *f =fopen(SCRIPT_ALIAS_NAME, "r");
-//	int readed = fread( s, 1, 1, f );
-//	WRITE_FMT_LOG("readed=%d\n", readed);
-//	WRITE_LOG( s );
-//	int readstatus = ferror(f);
-//	WRITE_FMT_LOG("ferror=%d\n", readstatus);
-//	free(s);
-//	fclose(f);
-	return run_lua_script( SCRIPT_ALIAS_NAME );
+int main(int argc, char **argv){
+	/* Read to buffer from stdin which contains text script; first line should always begin on '#';
+	 * First line can be one of these: #lua, #sqlite  */
+	int fdscript = 0;
+#ifdef DEBUGGER
+	fdscript = open( "/home/yaroslav/git/zrt/samples/zshell/sqlite/scripts/zerovm_config.sql", O_RDONLY );
+	assert( fdscript >= 0 );
+#endif
+
+	char *buffer = NULL;
+	int bufsize = LoadFileToBuffer(fdscript, &buffer );                /*load script from stdin*/
+	int newlinepos = SearchNewLine( buffer );
+	WRITE_FMT_LOG("newlinepos=%d\n", newlinepos);
+
+	int errcode = 0;
+	if ( !strncmp( LUA_ID, buffer, strlen(LUA_ID) ) && newlinepos >0 ){
+#ifndef DEBUGGER
+		/*if loaded file is lua script, run script skiping first line; Alternatively it can open
+		 * channel contains data which can be accessed in read/write modes */
+		int script_buf_size = bufsize-newlinepos;
+		errcode = run_lua_buffer_script (buffer+newlinepos, script_buf_size, LUA_ID);
+#endif
+	}
+	else if ( !strncmp( SQLITE_ID, buffer, strlen(SQLITE_ID) ) && newlinepos > 0 ){
+		/*if loaded file is sqlite query, run query skiping first line*/
+		int script_buf_size = bufsize-newlinepos;
+		int database_fd = open( DATA_CHANNEL_ALIAS_NAME, O_RDWR | O_CREAT);
+		WRITE_FMT_LOG( "database_fd=%d\n", database_fd );
+		errcode = run_sql_query_buffer( database_fd, buffer+newlinepos, script_buf_size );
+		close(database_fd);
+	}
+	else{
+		WRITE_LOG( "Could not detect script type, first line should be started by #SCRIPT_ID" );
+	}
+
+	free(buffer);
+	return errcode;
 }
 

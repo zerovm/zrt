@@ -7,17 +7,39 @@
  */
 
 #include <sys/types.h> //off_t
+#include <sys/stat.h>
 #include <string.h> //memcpy
 #include <stdio.h>  //SEEK_SET .. SEEK_END
 #include <stdlib.h> //atoi
 #include <stddef.h> //size_t
 #include <errno.h>
+#include <assert.h>
 
 #include "zvm.h"
 #include "zrt.h"
 #include "unistd.h" //STDIN_FILENO
 #include "syscallbacks.h"
 
+
+/* TODO
+ * RESEARCH
+ * fstat / stat changes according to channel types
+ * SUPPORT
+ * fstat for /etc/localtime, set timestamp as localtime
+ * EOF all cases:
+ * - zvm_pread return 0 bytes, errno 0;
+ * - zvm_pread return err code, if limits reached;
+ * - read - bytes read is returned (zero indicates end of file;
+ * - pread - zero indicates that end of file
+ * - test EOF for channel files: getchar, getline
+ * - feof - returning nonzero if it is set to EOF
+ * TESTS
+ * : EOF correctly return by read, fread, feof,*
+ * : channels close, reopen, reclose
+ * : try to test fstat returned data
+ * BUGS
+ * : fdopen failed, ftell fread
+ * */
 
 
 /* ******************************************************************************
@@ -35,11 +57,11 @@
 
 /* mock. replacing real syscall handler */
 #define SYSCALL_MOCK(name_wo_zrt_prefix, code) \
-		static int32_t ZRT_FUNC(name_wo_zrt_prefix)(uint32_t *args)\
-		{\
-	SHOWID;\
-	return code;\
-		}
+        static int32_t ZRT_FUNC(name_wo_zrt_prefix)(uint32_t *args)\
+        {\
+    SHOWID;\
+    return code;\
+        }
 
 
 /*manifest should be initialized in zrt main*/
@@ -53,61 +75,61 @@ static size_t *s_pos_ptr;
 static int s_fd_debug_log = -1;
 void log_msg(const char *msg)
 {
-	const char *fname= ZVM_STDERR;
-	if ( s_fd_debug_log == -1 ){
-		/* search for name through the channels */
-		int handle;
-		for(handle = 0; handle < s_manifest->channels_count; ++handle)
-			if(strcmp(s_manifest->channels[handle].name, fname) == 0)
-				s_fd_debug_log = handle;
-	}
+    const char *fname= ZVM_STDERR;
+    if ( s_fd_debug_log == -1 ){
+        /* search for name through the channels */
+        int handle;
+        for(handle = 0; handle < s_manifest->channels_count; ++handle)
+            if(strcmp(s_manifest->channels[handle].name, fname) == 0)
+                s_fd_debug_log = handle;
+    }
 
-	if ( s_fd_debug_log != -1 ){
-		int length = zvm_pwrite(s_fd_debug_log, msg, strlen(msg), s_pos_ptr[s_fd_debug_log]);
-		if(length > 0) s_pos_ptr[s_fd_debug_log] += length;
-	}
+    if ( s_fd_debug_log != -1 ){
+        int length = zvm_pwrite(s_fd_debug_log, msg, strlen(msg), s_pos_ptr[s_fd_debug_log]);
+        if(length > 0) s_pos_ptr[s_fd_debug_log] += length;
+    }
 }
 
 size_t strlen(const char *string) {
-	const char *s;
-	s = string;
-	while (*s)
-		s++;
-	return s - string;
+    const char *s;
+    s = string;
+    while (*s)
+        s++;
+    return s - string;
 }
 
 char *strrev(char *str) {
-	char *p1, *p2;
-	if (!str || !*str)
-		return str;
-	for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2) {
-		*p1 ^= *p2;
-		*p2 ^= *p1;
-		*p1 ^= *p2;
-	}
-	return str;
+    char *p1, *p2;
+    if (!str || !*str)
+        return str;
+    for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2) {
+        *p1 ^= *p2;
+        *p2 ^= *p1;
+        *p1 ^= *p2;
+    }
+    return str;
 }
 
 char *itoa(int n, char *s, int b) {
-	static char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-	int i=0, sign;
-	if ((sign = n) < 0)
-		n = -n;
-	do {
-		s[i++] = digits[n % b];
-	} while ((n /= b) > 0);
-	if (sign < 0)
-		s[i++] = '-';
-	s[i] = '\0';
-	return strrev(s);
+    static char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+    int i=0, sign;
+    if ((sign = n) < 0)
+        n = -n;
+    do {
+        s[i++] = digits[n % b];
+    } while ((n /= b) > 0);
+    if (sign < 0)
+        s[i++] = '-';
+    s[i] = '\0';
+    return strrev(s);
 }
 
 int log_int(int dec)
 {
-	char log_msg_text[30];
-	itoa(dec, (char*)log_msg_text, 10);
-	log_msg(log_msg_text);
-	return 0;
+    char log_msg_text[30];
+    itoa(dec, (char*)log_msg_text, 10);
+    log_msg(log_msg_text);
+    return 0;
 }
 #endif
 
@@ -129,74 +151,96 @@ SYSCALL_MOCK(dup2, -EPERM) /* duplicate the given file handle. n/a in the simple
  */
 static int32_t zrt_open(uint32_t *args)
 {
-	SHOWID;
-	char* name = (char*)args[0];
-	//  int flags = (int)args[1];
-	//  int mode = (int)args[2];
-	int handle;
+    SHOWID;
+    char* name = (char*)args[0];
+    int flags = (int)args[1];
+    int mode = (int)args[2];
+    int handle = -ENOENT;
 
-	/* search for name through the channels */
-	for(handle = 0; handle < s_manifest->channels_count; ++handle)
-		if(strcmp(s_manifest->channels[handle].name, name) == 0)
-			return handle;
+    /* search for name through the channels */
+    for(handle = 0; handle < s_manifest->channels_count; ++handle)
+        if(strcmp(s_manifest->channels[handle].name, name) == 0)
+            break; /*handle according to matched filename*/
 
-	/* todo: check flags and mode against type and limits/counters */
-	return -ENOENT;
+    /* todo: check flags and mode against type and limits/counters */
+
+    /**DEBUG*******************************************/
+    log_msg( "opn file name =" ); log_msg( name );
+    log_msg( " flags =" ); log_int( flags );
+    log_msg( " mode=" ); log_int( mode );
+    log_msg( "\n" );
+    /**DEBUG*******************************************/
+
+    return handle;
 }
 
 /* do nothing but checks given handle */
 static int32_t zrt_close(uint32_t *args)
 {
-	SHOWID;
-	//  int handle = (int)args[0];
-	int result = -EBADF;
+    SHOWID;
+    int handle = (int)args[0];
+    int result = -EBADF;
 
-	/*
-	 * todo: did channel was "opened" with zrt_open() ?
-	 * if so fix channel position and return OK
-	 * otherwise - appropriate error
-	 */
+    /*
+     * todo: did channel was "opened" with zrt_open() ?
+     * if so fix channel position and return OK
+     * otherwise - appropriate error
+     */
 
-	return result;
+    if ( handle < s_manifest->channels_count ){
+        s_pos_ptr[handle] = 0;   /*reset file pos*/
+        result = 0;              /*OK code*/
+    }
+
+    return result;
 }
 
 
 /* read the file with the given handle number */
 static int32_t zrt_read(uint32_t *args)
 {
-	SHOWID;
-	int file = (int)args[0];
-	void *buf = (void*)args[1];
-	int64_t length = (int64_t)args[2];
+    SHOWID;
+    int handle = (int)args[0];
+    void *buf = (void*)args[1];
+    int64_t length = (int64_t)args[2];
 
-	/**DEBUG*******************************************/
-	log_msg( "read: length=" ); log_int( length ); log_msg( "\n" );
-	/**DEBUG*******************************************/
+    if ( handle < s_manifest->channels_count ){
+        /**DEBUG*******************************************/
+        log_msg( "read file fd =" ); log_int( handle );
+        log_msg( " fpos =" ); log_int( s_pos_ptr[handle] );
+        log_msg( " length=" ); log_int( length );
+        log_msg( "\n" );
+        /**DEBUG*******************************************/
 
-	/* for the new zvm channels design */
-	length = zvm_pread(file, buf, length, s_pos_ptr[file]);
-	if(length > 0) s_pos_ptr[file] += length;
+        /* for the new zvm channels design */
+        length = zvm_pread(handle, buf, length, s_pos_ptr[handle]);
+        if(length > 0) s_pos_ptr[handle] += length;
 
-	/**DEBUG*******************************************/
-	log_msg( "read: readed=" ); log_int( length ); log_msg( buf ); log_msg( "\n" );
-	/**DEBUG*******************************************/
-
-	return length;
+        /**DEBUG*******************************************/
+        log_msg( "readed=" ); log_int( length );
+        log_msg( "\n" );
+        /**DEBUG*******************************************/
+    }
+    else{
+        length = -1;
+        errno = -EBADF;
+    }
+    return length;
 }
 
 /* example how to implement zrt syscall */
 static int32_t zrt_write(uint32_t *args)
 {
-	SHOWID;
-	int file = (int)args[0];
-	void *buf = (void*)args[1];
-	int64_t length = (int64_t)args[2];
+    SHOWID;
+    int file = (int)args[0];
+    void *buf = (void*)args[1];
+    int64_t length = (int64_t)args[2];
 
-	/* for the new zvm channels design */
-	length = zvm_pwrite(file, buf, length, s_pos_ptr[file]);
-	if(length > 0) s_pos_ptr[file] += length;
+    /* for the new zvm channels design */
+    length = zvm_pwrite(file, buf, length, s_pos_ptr[file]);
+    if(length > 0) s_pos_ptr[file] += length;
 
-	return length;
+    return length;
 }
 
 /*
@@ -204,166 +248,178 @@ static int32_t zrt_write(uint32_t *args)
  */
 static int32_t zrt_lseek(uint32_t *args)
 {
-	SHOWID;
-	struct ZVMChannel *channel;
+    SHOWID;
+    struct ZVMChannel *channel;
 
 #define CHECK_NEW_POS(offset)\
-		if(offset < 0 || offset > 0x7fffffff)\
-		{\
-			errno = EPERM; /* in advanced version should be set to conventional value */\
-		return -EPERM;\
-		}
+        if(offset < 0 || offset > 0x7fffffff)\
+        {\
+            errno = EPERM; /* in advanced version should be set to conventional value */\
+        return -EPERM;\
+        }
 
-	int32_t handle = (int32_t)args[0];
-	off_t offset = *((off_t*)args[1]);
-	int whence = (int)args[2];
-	off_t new_pos;
+    int32_t handle = (int32_t)args[0];
+    off_t offset = *((off_t*)args[1]);
+    int whence = (int)args[2];
+    off_t new_pos;
 
-	/* check handle */
-	if(handle < 0 || handle >= s_manifest->channels_count) return EBADF;
+    /* check handle */
+    if(handle < 0 || handle >= s_manifest->channels_count) return EBADF;
 
-	/* select channel and make checks */
-	channel = &s_manifest->channels[handle];
-	if(channel->position != s_pos_ptr[handle]) return EIO;
+    /* select channel and make checks */
+    channel = &s_manifest->channels[handle];
+    if(channel->position != s_pos_ptr[handle]) return EIO;
 
-	/* check if channel has random access */
-	if(channel->type == SGetSPut) return ESPIPE;
-	if(channel->type == Stdin) return ESPIPE;
-	if(channel->type == Stdout) return ESPIPE;
-	if(channel->type == Stderr) return ESPIPE;
+    /* check if channel has random access */
+    if(channel->type == SGetSPut) return ESPIPE;
+    if(channel->type == Stdin) return ESPIPE;
+    if(channel->type == Stdout) return ESPIPE;
+    if(channel->type == Stderr) return ESPIPE;
 
-	/*
-	 * following check doesn't garantee absence of errors since
-	 * it does not envolves counters update
-	 * todo(d'b): try to solve it w/o syscalls
-	 */
-	/* sequential r/o channel */
-	if(channel->type == SGetRPut && (channel->limits[PutsLimit] == 0
-			|| channel->limits[PutSizeLimit] == 0)) return ESPIPE;
-	/* sequential w/o channel */
-	if(channel->type == RGetSPut && (channel->limits[GetsLimit] == 0
-			|| channel->limits[GetSizeLimit] == 0)) return ESPIPE;
+    /*
+     * following check doesn't garantee absence of errors since
+     * it does not envolves counters update
+     * todo(d'b): try to solve it w/o syscalls
+     */
+    /* sequential r/o channel */
+    if(channel->type == SGetRPut && (channel->limits[PutsLimit] == 0
+            || channel->limits[PutSizeLimit] == 0)) return ESPIPE;
+    /* sequential w/o channel */
+    if(channel->type == RGetSPut && (channel->limits[GetsLimit] == 0
+            || channel->limits[GetSizeLimit] == 0)) return ESPIPE;
 
-	switch(whence)
-	{
-	case SEEK_SET:
-		CHECK_NEW_POS(offset);
-		s_pos_ptr[handle] = offset;
-		break;
-	case SEEK_CUR:
-		new_pos = s_pos_ptr[handle] + offset;
-		CHECK_NEW_POS(new_pos);
-		s_pos_ptr[handle] = new_pos;
-		break;
-	case SEEK_END:
-		new_pos = channel->size + offset;
-		CHECK_NEW_POS(new_pos);
-		s_pos_ptr[handle] = new_pos;
-		break;
-	default:
-		errno = EPERM; /* in advanced version should be set to conventional value */
-		return -EPERM;
-	}
+    switch(whence)
+    {
+    case SEEK_SET:
+        CHECK_NEW_POS(offset);
+        s_pos_ptr[handle] = offset;
+        break;
+    case SEEK_CUR:
+        new_pos = s_pos_ptr[handle] + offset;
+        CHECK_NEW_POS(new_pos);
+        s_pos_ptr[handle] = new_pos;
+        break;
+    case SEEK_END:
+        new_pos = channel->size + offset;
+        CHECK_NEW_POS(new_pos);
+        s_pos_ptr[handle] = new_pos;
+        break;
+    default:
+        errno = EPERM; /* in advanced version should be set to conventional value */
+        return -EPERM;
+    }
 
-	/*
-	 * return current position in a special way since 64 bits
-	 * doesn't fit to return code (32 bits)
-	 */
-	*(off_t *)args[1] = s_pos_ptr[handle];
-	return 0;
+    /*
+     * return current position in a special way since 64 bits
+     * doesn't fit to return code (32 bits)
+     */
+    *(off_t *)args[1] = s_pos_ptr[handle];
+    return 0;
 }
 
 
 SYSCALL_MOCK(ioctl, -EINVAL) /* not implemented in the simple version of zrtlib */
 
+/*used by stat, fstat; set stat based on channel type*/
+static void set_channel_stat(struct nacl_abi_stat *stat, const struct ZVMChannel *chan)
+{
+    /**DEBUG*******************************************/
+    log_msg( "set_channel_stat channel type: " ); log_int( chan->type ); log_msg( "\n" );
+    /**DEBUG*******************************************/
+
+    /* return stat object */
+    stat->nacl_abi_st_dev = 2049;     /* ID of device containing handle */
+    stat->nacl_abi_st_ino = 1967;     /* inode number */
+    stat->nacl_abi_st_mode = 33261;   /* protection */
+    stat->nacl_abi_st_nlink = 1;      /* number of hard links */
+    stat->nacl_abi_st_uid = 1000;     /* user ID of owner */
+    stat->nacl_abi_st_gid = 1000;     /* group ID of owner */
+    stat->nacl_abi_st_rdev = 0;       /* device ID (if special handle) */
+    stat->nacl_abi_st_size = chan->size; /* size in bytes */
+
+    uint32_t permissions = S_IRUSR | S_IWUSR;
+    int temp = 0;
+    switch(temp){   /*temporarily fix: instead of chan->type */
+    case SGetSPut: /* sequential read, sequential write */
+        stat->nacl_abi_st_mode = permissions | S_IFCHR;
+        stat->nacl_abi_st_blksize = 1;           /* block size for file system I/O */
+        stat->nacl_abi_st_blocks = chan->size;   /* number of 512B blocks allocated */
+        break;
+    case RGetSPut: /* random read, sequential write */
+        stat->nacl_abi_st_mode = permissions | S_IFBLK | S_IFREG;
+        stat->nacl_abi_st_blksize = 4096;        /* block size for file system I/O */
+        stat->nacl_abi_st_blocks =               /* number of 512B blocks allocated */
+                ((stat->nacl_abi_st_size + stat->nacl_abi_st_blksize - 1)
+                        / stat->nacl_abi_st_blksize) * stat->nacl_abi_st_blksize / 512;
+        break;
+    case SGetRPut: /* sequential read, random write */
+    case RGetRPut: /* random read, random write */
+    default:
+        assert( 0 ); /*assert because random write not supported yet*/
+        break;
+    }
+
+    /* files are not allowed to have real date/time */
+    stat->nacl_abi_st_atime = 0;      /* time of the last access */
+    stat->nacl_abi_st_mtime = 0;      /* time of the last modification */
+    stat->nacl_abi_st_ctime = 0;      /* time of the last status change */
+    stat->nacl_abi_st_atimensec = 0;
+    stat->nacl_abi_st_mtimensec = 0;
+    stat->nacl_abi_st_ctimensec = 0;
+}
 /*
  * return synthetic channel information
  * todo(d'b): the function needs update after the channels design will complete
  */
 static int32_t zrt_stat(uint32_t *args)
 {
-  SHOWID;
-//  char *prefixes[] = {STDIN, STDOUT, STDERR};
-  const char *file = (const char*)args[0];
-  struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
-//  struct ZVMChannel *channel;
-  int handle;
+    SHOWID;
+    int errcode = -EFAULT;
+    const char *file = (const char*)args[0];
+    struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
+    struct ZVMChannel *channel = NULL;
+    int handle;
 
-  /**DEBUG*******************************************/
-  log_msg( file ); log_msg( "\n" );
-  /**DEBUG*******************************************/
+    /**DEBUG*******************************************/
+    log_msg( file ); log_msg( "\n" );
+    /**DEBUG*******************************************/
 
-  /* calculate handle number */
-  if(file == NULL) return -EFAULT;
-  for(handle = STDIN_FILENO; handle < s_manifest->channels_count; ++handle)
-    if(!strcmp(file, s_manifest->channels[handle].name)) break;
+    /* calculate handle number */
+    if(file == NULL) return errcode;
+    for(handle = 0; handle < s_manifest->channels_count; ++handle)
+        if(!strcmp(file, s_manifest->channels[handle].name))
+            channel = &s_manifest->channels[handle];
 
-  /* todo(d'b): make difference for random/sequential channels */
+    if ( channel ){
+        set_channel_stat( sbuf, channel);
+        errcode = 0;
+    }
+    else{
+        errcode = -ENOENT;
+    }
 
-  /* return stat object */
-  sbuf->nacl_abi_st_dev = 2049;     /* ID of device containing handle */
-  sbuf->nacl_abi_st_ino = 1967;     /* inode number */
-  sbuf->nacl_abi_st_mode = 33261;   /* protection */
-  sbuf->nacl_abi_st_nlink = 1;      /* number of hard links */
-  sbuf->nacl_abi_st_uid = 1000;     /* user ID of owner */
-  sbuf->nacl_abi_st_gid = 1000;     /* group ID of owner */
-  sbuf->nacl_abi_st_rdev = 0;       /* device ID (if special handle) */
-  sbuf->nacl_abi_st_size = s_manifest->channels[handle].size; /* size in bytes */
-  sbuf->nacl_abi_st_blksize = 4096; /* block size for file system I/O */
-  sbuf->nacl_abi_st_blocks = /* number of 512B blocks allocated */
-      ((sbuf->nacl_abi_st_size + sbuf->nacl_abi_st_blksize - 1)
-      / sbuf->nacl_abi_st_blksize) * sbuf->nacl_abi_st_blksize / 512;
-
-  /* files are not allowed to have real date/time */
-  sbuf->nacl_abi_st_atime = 0;      /* time of the last access */
-  sbuf->nacl_abi_st_mtime = 0;      /* time of the last modification */
-  sbuf->nacl_abi_st_ctime = 0;      /* time of the last status change */
-  sbuf->nacl_abi_st_atimensec = 0;
-  sbuf->nacl_abi_st_mtimensec = 0;
-  sbuf->nacl_abi_st_ctimensec = 0;
-
-  return 0;
+    return errcode;
 }
 
 /* return synthetic channel information */
 static int32_t zrt_fstat(uint32_t *args)
 {
-  SHOWID;
-  int handle = (int)args[0];
-  struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
-  struct ZVMChannel *channel;
+    SHOWID;
+    int errcode = -EFAULT;
+    int handle = (int)args[0];
+    struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
+    struct ZVMChannel *channel = NULL;
 
-  /**DEBUG*******************************************/
-  log_msg( "fstat: " ); log_int( handle ); log_msg( "\n" );
-  /**DEBUG*******************************************/
+    /* check if user request contain the proper file handle */
+    if(handle < 0 || handle >= s_manifest->channels_count) return errcode;
+    channel = &s_manifest->channels[handle];
 
-  /* check if user request contain the proper file handle */
-  if(handle < STDIN_FILENO || handle >= s_manifest->channels_count) return -EBADF;
-  channel = &s_manifest->channels[handle];
+    /**DEBUG*******************************************/
+    log_msg( "fstat: " ); log_int( handle ); log_msg( ", channel_size=" ); log_int( channel->size ); log_msg( "\n" );
+    /**DEBUG*******************************************/
 
-  /* return stat object */
-  sbuf->nacl_abi_st_dev = 2049; /* ID of device containing handle */
-  sbuf->nacl_abi_st_ino = 1967; /* inode number */
-  sbuf->nacl_abi_st_mode = 33261; /* protection */
-  sbuf->nacl_abi_st_nlink = 1; /* number of hard links */
-  sbuf->nacl_abi_st_uid = 1000; /* user ID of owner */
-  sbuf->nacl_abi_st_gid = 1000; /* group ID of owner */
-  sbuf->nacl_abi_st_rdev = 0; /* device ID (if special handle) */
-  sbuf->nacl_abi_st_size = channel->size; /* total size, in bytes */
-  sbuf->nacl_abi_st_blksize = 4096; /* blocksize for file system I/O */
-  sbuf->nacl_abi_st_blocks = /* number of 512B blocks allocated */
-      ((sbuf->nacl_abi_st_size + sbuf->nacl_abi_st_blksize - 1)
-      / sbuf->nacl_abi_st_blksize) * sbuf->nacl_abi_st_blksize / 512;
-
-  /* files are not allowed to have real date/time */
-  sbuf->nacl_abi_st_atime = 0; /* time of the last access */
-  sbuf->nacl_abi_st_mtime = 0; /* time of the last modification */
-  sbuf->nacl_abi_st_ctime = 0; /* time of the last status change */
-  sbuf->nacl_abi_st_atimensec = 0;
-  sbuf->nacl_abi_st_mtimensec = 0;
-  sbuf->nacl_abi_st_ctimensec = 0;
-
-  return 0;
+    set_channel_stat( sbuf, channel);
+    return 0;
 }
 
 SYSCALL_MOCK(chmod, -EPERM) /* in a simple version of zrt chmod is not allowed */
@@ -378,27 +434,27 @@ SYSCALL_MOCK(chmod, -EPERM) /* in a simple version of zrt chmod is not allowed *
 /* change space allocation */
 static int32_t zrt_sysbrk(uint32_t *args)
 {
-  SHOWID;
-  int32_t retcode;
+    SHOWID;
+    int32_t retcode;
 
-  zvm_syscallback(0); /* uninstall syscallback */
-  retcode = NaCl_sysbrk(args[0]); /* invoke syscall directly */
-  zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
+    zvm_syscallback(0); /* uninstall syscallback */
+    retcode = NaCl_sysbrk(args[0]); /* invoke syscall directly */
+    zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
 
-  return retcode;
+    return retcode;
 }
 
 /* map region of memory */
 static int32_t zrt_mmap(uint32_t *args)
 {
-  SHOWID;
-  int32_t retcode;
+    SHOWID;
+    int32_t retcode;
 
-  zvm_syscallback(0); /* uninstall syscallback */
-  retcode = NaCl_mmap(args[0], args[1], args[2], args[3], args[4], args[5]);
-  zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
+    zvm_syscallback(0); /* uninstall syscallback */
+    retcode = NaCl_mmap(args[0], args[1], args[2], args[3], args[4], args[5]);
+    zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
 
-  return retcode;
+    return retcode;
 }
 
 /*
@@ -408,14 +464,14 @@ static int32_t zrt_mmap(uint32_t *args)
  */
 static int32_t zrt_munmap(uint32_t *args)
 {
-  SHOWID;
-  int32_t retcode;
+    SHOWID;
+    int32_t retcode;
 
-  zvm_syscallback(0); /* uninstall syscallback */
-  retcode = NaCl_munmap(args[0], args[1]);
-  zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
+    zvm_syscallback(0); /* uninstall syscallback */
+    retcode = NaCl_munmap(args[0], args[1]);
+    zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
 
-  return retcode;
+    return retcode;
 }
 
 SYSCALL_MOCK(getdents, 0)
@@ -426,10 +482,10 @@ SYSCALL_MOCK(getdents, 0)
  */
 static int32_t zrt_exit(uint32_t *args)
 {
-  /* no need to check args for NULL. it is always set by syscall_manager */
-  SHOWID;
-  zvm_exit(args[0]);
-  return 0; /* unreachable */
+    /* no need to check args for NULL. it is always set by syscall_manager */
+    SHOWID;
+    zvm_exit(args[0]);
+    return 0; /* unreachable */
 }
 
 SYSCALL_MOCK(getpid, 0)
@@ -441,31 +497,31 @@ SYSCALL_MOCK(sysconf, 0)
 #define TIMESTAMP_STRLEN strlen("TimeStamp=")
 static int32_t zrt_gettimeofday(uint32_t *args)
 {
-  SHOWID;
-  struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)args[0];
-  char *stamp = NULL;
-  int i;
+    SHOWID;
+    struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)args[0];
+    char *stamp = NULL;
+    int i;
 
-  /* get time stamp from the environment */
-  for(i = 0; s_manifest->envp[i] != NULL; ++i)
-  {
-    if(strncmp(s_manifest->envp[i], TIMESTAMP_STR, TIMESTAMP_STRLEN) != 0)
-      continue;
+    /* get time stamp from the environment */
+    for(i = 0; s_manifest->envp[i] != NULL; ++i)
+    {
+        if(strncmp(s_manifest->envp[i], TIMESTAMP_STR, TIMESTAMP_STRLEN) != 0)
+            continue;
 
-    stamp = s_manifest->envp[i] + TIMESTAMP_STRLEN;
-    break;
-  }
+        stamp = s_manifest->envp[i] + TIMESTAMP_STRLEN;
+        break;
+    }
 
-  /* check if timestampr is set */
-  if(stamp == NULL || !*stamp) return -EPERM;
+    /* check if timestampr is set */
+    if(stamp == NULL || !*stamp) return -EPERM;
 
-  /* check given arguments validity */
-  if(!tv) return -EFAULT;
+    /* check given arguments validity */
+    if(!tv) return -EFAULT;
 
-  tv->nacl_abi_tv_usec = 0; /* to simplify code. yet we can't get msec from nacl code */
-  tv->nacl_abi_tv_sec = atoi(stamp); /* manifest always contain decimal values */
+    tv->nacl_abi_tv_usec = 0; /* to simplify code. yet we can't get msec from nacl code */
+    tv->nacl_abi_tv_sec = atoi(stamp); /* manifest always contain decimal values */
 
-  return 0;
+    return 0;
 }
 
 /*
@@ -503,14 +559,15 @@ SYSCALL_MOCK(thread_nice, 0)
  */
 static int32_t zrt_tls_get(uint32_t *args)
 {
-  SHOWID;
-  int32_t retcode;
+    /* switch off spam
+     * SHOWID;*/
+    int32_t retcode;
 
-  zvm_syscallback(0); /* uninstall syscallback */
-  retcode = NaCl_tls_get(); /* invoke syscall directly */
-  zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
+    zvm_syscallback(0); /* uninstall syscallback */
+    retcode = NaCl_tls_get(); /* invoke syscall directly */
+    zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
 
-  return retcode;
+    return retcode;
 }
 
 SYSCALL_MOCK(second_tls_set, 0)
@@ -521,8 +578,8 @@ SYSCALL_MOCK(second_tls_set, 0)
  */
 static int32_t zrt_second_tls_get(uint32_t *args)
 {
-  SHOWID;
-  return zrt_tls_get(NULL);
+    SHOWID;
+    return zrt_tls_get(NULL);
 }
 
 SYSCALL_MOCK(sem_create, 0)
@@ -542,123 +599,123 @@ SYSCALL_MOCK(test_infoleak, 0)
  * can be found in the nacl "nacl_syscall_handlers.c" file.
  */
 int32_t (*zrt_syscalls[])(uint32_t*) = {
-    zrt_nan,                   /* 0 -- not implemented syscall */
-    zrt_null,                  /* 1 -- empty syscall. does nothing */
-    zrt_nameservice,           /* 2 */
-    zrt_nan,                   /* 3 -- not implemented syscall */
-    zrt_nan,                   /* 4 -- not implemented syscall */
-    zrt_nan,                   /* 5 -- not implemented syscall */
-    zrt_nan,                   /* 6 -- not implemented syscall */
-    zrt_nan,                   /* 7 -- not implemented syscall */
-    zrt_dup,                   /* 8 */
-    zrt_dup2,                  /* 9 */
-    zrt_open,                  /* 10 */
-    zrt_close,                 /* 11 */
-    zrt_read,                  /* 12 */
-    zrt_write,                 /* 13 */
-    zrt_lseek,                 /* 14 */
-    zrt_ioctl,                 /* 15 */
-    zrt_stat,                  /* 16 */
-    zrt_fstat,                 /* 17 */
-    zrt_chmod,                 /* 18 */
-    zrt_nan,                   /* 19 -- not implemented syscall */
-    zrt_sysbrk,                /* 20 */
-    zrt_mmap,                  /* 21 */
-    zrt_munmap,                /* 22 */
-    zrt_getdents,              /* 23 */
-    zrt_nan,                   /* 24 -- not implemented syscall */
-    zrt_nan,                   /* 25 -- not implemented syscall */
-    zrt_nan,                   /* 26 -- not implemented syscall */
-    zrt_nan,                   /* 27 -- not implemented syscall */
-    zrt_nan,                   /* 28 -- not implemented syscall */
-    zrt_nan,                   /* 29 -- not implemented syscall */
-    zrt_exit,                  /* 30 -- must use trap:exit() */
-    zrt_getpid,                /* 31 */
-    zrt_sched_yield,           /* 32 */
-    zrt_sysconf,               /* 33 */
-    zrt_nan,                   /* 34 -- not implemented syscall */
-    zrt_nan,                   /* 35 -- not implemented syscall */
-    zrt_nan,                   /* 36 -- not implemented syscall */
-    zrt_nan,                   /* 37 -- not implemented syscall */
-    zrt_nan,                   /* 38 -- not implemented syscall */
-    zrt_nan,                   /* 39 -- not implemented syscall */
-    zrt_gettimeofday,          /* 40 */
-    zrt_clock,                 /* 41 */
-    zrt_nanosleep,             /* 42 */
-    zrt_nan,                   /* 43 -- not implemented syscall */
-    zrt_nan,                   /* 44 -- not implemented syscall */
-    zrt_nan,                   /* 45 -- not implemented syscall */
-    zrt_nan,                   /* 46 -- not implemented syscall */
-    zrt_nan,                   /* 47 -- not implemented syscall */
-    zrt_nan,                   /* 48 -- not implemented syscall */
-    zrt_nan,                   /* 49 -- not implemented syscall */
-    zrt_nan,                   /* 50 -- not implemented syscall */
-    zrt_nan,                   /* 51 -- not implemented syscall */
-    zrt_nan,                   /* 52 -- not implemented syscall */
-    zrt_nan,                   /* 53 -- not implemented syscall */
-    zrt_nan,                   /* 54 -- not implemented syscall */
-    zrt_nan,                   /* 55 -- not implemented syscall */
-    zrt_nan,                   /* 56 -- not implemented syscall */
-    zrt_nan,                   /* 57 -- not implemented syscall */
-    zrt_nan,                   /* 58 -- not implemented syscall */
-    zrt_nan,                   /* 59 -- not implemented syscall */
-    zrt_imc_makeboundsock,     /* 60 */
-    zrt_imc_accept,            /* 61 */
-    zrt_imc_connect,           /* 62 */
-    zrt_imc_sendmsg,           /* 63 */
-    zrt_imc_recvmsg,           /* 64 */
-    zrt_imc_mem_obj_create,    /* 65 */
-    zrt_imc_socketpair,        /* 66 */
-    zrt_nan,                   /* 67 -- not implemented syscall */
-    zrt_nan,                   /* 68 -- not implemented syscall */
-    zrt_nan,                   /* 69 -- not implemented syscall */
-    zrt_mutex_create,          /* 70 */
-    zrt_mutex_lock,            /* 71 */
-    zrt_mutex_trylock,         /* 72 */
-    zrt_mutex_unlock,          /* 73 */
-    zrt_cond_create,           /* 74 */
-    zrt_cond_wait,             /* 75 */
-    zrt_cond_signal,           /* 76 */
-    zrt_cond_broadcast,        /* 77 */
-    zrt_nan,                   /* 78 -- not implemented syscall */
-    zrt_cond_timed_wait_abs,   /* 79 */
-    zrt_thread_create,         /* 80 */
-    zrt_thread_exit,           /* 81 */
-    zrt_tls_init,              /* 82 */
-    zrt_thread_nice,           /* 83 */
-    zrt_tls_get,               /* 84 */
-    zrt_second_tls_set,        /* 85 */
-    zrt_second_tls_get,        /* 86 */
-    zrt_nan,                   /* 87 -- not implemented syscall */
-    zrt_nan,                   /* 88 -- not implemented syscall */
-    zrt_nan,                   /* 89 -- not implemented syscall */
-    zrt_nan,                   /* 90 -- not implemented syscall */
-    zrt_nan,                   /* 91 -- not implemented syscall */
-    zrt_nan,                   /* 92 -- not implemented syscall */
-    zrt_nan,                   /* 93 -- not implemented syscall */
-    zrt_nan,                   /* 94 -- not implemented syscall */
-    zrt_nan,                   /* 95 -- not implemented syscall */
-    zrt_nan,                   /* 96 -- not implemented syscall */
-    zrt_nan,                   /* 97 -- not implemented syscall */
-    zrt_nan,                   /* 98 -- not implemented syscall */
-    zrt_nan,                   /* 99 -- not implemented syscall */
-    zrt_sem_create,            /* 100 */
-    zrt_sem_wait,              /* 101 */
-    zrt_sem_post,              /* 102 */
-    zrt_sem_get_value,         /* 103 */
-    zrt_dyncode_create,        /* 104 */
-    zrt_dyncode_modify,        /* 105 */
-    zrt_dyncode_delete,        /* 106 */
-    zrt_nan,                   /* 107 -- not implemented syscall */
-    zrt_nan,                   /* 108 -- not implemented syscall */
-    zrt_test_infoleak          /* 109 */
+        zrt_nan,                   /* 0 -- not implemented syscall */
+        zrt_null,                  /* 1 -- empty syscall. does nothing */
+        zrt_nameservice,           /* 2 */
+        zrt_nan,                   /* 3 -- not implemented syscall */
+        zrt_nan,                   /* 4 -- not implemented syscall */
+        zrt_nan,                   /* 5 -- not implemented syscall */
+        zrt_nan,                   /* 6 -- not implemented syscall */
+        zrt_nan,                   /* 7 -- not implemented syscall */
+        zrt_dup,                   /* 8 */
+        zrt_dup2,                  /* 9 */
+        zrt_open,                  /* 10 */
+        zrt_close,                 /* 11 */
+        zrt_read,                  /* 12 */
+        zrt_write,                 /* 13 */
+        zrt_lseek,                 /* 14 */
+        zrt_ioctl,                 /* 15 */
+        zrt_stat,                  /* 16 */
+        zrt_fstat,                 /* 17 */
+        zrt_chmod,                 /* 18 */
+        zrt_nan,                   /* 19 -- not implemented syscall */
+        zrt_sysbrk,                /* 20 */
+        zrt_mmap,                  /* 21 */
+        zrt_munmap,                /* 22 */
+        zrt_getdents,              /* 23 */
+        zrt_nan,                   /* 24 -- not implemented syscall */
+        zrt_nan,                   /* 25 -- not implemented syscall */
+        zrt_nan,                   /* 26 -- not implemented syscall */
+        zrt_nan,                   /* 27 -- not implemented syscall */
+        zrt_nan,                   /* 28 -- not implemented syscall */
+        zrt_nan,                   /* 29 -- not implemented syscall */
+        zrt_exit,                  /* 30 -- must use trap:exit() */
+        zrt_getpid,                /* 31 */
+        zrt_sched_yield,           /* 32 */
+        zrt_sysconf,               /* 33 */
+        zrt_nan,                   /* 34 -- not implemented syscall */
+        zrt_nan,                   /* 35 -- not implemented syscall */
+        zrt_nan,                   /* 36 -- not implemented syscall */
+        zrt_nan,                   /* 37 -- not implemented syscall */
+        zrt_nan,                   /* 38 -- not implemented syscall */
+        zrt_nan,                   /* 39 -- not implemented syscall */
+        zrt_gettimeofday,          /* 40 */
+        zrt_clock,                 /* 41 */
+        zrt_nanosleep,             /* 42 */
+        zrt_nan,                   /* 43 -- not implemented syscall */
+        zrt_nan,                   /* 44 -- not implemented syscall */
+        zrt_nan,                   /* 45 -- not implemented syscall */
+        zrt_nan,                   /* 46 -- not implemented syscall */
+        zrt_nan,                   /* 47 -- not implemented syscall */
+        zrt_nan,                   /* 48 -- not implemented syscall */
+        zrt_nan,                   /* 49 -- not implemented syscall */
+        zrt_nan,                   /* 50 -- not implemented syscall */
+        zrt_nan,                   /* 51 -- not implemented syscall */
+        zrt_nan,                   /* 52 -- not implemented syscall */
+        zrt_nan,                   /* 53 -- not implemented syscall */
+        zrt_nan,                   /* 54 -- not implemented syscall */
+        zrt_nan,                   /* 55 -- not implemented syscall */
+        zrt_nan,                   /* 56 -- not implemented syscall */
+        zrt_nan,                   /* 57 -- not implemented syscall */
+        zrt_nan,                   /* 58 -- not implemented syscall */
+        zrt_nan,                   /* 59 -- not implemented syscall */
+        zrt_imc_makeboundsock,     /* 60 */
+        zrt_imc_accept,            /* 61 */
+        zrt_imc_connect,           /* 62 */
+        zrt_imc_sendmsg,           /* 63 */
+        zrt_imc_recvmsg,           /* 64 */
+        zrt_imc_mem_obj_create,    /* 65 */
+        zrt_imc_socketpair,        /* 66 */
+        zrt_nan,                   /* 67 -- not implemented syscall */
+        zrt_nan,                   /* 68 -- not implemented syscall */
+        zrt_nan,                   /* 69 -- not implemented syscall */
+        zrt_mutex_create,          /* 70 */
+        zrt_mutex_lock,            /* 71 */
+        zrt_mutex_trylock,         /* 72 */
+        zrt_mutex_unlock,          /* 73 */
+        zrt_cond_create,           /* 74 */
+        zrt_cond_wait,             /* 75 */
+        zrt_cond_signal,           /* 76 */
+        zrt_cond_broadcast,        /* 77 */
+        zrt_nan,                   /* 78 -- not implemented syscall */
+        zrt_cond_timed_wait_abs,   /* 79 */
+        zrt_thread_create,         /* 80 */
+        zrt_thread_exit,           /* 81 */
+        zrt_tls_init,              /* 82 */
+        zrt_thread_nice,           /* 83 */
+        zrt_tls_get,               /* 84 */
+        zrt_second_tls_set,        /* 85 */
+        zrt_second_tls_get,        /* 86 */
+        zrt_nan,                   /* 87 -- not implemented syscall */
+        zrt_nan,                   /* 88 -- not implemented syscall */
+        zrt_nan,                   /* 89 -- not implemented syscall */
+        zrt_nan,                   /* 90 -- not implemented syscall */
+        zrt_nan,                   /* 91 -- not implemented syscall */
+        zrt_nan,                   /* 92 -- not implemented syscall */
+        zrt_nan,                   /* 93 -- not implemented syscall */
+        zrt_nan,                   /* 94 -- not implemented syscall */
+        zrt_nan,                   /* 95 -- not implemented syscall */
+        zrt_nan,                   /* 96 -- not implemented syscall */
+        zrt_nan,                   /* 97 -- not implemented syscall */
+        zrt_nan,                   /* 98 -- not implemented syscall */
+        zrt_nan,                   /* 99 -- not implemented syscall */
+        zrt_sem_create,            /* 100 */
+        zrt_sem_wait,              /* 101 */
+        zrt_sem_post,              /* 102 */
+        zrt_sem_get_value,         /* 103 */
+        zrt_dyncode_create,        /* 104 */
+        zrt_dyncode_modify,        /* 105 */
+        zrt_dyncode_delete,        /* 106 */
+        zrt_nan,                   /* 107 -- not implemented syscall */
+        zrt_nan,                   /* 108 -- not implemented syscall */
+        zrt_test_infoleak          /* 109 */
 };
 
 
 void zrt_setup( struct UserManifest* manifest ){
-	s_manifest = manifest;
-	/* set up internals */
-	s_pos_ptr = calloc(manifest->channels_count, sizeof(manifest->channels_count));
+    s_manifest = manifest;
+    /* set up internals */
+    s_pos_ptr = calloc(manifest->channels_count, sizeof(manifest->channels_count));
 }
 
 

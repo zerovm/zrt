@@ -22,6 +22,8 @@
 #  define WRITE_LOG(str)
 #endif
 
+
+
 /*
  * user program entry point. old style function prototyping
  * allows to avoid error when main has an empty arguments list

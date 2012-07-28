@@ -5,13 +5,13 @@ SCRIPT_PATH=`dirname "$SCRIPT"`
 
 VAR_NAME_1={SCRIPT_FILE_PATH}
 VAR_NAME_2={OUTPUT_FILE_PATH}
-VAR_NAME_3={INPUT_FILE_PATH}
+VAR_NAME_3={DATA_RW_FILE_PATH}
 VAR_NAME_4={LOG_FILE_PATH}
 VAR_NAME_5={COMMAND_LINE}
 
 if [ $# -lt 2 ]
 then
-    echo Error: At least 3 parameters required : 1-script file name, 2-output file name, 3-input file name;
+    echo Error: At least 3 parameters required : 1-script file name, 2-output file name, 3-data file name;
     echo Info: Optional parameters : 4-log filename, 5-"commandline string"
   exit
 fi

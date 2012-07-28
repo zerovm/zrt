@@ -15,52 +15,79 @@
 #include <stdio.h>                              /* For input/output */
 
 static void l_message (const char *pname, const char *msg) {
-  if (pname) luai_writestringerror("%s: ", pname);
-  luai_writestringerror("%s\n", msg);
+	if (pname) luai_writestringerror("%s: ", pname);
+	luai_writestringerror("%s\n", msg);
 }
 
 
 static int report (lua_State *L, int status) {
-  if (status != LUA_OK && !lua_isnil(L, -1)) {
-    const char *msg = lua_tostring(L, -1);
-    if (msg == NULL) msg = "(error object is not a string)";
-    l_message( "'zshell'", msg);
-    lua_pop(L, 1);
-    /* force a complete garbage collection in case of errors */
-    lua_gc(L, LUA_GCCOLLECT, 0);
-  }
-  return status;
+	if (status != LUA_OK && !lua_isnil(L, -1)) {
+		const char *msg = lua_tostring(L, -1);
+		if (msg == NULL) msg = "(error object is not a string)";
+		l_message( "'zshell'", msg);
+		lua_pop(L, 1);
+		/* force a complete garbage collection in case of errors */
+		lua_gc(L, LUA_GCCOLLECT, 0);
+	}
+	return status;
 }
 
 /*if filename NULL then read lua script from stdin*/
 static int do_lua_script (lua_State *L, const char *filename) {
-  int status = luaL_loadfile(L, filename);
-  WRITE_FMT_LOG("status=%d\n", status);
-  if ( status )
-	  return report(L, status);         /* Error out if Lua file has an error */
-  status = lua_pcall(L, 0, 0, 0);                  /* Run the loaded Lua script */
-  if ( status )
-  	  return report(L, status);         /* Error out if Lua file has an error */
-  return LUA_OK;
+	int status = luaL_loadfile(L, filename);
+	WRITE_FMT_LOG("status=%d\n", status);
+	if ( status )
+		return report(L, status);         /* Error out if Lua file has an error */
+	status = lua_pcall(L, 0, 0, 0);                  /* Run the loaded Lua script */
+	if ( status )
+		return report(L, status);         /* Error out if Lua file has an error */
+	return LUA_OK;
 }
 
 
 int run_lua_script (const char *filename)
 {
-    lua_State *L;
+	lua_State *L;
 
-    L = luaL_newstate();                        /* Create Lua state variable */
-    luaL_openlibs(L);                           /* Load Lua libraries */
+	L = luaL_newstate();                        /* Create Lua state variable */
+	luaL_openlibs(L);                           /* Load Lua libraries */
 
-    WRITE_LOG("In C, calling Lua\n");
+	WRITE_LOG("In C, calling Lua\n");
 
-    int err = do_lua_script (L, filename);                          /* executes script file */
+	int err = do_lua_script (L, filename);                          /* executes script file */
 
-    WRITE_LOG("Back in C again\n");
+	WRITE_LOG("Back in C again\n");
 
-    lua_close(L);                               /* Clean up, free the Lua state var */
+	lua_close(L);                               /* Clean up, free the Lua state var */
 
-    WRITE_LOG("Finish\n");
+	WRITE_LOG("Finish\n");
 
-    return err;
+	return err;
 }
+
+
+int run_lua_buffer_script (const char *buffer, size_t buf_size, const char *debug_name)
+{
+	lua_State *L;
+
+	L = luaL_newstate();                        /* Create Lua state variable */
+	luaL_openlibs(L);                           /* Load Lua libraries */
+
+	WRITE_LOG("In C, calling Lua\n");
+
+	int status = luaL_loadbuffer (L, buffer, buf_size, debug_name);   /* executes script data */
+	if ( status )
+		return report(L, status);         /* Error out if Lua file has an error */
+	status = lua_pcall(L, 0, 0, 0);                  /* Run the loaded Lua script */
+	if ( status )
+		return report(L, status);         /* Error out if Lua file has an error */
+
+	WRITE_LOG("Back in C again\n");
+
+	lua_close(L);                               /* Clean up, free the Lua state var */
+
+	WRITE_LOG("Finish\n");
+
+	return status;
+}
+
