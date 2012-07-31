@@ -9,7 +9,25 @@
 #ifndef ZRT_LIB_SYSCALLBACKS_H
 #define ZRT_LIB_SYSCALLBACKS_H
 
-struct UserManifest;
+#include "zvm.h"
+
+#define DEV_STDIN  "/dev/stdin"
+#define DEV_STDOUT "/dev/stdout"
+#define DEV_STDERR "/dev/stderr"
+
+
+struct ZrtChannelRt{
+    int     open_mode;             /*For currently opened file contains mode, otherwise -1*/
+    int     flags;                 /*For currently opened file contains flags*/
+    int64_t sequential_access_pos; /*sequential read, sequential write*/
+    int64_t random_access_pos;     /*random read, random write*/
+    int64_t maxsize;               /*synthethic size. maximum position of channel for all I/O requests*/
+};
+
+enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
+/*@param pos_whence If EPosGet offset unused, otherwise check and set offset
+ *@return -1 if bad offset, else offset result*/
+int64_t channel_pos( int handle, int8_t pos_whence, int64_t offset );
 
 /*Assign own channels pointer to get it filled with channels at the syscallback*/
 void zrt_setup( struct UserManifest* manifest );
@@ -48,7 +66,6 @@ struct nacl_abi_timeval {
 
 /*
  * FULL NACL SYSCALL LIST
- * should be moved to the header file
  */
 #define NACL_sys_null                    1 /* empty syscall. does nothing */
 #define NACL_sys_nameservice             2
@@ -110,10 +127,6 @@ struct nacl_abi_timeval {
  * DIRECT NACL SYSCALLS FUNCTIONS (VIA TRAMPOLINE)
  * should be fulfilled with all syscalls and moved to the header.
  */
-/* write() -- nacl syscall via trampoline */
-#define NaCl_write(d, buf, count) ((int32_t (*)(uint32_t, uint32_t, uint32_t)) \
-        (NACL_sys_write * 0x20 + 0x10000))(d, buf, count)
-
 /* mmap() -- nacl syscall via trampoline */
 #define NaCl_mmap(start, length, prot, flags, d, offp) \
         ((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)) \
