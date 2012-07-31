@@ -24,7 +24,14 @@ assert(not a and type(b) == "string" and type(c) == "number")
 a,b,c = io.open('/a/b/c/d', 'w')
 assert(not a and type(b) == "string" and type(c) == "number")
 
-local file = os.tmpname()
+-- YaroslavLitvinov
+-- can not use os.tmpname for current zerovm abstraction where no directories, 
+-- it's implementation uses /tmp dir
+-- commented original codeline below
+-- local file = os.tmpname()
+print('tmpname test skipped.')
+-- //
+local file = "/tmp/tmpfile"
 local f, msg = io.open(file, "w")
 if not f then
   (Message or print)("'os.tmpname' file cannot be open; skipping file tests")
@@ -34,7 +41,14 @@ f:close()
 
 print('testing i/o')
 
-local otherfile = os.tmpname()
+-- YaroslavLitvinov
+-- can not use os.tmpname for current zerovm abstraction where no directories, 
+-- it's implementation uses /tmp dir
+-- commented original codeline below
+-- local otherfile = os.tmpname()
+print('tempfile test skipped.')
+-- //
+local otherfile = "/tmp/tmpfile2"
 
 assert(not pcall(io.open, file, "rw"))     -- invalid mode
 assert(not pcall(io.open, file, "rb+"))    -- invalid mode
@@ -50,9 +64,14 @@ assert(os.setlocale('C', 'all'))
 
 io.input(io.stdin); io.output(io.stdout);
 
-os.remove(file)
-assert(loadfile(file) == nil)
-assert(io.open(file) == nil)
+-- YaroslavLitvinov
+-- can't remove tmp file it's not supported by current zerovm abstraction 
+-- commented original codelines below
+-- os.remove(file)
+-- assert(loadfile(file) == nil)
+-- assert(io.open(file) == nil)
+print('remove file test skipped.')
+-- //
 io.output(file)
 assert(io.output() ~= io.stdout)
 
@@ -85,16 +104,27 @@ end
 io.input():close()
 io.close()
 
-assert(os.rename(file, otherfile))
-assert(os.rename(file, otherfile) == nil)
+-- YaroslavLitvinov
+-- can't rename file it's not supported by current zerovm abstraction
+-- commented original codelines below
+--assert(os.rename(file, otherfile))
+--assert(os.rename(file, otherfile) == nil)
 
-io.output(io.open(otherfile, "ab"))
-assert(io.write("\n\n\t\t  3450\n"));
-io.close()
+--io.output(io.open(otherfile, "ab"))
+--assert(io.write("\n\n\t\t  3450\n"));
+--io.close()
+print('rename file test skipped.')
+-- //
 
 -- test line generators
 assert(not pcall(io.lines, "non-existent-file"))
-assert(os.rename(otherfile, file))
+
+-- YaroslavLitvinov
+-- can't rename file it's not supported by current zerovm abstraction
+-- assert(os.rename(otherfile, file))
+print('rename file test skipped.')
+-- //
+
 io.output(otherfile)
 local f = io.lines(file)
 while f() do end;
