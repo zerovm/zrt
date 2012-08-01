@@ -23,6 +23,9 @@
 #endif
 
 
+/*
+ * @return channels count*/
+const struct ZVMChannel *zvm_channels_c( int *channels_count );
 
 /*
  * user program entry point. old style function prototyping

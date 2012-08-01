@@ -90,6 +90,12 @@ static struct UserManifest* s_manifest;
 static struct ZrtChannelRt **s_zrt_channels;
 static int s_zrt_log_fd = -1;
 
+
+const struct ZVMChannel *zvm_channels_c( int *channels_count ){
+    *channels_count = s_manifest->channels_count;
+    return s_manifest->channels;
+}
+
 #ifdef DEBUG
 void log_msg(const char *msg)
 {
@@ -289,6 +295,7 @@ static int open_channel( const char *name, int mode, int flags  )
         set_zrt_errno( ENOENT );
         return -1;
     }
+    log_msg( " channel type=" ); log_int( s_manifest->channels[handle].type ); log_msg("\n");
 
     /*return handle if file already opened*/
     if ( s_zrt_channels[handle] && s_zrt_channels[handle]->open_mode >= 0 ){
@@ -591,11 +598,14 @@ static int32_t zrt_lseek(uint32_t *args)
         return -1;
     }
 
-    /* check non seek-able by zrt std channels*/
-    if ( handle == STDIN_FILENO || handle == STDOUT_FILENO || handle == STDERR_FILENO ){
-        set_zrt_errno( ESPIPE );
-        return -1;
-    }
+    int ftype = s_manifest->channels[handle].type;
+////// ZEROVM bug work around, skip seeking type test, as getting wrong file type in channels list
+//    /* check non seek-able by zrt std channels*/
+//    if ( ftype == SGetSPut ){
+//        set_zrt_errno( ESPIPE );
+//        return -1;
+//    }
+////// ZEROVM bug work around, skip seeking type test, as getting wrong file type in channels list
 
     log_msg( "handle= " ); log_int(handle);
     log_msg( " offset= " ); log_int(offset);
