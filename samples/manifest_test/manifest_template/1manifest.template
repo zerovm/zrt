@@ -1,0 +1,18 @@
+=====================================================================
+== manifest for given manifest_test nexe should not be modified, only according to test
+=====================================================================
+Channel = /dev/null, /dev/stdin, 0, 1, 1, 0, 0
+Channel = /dev/null, /dev/stdout, 0, 0, 0, 1, 1
+Channel = {ABS_PATH}1.errlog, /dev/stderr, 0, 0, 0, 999999, 999999
+
+Environment=MANIFEST_ID,1
+
+=====================================================================
+== switches for zerovm. some of them used to control nexe, some
+== for the internal zerovm needs
+=====================================================================
+Version = 13072012
+Nexe = {ABS_PATH}manifest_test.nexe
+NexeMax = 10000000
+SyscallsMax = 3333333
+SetupCallsMax = 99999999
