@@ -5,33 +5,25 @@
  */
 
 #include "zrt.h"
-
+#include <stdio.h>
+#ifdef GTEST
 #include "gtest/gtest.h"
 
 // Test harness for routines in zmq_netw.c
 class ZrtTests : public ::testing::Test {
 public:
 	ZrtTests(){}
-	~ZrtTests(){}
-	virtual void SetUp();
-	virtual void TearDown();
 };
-
-
-void ZrtTests::SetUp() {
-}
-
-void ZrtTests::TearDown() {
-}
 
 
 TEST_F(ZrtTests, TestEnvironment) {
 	//EXPECT_EQ( 0, 0 );
 }
+#endif
 
 extern "C"{
 int main(int argc, char **argv, char **envp) {
-	WRITE_LOG( "main\n" );
+    printf("test\n");fflush(0);
 	//testing::InitGoogleTest(&argc, argv);
 	//return RUN_ALL_TESTS();
 	return 0;
