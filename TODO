@@ -1,10 +1,11 @@
+1.change disort sample to get it worked via readdir
+2.
+
+
 [Remove ZRT_LIB macros from files listed below]
 :
-./samples/time/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
-./samples/hello/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
-./samples/disort/Makefile:2:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
-./samples/sqlite/Makefile:9:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
-./samples/sort/Makefile:6:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
+
+!!!!./samples/sqlite/Makefile:9:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
 ./samples/lua-scripting/lua-5.2.1/src/Makefile~:26:MYCFLAGS=-I$(ZRT_PATH) -DUSER_SIDE -DZRT_LIB -m64
 ./samples/lua-scripting/lua-5.2.1/src/Makefile:26:MYCFLAGS=-I$(ZRT_PATH) -DUSER_SIDE -DZRT_LIB -m64
 ./samples/strtol/Makefile:5:MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB

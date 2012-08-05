@@ -1,22 +1,17 @@
 =====================================================================
-== "time and clock" example with zrt library usage
-== the example tests untrusted code memory manager. new channels design
+== "readdir" example. demo of the new user custom attributes design
 =====================================================================
 Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
-Channel = stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
-Channel = stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
-
-=====================================================================
-== Environment
-=====================================================================
-Environment = TimeStamp, 1337012520
+Channel = /home/yaroslav/git/zrt/samples/readdir/stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = /home/yaroslav/git/zrt/samples/readdir/stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
+Channel = /home/yaroslav/git/zrt/samples/readdir/zrtdebug.log, /dev/zrtlog, 0, 0, 0, 9999999, 9999999
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
 Version = 13072012
-Nexe = time.nexe
+Nexe = /home/yaroslav/git/zrt/samples/readdir/readdir.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
 

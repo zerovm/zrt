@@ -15,16 +15,20 @@
 #include <string.h>
 #include <assert.h>
 
-enum { ESimpleManifest=1 };
+enum { ESimpleManifest=1, EManifest2 =2 };
 
 /*all available channels we has in manifest*/
 #define CHANNEL1 "/dev/stdin"
 #define CHANNEL2 "/dev/stdout"
+#define CHANNEL_CDR "cdr-alias"
 
 
 void test_channel(const struct ZVMChannel *ch,
         int type, int getslimit, int getsizelimit, int putslimit, int putsizelimit){
-    fprintf(stderr, "zvmchanel name=%s; type=%d, limits=%lld, %lld, %lld, %lld \n",
+    fprintf(stderr, "waiting channel data: name=%s; type=%d, limits=%lld, %lld, %lld, %lld \n",
+            ch->name, type, getslimit, getsizelimit, putslimit, putsizelimit );
+
+    fprintf(stderr, "actual chanel data: name=%s; type=%d, limits=%lld, %lld, %lld, %lld \n",
             ch->name, ch->type, ch->limits[GetsLimit], ch->limits[GetSizeLimit],
             ch->limits[PutsLimit], ch->limits[PutSizeLimit] );
     fflush(0);
@@ -57,8 +61,17 @@ int main(int argc, char **argv){
             }
         }
         break;
-        fprintf(stderr, "UnknownManifestId = %s\n", getenv("MANIFEST_ID") ); fflush(0);
+    case EManifest2:
+        fprintf(stderr, "EManifest2\n" );fflush(0);
+        for(index=0; index < channels_count; index++){
+            ch = &channels[index];
+            if ( !strcmp( ch->name, CHANNEL_CDR ) ){
+                test_channel( ch, 1, 999999, 999999, 999999, 999999);
+            }
+        }
+        break;
     default:
+        fprintf(stderr, "UnknownManifestId = %s\n", getenv("MANIFEST_ID") ); fflush(0);
         break;
     }
 
