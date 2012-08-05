@@ -1,22 +1,21 @@
-NAME=read_file
+NAME=readdir
 NACL_TOOLCHAIN_PATH=~/nacl_sdk/pepper_19/toolchain/linux_x86_glibc
 ZVM_ROOT=../..
 INCLUDE_FLAGS=-I $(ZVM_ROOT)/lib
-MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
 
 all: $(NAME).nexe run
 
-$(NAME).nexe: $(NAME).o 
-	@$(NACL_TOOLCHAIN_PATH)/bin/x86_64-nacl-gcc -o $(NAME).nexe -s -static -T \
+$(NAME).nexe: $(NAME).o
+	$(NACL_TOOLCHAIN_PATH)/bin/x86_64-nacl-gcc -o $(NAME).nexe -s -static -T \
 	$(NACL_TOOLCHAIN_PATH)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(DEBUG) $(NAME).o $(ZVM_ROOT)/lib/libzrt.a
+	$(DEBUG) $(NAME).o -L$(ZVM_ROOT)/lib -lzrt
 
-$(NAME).o: $(NAME).c
-	@$(NACL_TOOLCHAIN_PATH)/bin/x86_64-nacl-gcc -o $(NAME).o -Wall \
+$(NAME).o:
+	$(NACL_TOOLCHAIN_PATH)/bin/x86_64-nacl-gcc -o $(NAME).o -Wall \
 	$(INCLUDE_FLAGS) $(MACROS_FLAGS) $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 $(NAME).c
 
 run:
-	@$(ZVM_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
+	./run_tests.sh
 
 clean:
 	rm -f $(NAME).nexe $(NAME).o *.log *.data
