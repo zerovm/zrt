@@ -2,10 +2,10 @@
 == i/o switches. full list. optional. some switches now meaningless,
 == placed here for completeness and future changes
 =====================================================================
-Channel = {SCRIPT_FILE_PATH}, /dev/stdin, 4, 999999, 999999, 0, 0
-Channel = {OUTPUT_FILE_PATH}, /dev/stdout, 5, 0, 0, 999999, 999999
-Channel = {LOG_FILE_PATH}, /dev/stderr, 6, 0, 0, 9999999, 9999999
-Channel = {DATA_RW_FILE_PATH}, data, 3, 999999, 999999, 0, 0
+Channel = {SCRIPT_FILE_PATH}, /dev/stdin, 0, 999999, 999999, 0, 0
+Channel = {OUTPUT_FILE_PATH}, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = {LOG_FILE_PATH}, /dev/stderr, 0, 0, 0, 9999999, 9999999
+Channel = {DATA_RW_FILE_PATH}, /dev/input, 0, 999999, 999999, 0, 0
 
 CommandLine = {COMMAND_LINE}
 

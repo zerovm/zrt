@@ -15,13 +15,12 @@
 #include <fcntl.h> //temp read file
 #include "zshell.h"
 
-#define DEBUGGER
 
 #ifndef DEBUGGER
 #include "zrt.h"
 
 /* If provided by manifest, this channel contains data and can be accessed in read/write modes */
-#  define DATA_CHANNEL_ALIAS_NAME "data"
+#  define DATA_CHANNEL_ALIAS_NAME "/dev/input"
 #else
 #  define WRITE_FMT_LOG(fmt, args...)
 #  define WRITE_LOG(str) printf("%s\n", str)
@@ -67,7 +66,7 @@ int SearchNewLine( const char *buffer ){
 int main(int argc, char **argv){
 	/* Read to buffer from stdin which contains text script; first line should always begin on '#';
 	 * First line can be one of these: #lua, #sqlite  */
-	int fdscript = 0;
+	int fdscript = 0; //stdin
 #ifdef DEBUGGER
 	fdscript = open( "/home/yaroslav/git/zrt/samples/zshell/sqlite/scripts/zerovm_config.sql", O_RDONLY );
 	assert( fdscript >= 0 );
@@ -76,21 +75,22 @@ int main(int argc, char **argv){
 	char *buffer = NULL;
 	int bufsize = LoadFileToBuffer(fdscript, &buffer );                /*load script from stdin*/
 	int newlinepos = SearchNewLine( buffer );
-	WRITE_FMT_LOG("newlinepos=%d\n", newlinepos);
+	WRITE_FMT_LOG("newlinepos=%d, bufsize=%d\n", newlinepos, bufsize);
 
+	/*Detect type of script lua / sqlite*/
 	int errcode = 0;
 	if ( !strncmp( LUA_ID, buffer, strlen(LUA_ID) ) && newlinepos >0 ){
 #ifndef DEBUGGER
 		/*if loaded file is lua script, run script skiping first line; Alternatively it can open
 		 * channel contains data which can be accessed in read/write modes */
 		int script_buf_size = bufsize-newlinepos;
-		errcode = run_lua_buffer_script (buffer+newlinepos, script_buf_size, LUA_ID);
+		errcode = run_lua_buffer_script (buffer+newlinepos, script_buf_size, (const char **)argv);
 #endif
 	}
 	else if ( !strncmp( SQLITE_ID, buffer, strlen(SQLITE_ID) ) && newlinepos > 0 ){
 		/*if loaded file is sqlite query, run query skiping first line*/
 		int script_buf_size = bufsize-newlinepos;
-		int database_fd = open( DATA_CHANNEL_ALIAS_NAME, O_RDWR | O_CREAT);
+		int database_fd = open( DATA_CHANNEL_ALIAS_NAME, O_RDONLY );
 		WRITE_FMT_LOG( "database_fd=%d\n", database_fd );
 		errcode = run_sql_query_buffer( database_fd, buffer+newlinepos, script_buf_size );
 		close(database_fd);

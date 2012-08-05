@@ -36,7 +36,7 @@ sed s@$VAR_NAME_1@$SCRIPT_PATH/$1@g manifest_template/zshell.manifest.template |
 sed s@$VAR_NAME_2@$SCRIPT_PATH/$2@g | \
 sed $SED_3 | \
 sed $SED_4 | \
-sed s/$VAR_NAME_5/"$5"/ | \
+sed s@$VAR_NAME_5@"$5"@ | \
 sed s@{ABS_PATH}@$SCRIPT_PATH/@ 
 
 

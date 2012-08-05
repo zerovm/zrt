@@ -66,7 +66,7 @@ int run_lua_script (const char *filename)
 }
 
 
-int run_lua_buffer_script (const char *buffer, size_t buf_size, const char *debug_name)
+int run_lua_buffer_script (const char *buffer, size_t buf_size, const char **argv)
 {
 	lua_State *L;
 
@@ -75,10 +75,16 @@ int run_lua_buffer_script (const char *buffer, size_t buf_size, const char *debu
 
 	WRITE_LOG("In C, calling Lua\n");
 
-	int status = luaL_loadbuffer (L, buffer, buf_size, debug_name);   /* executes script data */
+	int status = luaL_loadbuffer (L, buffer, buf_size, "zshell");   /* executes script data */
 	if ( status )
 		return report(L, status);         /* Error out if Lua file has an error */
-	status = lua_pcall(L, 0, 0, 0);                  /* Run the loaded Lua script */
+
+	int arg=0;
+	while( argv[++arg] ){
+	    lua_pushstring( L, argv[arg] );
+	}
+
+	status = lua_pcall(L, arg-1, 0, 0);                  /* Run the loaded Lua script */
 	if ( status )
 		return report(L, status);         /* Error out if Lua file has an error */
 
