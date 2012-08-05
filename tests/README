@@ -1,7 +1,8 @@
 lua_test_suite
-zrt_test_suite functional tests related to zrt library;
+zrt_test_suite functional tests related to zrt library; Currently all passing correctly but except file system tests;
 
-sqlite unit tests are pending:
-1. TCL tests using TCL scsripting language;
-2. TH3 100% unit tetst coverage written in C;
-3. SQL Logic Test ??
+sqlite unit tests are pending: TH3 100% unit tetst coverage written in C;
+run all tests for db in memory
+
+zrt test suite 
+Planning move most of samples and wrap it as gtests
