@@ -13,18 +13,15 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "zrt.h"
-
-#define WRITE_FMT_LOG(fmt, args...) fprintf(stderr, fmt, args);
-
-#define WRITE_LOG(str) fprintf(stderr, "%s\n", str);
 
 int main(int argc, char **argv){
 	WRITE_LOG("test2 started\n");
 
-	int fda = open("testa", O_RDWR);
-	int fdb = open("testb", O_RDWR);
+	int fda = open("/dev/out/testa", O_WRONLY);
+	int fdb = open("/dev/in/testb", O_RDONLY);
 	WRITE_FMT_LOG("test2: fda=%d, fdb=%d\n", fda, fdb);
 
 	int testlen = 1000000;
@@ -33,8 +30,10 @@ int main(int argc, char **argv){
 	for (int i=0; i < 10; i++){
 		ssize_t bwrote = write(fdb, buf, testlen);
 		WRITE_FMT_LOG("#%d case1: write passed=%d, wrote=%d\n", i, testlen, (int)bwrote );
+		assert( bwrote == testlen );
 		ssize_t bread = read(fda, buf, testlen);
 		WRITE_FMT_LOG("#%d case2: read requested=%d, read=%d\n", i, testlen, (int)bread );
+		assert( bread == testlen );
 	}
 	free(buf);
 
