@@ -23,8 +23,8 @@
 #endif
 
 
-/*
- * @return channels count*/
+/* @param channels_count save channels count
+ * @return const channels array*/
 const struct ZVMChannel *zvm_channels_c( int *channels_count );
 
 /*

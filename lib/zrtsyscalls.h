@@ -6,8 +6,8 @@
  *      Author: YaroslavLitvinov
  */
 
-#ifndef ZRT_LIB_SYSCALLBACKS_H
-#define ZRT_LIB_SYSCALLBACKS_H
+#ifndef ZRT_LIB_ZRTSYSCALLS_H
+#define ZRT_LIB_ZRTSYSCALLS_H
 
 #include "zvm.h"
 
@@ -15,8 +15,39 @@
 #define DEV_STDOUT "/dev/stdout"
 #define DEV_STDERR "/dev/stderr"
 
+#define FIRST_NON_RESERVED_INODE 11
+#define INODE_FROM_HANDLE(handle) (FIRST_NON_RESERVED_INODE+handle)
+
+
+#ifdef DEBUG
+#define zrt_log(fmt, ...) \
+        do {\
+            char *buf; \
+            int debug_handle = debug_handle_get_buf(&buf); \
+            int len;\
+            if(debug_handle < 0) break;\
+            len = snprintf(buf, 0x1000, "%s; %s, %d: " fmt "\n", \
+            __FILE__, __func__, __LINE__, __VA_ARGS__);\
+            zvm_pwrite(debug_handle, buf, len, 0); \
+        } while(0)
+
+#define zrt_log_str(text) \
+        do {\
+            char *buf; \
+            int debug_handle = debug_handle_get_buf(&buf); \
+            int len;\
+            if( debug_handle < 0) break;\
+            len = snprintf(buf, 0x1000, "%s; %s, %d: %s\n", \
+            __FILE__, __func__, __LINE__, text);\
+            zvm_pwrite(debug_handle, buf, len, 0); \
+        } while(0)
+
+int debug_handle_get_buf(char **buf);
+#endif
+
 
 struct ZrtChannelRt{
+    int     handle;
     int     open_mode;             /*For currently opened file contains mode, otherwise -1*/
     int     flags;                 /*For currently opened file contains flags*/
     int64_t sequential_access_pos; /*sequential read, sequential write*/
@@ -24,13 +55,31 @@ struct ZrtChannelRt{
     int64_t maxsize;               /*synthethic size. maximum position of channel for all I/O requests*/
 };
 
+enum PosAccess{ EPosSeek, EPosRead, EPosWrite };
 enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
 /*@param pos_whence If EPosGet offset unused, otherwise check and set offset
  *@return -1 if bad offset, else offset result*/
-int64_t channel_pos( int handle, int8_t pos_whence, int64_t offset );
+int64_t channel_pos( int handle, int8_t whence, int8_t access, int64_t offset );
 
 /*Assign own channels pointer to get it filled with channels at the syscallback*/
 void zrt_setup( struct UserManifest* manifest );
+
+#define USE_PADDING
+struct nacl_abi_dirent {
+
+    unsigned long long   d_ino;     /*offsets NaCl 0 */
+//#ifdef USE_PADDING
+//    unsigned long padding1;
+//#endif
+
+    unsigned long long  d_off;     /*offsets NaCl 8 */
+//#ifdef USE_PADDING
+//    unsigned long padding2;
+//#endif
+
+    uint16_t  d_reclen;  /*offsets NaCl 16 */
+    char     d_name[];  /*offsets NaCl 18 */
+};
 
 /*
  * temporary fix for nacl. stat != nacl_abi_stat
@@ -150,4 +199,4 @@ struct nacl_abi_timeval {
 
 
 
-#endif //ZRT_LIB_SYSCALLBACKS_H
+#endif //ZRT_LIB_ZRTSYSCALLS_H

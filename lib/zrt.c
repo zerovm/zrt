@@ -23,13 +23,13 @@
  *      Author: d'b
  */
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <unistd.h> /* only for tests */
 
 #include "zvm.h"
 #include "zrt.h"
-#include "syscallbacks.h"
+#include "zrtsyscalls.h"
 
 // ### revise it
 #undef main /* prevent misuse macro */
@@ -40,15 +40,39 @@
  */
 int main(int argc, char **argv, char **envp)
 {
-	struct UserManifest *setup = zvm_init();
-	if(setup == NULL) return ERR_CODE;
+    int i;
+    struct UserManifest *setup = zvm_init();
+    if(setup == NULL) return ERR_CODE;
 
-	/* todo(d'b): replace it with a good engine. should be done asap */
-	setup->envp = envp; /* user custom attributes passed via environment */
-	zrt_setup( setup );
-	if(zvm_syscallback((intptr_t)syscall_director) == 0)
-		return ERR_CODE;
+    /* todo(d'b): replace it with a good engine. should be done asap */
+    setup->envp = envp; /* user custom attributes passed via environment */
+    zrt_setup( setup );
 
-	/* call user main() and care about return code */
-	return slave_main(argc, argv, envp);
+    /* debug print */
+    zrt_log("DEBUG INFORMATION FOR '%s' NODE", argv[0]);
+    zrt_log("user heap pointer address = %d", (intptr_t)setup->heap_ptr);
+    zrt_log("user memory size = %d", setup->mem_size);
+    zrt_log("syscall limit = %lld", setup->syscalls_limit);
+    zrt_log("%060d", 0 );
+    zrt_log("sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel));
+    zrt_log("channels count = %d", setup->channels_count);
+    zrt_log("%060d", 0);
+    for(i = 0; i < setup->channels_count; ++i)
+    {
+        zrt_log("channel[%d].name = '%s'", i, setup->channels[i].name);
+        zrt_log("channel[%d].type = %d", i, setup->channels[i].type);
+        zrt_log("channel[%d].size = %lld", i, setup->channels[i].size);
+        zrt_log("channel[%d].limits[GetsLimit] = %lld", i, setup->channels[i].limits[GetsLimit]);
+        zrt_log("channel[%d].limits[GetSizeLimit] = %lld", i, setup->channels[i].limits[GetSizeLimit]);
+        zrt_log("channel[%d].limits[PutsLimit] = %lld", i, setup->channels[i].limits[PutsLimit]);
+        zrt_log("channel[%d].limits[PutSizeLimit] = %lld", i, setup->channels[i].limits[PutSizeLimit]);
+    }
+    zrt_log("%060d", 0);
+
+    if(zvm_syscallback((intptr_t)syscall_director) == 0)
+        return ERR_CODE;
+
+    /* call user main() and care about return code */
+    return slave_main(argc, argv, envp);
 }
+

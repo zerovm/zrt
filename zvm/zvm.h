@@ -11,6 +11,12 @@
 #include <stdint.h>
 #include "zvm_errors.h"
 
+/*
+ * can be returned by zvm_read for the pure sequential
+ * channels and tested with zvm_errno()
+ */
+#define ZVM_EOF -0x2012
+
 /* channels available for user. very 1st channel must be InputChannel */
 enum AccessType {
   SGetSPut, /* sequential read, sequential write */
@@ -56,10 +62,13 @@ enum TrapCalls {
  */
 struct ZVMChannel
 {
-  char *name; /* file name (int32_t). secured */
-  enum AccessType type; /* type of access sequential/random */
-  int64_t size; /* channel size. optional */
   int64_t limits[IOLimitsCount];
+  int64_t size; /* channel size. optional */
+  enum AccessType type; /* type of access sequential/random */
+#ifdef USER_SIDE
+  int32_t pad2;
+#endif
+  char *name; /* file name (int32_t). secured */
 };
 
 /*
@@ -124,8 +133,11 @@ int32_t zvm_channel_name(struct ZVMChannel *channel, int ch);
  */
 int32_t zvm_channels(struct ZVMChannel *channels);
 
+/* get zerovm error number. standard error codes were used */
+int32_t zvm_errno();
+
 /* return syscalls limit */
-int64_t zvm_syscalls_limit();
+int32_t zvm_syscalls_limit();
 
 #endif /* USER_SIDE */
 

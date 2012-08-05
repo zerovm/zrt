@@ -11,14 +11,16 @@ INCLUDE_PATH=-I. -Ilib -Izvm
 all: lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST}
 
 
-lib/libzrt.a: lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/syscallbacks.c 
+lib/libzrt.a: lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/zrtsyscalls.c lib/zrtreaddir.c 
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c zvm/zvm.c -o zvm/zvm.o -Wall -Wno-long-long -O2 -msse4.1 -m64 ${INCLUDE_PATH}
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/syscall_manager.S -o lib/syscall_manager.o
+	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrtreaddir.c -o lib/zrtreaddir.o -Wall -Wno-long-long -O2 -m64 \
+	${MACROS_FLAGS} ${INCLUDE_PATH}
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrt.c -o lib/zrt.o -Wall -Wno-long-long -O2 -m64 \
 	${MACROS_FLAGS} ${INCLUDE_PATH}
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/syscallbacks.c -o lib/syscallbacks.o -Wall -Wno-long-long -O2 -m64 \
+	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrtsyscalls.c -o lib/zrtsyscalls.o -Wall -Wno-long-long -O2 -m64 \
 	${MACROS_FLAGS} ${INCLUDE_PATH}	
-	@ar rcs lib/libzrt.a lib/syscall_manager.o zvm/zvm.o lib/zrt.o lib/syscallbacks.o
+	@ar rcs lib/libzrt.a lib/syscall_manager.o zvm/zvm.o lib/zrt.o lib/zrtsyscalls.o lib/zrtreaddir.o
 
 ${LIBSQLITE}:
 	@PNACL_TOOL=${PNACL_TOOL} make -Clib/sqlite3
