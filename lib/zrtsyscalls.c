@@ -61,11 +61,17 @@
 /* ******************************************************************************
  * Syscallbacks debug macros*/
 #ifdef DEBUG
-#define ZRT_LOG_NAME "/dev/zrtlog"
+#define ZRT_LOG_NAME "/dev/debug"
 #define SHOWID zrt_log("%s", "syscall called")
 #else
 #define SHOWID
 #endif
+
+#define MAX(a,b) \
+        ({ __typeof__ (a) _a = (a); \
+        __typeof__ (b) _b = (b); \
+        _a > _b ? _a : _b; })
+
 
 /* ******************************************************************************
  * Syscallback mocks helper macroses*/
@@ -182,9 +188,9 @@ void debug_mes_zrt_channel_runtime( int handle ){
 void debug_mes_open_flags( int flags )
 {
     int all_flags[] = {O_CREAT, O_EXCL, O_TRUNC, O_DIRECT, O_DIRECTORY,
-            O_NOATIME, O_APPEND, O_CREAT, O_ASYNC, O_SYNC, O_NONBLOCK, O_NDELAY, O_NOCTTY};
+            O_NOATIME, O_APPEND, O_ASYNC, O_SYNC, O_NONBLOCK, O_NDELAY, O_NOCTTY};
     char *all_texts[] = {"O_CREAT", "O_EXCL", "O_TRUNC", "O_DIRECT", "O_DIRECTORY",
-            "O_NOATIME", "O_APPEND", "O_CREAT", "O_ASYNC", "O_SYNC", "O_NONBLOCK", "O_NDELAY", "O_NOCTTY"};
+            "O_NOATIME", "O_APPEND", "O_ASYNC", "O_SYNC", "O_NONBLOCK", "O_NDELAY", "O_NOCTTY"};
     int i;
     assert( sizeof(all_flags)/sizeof(int) == sizeof(all_texts)/sizeof(char*) );
 
@@ -509,14 +515,18 @@ static int32_t zrt_read(uint32_t *args)
             !s_zrt_channels[handle] ||
             s_zrt_channels[handle]->open_mode < 0 )
     {
+        zrt_log("invalid file descriptor handle=%d", handle);
         set_zrt_errno( EBADF );
         return -1;
     }
+    zrt_log( "channel name=%s", s_manifest->channels[handle].name );
+    debug_mes_zrt_channel_runtime( handle );
 
     /*check if file was not opened for reading*/
     int mode= O_ACCMODE & s_zrt_channels[handle]->open_mode;
     if ( mode != O_RDONLY && mode != O_RDWR  )
     {
+        zrt_log("file open_mode=%u not allowed read", mode);
         set_zrt_errno( EINVAL );
         return -1;
     }
@@ -554,14 +564,19 @@ static int32_t zrt_write(uint32_t *args)
             !s_zrt_channels[handle] ||
             s_zrt_channels[handle]->open_mode < 0  )
     {
+        zrt_log("invalid file descriptor handle=%d", handle);
         set_zrt_errno( EBADF );
         return -1;
     }
+
+    zrt_log( "channel name=%s", s_manifest->channels[handle].name );
+    debug_mes_zrt_channel_runtime( handle );
 
     /*check if file was not opened for writing*/
     int mode= O_ACCMODE & s_zrt_channels[handle]->open_mode;
     if ( mode != O_WRONLY && mode != O_RDWR  )
     {
+        zrt_log("file open_mode=%u not allowed write", mode);
         set_zrt_errno( EINVAL );
         return -1;
     }
@@ -595,12 +610,14 @@ static int32_t zrt_lseek(uint32_t *args)
     int whence = (int)args[2];
 
     zrt_log("handle=%d, offset=%d", handle, (int)offset);
+    debug_mes_zrt_channel_runtime( handle );
 
     /* check handle */
     if(handle < 0 || handle >= s_manifest->channels_count){
         set_zrt_errno( EBADF );
         return -1;
     }
+    zrt_log( "channel name=%s", s_manifest->channels[handle].name );
 
     switch(whence)
     {
@@ -655,29 +672,30 @@ static void set_stat(struct nacl_abi_stat *stat, int handle)
     int nlink = 1;
     uint32_t permissions = 0;
     int64_t size=4096;
+    uint32_t blksize =1;
     uint64_t ino;
 
     if ( handle >= s_manifest->channels_count ){ /*if handle is dir handle*/
         struct dir_data_t *d = match_handle_in_directory_list( &s_manifest_dirs, handle );
         nlink = d->nlink;
         ino = INODE_FROM_HANDLE(d->handle);
-        permissions = S_IRUSR | S_IFDIR;
+        permissions |= S_IRUSR | S_IFDIR;
     }
     else{ /*channel handle*/
         if ( CHECK_FLAG( s_zrt_channels[handle]->open_mode, O_RDONLY) ){
-            permissions = S_IRUSR;
+            permissions |= S_IRUSR;
         }
         else if ( CHECK_FLAG( s_zrt_channels[handle]->open_mode, O_WRONLY) ){
-            permissions = S_IWUSR;
+            permissions |= S_IWUSR;
         }
         else{
-            permissions = S_IRUSR | S_IWUSR | S_IFBLK; //only cdr has w/r access, it's block device
+            permissions |= S_IRUSR | S_IWUSR | S_IFBLK; //only cdr has w/r access, it's block device
+            blksize = 4096;
         }
         permissions |= S_IFREG;
         ino = INODE_FROM_HANDLE( handle );
 
-        if ( !s_zrt_channels[handle]->maxsize  ) size = s_manifest->channels[handle].size; /* size in bytes */
-        else size = s_zrt_channels[handle]->maxsize;
+        size = MAX( s_zrt_channels[handle]->maxsize, s_manifest->channels[handle].size ); /* size in bytes */
     }
 
     /* return stat object */
@@ -688,7 +706,7 @@ static void set_stat(struct nacl_abi_stat *stat, int handle)
     stat->nacl_abi_st_gid = 1000;     /* group ID of owner */
     stat->nacl_abi_st_rdev = 0;       /* device ID (if special handle) */
     stat->nacl_abi_st_mode = permissions;
-    stat->nacl_abi_st_blksize = 4096;        /* block size for file system I/O */
+    stat->nacl_abi_st_blksize = blksize;        /* block size for file system I/O */
     stat->nacl_abi_st_size = size;
     stat->nacl_abi_st_blocks =               /* number of 512B blocks allocated */
             ((stat->nacl_abi_st_size + stat->nacl_abi_st_blksize - 1)

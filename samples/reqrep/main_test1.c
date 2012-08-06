@@ -38,5 +38,6 @@ int main(int argc, char **argv){
 
 	close(fda);
 	close(fdb);
+	WRITE_LOG("exit\n");
 	return 0;
 }

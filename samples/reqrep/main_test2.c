@@ -28,10 +28,10 @@ int main(int argc, char **argv){
 	char *buf = malloc(testlen+1);
 	buf[testlen] = '\0';
 	for (int i=0; i < 10; i++){
-		ssize_t bwrote = write(fdb, buf, testlen);
+		ssize_t bwrote = write(fda, buf, testlen);
 		WRITE_FMT_LOG("#%d case1: write passed=%d, wrote=%d\n", i, testlen, (int)bwrote );
 		assert( bwrote == testlen );
-		ssize_t bread = read(fda, buf, testlen);
+		ssize_t bread = read(fdb, buf, testlen);
 		WRITE_FMT_LOG("#%d case2: read requested=%d, read=%d\n", i, testlen, (int)bread );
 		assert( bread == testlen );
 	}
@@ -39,5 +39,6 @@ int main(int argc, char **argv){
 
 	close(fda);
 	close(fdb);
+	WRITE_LOG("exit\n");
 	return 0;
 }
