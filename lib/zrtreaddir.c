@@ -224,6 +224,7 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
             readdir_temp->dir_data.handle, readdir_temp->dir_last_readed_index, readdir_temp->channel_last_readed_index);
 
     int retval = 0;
+    int foo;
     /*if launched getdents for new directory*/
     if ( readdir_temp->dir_data.handle != dir_handle ){
         struct dir_data_t *d = match_handle_in_directory_list(dirs, dir_handle);
@@ -251,12 +252,15 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
             zrt_log( "dir_index=%d", readdir_temp->dir_last_readed_index );
 
             if ( readdir_temp->dir_last_readed_index != -1 ){
+                /*fetch name from full path*/
+                const char *adding_name = name_from_path_get_path_len(
+                        dirs->dir_array[readdir_temp->dir_last_readed_index].path, &foo );
+
                 int w = put_dirent_into_buf(
                         buf+retval, bufsize-retval,
                         INODE_FROM_HANDLE(dirs->dir_array[readdir_temp->dir_last_readed_index].handle),
                         0, /*d_off*/
-                        dirs->dir_array[readdir_temp->dir_last_readed_index].path,
-                        strlen( dirs->dir_array[readdir_temp->dir_last_readed_index].path ) );
+                        adding_name, strlen( adding_name ) );
                 if ( w == -1 ) return retval;
                 retval += w;
                 readdir_temp->dir_last_readed_index++;
@@ -276,12 +280,15 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
             zrt_log( "channel_index=%d", readdir_temp->channel_last_readed_index );
 
             if ( readdir_temp->channel_last_readed_index != -1 ){
+                /*fetch name from full path*/
+                const char *adding_name = name_from_path_get_path_len(
+                        ( const char*)manifest->channels[readdir_temp->channel_last_readed_index].name, &foo );
+
                 int w = put_dirent_into_buf(
                         buf+retval, bufsize-retval,
                         INODE_FROM_HANDLE(readdir_temp->channel_last_readed_index),
                         0, /*d_off*/
-                        manifest->channels[readdir_temp->channel_last_readed_index].name,
-                        strlen( manifest->channels[readdir_temp->channel_last_readed_index].name ) );
+                        adding_name, strlen( adding_name ) );
                 if ( w == -1 ) return retval;
                 retval += w;
                 readdir_temp->channel_last_readed_index++;

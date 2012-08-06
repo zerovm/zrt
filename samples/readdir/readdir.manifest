@@ -4,7 +4,7 @@
 Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = /home/yaroslav/git/zrt/samples/readdir/stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = /home/yaroslav/git/zrt/samples/readdir/stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
-Channel = /home/yaroslav/git/zrt/samples/readdir/zrtdebug.log, /dev/zrtlog, 0, 0, 0, 9999999, 9999999
+Channel = /home/yaroslav/git/zrt/samples/readdir/zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some

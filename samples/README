@@ -21,7 +21,8 @@ disort/
   
 reqrep/
   example uses network facility, it's emulate simple network, where two nodes is communicating one to one. 
-  Single node sending 100MB and recevies the same from another node.
+  Single node sending N MB and recevies the same from another node. 
+  Now it's get cluster configuration via readdir. No direct file path using.
   
 file_stat/
   demonstrates stat() / fstat(). user can get synthetic information about zerovm channels (streams), manifest dirs
