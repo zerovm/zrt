@@ -107,11 +107,13 @@ static struct ZrtChannelRt **s_zrt_channels;
 struct manifest_loaded_directories_t s_manifest_dirs;
 /*getdents temp data for subsequent syscalls*/
 static struct ReadDirTemp s_readdir_temp = {{-1,0,0,0},-1,-1};
+static int s_donotlog=0;
 
 #ifdef DEBUG
 static int s_zrt_log_fd = -1;
 static char s_logbuf[0x1000];
 int debug_handle_get_buf(char **buf){
+    if ( s_donotlog != 0 ) return -1; /*switch off log for some functions*/
     *buf = s_logbuf;
     return s_zrt_log_fd;
 }
@@ -533,6 +535,7 @@ static int32_t zrt_read(uint32_t *args)
 
     int64_t pos = channel_pos(handle, EPosGet, EPosRead, 0);
     if ( CHECK_NEW_POS( pos+length ) != 0 ){
+        zrt_log("file bad pos=%lld", pos);
         set_zrt_errno( EOVERFLOW );
         return -1;
     }
@@ -558,6 +561,9 @@ static int32_t zrt_write(uint32_t *args)
     void *buf = (void*)args[1];
     int64_t length = (int64_t)args[2];
     int32_t wrote = 0;
+
+    if ( handle < 3 ) s_donotlog = 1;
+    else             s_donotlog = 0;
 
     /*file not opened, bad descriptor*/
     if ( handle < 0 || handle >= s_manifest->channels_count ||
@@ -595,6 +601,8 @@ static int32_t zrt_write(uint32_t *args)
         set_zrt_errno( zvm_errno() );
         return -1;
     }
+
+    s_donotlog = 0;
     return wrote;
 }
 
