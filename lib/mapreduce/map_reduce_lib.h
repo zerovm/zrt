@@ -5,9 +5,9 @@
 #include "buffer.h"
 
 //forward decl
-struct ChannelsConfInterface;
+struct ChannelsConfigInterface;
 
-enum { EMapNode=1, EReduceNode=2 };
+enum { EMapNode=1, EReduceNode=2, EInputOutputNode=3 };
 
 typedef uint32_t KeyType;
 #define MIN(a,b) (a < b ? a : b )
@@ -74,19 +74,19 @@ struct MapNodeEvents{
 	/**/
 	void
 	(*MapCreateHistogramSendEachToOtherCreateDividersList)(
-			struct ChannelsConfInterface *ch_if, struct MapReduceData *data, const Buffer *input_keys );
+			struct ChannelsConfigInterface *ch_if, struct MapReduceData *data, const Buffer *input_keys );
 	/**/
 	void
-	(*MapSendKeysValuesToAllReducers)(struct ChannelsConfInterface *ch_if, int last_data, Buffer *keys, Buffer *values);
+	(*MapSendKeysValuesToAllReducers)(struct ChannelsConfigInterface *ch_if, int last_data, Buffer *keys, Buffer *values);
 };
 
 
-int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface *ch_if );
-int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface *ch_if );
+int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *ch_if );
+int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *ch_if );
 
 /****************************************************
  * Inernals**/
-void InitInternals(struct MapReduceUserIf *userif, const struct ChannelsConfInterface *chif, struct MapNodeEvents* ev);
+void InitInternals(struct MapReduceUserIf *userif, const struct ChannelsConfigInterface *chif, struct MapNodeEvents* ev);
 /*sort by key keys and linked values*/
 void LocalSort( const Buffer *keys, const Buffer *values, Buffer *sorted_keys, Buffer *sorted_values);
 size_t MapInputDataProvider( int fd, char **input_buffer, size_t buf_size, int unhandled_data_pos );

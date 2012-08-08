@@ -1,0 +1,23 @@
+I/O channels
+
+----------------------------------------------------------------
+channel type SGetSPut=0, sequential  get / sequential_put
+RDONLY     Seek pos —     get
+WRONLY     Seek pos —     get
+RDWR       Seek pos —     get
+----------------------------------------------------------------
+channel type RGetSPut=1, Random get / sequential put
+RDONLY     Seek pos — set get 
+WRONLY     Seek pos —     get
+RDWR       Write pos unavailable; Read Seek pos - set get;
+----------------------------------------------------------------
+channel type SGetRPut=2, Sequential get / Random put
+RDONLY     Seek pos —     get
+WRONLY     Seek pos — set get
+RDWR       Read pos unavailable; Write Seek pos - set get;
+----------------------------------------------------------------
+channel type RGetRPut=3, Random get / Random put
+RDONLY     Seek pos — set get
+WRONLY     Seek pos —     get
+RDWR       Seek pos — set get
+----------------------------------------------------------------

@@ -10,62 +10,45 @@
 
 #include <stdint.h>
 
-/*User at first should configure own claster network, and next use conf via accessors
- * ChannelConfFd, ChannelConfPath */
-
-#define CHANNEL_MODE_READ ('r')
-#define CHANNEL_MODE_WRITE ('w')
+/*User at first should configure own claster network, and in further can get configuration
+ * via interface accessors : ChannelConfFd, ChannelConfPath */
 
 /*Theses list intended For UserChannel::dstnodeid to map stdin into generic file decriptor*/
 #define STDIN 0
 
+typedef enum  ChannelMode{ EChannelModeRead=0, EChannelModeWrite=1 }  ChannelMode;
 struct UserChannel{
-	uint16_t srcnodeid;
-	uint16_t dstnodeid;
-	int16_t fd;
-	int8_t mode; /*CHANNEL_MODE_READ | CHANNEL_MODE_WRITE*/
-	char *path;
+    uint8_t        nodetype;
+	uint16_t       nodeid;  /*unique for same nodetype records*/
+    uint16_t        fd;     /*unique*/
+	ChannelMode    mode; /*EChannelModeRead, EChannelModeWrite*/
 };
 
-
-struct UserChannelInternal{
-	struct UserChannel user_channel;
-	struct UserChannelInternal *next;
-};
-
-struct NodesListInternal{
-	int nodetype;
-	int nodes_count;
-	int *nodes_list;
-};
-
-struct ChannelsConfInterface{
-	int (*TestConf)( struct ChannelsConfInterface *ch_if );
-	/*Add nodes list related to same type*/
-	void (*NodesListAdd)( struct ChannelsConfInterface *ch_if, int nodetype, int *nodes_list, int nodes_count );
+struct ChannelsConfigInterface{
+	/*Add nodes list related to same type,
+	 * nodetype should be value in range from 0 up to node types count
+	 * nodeid  should be unique for the same node type*/
+    struct UserChannel *(*AddChannel)( struct ChannelsConfigInterface *ch_if,
+            int nodetype, int nodeid, int channelfd, ChannelMode mode );
 	/*Get nodes list by nodetype
-	 * @param nodes_count get nodes count
-	 * @return pointer to list*/
-	int *(*NodesList)( const struct ChannelsConfInterface *ch_if, int nodetype, int *nodes_count );
-	/*Add channels to configuration one by one. UserChannel::path should be acessible during lifecycle*/
-	void (*ChannelConfAdd)(struct ChannelsConfInterface *ch_if, struct UserChannel *channel );
-	/*get conf data*/
-	int (*ChannelConfFd)(struct ChannelsConfInterface *ch_if, int nodeid, int8_t mode);
-	/*get conf data*/
-	char* (*ChannelConfPath)(struct ChannelsConfInterface *ch_if, int nodeid, int8_t mode);
+	 * @param  pointer to list
+	 * @return nodes_count get nodes count*/
+    int (*GetNodesListByType)( const struct ChannelsConfigInterface *ch_if, int nodetype, int **nodes_array );
+	/*get channel config*/
+    struct UserChannel *(*Channel)(struct ChannelsConfigInterface *ch_if,
+            int nodetype, int nodeid, int8_t channelmode);
 	/*free resources*/
-	void (*Free)(struct ChannelsConfInterface *ch_if);
+	void (*Free)(struct ChannelsConfigInterface *ch_if);
+
 	/*******************************************************
 	 * data */
-	int ownnodeid; /*For every node ownnodeid should be different*/
-
+	int ownnodeid;
+	int ownnodetype;
 	/*private data*/
-	struct UserChannelInternal *user_channels_internal; /*should not be used directly*/
-	struct NodesListInternal *nodes_list_internal; /*should not be used directly*/
-	int nodes_list_count_internal; /*should not be used directly*/
+	struct DynArray* channels;
 };
 
-void SetupChannelsConfInterface( struct ChannelsConfInterface *ch_if, int ownnodeid  );
+void SetupChannelsConfigInterface( struct ChannelsConfigInterface *ch_if, int ownnodeid, int ownnodetype );
 
 
 

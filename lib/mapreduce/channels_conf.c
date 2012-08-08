@@ -6,116 +6,127 @@
  */
 
 #include <string.h> //memset
-#include <stdlib.h> //calloc
+#include <stdlib.h> //calloc, qsort
+#include <stdio.h>
 #include <stddef.h>
 #include <assert.h>
 
+#include "helpers/dyn_array.h"
+#include "defines.h"
 #include "channels_conf.h"
 
-/*helper to channels navigate*/
-static struct UserChannelInternal **__next_chann = NULL;
 
-int TestConf( struct ChannelsConfInterface *ch_if ){
-	return 1;
+static int
+cmp_by_node_type_and_id(const void *p1, const void *p2)
+{
+    struct UserChannel** c1 = (struct UserChannel**)p1;
+    struct UserChannel** c2 = (struct UserChannel**)p2;
+
+    if       ( (*c1)->nodetype < (*c2)->nodetype ) return -1;
+    else if ( (*c1)->nodetype > (*c2)->nodetype ) return  1;
+   else{
+        if       ( (*c1)->nodeid < (*c2)->nodeid ) return -1;
+        else if ( (*c1)->nodeid > (*c2)->nodeid ) return  1;
+        else return 0;
+    }
+    return 0;
 }
 
-void Free(struct ChannelsConfInterface *ch_if){
-	/*free nodes lists memories*/
-	free(ch_if->nodes_list_internal);
-	struct UserChannelInternal *next = ch_if->user_channels_internal;
-	do {
-		if ( next ){
-			struct UserChannelInternal *current = next;
-			next = next->next;
-			free( current );
-		}
-	}while( next != NULL );
+
+void Free(struct ChannelsConfigInterface *ch_if){
+    struct UserChannel *channel = NULL;
+    for( int i=0; i < ch_if->channels->num_entries; i++ ){
+        channel = DynArrayGet(ch_if->channels, i);
+        assert(channel);
+        free(channel);
+    }
+    DynArrayDtor( ch_if->channels );
 }
 
-void NodesListAdd(struct ChannelsConfInterface *ch_if, int nodetype, int *nodes_list, int nodes_count ){
-	if ( ! ch_if->nodes_list_internal ){
-		ch_if->nodes_list_internal = malloc( sizeof(struct NodesListInternal) );
-		ch_if->nodes_list_count_internal = 0;
-	}
-	else{
-		ch_if->nodes_list_internal = realloc(
-				ch_if->nodes_list_internal,
-				sizeof(struct NodesListInternal)*(ch_if->nodes_list_count_internal+1) );
-	}
-	ch_if->nodes_list_internal[ch_if->nodes_list_count_internal].nodetype = nodetype;
-	ch_if->nodes_list_internal[ch_if->nodes_list_count_internal].nodes_count = nodes_count;
-	ch_if->nodes_list_internal[ch_if->nodes_list_count_internal].nodes_list = nodes_list;
-	++ch_if->nodes_list_count_internal;
+struct UserChannel *AddChannel(struct ChannelsConfigInterface *ch_if,
+        int nodetype, int nodeid, int channelfd, ChannelMode mode )
+{
+    struct UserChannel *channel = NULL;
+    int res=0;
+    if ( !ch_if->channels ){
+        ch_if->channels = calloc( 1, sizeof(struct DynArray) );
+        res = DynArrayCtor(ch_if->channels, 10 /*granularity*/ );
+        assert( res != 0 );
+    }
+
+    channel = calloc(1, sizeof(struct UserChannel));
+    channel->nodetype = nodetype;
+    channel->nodeid = nodeid;
+    channel->fd = channelfd;
+    channel->mode = mode;
+    /*all channel heap data should be deleted */
+    res = DynArraySet( ch_if->channels, ch_if->channels->num_entries, channel );
+    assert( res != 0 );
+
+    return channel;
 }
 
-int *NodesList( const struct ChannelsConfInterface *ch_if, int nodetype, int *nodes_count ){
-	if ( ch_if->nodes_list_internal ){
-		for( int i=0; i < ch_if->nodes_list_count_internal; i++ ){
-			if ( ch_if->nodes_list_internal[i].nodetype == nodetype ){
-				*nodes_count = ch_if->nodes_list_internal[i].nodes_count;
-				return ch_if->nodes_list_internal[i].nodes_list;
-			}
-		}
-	}
-	*nodes_count = 0;
+int GetNodesListByType( const struct ChannelsConfigInterface *ch_if, int nodetype, int **nodes_array ){
+    int count_rchan = 0;
+    int count_wchan = 0;
+    int i=0;
+
+    /*calculate nodes count for two groups of nodes and select maximum */
+    for ( i=0; i < ch_if->channels->num_entries; i++  ){
+        struct UserChannel *channel = DynArrayGet(ch_if->channels, i );
+        if ( channel->nodetype == nodetype && channel->mode == EChannelModeRead )
+            count_rchan++;
+        else if ( channel->nodetype == nodetype && channel->mode == EChannelModeWrite )
+            count_wchan++;
+    }
+
+    *nodes_array = calloc( count_rchan > count_wchan ? count_rchan : count_wchan, sizeof(int) );
+    int mode=0;
+    if ( count_rchan > count_wchan ){
+        /*alloc array of node ids*/
+        mode=EChannelModeRead;
+    }
+    else{
+        mode=EChannelModeWrite;
+    }
+
+    WRITE_LOG("");
+    /*sort to get ascending nodeid array*/
+    qsort( ch_if->channels->ptr_array, ch_if->channels->num_entries,sizeof(struct UserChannel*), cmp_by_node_type_and_id );
+
+    count_rchan = 0;
+    for ( i=0; i < ch_if->channels->num_entries; i++  ){
+        struct UserChannel *channel = DynArrayGet(ch_if->channels, i );
+        if ( channel->nodetype == nodetype && channel->mode == mode ){
+            WRITE_FMT_LOG("[%d]=%d type=%d\n", count_rchan, channel->nodeid, channel->nodetype);
+            (*nodes_array)[count_rchan++] = channel->nodeid;
+        }
+    }
+
+    WRITE_FMT_LOG("\nGetNodesListByType nodetype=%d, count=%d\n", nodetype, count_rchan);
+	return count_rchan;
+}
+
+
+struct UserChannel *Channel(struct ChannelsConfigInterface *ch_if, int nodetype, int nodeid, int8_t channelmode){
+	struct UserChannel *ch = NULL;
+    for ( int i=0; i < ch_if->channels->num_entries; i++ ){
+        ch = DynArrayGet(ch_if->channels, i);
+        if( ch && ch->nodetype == nodetype && ch->nodeid == nodeid && ch->mode == channelmode ){
+            return ch;
+        }
+    }
 	return NULL;
 }
 
-void ChannelConfAdd( struct ChannelsConfInterface *ch_if, struct UserChannel *user_channel ){
-	/*add first time*/
-	if ( !ch_if->user_channels_internal ){
-		ch_if->user_channels_internal = calloc( 1, sizeof(struct UserChannelInternal) );
-		__next_chann = &ch_if->user_channels_internal;
-	}
-	else{
-		/*add aggain*/
-		*__next_chann = calloc( 1, sizeof(struct UserChannelInternal) );
-	}
-	(*__next_chann)->user_channel = *user_channel;
-	(*__next_chann)->next = NULL;
-	__next_chann = &(*__next_chann)->next;
-}
 
-
-struct UserChannel* SearchByNodeid(struct ChannelsConfInterface *ch_if, int nodeid, int8_t mode ){
-	struct UserChannelInternal *next = ch_if->user_channels_internal;
-	do {
-		if ( next ){
-			if ( next->user_channel.srcnodeid == ch_if->ownnodeid &&
-				 next->user_channel.dstnodeid == nodeid &&
-				 next->user_channel.mode == mode )
-			{
-				return &next->user_channel;
-			}
-			next = next->next;
-		}
-	}while( next != NULL );
-	return NULL;
-}
-
-
-
-int ChannelConfFd(struct ChannelsConfInterface *ch_if, int nodeid, int8_t mode){
-	struct UserChannel *ch = SearchByNodeid( ch_if, nodeid, mode );
-	assert(ch);
-	return ch->fd;
-}
-
-char* ChannelConfPath(struct ChannelsConfInterface *ch_if, int nodeid, int8_t mode){
-	struct UserChannel *ch = SearchByNodeid( ch_if, nodeid, mode );
-	assert(ch);
-	return ch->path;
-}
-
-
-void SetupChannelsConfInterface( struct ChannelsConfInterface *ch_if, int ownnodeid  ){
+void SetupChannelsConfigInterface( struct ChannelsConfigInterface *ch_if, int ownnodeid, int ownnodetype  ){
 	memset( ch_if, '\0', sizeof(*ch_if) );
-	ch_if->TestConf = TestConf;
-	ch_if->NodesListAdd = NodesListAdd;
-	ch_if->NodesList = NodesList;
-	ch_if->ChannelConfAdd = ChannelConfAdd;
-	ch_if->ChannelConfFd = ChannelConfFd;
-	ch_if->ChannelConfPath = ChannelConfPath;
+	ch_if->AddChannel = AddChannel;
+	ch_if->Channel = Channel;
+	ch_if->GetNodesListByType = GetNodesListByType;
+	ch_if->Free = Free;
 	ch_if->ownnodeid = ownnodeid;
+	ch_if->ownnodetype = ownnodetype;
 }
 

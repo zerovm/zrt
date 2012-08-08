@@ -154,6 +154,7 @@ void ReadHistogramFromNode( struct EachToOtherPattern *p_this, int nodetype, int
 	/*histogram has always the same index as node in nodes_list reading from*/
 	assert( index < mapred_data->histograms_count );
 	Histogram *histogram = &mapred_data->histograms_list[index];
+	WRITE_FMT_LOG("ReadHistogramFromNode index=%d\n", index);
 	assert( !histogram->array ); 	/*before reading histogram array pointer should be empty*/
 	read(fdr, histogram, sizeof(Histogram) );
 	if ( histogram->array_len ){
@@ -169,18 +170,11 @@ void WriteHistogramToNode( struct EachToOtherPattern *p_this, int nodetype, int 
 	WRITE_FMT_LOG( "eachtoother:write( to:index=%d, to:fdw=%d)\n", index, fdw );
 	/*write own data histogram to another nodes*/
 	struct MapReduceData *mapred_data = (struct MapReduceData *)p_this->data;
-	int own_histogram_index = 0;
-	int nodes_count=0;
-	int *nodes_list = p_this->conf->NodesList( p_this->conf, nodetype, &nodes_count);
-	for ( int i=0; i < nodes_count; i++ ){
-		if ( nodes_list[i] == p_this->conf->ownnodeid ){
-			own_histogram_index = i;
-			break;
-		}
-	}
-	/*histogram has always the same index as node in nodes_list reading from*/
+	/*nodeid in range from 1 up to count*/
+	int own_histogram_index = p_this->conf->ownnodeid-1;
 	assert( own_histogram_index < mapred_data->histograms_count );
 	Histogram *histogram = &mapred_data->histograms_list[own_histogram_index];
+	WRITE_FMT_LOG("WriteHistogramToNode index=%d\n", index);
 	/*write Histogram struct, array contains pointer it should be ignored by receiver */
 	write(fdw, histogram, sizeof(Histogram));
 	if ( histogram->array ){
@@ -321,24 +315,20 @@ size_t MapInputDataLocalProcessing( const char *buf, size_t buf_size, int last_c
 
 
 void MapCreateHistogramSendEachToOtherCreateDividersList(
-		struct ChannelsConfInterface *ch_if, struct MapReduceData *data, const Buffer *input_keys ){
+		struct ChannelsConfigInterface *ch_if, struct MapReduceData *data, const Buffer *input_keys ){
 	/*For first call need to create histogram and send to all map nodes
 	 * To finally get dividers list which helps distribute of data to Reducers*/
 
 	/*retrieve Map/Reducer nodes list and nodes count*/
-	int map_nodes_count=0;
-	int *map_nodes_list = ch_if->NodesList( ch_if, EMapNode, &map_nodes_count );
+	int *map_nodes_list = NULL;
+	int map_nodes_count = ch_if->GetNodesListByType( ch_if, EMapNode, &map_nodes_list );
 
 	/*get reducer count, this is same as dividers count for us, reducers list is not needed now*/
-	int reduce_nodes_count=0;
-	ch_if->NodesList( ch_if, EReduceNode, &reduce_nodes_count );
+	int *reduce_nodes_list = NULL;
+	int reduce_nodes_count = ch_if->GetNodesListByType( ch_if, EReduceNode, &reduce_nodes_list );
 
 	//generate histogram with offset
-	int current_node_index;
-	for( current_node_index =0; current_node_index < map_nodes_count; current_node_index++ ){
-		if ( map_nodes_list[current_node_index] == ch_if->ownnodeid )
-			break;
-	}
+	int current_node_index = ch_if->ownnodeid-1;
 	assert(map_nodes_count); /*it should not be zero*/
 	size_t hist_step = input_keys->header.count / 100 / map_nodes_count;
 	/*save histogram for own data always into current_node_index-pos of histograms array*/
@@ -369,12 +359,15 @@ void MapCreateHistogramSendEachToOtherCreateDividersList(
 	/*now every map node contains histograms from all map nodes, summarize histograms,
 	 * to get distribution of all data. Result of summarization write into divider_array*/
 	data->dividers_count = reduce_nodes_count;
-	data->dividers_list = calloc( map_nodes_count, sizeof(*__userif->data.dividers_list) );
+	data->dividers_list = calloc( reduce_nodes_count, sizeof(*__userif->data.dividers_list) );
 	SummarizeHistograms(
 			data->histograms_list,
 			data->histograms_count,
 			data->dividers_count,
 			data->dividers_list );
+
+	free(map_nodes_list);
+	free(reduce_nodes_list);
 }
 
 
@@ -396,7 +389,8 @@ void WriteDataToReduce(int fdw, const Buffer *keys, const Buffer *values, int da
 
 	ssize_t bytes = 0;
 	/*write last data flag 0 | 1, if reducer receives 1 then it should exclude this map node from communications*/
-	write( fdw, &last_data_flag, sizeof(last_data_flag) );
+	bytes = write( fdw, &last_data_flag, sizeof(last_data_flag) );
+	WRITE_FMT_LOG( "write=%d / %d last_data_flag\n", (int)bytes, (int)sizeof(divider_keys_header) );
 	/*write keys records size*/
 	bytes = write(fdw, &divider_keys_header, sizeof(divider_keys_header));
 	WRITE_FMT_LOG( "write=%d / %d\n", (int)bytes, (int)sizeof(divider_keys_header) );
@@ -422,10 +416,10 @@ void WriteDataToReduce(int fdw, const Buffer *keys, const Buffer *values, int da
 }
 
 
-void MapSendKeysValuesToAllReducers(struct ChannelsConfInterface *ch_if, int last_data, Buffer *keys, Buffer *values){
+void MapSendKeysValuesToAllReducers(struct ChannelsConfigInterface *ch_if, int last_data, Buffer *keys, Buffer *values){
 	/*get reducer count, this is same as dividers count for us, reducers list is not needed now*/
-	int dividers_count=0;
-	int *reduce_nodes_list = ch_if->NodesList( ch_if, EReduceNode, &dividers_count );
+    int *reduce_nodes_list = NULL;
+	int dividers_count  = ch_if->GetNodesListByType( ch_if, EReduceNode, &reduce_nodes_list );
 
 	/*send keys-values to Reducer nodes, using dividers data from data_start_index to
 	 * data_end_index range their max value less or equal to current divider value */
@@ -456,7 +450,10 @@ void MapSendKeysValuesToAllReducers(struct ChannelsConfInterface *ch_if, int las
 					j, current_key );
 
 			/*send to reducer with current_divider_index index*/
-			int fdw = ch_if->ChannelConfFd(ch_if, reduce_nodes_list[current_divider_index], CHANNEL_MODE_WRITE);
+			struct UserChannel *channel = ch_if->Channel(ch_if,
+			        EReduceNode, reduce_nodes_list[current_divider_index], EChannelModeWrite);
+			assert(channel);
+			int fdw = channel->fd;
 			last_data = last_data ? MAP_NODE_EXCLUDE : MAP_NODE_NO_EXCLUDE;
 			WRITE_FMT_LOG( "fdw=%d to reducer node %d write %d items\n", fdw,
 					reduce_nodes_list[current_divider_index], (int)count_in_section );
@@ -480,16 +477,20 @@ void MapSendKeysValuesToAllReducers(struct ChannelsConfInterface *ch_if, int las
 	 *and another data required by communication protocol*/
 	if ( !keys->header.count ){
 		for ( int i=0; i < dividers_count; i++ ){
-			int fdw = ch_if->ChannelConfFd(ch_if, reduce_nodes_list[i], CHANNEL_MODE_WRITE);
+            struct UserChannel *channel = ch_if->Channel(ch_if, EReduceNode, reduce_nodes_list[i], EChannelModeWrite);
+            assert(channel);
+			int fdw = channel->fd;
 			WRITE_FMT_LOG( "fdw=%d to reducer node items_count=0, flag=MAP_NODE_EXCLUDE\n", fdw );
 			WriteDataToReduce( fdw, keys, values, 0, 0, MAP_NODE_EXCLUDE );
 		}
 	}
 }
 
-void InitMapInternals(struct MapReduceUserIf *userif, const struct ChannelsConfInterface *chif, struct MapNodeEvents* ev){
+void InitMapInternals(struct MapReduceUserIf *userif, const struct ChannelsConfigInterface *chif, struct MapNodeEvents* ev){
 	/*get histograms count for MapReduceData*/
-	chif->NodesList( chif, EMapNode, &userif->data.histograms_count);
+    int *nodes_list_unwanted = NULL;
+    userif->data.histograms_count = chif->GetNodesListByType(chif, EMapNode, &nodes_list_unwanted );
+    free(nodes_list_unwanted);
 	userif->data.histograms_list = calloc( userif->data.histograms_count, sizeof(*userif->data.histograms_list) );
 
 	ev->MapCreateHistogramSendEachToOtherCreateDividersList = MapCreateHistogramSendEachToOtherCreateDividersList;
@@ -499,7 +500,7 @@ void InitMapInternals(struct MapReduceUserIf *userif, const struct ChannelsConfI
 }
 
 
-int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface *chif ){
+int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *chif ){
 	WRITE_LOG("MapNodeMain\n");
 	assert(userif);
 	__userif = userif;
@@ -518,9 +519,12 @@ int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface *ch
 	int last_chunk = 0;
 
 	do{
+        /*get input channel*/
+	    struct UserChannel *channel = chif->Channel(chif,EInputOutputNode, 1, EChannelModeRead);
+	    assert(channel);
 		/*4rd parameter is not used for first call, for another calls it should be assigned by Map call return value*/
 		returned_buf_size = events.MapInputDataProvider(
-				chif->ChannelConfFd(chif, STDIN, CHANNEL_MODE_READ ),
+				channel->fd,
 				&buffer,
 				split_input_size,
 				current_unhandled_data_pos
@@ -602,7 +606,7 @@ void MergeBuffersToNew( Buffer *newkeys, Buffer *newvalues,
 }
 
 
-int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface *chif ){
+int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *chif ){
 	WRITE_LOG("ReduceNodeMain\n");
 	assert(userif);
 	__userif = userif;
@@ -621,8 +625,8 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface 
 	memset( &all_values, '\0', sizeof(Buffer) );
 
 	/*get map_nodes_count*/
-	int map_nodes_count;
-	int *map_nodes_list = chif->NodesList( chif, EMapNode, &map_nodes_count);
+	int *map_nodes_list = NULL;
+	int map_nodes_count = chif->GetNodesListByType( chif, EMapNode, &map_nodes_list);
 	int excluded_map_nodes[map_nodes_count];
 	memset( excluded_map_nodes, '\0', sizeof(excluded_map_nodes) );
 
@@ -636,37 +640,46 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface 
 	memset( recv_values, '\0', sizeof(recv_values) );
 
 	/*read data from map nodes*/
+	int bytes=0;
 	int leave_map_nodes; /*is used as condition for do while loop*/
 	do{
 		leave_map_nodes = 0;
 		for( int i=0; i < map_nodes_count; i++ ){
 			/*If current map node should send data*/
 			if ( excluded_map_nodes[i] != MAP_NODE_EXCLUDE ){
-				int fdr = chif->ChannelConfFd( chif, map_nodes_list[i], CHANNEL_MODE_READ );
+			    struct UserChannel *channel = chif->Channel(chif, EMapNode, map_nodes_list[i], EChannelModeRead );
+			    assert(channel);
+				int fdr = channel->fd;
 				/*read last data flag 0 | 1, if reducer receives 1 then it should
 				 * exclude sender map node from communications*/
-				read( fdr, &excluded_map_nodes[i], sizeof(excluded_map_nodes[i]) );
+				bytes = read( fdr, &excluded_map_nodes[i], sizeof(excluded_map_nodes[i]) );
+				assert( bytes == sizeof(excluded_map_nodes[i]) );
 				WRITE_FMT_LOG( "read from map %d, map exclude flag=%d\n", map_nodes_list[i], (int)excluded_map_nodes[i] );
 				/*set next wait loop condition*/
 				if ( excluded_map_nodes[i] != MAP_NODE_EXCLUDE ){
 					leave_map_nodes = 1;
 				}
 				/*read keys header*/
-				read( fdr, &recv_keys[i].header, sizeof(BufferHeader));
+				bytes = read( fdr, &recv_keys[i].header, sizeof(BufferHeader));
+				assert( bytes == sizeof(BufferHeader) );
 				/*alloc memory for keys data*/
 				recv_keys[i].data = malloc( recv_keys[i].header.buf_size );
 				WRITE_FMT_LOG( "read from map %d, keys header, buf_size=%d\n",
 						map_nodes_list[i], (int)recv_keys[i].header.buf_size );
 				/*read keys data*/
-				read( fdr, recv_keys[i].data, recv_keys[i].header.buf_size );
+				bytes = read( fdr, recv_keys[i].data, recv_keys[i].header.buf_size );
+				assert( bytes == recv_keys[i].header.buf_size );
 				/*read values header*/
-				read( fdr, &recv_values[i].header, sizeof(BufferHeader));
+				bytes = read( fdr, &recv_values[i].header, sizeof(BufferHeader));
+				assert(bytes == sizeof(BufferHeader));
 				/*alloc memory for values data*/
 				recv_values[i].data = malloc( recv_values[i].header.buf_size );
 				WRITE_FMT_LOG( "read from map %d, value header, buf_size=%d\n",
 						map_nodes_list[i], (int)recv_values[i].header.buf_size );
 				/*read values data*/
-				read( fdr, recv_values[i].data, recv_values[i].header.buf_size );
+				bytes = read( fdr, recv_values[i].data, recv_values[i].header.buf_size );
+				assert(bytes == recv_values[i].header.buf_size );
+				WRITE_FMT_LOG( "readed from map %d, data size =%d\n", map_nodes_list[i], bytes );
 			}
 			else{
 				/*current map node excluded, free memory for unused buffers*/
@@ -685,6 +698,8 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface 
 			}
 		}
 
+		WRITE_LOG( "Prepare to merge" );
+
 		/*portion of data received from map nodes; merge all received data stored in
 		 * recv_keys, recv_values arrays in positions range "[0, map_nodes_cunt-1]";
 		 * last_merge_item_index points to previous merge result stored in the same arrays */
@@ -699,6 +714,7 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface 
 		assert( !AllocBuffer( &merged_keys, userif->data.keytype, result_granul ) );
 		assert( !AllocBuffer( &merged_values, userif->data.valuetype, result_granul ) );
 		MergeBuffersToNew( &merged_keys, &merged_values, recv_keys, recv_values, merge_count );
+		WRITE_LOG( "merge complete" );
 
 		/*Merge complete, so free merge input intermediate data*/
 		if ( recv_keys[last_merge_item_index].data ){
@@ -735,8 +751,6 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface 
 			int not_supported_yet = 0;
 			assert(not_supported_yet);
 		}
-
-
 	}while( leave_map_nodes != 0 );
 
 	/*free intermediate keys,values buffers*/
@@ -751,8 +765,9 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfInterface 
 		/*user should output data into output file/s*/
 		userif->Reduce( &all_keys, &all_values );
 	}
-	WRITE_LOG("ReduceNodeMain Complete\n");
 
+    free(map_nodes_list);
+	WRITE_LOG("ReduceNodeMain Complete\n");
 	return 0;
 }
 

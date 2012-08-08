@@ -1,5 +1,5 @@
 /*
- * map_communication_pattern.h
+ * eachtoother_comm.h
  *
  *  Created on: 14.07.2012
  *      Author: yaroslav
@@ -13,7 +13,7 @@
 
 /*Pattern for dermenistic claster nodes network communications without manager node*/
 struct EachToOtherPattern{
-	struct ChannelsConfInterface *conf;
+	struct ChannelsConfigInterface *conf;
 	void *data;
 	/*index - index in nodes_list currently reading*/
 	void (*Read)( struct EachToOtherPattern *p_this, int nodetype, int index, int fdr );
