@@ -2,24 +2,26 @@
 == i/o switches. full list. optional. some switches now meaningless,
 == placed here for completeness and future changes
 =====================================================================
-Channel = {ABS_PATH}data/{NODEID}input.txt, /dev/stdin, 4, 999999, 999999, 0, 0
-Channel = /dev/null, /dev/stdout, 5, 0, 0, 999999, 999999
-Channel = {ABS_PATH}log/map{NODEID}.stderr.log, /dev/stderr, 6, 0, 0, 9999999, 9999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red5, w_map{NODEID}_red5, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red6, w_map{NODEID}_red6, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red7, w_map{NODEID}_red7, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red8, w_map{NODEID}_red8, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_red9, w_map{NODEID}_red9, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_map1, w_map{NODEID}_map1, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_map2, w_map{NODEID}_map2, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_map3, w_map{NODEID}_map3, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map{NODEID}_map4, w_map{NODEID}_map4, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map1_map{NODEID}, r_map{NODEID}_map1, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map2_map{NODEID}, r_map{NODEID}_map2, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map3_map{NODEID}, r_map{NODEID}_map3, 0, 99999999, 99999999, 99999999, 99999999
-Channel = {ABS_PATH}debug/zerovm/files/map4_map{NODEID}, r_map{NODEID}_map4, 0, 99999999, 99999999, 99999999, 99999999
+Channel = {ABS_PATH}data/{NODEID}input.txt, /dev/stdin, 0, 99999999, 99999999, 0, 0
+Channel = {ABS_PATH}log/map{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 999999999, 999999999
+Channel = /dev/null, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}log/map{NODEID}.stderr.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
+Channel = ipc:///tmp/map{NODEID}-red1, w_map{NODEID}-red-1, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map{NODEID}-red2, w_map{NODEID}-red-2, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map{NODEID}-red3, w_map{NODEID}-red-3, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map{NODEID}-red4, w_map{NODEID}-red-4, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map{NODEID}-red5, w_map{NODEID}-red-5, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map{NODEID}-map1, w_map{NODEID}-map-1, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map{NODEID}-map2, w_map{NODEID}-map-2, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map{NODEID}-map3, w_map{NODEID}-map-3, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map{NODEID}-map4, w_map{NODEID}-map-4, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/map1-map{NODEID}, r_map{NODEID}-map-1, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/map2-map{NODEID}, r_map{NODEID}-map-2, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/map3-map{NODEID}, r_map{NODEID}-map-3, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/map4-map{NODEID}, r_map{NODEID}-map-4, 0, 99999999, 99999999, 0, 0
 
-CommandLine = {NODEID}
+Environment =MAP_NAME,map,REDUCE_NAME,red
+CommandLine = map-{NODEID}
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some

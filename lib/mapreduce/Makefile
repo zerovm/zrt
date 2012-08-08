@@ -1,6 +1,7 @@
 NACL_GCC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
 DEBUG=-g -DDEBUG
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I.
+ZRT_ROOT=..
+INCLUDE_FLAGS=-I$(ZRT_ROOT)/  -I. 
 CFLAGS=-Wall -Wno-long-long -m64 -std=c99
 
 all: libmapreduce.a libmapreduce_gcc.a
@@ -8,8 +9,8 @@ all: libmapreduce.a libmapreduce_gcc.a
 libmapreduce_gcc.a: gcc_buffer.o gcc_map_reduce_lib.o gcc_eachtoother_comm.o gcc_channels_conf.o
 	@ar rcs libmapreduce_gcc.a gcc_buffer.o gcc_map_reduce_lib.o gcc_eachtoother_comm.o gcc_channels_conf.o
 
-libmapreduce.a: buffer.o map_reduce_lib.o eachtoother_comm.o channels_conf.o
-	@ar rcs libmapreduce.a buffer.o map_reduce_lib.o eachtoother_comm.o channels_conf.o
+libmapreduce.a: buffer.o map_reduce_lib.o eachtoother_comm.o channels_conf.o dyn_array.o
+	@ar rcs libmapreduce.a buffer.o map_reduce_lib.o eachtoother_comm.o channels_conf.o dyn_array.o
 
 
 ##############################################
@@ -43,6 +44,9 @@ eachtoother_comm.o: eachtoother_comm.c eachtoother_comm.h
 
 channels_conf.o: channels_conf.c channels_conf.h
 	@$(NACL_GCC) -c -o channels_conf.o    $(INCLUDE_FLAGS) ${CFLAGS} $(DEBUG) channels_conf.c
+
+dyn_array.o: ../helpers/dyn_array.c ../helpers/dyn_array.h
+	@$(NACL_GCC) -c -o dyn_array.o    $(INCLUDE_FLAGS) ${CFLAGS} $(DEBUG) ../helpers/dyn_array.c
 
 clean:
 	@rm -f libmapreduce_gcc.a libmapreduce.a *.o 

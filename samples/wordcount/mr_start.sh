@@ -12,8 +12,8 @@ cd ../../zvm
 #config for mapreduce network
 MAP_FIRST=1
 MAP_LAST=4
-REDUCE_FIRST=5
-REDUCE_LAST=8
+REDUCE_FIRST=1
+REDUCE_LAST=5
 
 time
 
@@ -29,6 +29,6 @@ while [  $COUNTER -le $REDUCE_LAST ]; do
     let COUNTER=COUNTER+1 
 done
 
-time ./zerovm -M../samples/wordcount/manifest/reduce9.manifest
+time ./zerovm -M../samples/wordcount/manifest/reduce"$REDUCE_LAST".manifest
 
 

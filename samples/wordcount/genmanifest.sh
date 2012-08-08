@@ -7,18 +7,24 @@ echo $SCRIPT_PATH
 #Generate from template
 MAP_FIRST=1
 MAP_LAST=4
-REDUCE_FIRST=5
-REDUCE_LAST=9
+REDUCE_FIRST=1
+REDUCE_LAST=5
 
 COUNTER=$MAP_FIRST
 while [  $COUNTER -le $MAP_LAST ]; do
-    sed s/{NODEID}/$COUNTER/g manifest/map.manifest.template | sed s@{ABS_PATH}@$SCRIPT_PATH@ | sed /map"$COUNTER"_map"$COUNTER"/d > manifest/map"$COUNTER".manifest 
+    sed s/{NODEID}/$COUNTER/g manifest/map.manifest.template | \
+    sed s@{ABS_PATH}@$SCRIPT_PATH@ | \
+    sed /map"$COUNTER"-map"$COUNTER"/d | \
+    sed s@w_map"$COUNTER"-@/dev/out/@g | \
+    sed s@r_map"$COUNTER"-@/dev/in/@g > manifest/map"$COUNTER".manifest 
     let COUNTER=COUNTER+1 
 done
 
 COUNTER=$REDUCE_FIRST
 while [  $COUNTER -le $REDUCE_LAST ]; do
-    sed s/{NODEID}/$COUNTER/g manifest/reduce.manifest.template | sed s@{ABS_PATH}@$SCRIPT_PATH@ > manifest/reduce"$COUNTER".manifest
+    sed s/{NODEID}/$COUNTER/g manifest/reduce.manifest.template | \
+    sed s@{ABS_PATH}@$SCRIPT_PATH@ |
+    sed s@r_red"$COUNTER"-@/dev/in/@g > manifest/reduce"$COUNTER".manifest
     let COUNTER=COUNTER+1 
 done
 

@@ -51,7 +51,7 @@ int main(int argc, char **argv){
         snprintf( path, MAX_PATH_LENGTH, "%s/%s", IN_DIR, name );
     }
     else{
-        assert("can't read in dir");
+        assert(0); //can't read out dir
     }
     closedir(dp);
     fdr = open(path, O_RDONLY);
@@ -62,8 +62,9 @@ int main(int argc, char **argv){
     dp = opendir( OUT_DIR );
     if ( (name=listdir(dp)) ){
         snprintf( path, MAX_PATH_LENGTH, "%s/%s", OUT_DIR, name );
-    }{
-        assert("can't read out dir");
+    }
+    else{
+        assert(0); //can't read out dir
     }
     closedir(dp);
     fdw = open(path, O_WRONLY);

@@ -6,7 +6,7 @@ ZRT_ROOT=../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I$(ZRT_ROOT)/lib/mapreduce -Isrc
 CFLAGS=-Wall -Wno-long-long -m64 -std=c99
 
-all: createdirs clean gcc_map gcc_reduce map.nexe reduce.nexe
+all: createdirs clean map.nexe reduce.nexe
 
 ##############################################
 ############## gcc g++

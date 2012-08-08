@@ -5,12 +5,12 @@
  *      Author: YaroslavLitvinov
  */
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <assert.h>
 
 #ifdef USER_SIDE
 	#include "zrt.h"
@@ -21,30 +21,49 @@
 #include "channels_conf.h"
 #include "common_channels_conf.h" //temp
 #include "defines.h"
-
-
-/*should be accessible by all node type by single reference*/
-const int __map_nodes_list[] = { 1, 2, 3, 4 }; /*ascending order*/
-const int __reduce_nodes_list[] = { 5, 6, 7, 8, 9 }; /*ascending order*/
+#include "helpers/dyn_array.h"
 
 
 int main(int argc, char **argv){
-	WRITE_LOG("Map node started.\n" );
-	if ( argc < 2 ){
-		WRITE_LOG("Required 1 arg unique node integer id\n");
-		exit(-1);
-	}
-	const int nodeid = atoi(argv[1]);
-	WRITE_FMT_LOG("nodeid=%d \n", nodeid);
+    /* argv[0] is node name
+     * expecting in format : "name-%d",
+     * format for single node without decimal id: "name" */
+    int ownnodeid= -1;
+    int extracted_name_len=0;
+    int res =0;
 
-	/*setup channels conf, now used static data but should be replaced by data from zrt*/
-	struct ChannelsConfInterface chan_if;
-	SetupChannelsConfInterface( &chan_if, nodeid );
-	chan_if.NodesListAdd( &chan_if, EMapNode,
-			(int*)__map_nodes_list, sizeof(__map_nodes_list)/sizeof(*__map_nodes_list) );
-	chan_if.NodesListAdd( &chan_if, EReduceNode,
-			(int*)__reduce_nodes_list, sizeof(__reduce_nodes_list)/sizeof(*__reduce_nodes_list) );
-	FillUserChannelsList( &chan_if ); /*temp. setup distributed conf, by static data */
+	WRITE_FMT_LOG("Map node started argv[0]=%s.\n", argv[1] );
+
+	/*get node type names via environnment*/
+    char *map_node_type_text = getenv(ENV_MAP_NODE_NAME);
+    char *red_node_type_text = getenv(ENV_REDUCE_NODE_NAME);
+    assert(map_node_type_text);
+    assert(red_node_type_text);
+
+	ownnodeid = ExtractNodeNameId( argv[1], &extracted_name_len );
+	/*nodename should be the same we got via environment and extracted from argv[0]*/
+	assert( !strncmp(map_node_type_text, argv[1], extracted_name_len ) );
+	if ( ownnodeid == -1 ) ownnodeid=1; /*node id not specified for single node by default assign nodeid=1*/
+
+    /*setup channels conf, now used static data but should be replaced by data from zrt*/
+    struct ChannelsConfigInterface chan_if;
+    SetupChannelsConfigInterface( &chan_if, ownnodeid, EMapNode );
+
+    /***********************************************************************
+     Add channels configuration into config object */
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, IN_DIR, EChannelModeRead, EMapNode, map_node_type_text );
+    assert( res == 0 );
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, IN_DIR, EChannelModeRead, EReduceNode, red_node_type_text );
+    assert( res == 0 );
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, OUT_DIR, EChannelModeWrite, EMapNode, map_node_type_text );
+    assert( res == 0 );
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, OUT_DIR, EChannelModeWrite, EReduceNode, red_node_type_text );
+    assert( res == 0 );
+    /*add input channel into config*/
+    res = chan_if.AddChannel( &chan_if, EInputOutputNode, 1, 0, EChannelModeRead ) != NULL? 0: -1;
+    /*add fake channel into config related to mapnode types, to get right nodes list*/
+    res = chan_if.AddChannel( &chan_if, EMapNode, ownnodeid, -1, EChannelModeRead ) != NULL? 0: -1;
+    assert( res == 0 );
 	/*--------------*/
 
 	struct MapReduceUserIf mr_if;
@@ -52,9 +71,16 @@ int main(int argc, char **argv){
 	InitInterface( &mr_if );
 	mr_if.data.keytype = EUint32;
 	mr_if.data.valuetype = EUint32;
-	int res = MapNodeMain(&mr_if, &chan_if);
+	res = MapNodeMain(&mr_if, &chan_if);
 
-	CloseChannels();
+	/*map job complete*/
+    for ( int i=0; i < chan_if.channels->num_entries;i++ ){
+        struct UserChannel *channel = (struct UserChannel *)chan_if.channels->ptr_array[i];
+        if ( channel ){
+            close(channel->fd);  /*close all opened file descriptors*/
+        }
+    }
+    chan_if.Free(&chan_if); /*freee memories used by channels configuration*/
 
 	return res;
 }

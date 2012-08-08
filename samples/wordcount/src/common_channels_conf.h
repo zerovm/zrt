@@ -8,14 +8,23 @@
 #ifndef COMMON_CHANNELS_CONF_H_
 #define COMMON_CHANNELS_CONF_H_
 
-/*this path is used to temporary store files that emulate communication channels,
- * for ZeroVM build it should use Zerovm channels implementation */
-#define GCC_DEBUG_CHANNELS_PATH "debug/gcc/files/"
-#define ZEROVM_DEBUG_CHANNELS_PATH ""
+#include <stddef.h>
+#include <stdint.h>
 
-/*Stub initializes distributed app channels for all nodes*/
-void FillUserChannelsList(struct ChannelsConfInterface *ch_if);
-/*required only for debugging on fake network-files channels*/
-void CloseChannels();
+struct ChannelsConfigInterface;
+
+#define ENV_MAP_NODE_NAME "MAP_NAME"
+#define ENV_REDUCE_NODE_NAME "REDUCE_NAME"
+#define IN_DIR "/dev/in"
+#define OUT_DIR "/dev/out"
+#define MAX_PATH_LENGTH 255
+
+int AddAllChannelsRelatedToNodeTypeFromDir( struct ChannelsConfigInterface *chan_if,
+        const char *dirpath, int channel_mode, int nodetype, const char* nodename_text );
+
+/* @param nameall string to extract values
+ * @param nodenamelen length of extracted text up to trailing '-'
+ * @return node id  */
+int ExtractNodeNameId( const char *nameall, int *nodenamelen );
 
 #endif /* COMMON_CHANNELS_CONF_H_ */
