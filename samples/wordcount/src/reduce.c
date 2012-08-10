@@ -19,7 +19,7 @@
 #include "map_reduce_lib.h"
 #include "eachtoother_comm.h"
 #include "channels_conf.h"
-#include "common_channels_conf.h" //temp
+#include "channels_conf_reader.h"
 #include "defines.h"
 #include "helpers/dyn_array.h"
 
@@ -67,13 +67,6 @@ int main(int argc, char **argv){
     WRITE_LOG("complete---------------------");
 
     /*reduce job complete*/
-    for ( int i=0; i < chan_if.channels->num_entries;i++ ){
-        struct UserChannel *channel = (struct UserChannel *)chan_if.channels->ptr_array[i];
-        if ( channel ){
-            close(channel->fd);  /*close all opened file descriptors*/
-        }
-    }
-    chan_if.Free(&chan_if); /*freee memories used by channels configuration*/
-
+    CloseChannels(&chan_if);
 	return res;
 }
