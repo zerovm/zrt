@@ -4,11 +4,12 @@ PNACL_TOOL=~/nacl_sdk/pepper_19/toolchain/linux_x86_glibc
 LIBSQLITE=lib/sqlite3/libsqlite3.a
 LIBLUA=lib/lua-5.2.1/src/liblua.a
 LIBMAPREDUCE=lib/mapreduce/libmapreduce.a
+LIBNETWORKING=lib/networking/libnetworking.a
 LIBGTEST=gtest/libgtest.a
 MACROS_FLAGS=-DUSER_SIDE -DDEBUG
 INCLUDE_PATH=-I. -Ilib -Izvm
 
-all: lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST}
+all: lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING}
 
 
 lib/libzrt.a: lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/zrtsyscalls.c lib/zrtreaddir.c 
@@ -34,6 +35,10 @@ ${LIBMAPREDUCE}:
 	@PNACL_TOOL=${PNACL_TOOL} make -Clib/mapreduce
 	@mv -f ${LIBMAPREDUCE} lib
 
+${LIBNETWORKING}:
+	@PNACL_TOOL=${PNACL_TOOL} make -Clib/networking
+	@mv -f ${LIBNETWORKING} lib
+
 ${LIBGTEST}:
 	@PNACL_TOOL=${PNACL_TOOL} make -Cgtest
 
@@ -41,22 +46,23 @@ all_samples:
 	@echo Building samples
 	@make -Csamples/command_line
 	@make -Csamples/disort
-	@make -Csamples/file_io	
+	@make -Csamples/environment	
 	@make -Csamples/file_stat
 	@make -Csamples/hello
-	@make -Csamples/lua
-	@make -Csamples/malloc
+	@make -Csamples/manifest_test
+	@make -Csamples/net
+	@make -Csamples/readdir
 	@make -Csamples/reqrep
-	@make -Csamples/sort
+	@make -Csamples/zshell
 	@make -Csamples/sort_paging
-	@make -Csamples/sqlite
-	@make -Csamples/strtol
 	@make -Csamples/time
+	@make -Csamples/wordcount
 
 clean:	
 	@make -Clib/sqlite3 clean
 	@make -Clib/lua-5.2.1 clean
 	@make -Clib/mapreduce clean
+	@make -Clib/networking clean
 	@make -Cgtest clean
 	@rm -f lib/*.o lib/*.a
 

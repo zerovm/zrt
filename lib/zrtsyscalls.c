@@ -479,6 +479,7 @@ static int32_t zrt_close(uint32_t *args)
         s_zrt_channels[handle]->random_access_pos = s_zrt_channels[handle]->sequential_access_pos = 0;
         s_zrt_channels[handle]->maxsize = 0;
         s_zrt_channels[handle]->open_mode = -1;
+        zvm_close(handle);
         return 0;
     }
     else{ /*search handle in directories list*/
