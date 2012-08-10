@@ -17,6 +17,9 @@
 
 #include "zrt.h"
 
+#define WRITE_FMT_LOG(fmt, args...) fprintf(stderr, fmt, args)
+#define WRITE_LOG(str) fprintf(stderr, "%s\n", str)
+
 #define IN_DIR "/dev/in"
 #define OUT_DIR "/dev/out"
 #define MAX_PATH_LENGTH 255
@@ -37,14 +40,15 @@ int main(int argc, char **argv){
     int fdr = -1;
     int fdw = -1;
     char *first = getenv("first");
+    char *type = getenv("type");
 
-	WRITE_FMT_LOG("reqrep started, first=%s\n", first);
+    WRITE_FMT_LOG("reqrep started, first=%s\n", first);
     if ( strcmp(first, "read") && strcmp(first, "write") ){
         WRITE_LOG("environment variable FIRST as waiting values (read | write)\n");
         exit(0);
     }
 
-	/***********************************************************************
+    /***********************************************************************
 	 open in channel, readed from /dev/in dir */
     DIR *dp = opendir( IN_DIR );
     if ( (name=listdir(dp)) ){
@@ -73,31 +77,50 @@ int main(int argc, char **argv){
     assert( fdr != -1 );
     assert( fdw != -1 );
 
-	int testlen = 1000000;
-	char *buf = malloc(testlen+1);
-	buf[testlen] = '\0';
-	for (int i=0; i < 10; i++){
-	    if ( !strcmp(first, "read") ){
-            ssize_t bread = read(fdr, buf, testlen);
-            WRITE_FMT_LOG("#%d case1: read requested=%d, read=%d\n", i, testlen, (int)bread );
-            assert( bread == testlen );
-            ssize_t bwrite = write(fdw, buf, testlen);
-            WRITE_FMT_LOG("#%d case2: write passed=%d, wrote=%d\n", i, testlen, (int)bwrite );
-            assert( bwrite == testlen );
-	    }
-	    else{
-	        ssize_t bwrote = write(fdw, buf, testlen);
-	        WRITE_FMT_LOG("#%d case1: write passed=%d, wrote=%d\n", i, testlen, (int)bwrote );
-	        assert( bwrote == testlen );
-	        ssize_t bread = read(fdr, buf, testlen);
-	        WRITE_FMT_LOG("#%d case2: read requested=%d, read=%d\n", i, testlen, (int)bread );
-	        assert( bread == testlen );
-	    }
-	}
-	free(buf);
+    int testlen = 1000000;
+    char *buf = malloc(testlen+1);
+    buf[testlen] = '\0';
 
-	close(fdr);
-	close(fdw);
-	WRITE_LOG("exit\n");
-	return 0;
+    if ( type == NULL || strcmp(type, "2") != 0 ){
+        for (int i=0; i < 10; i++){
+            if ( !strcmp(first, "read") ){
+                ssize_t bread = read(fdr, buf, testlen);
+                WRITE_FMT_LOG("#%d case1: read requested=%d, read=%d\n", i, testlen, (int)bread );
+                assert( bread == testlen );
+                ssize_t bwrite = write(fdw, buf, testlen);
+                WRITE_FMT_LOG("#%d case2: write passed=%d, wrote=%d\n", i, testlen, (int)bwrite );
+                assert( bwrite == testlen );
+            }
+            else{
+                ssize_t bwrote = write(fdw, buf, testlen);
+                WRITE_FMT_LOG("#%d case1: write passed=%d, wrote=%d\n", i, testlen, (int)bwrote );
+                assert( bwrote == testlen );
+                ssize_t bread = read(fdr, buf, testlen);
+                WRITE_FMT_LOG("#%d case2: read requested=%d, read=%d\n", i, testlen, (int)bread );
+                assert( bread == testlen );
+            }
+        }
+    }
+    else{
+        if ( !strcmp(first, "read") ){
+            for (int i=0; i < 10; i++){
+                ssize_t bread = read(fdr, buf, testlen);
+                WRITE_FMT_LOG("#%d case2: read requested=%d, read=%d\n", i, testlen, (int)bread );
+                assert( bread == testlen );
+            }
+        }
+        else {
+            for (int i=0; i < 10; i++){
+                ssize_t bwrote = write(fdw, buf, testlen);
+                WRITE_FMT_LOG("#%d case2: write passed=%d, wrote=%d\n", i, testlen, (int)bwrote );
+                assert( bwrote == testlen );
+            }
+        }
+    }
+    close(fdr);
+    close(fdw);
+    WRITE_LOG("free buf");
+    free(buf);
+    WRITE_LOG("exit\n");
+    return 0;
 }
