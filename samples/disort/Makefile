@@ -1,6 +1,6 @@
 PNACL_TOOL=~/nacl_sdk/pepper_19/toolchain/linux_x86_glibc
 ZRT_ROOT=../..
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I.
+INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/lib/networking -I$(ZRT_ROOT)/zvm -I.
 #DEBUG=-g
 MANNODE=nodeman
 SRCNODE=nodesrc
@@ -11,19 +11,20 @@ all: cleanlog prepare $(MANNODE).nexe $(SRCNODE).nexe $(DSTNODE).nexe
 $(MANNODE).nexe: obj/main_man.o obj/comm_man.o obj/histanlz.o obj/dsort.o obj/comm.o
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(MANNODE).nexe  -s -static -T $(DEBUG) \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	obj/main_man.o obj/comm_man.o obj/histanlz.o obj/dsort.o obj/comm.o -Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt
+	obj/main_man.o obj/comm_man.o obj/histanlz.o obj/dsort.o obj/comm.o \
+	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lnetworking
 	
-$(SRCNODE).nexe: obj/main_src.o obj/sort.o obj/dsort.o obj/comm_src.o obj/bitonic.o obj/cpuid.o obj/comm.o
+$(SRCNODE).nexe: obj/main_src.o obj/sort.o obj/dsort.o obj/comm_src.o obj/bitonic.o obj/cpuid.o obj/comm.o 
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(SRCNODE).nexe  -s -static -T $(DEBUG) \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
 	obj/main_src.o obj/sort.o obj/dsort.o obj/comm_src.o obj/bitonic.o obj/cpuid.o obj/comm.o \
-	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt 
+	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lnetworking
 	  
-	
-$(DSTNODE).nexe: obj/main_dst.o obj/sort.o obj/dsort.o obj/comm_dst.o obj/comm.o
+$(DSTNODE).nexe: obj/main_dst.o obj/sort.o obj/dsort.o obj/comm_dst.o obj/comm.o 
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(DSTNODE).nexe  -s -static -T $(DEBUG) \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	obj/main_dst.o obj/sort.o obj/dsort.o obj/comm_dst.o obj/comm.o -Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt
+	obj/main_dst.o obj/sort.o obj/dsort.o obj/comm_dst.o obj/comm.o  \
+	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lnetworking
 
 #source node & dest node
 obj/dsort.o: dsort.c
@@ -99,7 +100,7 @@ createdirs:
 clean: cleanlog 
 	@rm -f *.nexe
 	@rm -f obj/*.o
-	@rm -f vmlog/*
+	@rm -f manifest/*.manifest
 	@rm -f data/*.data
 	@rm -f $(MANNODE).nexe $(SRCNODE).nexe $(DSTNODE).nexe
 	

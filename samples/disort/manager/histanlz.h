@@ -12,6 +12,8 @@
 #include <sys/types.h>
 
 
+struct ChannelsConfigInterface;
+
 struct histogram_helper_t{
 	int begin_offset;
 	int begin_histogram_index; //First histogram in range
@@ -57,11 +59,12 @@ size_all_processed_histograms( const struct histogram_worker* array_workers, int
 
 
 struct request_data_t**
-alloc_range_request_analize_histograms( const int single_src_items_count, pid_t pid,
-		const struct Histogram *histograms_array, size_t len );
+alloc_range_request_analize_histograms( struct ChannelsConfigInterface *chan_if,
+        const int single_src_items_count, const struct Histogram *histograms_array, size_t len );
 
 void
-request_assign_detailed_histogram( int current_histogram_len, int single_src_items_count, int node_id,
-		struct histogram_worker* workers, int array_len, int last_request );
+request_assign_detailed_histogram( struct ChannelsConfigInterface *chan_if,
+        int current_histogram_len, int single_src_items_count,
+		struct histogram_worker* workers, int last_request );
 
 #endif /* HISTANLZ_H_ */

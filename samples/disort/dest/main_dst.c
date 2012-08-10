@@ -14,46 +14,84 @@
 #include <assert.h>
 
 #include "zrt.h"
-#include "defines.h"
 #include "sort.h"
+#include "defines.h"
 #include "dsort.h"
 #include "comm_dst.h"
+#include "channels_conf_reader.h"
+#include "channels_conf.h"
 
+#define STDOUT 1
 
-int main(int argc, char **argv){
-	int nodeid = -1;
-	if ( argc < 2 ){
-		return 1;
-	}
-	nodeid = atoi(argv[1]);
-	WRITE_FMT_LOG(LOG_UI, "[%d] Destination node started\n", nodeid);
+int start_node(struct ChannelsConfigInterface *chan_if, int nodeid){
+    BigArrayPtr unsorted_array = NULL;
+    BigArrayPtr sorted_array = NULL;
 
-	BigArrayPtr unsorted_array = NULL;
-	BigArrayPtr sorted_array = NULL;
-
-	/*receive sorted ranges from all source nodes*/
-	unsorted_array = calloc( sizeof(BigArrayItem), ARRAY_ITEMS_COUNT );
-	repreq_read_sorted_ranges( DEST_FD_READ_SORTED_RANGES_START, nodeid, unsorted_array,
-			ARRAY_ITEMS_COUNT, SRC_NODES_COUNT );
+    /*receive sorted ranges from all source nodes*/
+    unsorted_array = calloc( sizeof(BigArrayItem), ARRAY_ITEMS_COUNT );
+    repreq_read_sorted_ranges( chan_if, unsorted_array, ARRAY_ITEMS_COUNT );
 
 #ifdef MERGE_ON_FLY
-	sorted_array = unsorted_array;
+    sorted_array = unsorted_array;
 #else
-	/*local sort of received pieces*/
-	sorted_array = alloc_sort( unsorted_array, ARRAY_ITEMS_COUNT );
+    /*local sort of received pieces*/
+    sorted_array = alloc_sort( unsorted_array, ARRAY_ITEMS_COUNT );
 #endif
 
-	/*save sorted array to output file*/
-	const size_t data_size = sizeof(BigArrayItem)*ARRAY_ITEMS_COUNT;
-	if ( sorted_array ){
-		const ssize_t wrote = write( 1, sorted_array, data_size);
-		assert(wrote == data_size );
-	}
+    /*save sorted array to output file*/
+    const size_t data_size = sizeof(BigArrayItem)*ARRAY_ITEMS_COUNT;
+    if ( sorted_array ){
+        const ssize_t wrote = write( 1, sorted_array, data_size);
+        assert(wrote == data_size );
+    }
 
-	write_sort_result( DEST_FD_WRITE_SORT_RESULT, nodeid, sorted_array, ARRAY_ITEMS_COUNT );
+    struct UserChannel *channel = chan_if->Channel(chan_if, EManagerNode, 1, EChannelModeWrite);
+    write_sort_result( channel->fd, nodeid, sorted_array, ARRAY_ITEMS_COUNT );
 
-	free(unsorted_array);
-	WRITE_LOG( LOG_UI,  "Destination node complete\n");
-	return 0;
+    free(unsorted_array);
+    WRITE_LOG( LOG_UI,  "Destination node complete\n");
+    return 0;
+}
+
+int main(int argc, char **argv){
+    /* argv[0] is node name
+     * expecting in format : "name-%d",
+     * format for single node without decimal id: "name" */
+    int ownnodeid= -1;
+    int extracted_name_len=0;
+    int res =0;
+    WRITE_FMT_LOG(LOG_DEBUG, "Destination node started argv[0]=%s.\n", argv[1] );
+
+    /*get node type names via environnment*/
+    char *dest_node_type_text = getenv(ENV_DEST_NODE_NAME);
+    char *source_node_type_text = getenv(ENV_SOURCE_NODE_NAME);
+    char *man_node_type_text = getenv(ENV_MAN_NODE_NAME);
+    assert(dest_node_type_text);
+    assert(source_node_type_text);
+    assert(man_node_type_text);
+
+    ownnodeid = ExtractNodeNameId( argv[1], &extracted_name_len );
+    /*nodename should be the same we got via environment and extracted from argv[0]*/
+    assert( strncmp(dest_node_type_text, argv[1], extracted_name_len ) == 0 );
+    if ( ownnodeid == -1 ) ownnodeid=1; /*node id not specified for single node by default assign nodeid=1*/
+
+    /*setup channels conf, now used static data but should be replaced by data from zrt*/
+    struct ChannelsConfigInterface chan_if;
+    SetupChannelsConfigInterface( &chan_if, ownnodeid, EDestinationNode );
+
+    /***********************************************************************
+      Add channels configuration into config object */
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, IN_DIR, EChannelModeRead, ESourceNode, source_node_type_text );
+    assert( res == 0 );
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, OUT_DIR, EChannelModeWrite, EManagerNode, man_node_type_text );
+    assert( res == 0 );
+    /*add input channel into config*/
+    res = chan_if.AddChannel( &chan_if, EInputOutputNode, 1, STDOUT, EChannelModeWrite ) != NULL? 0: -1;
+    assert( res == 0 );
+    /*--------------*/
+
+    start_node(&chan_if, ownnodeid);
+    CloseChannels(&chan_if);
+    return 0;
 }
 

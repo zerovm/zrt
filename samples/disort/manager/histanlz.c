@@ -6,14 +6,15 @@
  */
 
 
-#include "defines.h"
-#include "histanlz.h"
-#include "comm_man.h"
-
 #include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+
+#include "histanlz.h"
+#include "defines.h"
+#include "comm_man.h"
+#include "channels_conf.h"
 
 
 void
@@ -169,8 +170,8 @@ size_all_processed_histograms( const struct histogram_worker* array_workers, int
 
 /*@return two dimensional array, where is result[i][j] an item representing range of data*/
 struct request_data_t**
-alloc_range_request_analize_histograms( const int single_src_items_count, int nodeid,
-		const struct Histogram *histograms_array, size_t len ){
+alloc_range_request_analize_histograms( struct ChannelsConfigInterface *chan_if,
+        const int single_src_items_count, const struct Histogram *histograms_array, size_t len ){
 	struct request_data_t **result = NULL;
 	struct histogram_worker workers[len];
 	for ( int i=0; i < len; i++ ){
@@ -230,12 +231,12 @@ alloc_range_request_analize_histograms( const int single_src_items_count, int no
 				 range_count + len*histogram_len >= single_src_items_count)
 			{
 				last_histograms_requested = destination_index+1 >= len;
-				WRITE_FMT_LOG(LOG_DEBUG, "#%d Detailed Histograms recv start", destination_index );
-				WRITE_FMT_LOG(LOG_DEBUG, "histogram_len=%d, len=%d", (int)histogram_len, (int)len);
-				request_assign_detailed_histogram( histogram_len, single_src_items_count, nodeid,
-						workers, len, last_histograms_requested );
+				WRITE_FMT_LOG(LOG_DEBUG, "#%d Detailed Histograms recv start\n", destination_index );
+				WRITE_FMT_LOG(LOG_DEBUG, "histogram_len=%d, len=%d\n", (int)histogram_len, (int)len);
+				request_assign_detailed_histogram( chan_if, histogram_len, single_src_items_count,
+						workers, last_histograms_requested );
 
-				WRITE_FMT_LOG(LOG_DEBUG, "#%d Detailed Histograms received", destination_index );
+				WRITE_FMT_LOG(LOG_DEBUG, "#%d Detailed Histograms received\n", destination_index );
 				allow_check_remove_detailed_hitogram = 0;
 			}
 		} //while
@@ -251,10 +252,10 @@ alloc_range_request_analize_histograms( const int single_src_items_count, int no
 			result[destination_index][j].first_item_index = first_item_index;
 			result[destination_index][j].last_item_index = last_item_index-1;
 			result[destination_index][j].src_nodeid = workers[j].histogram.src_nodeid;
-			for (int k=0; k < SRC_NODES_COUNT; k++)
-				if ( histograms_array[j].src_nodeid == (FIRST_SOURCE_NODEID+k)  )
+			for (int k=0; k < len; k++)
+				if ( histograms_array[j].src_nodeid == (k+1)  )
 				{
-					result[destination_index][j].dst_nodeid = FIRST_DEST_NODEID+k;
+					result[destination_index][j].dst_nodeid = k+1;
 				}
 		}
 
@@ -272,23 +273,28 @@ alloc_range_request_analize_histograms( const int single_src_items_count, int no
 
 
 void
-request_assign_detailed_histogram( int current_histogram_len, int single_src_items_count, int nodeid,
-		struct histogram_worker* workers, int array_len, int last_request ){
-	struct request_data_t request_detailed_histogram[array_len];
+request_assign_detailed_histogram( struct ChannelsConfigInterface *chan_if,
+        int current_histogram_len, int single_src_items_count,
+		struct histogram_worker* workers, int last_request )
+{
+    int *src_nodes_list = NULL;
+    int src_nodes_count = chan_if->GetNodesListByType(chan_if, ESourceNode, &src_nodes_list);
+
+	struct request_data_t request_detailed_histogram[src_nodes_count];
 	/*Prepare request_detailed_histogram to do request*/
-	for (int i=0; i < array_len; i++){
-		WRITE_FMT_LOG(LOG_DEBUG,  "i=%d, workers[i].helper.end_histogram_index=%d",
+	for (int i=0; i < src_nodes_count; i++){
+		WRITE_FMT_LOG(LOG_DEBUG,  "i=%d, workers[i].helper.end_histogram_index=%d\n",
 				i, workers[i].helper.end_histogram_index );
 
 		int start_index = workers[i].histogram.array[workers[i].helper.end_histogram_index].item_index;
 
 		request_detailed_histogram[i].dst_nodeid = workers[i].histogram.src_nodeid;
-		request_detailed_histogram[i].src_nodeid = nodeid;
+		request_detailed_histogram[i].src_nodeid = chan_if->ownnodeid;
 		request_detailed_histogram[i].first_item_index = start_index;
 		request_detailed_histogram[i].last_item_index =
-				min(start_index + current_histogram_len * array_len, single_src_items_count );
+				min(start_index + current_histogram_len * src_nodes_count, single_src_items_count );
 
-		WRITE_FMT_LOG(LOG_DEBUG,  "Want %d range(%d, %d)",
+		WRITE_FMT_LOG(LOG_DEBUG,  "Want %d range(%d, %d)\n",
 				request_detailed_histogram[i].dst_nodeid,
 				request_detailed_histogram[i].first_item_index,
 				request_detailed_histogram[i].last_item_index ); fflush(0);
@@ -296,11 +302,15 @@ request_assign_detailed_histogram( int current_histogram_len, int single_src_ite
 
 	/////////////////
 
-	for( int i=0; i < array_len; i++ ){
-		int fdr = i+MANAGER_FD_READ_D_HISTOGRAM_REQ_START;
-		int fdw = i+MANAGER_FD_WRITE_D_HISTOGRAM_REP_START;
+	for( int i=0; i < src_nodes_count; i++ ){
+	    struct UserChannel *chanr = chan_if->Channel( chan_if, ESourceNode, src_nodes_list[i], EChannelModeRead );
+	    struct UserChannel *chanw = chan_if->Channel( chan_if, ESourceNode, src_nodes_list[i], EChannelModeWrite );
+	    assert(chanr);
+	    assert(chanw);
+	    chanw->DebugPrint(chanw, stderr);
+	    chanr->DebugPrint(chanr, stderr);
 		struct Histogram *detld_histogram = reqrep_detailed_histograms_alloc(
-				fdw, fdr, nodeid, &request_detailed_histogram[i], last_request );
+				chanw->fd, chanr->fd, chan_if->ownnodeid, &request_detailed_histogram[i], last_request );
 		/*save received detailed histograms into workers array, transfers pointer ownership*/
 		set_detailed_histogram( &workers[i], detld_histogram );
 	}

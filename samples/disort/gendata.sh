@@ -1,5 +1,5 @@
 #!/bin/bash
-SRC_NODES_LIST="2 3 4 5 6 7 8 9 10 11"
+SRC_NODES_LIST="1 2 3 4 5 6 7 8 9 10"
 
 mkdir data -p
 

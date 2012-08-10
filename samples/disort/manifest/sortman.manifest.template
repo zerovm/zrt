@@ -1,0 +1,57 @@
+=====================================================================
+== i/o switches. full list. optional. some switches now meaningless,
+== placed here for completeness and future changes
+=====================================================================
+Channel = /dev/null, /dev/stdin, 0, 99999999, 99999999, 0, 0
+Channel = {ABS_PATH}data/crc.data, /dev/stdout, 0, 0, 0, 9999, 9999
+Channel = {ABS_PATH}log/sortman.zrt.log, /dev/debug, 0, 0, 0, 999999999, 999999999
+Channel = {ABS_PATH}log/sortman.stderr.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
+
+Channel = ipc:///tmp/dst1-man,  /dev/in/dst-1, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst2-man,  /dev/in/dst-2, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst3-man,  /dev/in/dst-3, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst4-man,  /dev/in/dst-4, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst5-man,  /dev/in/dst-5, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst6-man,  /dev/in/dst-6, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst7-man,  /dev/in/dst-7, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst8-man,  /dev/in/dst-8, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst9-man,  /dev/in/dst-9, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/dst10-man, /dev/in/dst-10, 0, 99999999, 99999999, 0, 0
+
+Channel = ipc:///tmp/src1-man,  /dev/in/src-1, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src2-man,  /dev/in/src-2, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src3-man,  /dev/in/src-3, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src4-man,  /dev/in/src-4, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src5-man,  /dev/in/src-5, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src6-man,  /dev/in/src-6, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src7-man,  /dev/in/src-7, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src8-man,  /dev/in/src-8, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src9-man,  /dev/in/src-9, 0, 99999999, 99999999, 0, 0
+Channel = ipc:///tmp/src10-man, /dev/in/src-10, 0, 99999999, 99999999, 0, 0
+
+Channel = ipc:///tmp/man-src1,  /dev/out/src-1, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src2,  /dev/out/src-2, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src3,  /dev/out/src-3, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src4,  /dev/out/src-4, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src5,  /dev/out/src-5, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src6,  /dev/out/src-6, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src7,  /dev/out/src-7, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src8,  /dev/out/src-8, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src9,  /dev/out/src-9, 0, 0, 0, 99999999, 99999999
+Channel = ipc:///tmp/man-src10, /dev/out/src-10, 0, 0, 0, 99999999, 99999999
+
+Channel = ipc:///tmp/man-dest{NODEID}, /dev/out/man, 0, 0, 0, 99999999, 99999999
+
+Environment =SOURCE_NAME,src,DEST_NAME,dst,MAN_NAME,man
+CommandLine = man
+
+=====================================================================
+== switches for zerovm. some of them used to control nexe, some
+== for the internal zerovm needs
+=====================================================================
+Version = 13072012
+Nexe = {ABS_PATH}nodeman.nexe
+NexeMax = 10000000
+SyscallsMax = 3333333
+SetupCallsMax = 99999999
+

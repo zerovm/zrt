@@ -10,8 +10,10 @@
 
 #include "distr_common.h"
 
+struct ChannelsConfigInterface;
+
 void
-repreq_read_sorted_ranges( int fdr, int nodeid, BigArrayPtr dst_array, int dst_array_len, int ranges_count );
+repreq_read_sorted_ranges( struct ChannelsConfigInterface *chan_if, BigArrayPtr dst_array, int dst_array_len );
 
 void
 write_sort_result( int fdw, int nodeid, BigArrayPtr sorted_array, int len );

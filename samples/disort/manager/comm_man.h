@@ -10,12 +10,14 @@
 
 #include "distr_common.h"
 
+struct ChannelsConfigInterface;
 
 void
-read_crcs(int fdr, uint32_t *crc_array, int array_len);
+read_crcs(struct ChannelsConfigInterface *chan_if, int *src_nodes_list, uint32_t *crc_array, int array_len);
 
 void
-recv_histograms( int fdr, struct Histogram *histograms, int wait_histograms_count );
+recv_histograms( struct ChannelsConfigInterface *chan_if, int *src_nodes_list,
+        struct Histogram *histograms, int wait_histograms_count );
 
 /*@param complete Flag 0 say to client in request that would be requested again, 1-last request send
  *return Histogram Caller is responsive to free memory after using result*/
@@ -27,7 +29,7 @@ void
 write_range_request( int fdw, struct request_data_t** range, int len, int i );
 
 struct sort_result*
-read_sort_result( int fdr, int waiting_results );
+read_sort_result( struct ChannelsConfigInterface *chan_if );
 
 void
 print_request_data_array( struct request_data_t* const range, int len );

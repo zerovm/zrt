@@ -6,104 +6,131 @@
  */
 
 #include <unistd.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <assert.h>
 
 #include "zrt.h"
-#include "defines.h"
-#include "comm_man.h"
-#include "distr_common.h"
 #include "histanlz.h"
+#include "defines.h"
 #include "dsort.h"
+#include "distr_common.h"
+#include "comm_man.h"
+#include "channels_conf_reader.h"
+#include "channels_conf.h"
 
+#define STDOUT 1
+
+int start_node(struct ChannelsConfigInterface *chan_if){
+    int *src_nodes_list = NULL;
+    int src_nodes_count = chan_if->GetNodesListByType(chan_if, ESourceNode, &src_nodes_list);
+
+    /*crc reading from all source nodes*/
+    uint32_t *crc_array = malloc(src_nodes_count*sizeof(uint32_t));
+    memset(crc_array, '\0', src_nodes_count*sizeof(uint32_t));
+    read_crcs(chan_if, src_nodes_list, crc_array, src_nodes_count);
+    /*crc read ok*/
+
+    /******** Histograms reading*/
+    struct Histogram histograms[src_nodes_count];
+    WRITE_LOG(LOG_DEBUG, "Recv histograms");
+    recv_histograms( chan_if, src_nodes_list, (struct Histogram*) &histograms, src_nodes_count );
+    WRITE_LOG(LOG_DEBUG, "Recv histograms OK");
+    /******** Histograms reading OK*/
+
+    /*Sort histograms by src_nodeid, because recv order is unexpected,
+     * but histogram analizer algorithm is required deterministic order*/
+    qsort( histograms, src_nodes_count, sizeof(struct Histogram), histogram_srcid_comparator );
+
+    WRITE_LOG(LOG_DEBUG, "Analize histograms and request detailed histograms\n");
+    struct request_data_t** range = alloc_range_request_analize_histograms( chan_if,
+            ARRAY_ITEMS_COUNT, histograms, src_nodes_count );
+    WRITE_LOG(LOG_DEBUG, "Analize histograms and request detailed histograms OK\n");
+
+    for (int i=0; i < src_nodes_count; i++ )
+    {
+        WRITE_FMT_LOG(LOG_DEBUG, "SOURCE PART N %d:\n", i );
+        print_request_data_array( range[i], src_nodes_count );
+    }
+
+    WRITE_LOG(LOG_DETAILED_UI, "Send range requests to source nodes\n" );
+
+    /// sending range requests to every source node
+    for (int i=0; i < src_nodes_count; i++ ){
+        struct UserChannel *channel = chan_if->Channel(chan_if, ESourceNode, range[0][i].src_nodeid, EChannelModeWrite );
+        assert(channel);
+        channel->DebugPrint(channel, stderr);
+        WRITE_FMT_LOG(LOG_DEBUG, "write_sorted_ranges fdw=%d\n", channel->fd );
+        write_range_request( channel->fd, range, src_nodes_count, i );
+    }
+
+    for ( int i=0; i < src_nodes_count; i++ ){
+        free(histograms[i].array);
+        free( range[i] );
+    }
+    free(range);
+
+    WRITE_LOG(LOG_DEBUG, "Read confirmation sort results, to test it\n");
+
+    struct sort_result *results = read_sort_result( chan_if );
+    /*sort results by nodeid, because receive order not deterministic*/
+    qsort( results, src_nodes_count, sizeof(struct sort_result), sortresult_comparator );
+    int sort_ok = 1;
+    uint32_t crc_test_unsorted = 0;
+    uint32_t crc_test_sorted = 0;
+    for ( int i=0; i < src_nodes_count; i++ ){
+        crc_test_unsorted = (crc_test_unsorted+crc_array[i]% CRC_ATOM) % CRC_ATOM;
+        crc_test_sorted = (crc_test_sorted+results[i].crc% CRC_ATOM) % CRC_ATOM;
+        if ( i>0 ){
+            if ( !(results[i].max > results[i].min && results[i-1].max < results[i].min) )
+                sort_ok = 0;
+        }
+        WRITE_FMT_LOG(LOG_DEBUG, "results[%d], nodeid=%d, min=%u, max=%u\n", i, results[i].nodeid, results[i].min, results[i].max);
+        fflush(0);
+    }
+
+    WRITE_FMT_LOG(LOG_UI, "Distributed sort complete, Test %d, %d, %d\n", sort_ok, crc_test_unsorted, crc_test_sorted );
+    if ( crc_test_unsorted == crc_test_sorted ){
+        WRITE_LOG(LOG_UI, "crc OK\n");
+    }
+    else{
+        WRITE_LOG(LOG_UI,"crc FAILED\n");
+    }
+    return 0;
+}
 
 int main(int argc, char **argv){
-	int nodeid = -1;
-	WRITE_FMT_LOG(LOG_DEBUG, "Manager node started: argc=%d argv=%p\n", argc, argv);
+    int res =0;
+    WRITE_FMT_LOG(LOG_DEBUG, "Manager node started argv[0]=%s.\n", argv[1] );
 
-	for ( int i=0; i < argc; i++ ){
-		WRITE_FMT_LOG(LOG_DEBUG, "argv[%d]=%s \n", i, argv[i]);
-	}
-	if ( argc < 2 ){
-		WRITE_LOG(LOG_ERR, "Required 1 arg unique node integer id\n");
-		return 1;
-	}
-	nodeid = atoi(argv[1]);
-	WRITE_FMT_LOG(LOG_DEBUG, "nodeid=%d \n", nodeid);
+    /*get node type names via environnment*/
+    char *source_node_type_text = getenv(ENV_SOURCE_NODE_NAME);
+    char *dest_node_type_text = getenv(ENV_DEST_NODE_NAME);
+    assert(source_node_type_text);
+    assert(dest_node_type_text);
 
-	/*crc reading from all source nodes*/
-	//uint32_t crc_array[SRC_NODES_COUNT];
-	uint32_t *crc_array = malloc(SRC_NODES_COUNT*sizeof(uint32_t));
-	memset(crc_array, '\0', SRC_NODES_COUNT*sizeof(uint32_t));
-	read_crcs(MANAGER_FD_READ_CRC_START, crc_array, SRC_NODES_COUNT);
-	/*crc read ok*/
+    /*setup channels conf, now used static data but should be replaced by data from zrt*/
+    struct ChannelsConfigInterface chan_if;
+    SetupChannelsConfigInterface( &chan_if, 1/*nodeid*/, EManagerNode );
 
-	/******** Histograms reading*/
-	struct Histogram histograms[SRC_NODES_COUNT];
-	WRITE_LOG(LOG_DEBUG, "Recv histograms");
-	recv_histograms( MANAGER_FD_READ_HISTOGRAM_START, (struct Histogram*) &histograms, SRC_NODES_COUNT );
-	WRITE_LOG(LOG_DEBUG, "Recv histograms OK");
-	/******** Histograms reading OK*/
+    /***********************************************************************
+     Add channels configuration into config object */
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, IN_DIR, EChannelModeRead, ESourceNode, source_node_type_text );
+    assert( res == 0 );
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, IN_DIR, EChannelModeRead, EDestinationNode, dest_node_type_text );
+    assert( res == 0 );
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, OUT_DIR, EChannelModeWrite, ESourceNode, source_node_type_text );
+    assert( res == 0 );
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, OUT_DIR, EChannelModeWrite, EDestinationNode, dest_node_type_text );
+    assert( res == 0 );
+    /*add input channel into config*/
+    res = chan_if.AddChannel( &chan_if, EInputOutputNode, 1, STDOUT, EChannelModeWrite ) != NULL? 0: -1;
+    assert( res == 0 );
+    /*--------------*/
 
-	/*Sort histograms by src_nodeid, because recv order is unexpected,
-	 * but histogram analizer algorithm is required deterministic order*/
-	qsort( histograms, SRC_NODES_COUNT, sizeof(struct Histogram), histogram_srcid_comparator );
-
-	WRITE_LOG(LOG_DEBUG, "Analize histograms and request detailed histograms\n");
-	struct request_data_t** range = alloc_range_request_analize_histograms(
-			ARRAY_ITEMS_COUNT, nodeid, histograms, SRC_NODES_COUNT );
-	WRITE_LOG(LOG_DEBUG, "Analize histograms and request detailed histograms OK\n");
-
-	for (int i=0; i < SRC_NODES_COUNT; i++ )
-	{
-		WRITE_FMT_LOG(LOG_DEBUG, "SOURCE PART N %d:\n", i );
-		print_request_data_array( range[i], SRC_NODES_COUNT );
-	}
-
-	WRITE_LOG(LOG_DETAILED_UI, "Send range requests to source nodes\n" );
-
-	/// sending range requests to every source node
-	for (int i=0; i < SRC_NODES_COUNT; i++ ){
-		///
-		int src_write_fd = range[0][i].src_nodeid - FIRST_SOURCE_NODEID + MANAGER_FD_WRITE_RANGE_REQUEST_START;
-		WRITE_FMT_LOG(LOG_DEBUG, "write_sorted_ranges fdw=%d\n", src_write_fd );
-		write_range_request( src_write_fd, range, SRC_NODES_COUNT, i );
-	}
-
-	for ( int i=0; i < SRC_NODES_COUNT; i++ ){
-		free(histograms[i].array);
-		free( range[i] );
-	}
-	free(range);
-
-	WRITE_LOG(LOG_DEBUG, "Read confirmation sort results, to test it\n");
-
-	struct sort_result *results = read_sort_result( MANAGER_FD_READ_SORT_RESULTS_START, SRC_NODES_COUNT );
-	/*sort results by nodeid, because receive order not deterministic*/
-	qsort( results, SRC_NODES_COUNT, sizeof(struct sort_result), sortresult_comparator );
-	int sort_ok = 1;
-	uint32_t crc_test_unsorted = 0;
-	uint32_t crc_test_sorted = 0;
-	for ( int i=0; i < SRC_NODES_COUNT; i++ ){
-		crc_test_unsorted = (crc_test_unsorted+crc_array[i]% CRC_ATOM) % CRC_ATOM;
-		crc_test_sorted = (crc_test_sorted+results[i].crc% CRC_ATOM) % CRC_ATOM;
-		if ( i>0 ){
-			if ( !(results[i].max > results[i].min && results[i-1].max < results[i].min) )
-				sort_ok = 0;
-		}
-		WRITE_FMT_LOG(LOG_DEBUG, "results[%d], nodeid=%d, min=%u, max=%u\n", i, results[i].nodeid, results[i].min, results[i].max);
-		fflush(0);
-	}
-
-	WRITE_FMT_LOG(LOG_UI, "Distributed sort complete, Test %d, %d, %d\n", sort_ok, crc_test_unsorted, crc_test_sorted );
-	if ( crc_test_unsorted == crc_test_sorted ){
-		WRITE_LOG(LOG_UI, "crc OK\n");
-	}
-	else{
-		WRITE_LOG(LOG_UI,"crc FAILED\n");
-	}
-	return 0;
+    start_node(&chan_if);
+    CloseChannels(&chan_if);
+    return 0;
 }
