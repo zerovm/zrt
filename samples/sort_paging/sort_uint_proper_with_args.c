@@ -15,7 +15,9 @@
 #include <sys/stat.h>
 #include <emmintrin.h>
 #include <smmintrin.h>
-#include "api/zrt.h"
+
+#include "zrt.h"
+#include "cpuid.h"
 
 #if 0
 #				define DEBUG
@@ -474,6 +476,11 @@ int main(int argc, char **argv)
   /* read data */
   if(fread(d, sizeof(*d), cnt, in) != cnt)
     _eoutput("cannot read data from the input channel\n");
+
+  /*check cpu facility*/
+  if ( !test_sse41_CPU() ){
+      _eoutput("SSE 4.1 instructions set not available\n");
+  }
 
   /* Bitonic sort */
   fprintf(stderr, "data sorting.. ");

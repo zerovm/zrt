@@ -1,3 +1,4 @@
+./genmanifest.sh
 echo ---------------------------------------------------- generating
 ../../zvm/zerovm -Mgenerator.manifest -v2
 cat generator.stderr.log

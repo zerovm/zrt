@@ -5,13 +5,13 @@ NAME_3=tester.uint32_t
 ZRT_ROOT=../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm
 
-all: $(NAME_1).o $(NAME_2).o $(NAME_3).o
+all: $(NAME_1).o $(NAME_2).o $(NAME_3).o cpuid.o
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME_1).nexe -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
 	$(DEBUG) $(NAME_1).o -L$(ZRT_ROOT)/lib -lzrt
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME_2).nexe -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(DEBUG) $(NAME_2).o -L$(ZRT_ROOT)/lib -lzrt
+	$(DEBUG) $(NAME_2).o cpuid.o -L$(ZRT_ROOT)/lib -lzrt
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME_3).nexe -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
 	$(DEBUG) $(NAME_3).o -L$(ZRT_ROOT)/lib -lzrt
@@ -30,5 +30,9 @@ $(NAME_3).o:
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME_3).o -Wall \
 	$(INCLUDE_FLAGS)  $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 $(NAME_3).c
 
+cpuid.o:
+	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o cpuid.o -Wall \
+	$(INCLUDE_FLAGS)  $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 cpuid.c
+
 clean:
-	rm -f $(NAME_1).nexe $(NAME_1).o $(NAME_2).nexe $(NAME_2).o $(NAME_3).nexe $(NAME_3).o *.log *.data
+	rm -f *.nexe *.o *.log *.data *.manifest
