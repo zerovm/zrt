@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include "zrt.h"
 
 #define ELEMENT_SIZE sizeof(uint32_t)
@@ -64,6 +65,7 @@ int main(int argc, char **argv)
     return 4;
   }
   fprintf(stderr, "number of elements = %d\n", seq_size);
+  assert( seq_size != 0 );
 
   /* read the data */
   if(fread(r, sizeof(*r), seq_size, stdin) != seq_size)

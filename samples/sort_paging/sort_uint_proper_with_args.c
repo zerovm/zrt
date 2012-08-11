@@ -438,15 +438,16 @@ int main(int argc, char **argv)
   uint32_t *d; /* data to sort */
   uint32_t *buf; /* extra space to sort */
   int64_t filesize;
-  FILE *in, *out;
+  FILE *in = NULL;
+  FILE *out= NULL;
 
   /* check command line */
-  if(argc != 3)
-    _eoutput("usage: sort input_file_name output_file_name\n");
+  if(argc != 2)
+    _eoutput("usage: sort input_file_name\n");
 
   /* open input and output files */
   in = fopen(argv[1], "rb");
-  out = fopen(argv[2], "wb");
+  out = stdout;
   if(in == NULL)
     _eoutput("input file open error\n");
   if(out == NULL)
@@ -492,6 +493,5 @@ int main(int argc, char **argv)
   fprintf(stderr, "sorted data is written\n");
 
   fclose(in);
-  fclose(out);
   return EXIT_SUCCESS;
 }

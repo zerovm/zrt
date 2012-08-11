@@ -27,7 +27,6 @@ int main(int argc, char **argv)
   uint32_t *r;
   uint32_t seq_size;
   uint32_t inc;
-  FILE *f;
 
   /*
    * unlike previous generator version (resided in "samples/sort")
@@ -39,14 +38,6 @@ int main(int argc, char **argv)
   {
     fprintf(stderr, "usage: generator number_of_elements file_name\n");
     return 1;
-  }
-
-  /* open file to output numbers */
-  f = fopen(argv[2], "wb");
-  if(f == NULL)
-  {
-    fprintf(stderr, "cannot open output file\n");
-    return 2;
   }
 
   /* get buffer for the output channel */
@@ -77,11 +68,10 @@ int main(int argc, char **argv)
   fprintf(stderr, "numbers are generated\n");
 
   /* write data to the output channel */
-  i = fwrite(r, sizeof(*r), seq_size, f);
+  i = fwrite(r, sizeof(*r), seq_size, stdout);
   fprintf(stderr, "%u elements is written\n", i);
   if(i != seq_size)
     fprintf(stderr, "ERROR: couldn't write all generated elements!\n");
 
-  fclose(f);
   return 0;
 }
