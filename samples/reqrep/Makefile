@@ -3,7 +3,7 @@ DEBUG=-DDEBUG
 ZRT_ROOT=../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm
 
-all: createdirs clean reqrep.nexe run
+all: createdirs reqrep.nexe run
 	
 reqrep.nexe: obj/reqrep.o
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o reqrep.nexe  -s -static -T \
@@ -15,6 +15,7 @@ obj/reqrep.o: reqrep.c
 	$(INCLUDE_FLAGS) $(DEBUG) -Wno-long-long -m64 reqrep.c
 	
 run:
+	./genmanifest.sh
 	./test.sh	
 
 createdirs:
@@ -24,5 +25,6 @@ clean:
 	@rm -f obj/*.o
 	@rm -f log/*.log
 	@rm -f *.nexe
+	@rm -f *.manifest
 	
 
