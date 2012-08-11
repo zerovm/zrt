@@ -2,10 +2,16 @@
 == "file input/output" example with zrt library usage. the new channels design
 == following channels: stdin, stdout, stderr used
 =====================================================================
-Channel = /dev/null, /dev/stdin, 4, 999999, 999999, 0, 0
-Channel = file_stat.output.data, /dev/stdout, 5, 0, 0, 999999, 999999
-Channel = file_stat.user.log, /dev/stderr, 6, 0, 0, 999999, 999999
-Channel = 18bytes.txt, readdata, 0, 999999, 999999, 0, 0
+Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
+Channel = file_stat.output.data, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = file_stat.user.log, /dev/stderr, 0, 0, 0, 999999, 999999
+Channel = file_stat.zrt.log, /dev/debug, 0, 0, 0, 999999, 999999
+Channel = generated.data, readdata, 1, 9999, 9999, 0, 0
+Channel = write.data, writedata, 2, 0, 0, 999, 999
+Channel = cdr.data, /dev/image, 1, 999, 999, 999, 999
+Channel = randomread.data, randomread, 3, 999, 999, 0, 0
+Channel = randomwrite.data, randomwrite, 3, 0, 0, 999, 999
+
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
