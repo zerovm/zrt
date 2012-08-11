@@ -2,9 +2,9 @@
 == "environment" example. demo of the new user custom attributes design
 =====================================================================
 Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
-Channel = stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
-Channel = stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
-Channel = zrtdebug.log, /dev/zrtlog, 0, 0, 0, 9999999, 9999999
+Channel = {ABS_PATH}stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}zrtdebug.log, /dev/zrtlog, 0, 0, 0, 9999999, 9999999
 
 =====================================================================
 == Environment and command line
@@ -17,8 +17,7 @@ Environment = TimeStamp, 1337012520, SafeWords, klaato_verada_nikto
 == for the internal zerovm needs
 =====================================================================
 Version = 13072012
-Log = zerovm.log
-Nexe = environment.nexe
+Nexe = {ABS_PATH}environment.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
 
