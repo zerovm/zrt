@@ -33,7 +33,9 @@ createdirs:
 
 clean: 
 	@rm -f obj/*.o
-	@rm -f log/*.log
+	@rm -f log/*.log log/*.stdout
+	@rm -f sqlite/*.manifest
+	@rm -f lua/*.manifest
 	@rm -f zshell.nexe zshell_gcc
 	
 

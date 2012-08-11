@@ -35,7 +35,7 @@ static int report (lua_State *L, int status) {
 /*if filename NULL then read lua script from stdin*/
 static int do_lua_script (lua_State *L, const char *filename) {
 	int status = luaL_loadfile(L, filename);
-	WRITE_FMT_LOG("status=%d\n", status);
+	fprintf( stderr, "status=%d\n", status);
 	if ( status )
 		return report(L, status);         /* Error out if Lua file has an error */
 	status = lua_pcall(L, 0, 0, 0);                  /* Run the loaded Lua script */
@@ -52,15 +52,15 @@ int run_lua_script (const char *filename)
 	L = luaL_newstate();                        /* Create Lua state variable */
 	luaL_openlibs(L);                           /* Load Lua libraries */
 
-	WRITE_LOG("In C, calling Lua\n");
+	fprintf( stderr, "In C, calling Lua\n");
 
 	int err = do_lua_script (L, filename);                          /* executes script file */
 
-	WRITE_LOG("Back in C again\n");
+	fprintf( stderr, "Back in C again\n");
 
 	lua_close(L);                               /* Clean up, free the Lua state var */
 
-	WRITE_LOG("Finish\n");
+	fprintf( stderr, "Finish\n");
 
 	return err;
 }
@@ -73,7 +73,7 @@ int run_lua_buffer_script (const char *buffer, size_t buf_size, const char **arg
 	L = luaL_newstate();                        /* Create Lua state variable */
 	luaL_openlibs(L);                           /* Load Lua libraries */
 
-	WRITE_LOG("In C, calling Lua\n");
+	fprintf( stderr, "In C, calling Lua\n");
 
 	int status = luaL_loadbuffer (L, buffer, buf_size, "zshell");   /* executes script data */
 	if ( status )
@@ -88,11 +88,11 @@ int run_lua_buffer_script (const char *buffer, size_t buf_size, const char **arg
 	if ( status )
 		return report(L, status);         /* Error out if Lua file has an error */
 
-	WRITE_LOG("Back in C again\n");
+	fprintf( stderr, "Back in C again\n");
 
 	lua_close(L);                               /* Clean up, free the Lua state var */
 
-	WRITE_LOG("Finish\n");
+	fprintf( stderr, "Finish\n");
 
 	return status;
 }
