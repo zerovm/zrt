@@ -1,0 +1,17 @@
+{ "generator" :
+[
+	{
+		"name" : "generator",
+		"exec" : "generator.uint32_t.nexe",
+		"filelist" : 
+		[ 
+		{
+			"access" : "sw",
+			"device" : "stdout",
+			"path"   : "url/container1/object*.data"
+		} 
+		],
+		"args": [ "16777216", "random.dat" ]
+	}
+]
+}
