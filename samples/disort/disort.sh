@@ -1,5 +1,6 @@
 #!/bin/bash
 
+./gendata.sh
 cd ../../zvm
 
 #config for 10src, 10dst nodes

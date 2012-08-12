@@ -19,7 +19,7 @@ Channel = ipc:///tmp/src{NODEID}-dst10,/dev/out/dst-10, 0, 0, 0, 99999999, 99999
 Channel = ipc:///tmp/src{NODEID}-man,/dev/out/man, 0, 0, 0, 99999999, 99999999
 Channel = ipc:///tmp/man-src{NODEID},/dev/in/man, 0, 99999999, 99999999, 0, 0
 
-Environment =SOURCE_NAME,src,DEST_NAME,src,MAN_NAME,man
+Environment =SOURCE_NAME,src,DEST_NAME,dst,MAN_NAME,man
 CommandLine = src-{NODEID}
 
 =====================================================================
