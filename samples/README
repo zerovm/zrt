@@ -11,21 +11,24 @@ environment/
   all types of access to environment variables
 
 wordcount/
-  distributed application uses mapreduce library that part of zrt. It calculates count of words in loaded input files;
+  distributed application that uses mapreduce, networking library that part of zrt. 
+  It calculates count of words in loaded input files; One file per one map node;
 
 disort/
   distributed sorting, contains 3 types of applications that interacts as nodes, that implements networking communication; 
   it uses files as one-to-one network channels. For local sort it uses bitonic sort for sse41 instructions set or 
   qsort from c std library for another cpu instructions set. Currently network organized by 
-  10 source, 10 destination and one manager nodes. Count of nodes and amount of sorting data are possible to configurate;   
+  10 source, 10 destination and one manager nodes. Count of nodes and amount of sorting data are possible to configurate;
+  Source data for source nodes generates by generators nexe, that should be run separately from sorting job;   
   
 reqrep/
   example uses network facility, it's emulate simple network, where two nodes is communicating one to one. 
-  Single node sending N MB and recevies the same from another node. 
+  Can work in two modes. mode 1 - Single node sending N MB and recevies the same from another node.
+  mode 2- one node sends and another node receives data in cycle; 
   Now it's get cluster configuration via readdir. No direct file path using.
   
 file_stat/
-  demonstrates stat() / fstat(). user can get synthetic information about zerovm channels (streams), manifest dirs
+  demonstrates stat() / fstat() for various channels. Also it uses assertions to test expecting stat data; 
   
 hello/
   simple example how to write a program for zerovm using zerovm api.
@@ -33,7 +36,7 @@ hello/
 sort_paging/
   contains 3 programs which allows to create random data, sort it and test sort order. from this example you can
   see how to use intrinsics in nacl modules - absolutely same as usual. also this is another example of pagination
-  mechanism usage.
+  mechanism usage. Doing check for sse41. 
   same "sort/" with i/o via zerovm api. also this example doesn't use mapped channels (except stderr)
   
 time/
