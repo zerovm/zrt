@@ -33,6 +33,8 @@ createdirs:
 clean: 
 	@rm -f obj/*.o
 	@rm -f log/*.log
+	@rm -f data/*.res
+	@rm -f manifest/*.manifest	
 	@rm -f *.nexe gcc_map gcc_reduce
 	
 

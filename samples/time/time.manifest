@@ -6,10 +6,7 @@ Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
 
-=====================================================================
-== Environment
-=====================================================================
-Environment = TimeStamp, 1337012520
+Environment = TimeStamp, 1344719070.18711
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
