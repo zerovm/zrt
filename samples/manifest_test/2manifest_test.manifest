@@ -3,8 +3,8 @@
 =====================================================================
 Channel = /dev/null, /dev/stdin, 0, 1, 1, 0, 0
 Channel = /dev/null, /dev/stdout, 0, 0, 0, 1, 1
-Channel = {ABS_PATH}2.stderr.log, /dev/stderr, 0, 0, 0, 999999, 999999
-Channel = {ABS_PATH}some.data, cdr-alias, 1, 999999, 999999, 999999, 999999
+Channel = /home/yaroslav/git/zrt/samples/manifest_test/2.stderr.log, /dev/stderr, 0, 0, 0, 999999, 999999
+Channel = /home/yaroslav/git/zrt/samples/manifest_test/some.data, cdr-alias, 1, 999999, 999999, 999999, 999999
 
 Environment=MANIFEST_ID,2
 
@@ -13,7 +13,7 @@ Environment=MANIFEST_ID,2
 == for the internal zerovm needs
 =====================================================================
 Version = 13072012
-Nexe = {ABS_PATH}manifest_test.nexe
+Nexe = /home/yaroslav/git/zrt/samples/manifest_test/manifest_test.nexe
 NexeMax = 10000000
 SyscallsMax = 3333333
 SetupCallsMax = 99999999

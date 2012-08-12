@@ -18,5 +18,6 @@ run:
 	@./run_tests.sh
 
 clean:
-	rm -f $(NAME).nexe *.o *.log *.result
+	rm -f $(NAME).nexe *.o *.log *.result *.data
+	rm -f *.manifest
 
