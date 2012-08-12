@@ -9,7 +9,7 @@ LIBGTEST=gtest/libgtest.a
 MACROS_FLAGS=-DUSER_SIDE -DDEBUG
 INCLUDE_PATH=-I. -Ilib -Izvm
 
-all: lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING}
+all: lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING} all_samples
 
 
 lib/libzrt.a: lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/zrtsyscalls.c lib/zrtreaddir.c 
@@ -53,12 +53,27 @@ all_samples:
 	@make -Csamples/net
 	@make -Csamples/readdir
 	@make -Csamples/reqrep
-	@make -Csamples/zshell
 	@make -Csamples/sort_paging
 	@make -Csamples/time
 	@make -Csamples/wordcount
-
-clean:	
+	@make -Csamples/zshell
+	
+clean_samples:
+	@make -Csamples/command_line clean
+	@make -Csamples/disort clean
+	@make -Csamples/environment	clean
+	@make -Csamples/file_stat clean
+	@make -Csamples/hello clean
+	@make -Csamples/manifest_test clean
+	@make -Csamples/net clean
+	@make -Csamples/readdir clean
+	@make -Csamples/reqrep clean
+	@make -Csamples/sort_paging clean
+	@make -Csamples/time clean
+	@make -Csamples/wordcount clean
+	@make -Csamples/zshell clean
+	
+clean: clean_samples
 	@make -Clib/sqlite3 clean
 	@make -Clib/lua-5.2.1 clean
 	@make -Clib/mapreduce clean

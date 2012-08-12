@@ -7,9 +7,9 @@
  */
 
 #define _GNU_SOURCE
-#define __USE_LARGEFILE64
-#define _LARGEFILE64_SOURCE
-#define _FILE_OFFSET_BITS 64
+//#define __USE_LARGEFILE64
+//#define _LARGEFILE64_SOURCE
+//#define _FILE_OFFSET_BITS 64
 
 #include <sys/types.h> //off_t
 #include <sys/stat.h>
@@ -62,9 +62,10 @@
  * Syscallbacks debug macros*/
 #ifdef DEBUG
 #define ZRT_LOG_NAME "/dev/debug"
-#define SHOWID zrt_log("%s", "syscall called")
+#define SHOWID(args_p) { s_donotlog=0; zrt_log("syscall arg[0]=%u, arg[1]=%u, arg[2]=%u, arg[3]=%u, arg[4]=%u", \
+         args_p[0], args_p[1], args_p[2], args_p[3], args_p[4] ); }
 #else
-#define SHOWID
+#define SHOWID()
 #endif
 
 #define MAX(a,b) \
@@ -82,7 +83,7 @@
 #define SYSCALL_MOCK(name_wo_zrt_prefix, code) \
         static int32_t ZRT_FUNC(name_wo_zrt_prefix)(uint32_t *args)\
         {\
-    SHOWID;\
+    SHOWID(args);\
     return code;\
         }
 
@@ -274,6 +275,33 @@ static int open_channel( const char *name, int mode, int flags  )
 }
 
 
+uint32_t channel_permissions(struct ZVMChannel *channel){
+    uint32_t perm = 0;
+    assert(channel);
+    if ( channel->limits[GetsLimit] != 0 && channel->limits[GetSizeLimit] )
+        perm |= S_IRUSR;
+    if ( channel->limits[PutsLimit] != 0 && channel->limits[PutSizeLimit] )
+        perm |= S_IWUSR;
+    if ( (channel->type == SGetSPut && ( (perm&S_IRWXU)==S_IRUSR || (perm&S_IRWXU)==S_IWUSR )) ||
+         (channel->type == RGetSPut && (perm&S_IRWXU)==S_IWUSR ) ||
+         (channel->type == SGetRPut && (perm&S_IRWXU)==S_IRUSR ) )
+    {
+        perm |= S_IFCHR;
+    }
+    else if ( (channel->type == RGetSPut && (perm&S_IRWXU)==S_IRUSR) ||
+               (channel->type == SGetRPut && (perm&S_IRWXU)==S_IWUSR) ||
+               (channel->type == RGetRPut && ( (perm&S_IRWXU)==S_IWUSR) && (perm&S_IRWXU)!=S_IRUSR) ||
+               (channel->type == RGetRPut && ( (perm&S_IRWXU)!=S_IWUSR) && (perm&S_IRWXU)==S_IRUSR) )
+    {
+        perm |= S_IFREG;
+    }
+    else{
+        perm |= S_IFBLK;
+    }
+    return perm;
+}
+
+
 int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_channel,
         int8_t whence, int8_t access, int64_t offset ){
     /*seek get supported by channel for any modes*/
@@ -424,12 +452,12 @@ SYSCALL_MOCK(dup2, -EPERM) /* duplicate the given file handle. n/a in the simple
  */
 static int32_t zrt_open(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     errno=0;
     char* name = (char*)args[0];
     int flags = (int)args[1];
     int mode = (int)args[2];
-    zrt_log("name=%s", name);
+    zrt_log("name=%s, arg[3]=%s", name, (char*)args[3]);
     debug_mes_open_flags(flags);
 
     if ( CHECK_FLAG(flags, O_DIRECTORY) == 0 ){
@@ -467,7 +495,7 @@ static int32_t zrt_open(uint32_t *args)
 /* do nothing but checks given handle */
 static int32_t zrt_close(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     errno = 0;
     int handle = (int)args[0];
     zrt_log("handle=%d", handle);
@@ -506,7 +534,7 @@ static int32_t zrt_close(uint32_t *args)
 /* read the file with the given handle number */
 static int32_t zrt_read(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     errno = 0;
     int handle = (int)args[0];
     void *buf = (void*)args[1];
@@ -557,14 +585,13 @@ static int32_t zrt_read(uint32_t *args)
 /* example how to implement zrt syscall */
 static int32_t zrt_write(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     int handle = (int)args[0];
     void *buf = (void*)args[1];
     int64_t length = (int64_t)args[2];
     int32_t wrote = 0;
 
     if ( handle < 3 ) s_donotlog = 1;
-    else             s_donotlog = 0;
 
     /*file not opened, bad descriptor*/
     if ( handle < 0 || handle >= s_manifest->channels_count ||
@@ -603,7 +630,6 @@ static int32_t zrt_write(uint32_t *args)
         return -1;
     }
 
-    s_donotlog = 0;
     return wrote;
 }
 
@@ -612,7 +638,7 @@ static int32_t zrt_write(uint32_t *args)
  */
 static int32_t zrt_lseek(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     errno = 0;
     int32_t handle = (int32_t)args[0];
     off_t offset = *((off_t*)args[1]);
@@ -691,20 +717,14 @@ static void set_stat(struct nacl_abi_stat *stat, int handle)
         permissions |= S_IRUSR | S_IFDIR;
     }
     else{ /*channel handle*/
-        if ( CHECK_FLAG( s_zrt_channels[handle]->open_mode, O_RDONLY) ){
-            permissions |= S_IRUSR;
-        }
-        else if ( CHECK_FLAG( s_zrt_channels[handle]->open_mode, O_WRONLY) ){
-            permissions |= S_IWUSR;
-        }
-        else{
-            permissions |= S_IRUSR | S_IWUSR | S_IFBLK; //only cdr has w/r access, it's block device
-            blksize = 4096;
-        }
-        permissions |= S_IFREG;
+        permissions = channel_permissions(&s_manifest->channels[handle]);
+        if ( CHECK_FLAG( permissions, S_IFCHR) ) blksize = 1;
+        else                                     blksize = 4096;
         ino = INODE_FROM_HANDLE( handle );
-
-        size = MAX( s_zrt_channels[handle]->maxsize, s_manifest->channels[handle].size ); /* size in bytes */
+        if ( s_zrt_channels[handle] ) /* if available runtime data then get maximum registered position */
+            size = MAX( s_zrt_channels[handle]->maxsize, s_manifest->channels[handle].size );
+        else
+            size = s_manifest->channels[handle].size; /* size in bytes */
     }
 
     /* return stat object */
@@ -738,7 +758,7 @@ static void set_stat(struct nacl_abi_stat *stat, int handle)
  */
 static int32_t zrt_stat(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     errno = 0;
     const char *file = (const char*)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
@@ -754,9 +774,14 @@ static int32_t zrt_stat(uint32_t *args)
         return -1;
     }
 
-    for(handle = 0; handle < s_manifest->channels_count; ++handle)
-        if(!strcmp(file, s_manifest->channels[handle].name))
+    for(handle = 0; handle < s_manifest->channels_count; ++handle){
+        zrt_log("cmp %s, %s\n", file, s_manifest->channels[handle].name);
+        if(!strcmp(file, s_manifest->channels[handle].name)){
+            zrt_log("matched handle=%d\n", handle);
             channel = &s_manifest->channels[handle];
+            break;
+        }
+    }
 
     if ( channel ){
         set_stat( sbuf, handle);
@@ -778,7 +803,7 @@ static int32_t zrt_stat(uint32_t *args)
 /* return synthetic channel information */
 static int32_t zrt_fstat(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     errno = 0;
     int handle = (int)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
@@ -812,7 +837,7 @@ SYSCALL_MOCK(chmod, -EPERM) /* in a simple version of zrt chmod is not allowed *
 /* change space allocation */
 static int32_t zrt_sysbrk(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
@@ -825,7 +850,7 @@ static int32_t zrt_sysbrk(uint32_t *args)
 /* map region of memory */
 static int32_t zrt_mmap(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
@@ -842,7 +867,7 @@ static int32_t zrt_mmap(uint32_t *args)
  */
 static int32_t zrt_munmap(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
@@ -855,7 +880,7 @@ static int32_t zrt_munmap(uint32_t *args)
 
 static int32_t zrt_getdents(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     errno=0;
     int handle = (int)args[0];
     char *buf = (char*)args[1];
@@ -882,7 +907,7 @@ static int32_t zrt_getdents(uint32_t *args)
 static int32_t zrt_exit(uint32_t *args)
 {
     /* no need to check args for NULL. it is always set by syscall_manager */
-    SHOWID;
+    SHOWID(args);
     zvm_exit(args[0]);
     return 0; /* unreachable */
 }
@@ -896,7 +921,7 @@ SYSCALL_MOCK(sysconf, 0)
 #define TIMESTAMP_STRLEN strlen("TimeStamp=")
 static int32_t zrt_gettimeofday(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)args[0];
     char *stamp = NULL;
     int i;
@@ -959,7 +984,7 @@ SYSCALL_MOCK(thread_nice, 0)
 static int32_t zrt_tls_get(uint32_t *args)
 {
     /* switch off spam
-     * SHOWID;*/
+     * SHOWID(args);*/
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
@@ -977,7 +1002,7 @@ SYSCALL_MOCK(second_tls_set, 0)
  */
 static int32_t zrt_second_tls_get(uint32_t *args)
 {
-    SHOWID;
+    SHOWID(args);
     return zrt_tls_get(NULL);
 }
 
