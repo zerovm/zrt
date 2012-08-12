@@ -88,17 +88,17 @@
         }
 
 /*0 if check OK*/
-#define CHECK_NEW_POS(offset) ((offset) < 0 || (offset) > 0x7fffffff ? -1: 0)
+#define CHECK_NEW_POS(offset) ((offset) < 0 ? -1: 0)
 #define CHECK_FLAG(flags, flag) ( (flags & flag) == flag? 1 : 0)
 #define SET_SAFE_OFFSET( whence, pos_p, offset ) \
         if ( EPosSetRelative == whence ){ \
             if ( CHECK_NEW_POS( *pos_p+offset ) == -1 ) \
             { set_zrt_errno( EOVERFLOW ); return -1; } \
             else return *pos_p +=offset; } \
-            else{ \
-                if ( CHECK_NEW_POS( offset ) == -1 ) \
-                { set_zrt_errno( EOVERFLOW ); return -1; } \
-                else return *pos_p  =offset; }
+        else{ \
+            if ( CHECK_NEW_POS( offset ) == -1 ) \
+            { set_zrt_errno( EOVERFLOW ); return -1; } \
+            else return *pos_p  =offset; }
 
 /*manifest should be initialized in zrt main*/
 static struct UserManifest* s_manifest;
@@ -457,7 +457,7 @@ static int32_t zrt_open(uint32_t *args)
     char* name = (char*)args[0];
     int flags = (int)args[1];
     int mode = (int)args[2];
-    zrt_log("name=%s, arg[3]=%s", name, (char*)args[3]);
+    zrt_log("name=%s", name);
     debug_mes_open_flags(flags);
 
     if ( CHECK_FLAG(flags, O_DIRECTORY) == 0 ){
@@ -644,7 +644,7 @@ static int32_t zrt_lseek(uint32_t *args)
     off_t offset = *((off_t*)args[1]);
     int whence = (int)args[2];
 
-    zrt_log("handle=%d, offset=%d", handle, (int)offset);
+    zrt_log("offt size=%d, handle=%d, offset=%lld", sizeof(off_t), handle, offset);
     debug_mes_zrt_channel_runtime( handle );
 
     /* check handle */
