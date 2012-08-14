@@ -1,7 +1,8 @@
+---------------------------------------------
+Lua static library. This is Lua 5.2.1, released on 08 Jun 2012. Ported to ZRT.
+---------------------------------------------
 
-This is Lua 5.2.1, released on 08 Jun 2012.
-Ported to ZRT.
-Currently for I/O used only stdin & stdout by default opened files in LUA.
-Current version of ZRT don't give networking for LUA, because only allowed 
-pre-opened channels and user can't manualy open network channel as file. 
-It will supported in LUA as soon as ZRT implements it; 
+1.1.Using powerfull Lua syntax with zerovm network abstraction via file descriptors, you can rapidly create
+distributed network applications, to see additional information about channels refer to ZRT README; 
+1.2.In order to linking it add folowing flags: -L{YOUR_ZRT_ROOT}/lib -lzrt -llua
+1.3.Lua test suite using this library, to get worked Lua tests successfully;

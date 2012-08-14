@@ -1,5 +1,8 @@
+------------------------------------------
+1.Map-Reduce static library.
+------------------------------------------
 
-Data flow description of MapReduce 32/128.
+1.Data flow description of MapReduce 32/128.
 Every Map node has input file, every Reduce node has output file;
 MapReduce Library for every Map node reading input file sequently by configured block size, for example 1MB,
 Next MapReduce Library passed chunk of data into user defined Map function, that parse data and return
@@ -13,4 +16,6 @@ MapReduce Library for every Reduce node receives data from map nodes, if portion
 If MapReduce library handled for Reduce node that received MAP_EXCLUDE flag from Map node, it should exclude 
 this node from list of map nodes whos data are waiting. When all map nodes say to exclude their 
 from waiting data loop, nothing to receive anymore; 
-Next MapReduce Library call user defined Reduce function that reduces data in last step of job.         
+Next MapReduce Library call user defined Reduce function that reduces data in last step of job.
+1.2.MapReduce uses libnetworking to get list of configured channels and creates distributed configuration;         
+1.3.In order to linking it add folowing flags: -L{YOUR_ZRT_ROOT}/lib -lzrt -lmapreduce -lnetworking
