@@ -73,6 +73,6 @@ int main(int argc, char **argv, char **envp)
         return ERR_CODE;
 
     /* call user main() and care about return code */
-    return slave_main(argc, argv, envp);
+    return slave_main(argc, argv);
 }
 

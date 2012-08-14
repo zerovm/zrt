@@ -27,7 +27,7 @@ const struct ZVMChannel *zvm_channels_c( int *channels_count );
  * be removed
  */
 #define main slave_main
-int slave_main();
+int slave_main(int argc, char **argv);
 
 /* entry point for zrt library sample (see "syscall_manager.S" file) */
 void syscall_director(void);

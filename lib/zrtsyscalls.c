@@ -775,7 +775,6 @@ static int32_t zrt_stat(uint32_t *args)
     }
 
     for(handle = 0; handle < s_manifest->channels_count; ++handle){
-        zrt_log("cmp %s, %s\n", file, s_manifest->channels[handle].name);
         if(!strcmp(file, s_manifest->channels[handle].name)){
             zrt_log("matched handle=%d\n", handle);
             channel = &s_manifest->channels[handle];
