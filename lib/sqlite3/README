@@ -1,5 +1,6 @@
 ------------------------------------------------
 1.Sqlite3 dbms static library. Ported to ZRT.
+source: www.sqlite.org
 ------------------------------------------------
 
 1.1.Since ZeroVM has no own filesystem, in any case we are need to provide access to database file;

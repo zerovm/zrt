@@ -1,1 +1,19 @@
-run with run_tests.sh, it generates from template valid manifest;
+---------------------------------------------------
+Lua Unit tests, based on Test suite for Lua 5.2.1
+source: www.lua.org
+---------------------------------------------------
+
+1.Tests wrapper
+Tests was wrapped into usual for ZeroVM - nexe executable
+2.Build and run from command line:
+cd zrt/tests/lua_test/suite
+make
+run_tests.sh
+
+
+
+- annotation
+- contents
+- tests
+- known issues
+- problems 

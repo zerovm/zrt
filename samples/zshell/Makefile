@@ -1,6 +1,6 @@
 GTEST_CFLAGS=-DGTEST_HAS_PTHREAD=0
 DEBUG=-g -DDEBUG
-PNACL_TOOL=~/nacl_sdk/pepper_19/toolchain/linux_x86_glibc
+PNACL_TOOL=$(shell ../../setupenv.sh)
 NACL_GCC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
 ZRT_ROOT=../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I$(ZRT_ROOT)/lib/lua-5.2.1/src -I$(ZRT_ROOT)/lib/sqlite3 -I.

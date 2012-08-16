@@ -1,5 +1,5 @@
 NAME=environment_test
-PNACL_TOOL=~/nacl_sdk/pepper_19/toolchain/linux_x86_glibc
+PNACL_TOOL=$(shell ../../../setupenv.sh)
 ZRT_ROOT=../../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/gtest -I$(ZRT_ROOT)
 

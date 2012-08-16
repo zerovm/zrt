@@ -66,8 +66,20 @@ file      "/dev/input"
 All added directories can be accessed via stat, and realistic stat structure will be returned by stat syscall
 It was implemented to get readdir working
 
+---------------------------------------------------------------
 4. ZRT Debugging
+---------------------------------------------------------------
 ZRT has its own debugging channel associated with alias name "/dev/debug"
 If this channel is defined then all debugging ZRT information will go into the debug channel
 If debug channel is not defined no debug info will available (apart from system logs)
 TODO: Add remote debugging, to get debug info if executable was launched on cluster 
+
+---------------------------------------------------------------
+5. Known issues
+---------------------------------------------------------------
+1. fseek( file, 0, SEEK_END ) declared as: int fseek (FILE *stream, long int offset, int whence)
+fseek doesn't working properly if called with whence=SEEK_END and offset=0, so seeked file pos will not point
+to end of file, but it will point to start of file, this is because ZRT recevies NACL syscall where whence=SEEK_SET
+instead of SEEK_END.
+
+ 

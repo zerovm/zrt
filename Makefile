@@ -1,5 +1,5 @@
-#prerequisites: Google Native Client SDK
-PNACL_TOOL=~/nacl_sdk/pepper_19/toolchain/linux_x86_glibc
+PNACL_TOOL=$(shell ./setupenv.sh)
+
 #ported application libraries
 LIBSQLITE=lib/sqlite3/libsqlite3.a
 LIBLUA=lib/lua-5.2.1/src/liblua.a
@@ -9,8 +9,11 @@ LIBGTEST=gtest/libgtest.a
 MACROS_FLAGS=-DUSER_SIDE -DDEBUG
 INCLUDE_PATH=-I. -Ilib -Izvm
 
-all: lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING} all_samples
+all: prepare lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING} all_samples
 
+prepare:
+	chmod u+rwx setupenv.sh
+	echo ${PNACL_TOOL}
 
 lib/libzrt.a: lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/zrtsyscalls.c lib/zrtreaddir.c 
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c zvm/zvm.c -o zvm/zvm.o -Wall -Wno-long-long -O2 -msse4.1 -m64 ${INCLUDE_PATH}
@@ -24,15 +27,15 @@ lib/libzrt.a: lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/zrtsyscalls.c lib/zr
 	@ar rcs lib/libzrt.a lib/syscall_manager.o zvm/zvm.o lib/zrt.o lib/zrtsyscalls.o lib/zrtreaddir.o
 
 ${LIBSQLITE}:
-	@PNACL_TOOL=${PNACL_TOOL} make -Clib/sqlite3
+	@make -Clib/sqlite3
 	@mv -f ${LIBSQLITE} lib
 	
 ${LIBLUA}:
-	@PNACL_TOOL=${PNACL_TOOL} make ansi -Clib/lua-5.2.1
+	@make -Clib/lua-5.2.1
 	@mv -f ${LIBLUA} lib	 
 
 ${LIBMAPREDUCE}:
-	@PNACL_TOOL=${PNACL_TOOL} make -Clib/mapreduce
+	@make -Clib/mapreduce
 	@mv -f ${LIBMAPREDUCE} lib
 
 ${LIBNETWORKING}:
@@ -44,19 +47,19 @@ ${LIBGTEST}:
 
 all_samples:
 	@echo Building samples
-	@make -Csamples/command_line
-	@make -Csamples/disort
-	@make -Csamples/environment	
-	@make -Csamples/file_stat
-	@make -Csamples/hello
-	@make -Csamples/manifest_test
-	@make -Csamples/net
-	@make -Csamples/readdir
-	@make -Csamples/reqrep
-	@make -Csamples/sort_paging
-	@make -Csamples/time
-	@make -Csamples/wordcount
-	@make -Csamples/zshell
+	make -Csamples/command_line
+	make -Csamples/disort
+	make -Csamples/environment	
+	make -Csamples/file_stat
+	make -Csamples/hello
+	make -Csamples/manifest_test
+	make -Csamples/net
+	make -Csamples/readdir
+	make -Csamples/reqrep
+	make -Csamples/sort_paging
+	make -Csamples/time
+	make -Csamples/wordcount
+	make -Csamples/zshell
 	
 clean_samples:
 	@make -Csamples/command_line clean

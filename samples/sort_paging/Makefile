@@ -1,4 +1,4 @@
-PNACL_TOOL=~/nacl_sdk/pepper_19/toolchain/linux_x86_glibc
+PNACL_TOOL=$(shell ../../setupenv.sh)
 NAME_1=generator.uint32_t
 NAME_2=sort_uint_proper_with_args
 NAME_3=tester.uint32_t

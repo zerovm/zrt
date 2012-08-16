@@ -1,3 +1,5 @@
+PNACL_TOOL=$(shell ../../setupenv.sh)
+
 all: libsqlite3.a
 
 libsqlite3.a: sqlite3.o vfs_channel.o
