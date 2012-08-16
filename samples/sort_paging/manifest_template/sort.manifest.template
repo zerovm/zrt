@@ -2,11 +2,9 @@
 == "sort" example with zrt library usage. new channels design
 == following channels stdin, stdout, stderr must be specified
 =====================================================================
-Channel = /dev/null, /dev/stdin, 0, 99999999, 99999999, 0, 0
+Channel = {ABS_PATH}unsorted.data, /dev/stdin, 0, 99999999, 99999999, 0, 0
 Channel = {ABS_PATH}sorted.data, /dev/stdout, 0, 0, 0, 99999999, 99999999
 Channel = {ABS_PATH}sort.stderr.log, /dev/stderr, 0, 0, 0, 99999999, 99999999
-Channel = {ABS_PATH}sort.zrt.log, /dev/debug, 0, 0, 0, 99999999, 99999999
-Channel = {ABS_PATH}unsorted.data, /dev/input, 1, 99999999, 99999999, 0, 0
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -16,4 +14,4 @@ Version = 09082012
 Nexe = {ABS_PATH}sort_uint_proper_with_args.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
-CommandLine = /dev/input
+CommandLine = 67108864

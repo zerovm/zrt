@@ -438,23 +438,22 @@ int main(int argc, char **argv)
   uint32_t *d; /* data to sort */
   uint32_t *buf; /* extra space to sort */
   int64_t filesize;
-  FILE *in = NULL;
-  FILE *out= NULL;
+  FILE *in, *out;
 
   /* check command line */
-  if(argc != 2)
-    _eoutput("usage: sort input_file_name\n");
+  if(argc > 3)
+    _eoutput("usage: sort [number_of_elements] | [input_file_name output_file_name]\n");
 
   /* open input and output files */
-  in = fopen(argv[1], "rb");
-  out = stdout;
+  in = argc == 3 ? fopen(argv[1], "rb") : stdin;
+  out = argc == 3 ? fopen(argv[2], "wb") : stdout;
   if(in == NULL)
     _eoutput("input file open error\n");
   if(out == NULL)
     _eoutput("output file open error\n");
 
   /* allocate data buffer */
-  filesize = file_size(argv[1]);
+  filesize = argc == 3 ? file_size(argv[1]) : strtoll(argv[1], NULL, 10);
   cnt = filesize / sizeof(*d);
   d = aligned_malloc(filesize, 16);
   if(d == NULL) _eoutput("cannot allocate data buffer\n");
@@ -478,7 +477,7 @@ int main(int argc, char **argv)
   if(fread(d, sizeof(*d), cnt, in) != cnt)
     _eoutput("cannot read data from the input channel\n");
 
-  /*check cpu facility*/
+ /*check cpu facility*/
   if ( !test_sse41_CPU() ){
       _eoutput("SSE 4.1 instructions set not available\n");
   }
@@ -493,5 +492,7 @@ int main(int argc, char **argv)
   fprintf(stderr, "sorted data is written\n");
 
   fclose(in);
+  fclose(out);
   return EXIT_SUCCESS;
 }
+
