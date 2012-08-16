@@ -2,7 +2,7 @@
 Lua static library. This is Lua 5.2.1, released on 08 Jun 2012. Ported to ZRT.
 ---------------------------------------------
 
-1.1.Using powerfull Lua syntax with zerovm network abstraction via file descriptors, you can rapidly create
+1.1. Using powerfull Lua syntax with zerovm network abstraction via file descriptors, you can rapidly create
 distributed network applications, to see additional information about channels refer to ZRT README; 
-1.2.In order to linking it add folowing flags: -L{YOUR_ZRT_ROOT}/lib -lzrt -llua
-1.3.Lua test suite using this library, to get worked Lua tests successfully;
+1.2. In order link it add the folowing flags: -L{YOUR_ZRT_ROOT}/lib -lzrt -llua
+1.3. Lua test suite is using this library, to pass Lua tests successfully
