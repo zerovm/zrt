@@ -55,7 +55,7 @@ struct ZrtChannelRt{
     int64_t maxsize;               /*synthethic size. maximum position of channel for all I/O requests*/
 };
 
-enum PosAccess{ EPosSeek, EPosRead, EPosWrite };
+enum PosAccess{ EPosSeek=0, EPosRead, EPosWrite };
 enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
 /*@param pos_whence If EPosGet offset unused, otherwise check and set offset
  *@return -1 if bad offset, else offset result*/

@@ -100,6 +100,11 @@
             { set_zrt_errno( EOVERFLOW ); return -1; } \
             else return *pos_p  =offset; }
 
+
+#define CHANNEL_SIZE(handle) s_zrt_channels[handle] ? \
+    MAX( s_zrt_channels[handle]->maxsize, s_manifest->channels[handle].size ) : s_manifest->channels[handle].size;
+
+
 /*manifest should be initialized in zrt main*/
 static struct UserManifest* s_manifest;
 /*runtime information related to channels*/
@@ -460,6 +465,7 @@ static int32_t zrt_open(uint32_t *args)
     zrt_log("name=%s", name);
     debug_mes_open_flags(flags);
 
+    /*If specified open flag saying as that trying to open not directory*/
     if ( CHECK_FLAG(flags, O_DIRECTORY) == 0 ){
         return open_channel( name, flags, mode );
     }
@@ -606,7 +612,7 @@ static int32_t zrt_write(uint32_t *args)
     zrt_log( "channel name=%s", s_manifest->channels[handle].name );
     debug_mes_zrt_channel_runtime( handle );
 
-    /*check if file was not opened for writing*/
+    /*if file was not opened for writing, set errno and get error*/
     int mode= O_ACCMODE & s_zrt_channels[handle]->open_mode;
     if ( mode != O_WRONLY && mode != O_RDWR  )
     {
@@ -628,6 +634,16 @@ static int32_t zrt_write(uint32_t *args)
     if ( wrote < 0 ){
         set_zrt_errno( zvm_errno() );
         return -1;
+    }
+
+    /*save maximum writable position for random access write only channels using this as synthetic
+     *size for channel mapped file. Here is works a single rule: maximum writable position can be used as size*/
+    int8_t access_type = s_manifest->channels[handle].type;
+    if ( CHECK_FLAG(s_zrt_channels[handle]->open_mode, O_WRONLY ) &&
+         (access_type == SGetRPut || access_type == RGetRPut) )
+    {
+        s_zrt_channels[handle]->maxsize = channel_pos(handle, EPosGet, EPosWrite, 0);
+        zrt_log("Set channel size=%lld", s_zrt_channels[handle]->maxsize );
     }
 
     return wrote;
@@ -667,11 +683,13 @@ static int32_t zrt_lseek(uint32_t *args)
         else
             offset = channel_pos(handle, EPosSetRelative, EPosSeek, offset );
         break;
-    case SEEK_END:
-        zrt_log("whence=%s, maxsize=%lld", "SEEK_END", s_zrt_channels[handle]->maxsize);
+    case SEEK_END:{
+        off_t size = CHANNEL_SIZE(handle);
+        zrt_log("whence=%s, maxsize=%lld", "SEEK_END", size);
         /*use runtime size instead static size in zvm channel*/
-        offset = channel_pos(handle, EPosSetAbsolute, EPosSeek, s_zrt_channels[handle]->maxsize + offset );
+        offset = channel_pos(handle, EPosSetAbsolute, EPosSeek, size + offset );
         break;
+    }
     default:
         set_zrt_errno( EPERM ); /* in advanced version should be set to conventional value */
         return -1;
@@ -721,10 +739,7 @@ static void set_stat(struct nacl_abi_stat *stat, int handle)
         if ( CHECK_FLAG( permissions, S_IFCHR) ) blksize = 1;
         else                                     blksize = 4096;
         ino = INODE_FROM_HANDLE( handle );
-        if ( s_zrt_channels[handle] ) /* if available runtime data then get maximum registered position */
-            size = MAX( s_zrt_channels[handle]->maxsize, s_manifest->channels[handle].size );
-        else
-            size = s_manifest->channels[handle].size; /* size in bytes */
+        size = CHANNEL_SIZE(handle);
     }
 
     /* return stat object */
