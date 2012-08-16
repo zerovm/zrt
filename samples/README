@@ -1,15 +1,9 @@
-this folder contain both samples of zerovm usage and functional tests (especially in "security/" folder)
+Just samples demonstrates samples using ZRT and running on ZeroVM.
 
 zshell/
   run easily lua scripts and sql queries; 
   now lua does not support file system; sqlite can do queries in READ-ONLY mode; 
   
-command_line/
-  demonstrates argc/argv passed via manifest (CommandLine keyword)
-
-environment/
-  all types of access to environment variables
-
 wordcount/
   distributed application that uses mapreduce, networking library that part of zrt. 
   It calculates count of words in loaded input files; One file per one map node;
@@ -27,14 +21,8 @@ reqrep/
   mode 2- one node sends and another node receives data in cycle; 
   Now it's get cluster configuration via readdir. No direct file path using.
   
-file_stat/
-  demonstrates stat() / fstat() for various channels. Also it uses assertions to test expecting stat data; 
-  
 hello/
   simple example how to write a program for zerovm using zerovm api.
-  
-manifest_test/
-  simple functional test that tests using assertions for channels data, expected that it's parsing correctly. 
   
 sort_paging/
   contains 3 programs which allows to create random data, sort it and test sort order. from this example you can
