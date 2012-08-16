@@ -9,11 +9,3 @@ Tests was wrapped into usual for ZeroVM - nexe executable
 cd zrt/tests/lua_test/suite
 make
 run_tests.sh
-
-
-
-- annotation
-- contents
-- tests
-- known issues
-- problems 

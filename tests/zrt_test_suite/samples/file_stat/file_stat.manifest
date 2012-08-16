@@ -17,7 +17,7 @@ Channel = randomwrite.data, randomwrite, 3, 0, 0, 999, 999
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
-Version = 13072012
+Version = 09082012
 Nexe = file_stat.nexe
 NexeMax = 10000000
 SyscallsMax = 3333

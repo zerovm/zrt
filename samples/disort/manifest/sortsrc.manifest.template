@@ -26,7 +26,7 @@ CommandLine = src-{NODEID}
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
-Version = 13072012
+Version = 09082012
 Nexe = {ABS_PATH}nodesrc.nexe
 NexeMax = 10000000
 SyscallsMax = 3333333

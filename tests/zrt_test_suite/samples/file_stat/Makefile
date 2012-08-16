@@ -1,6 +1,6 @@
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=$(shell ../../../../setupenv.sh)
 NAME=file_stat
-ZRT_ROOT=../..
+ZRT_ROOT=../../../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm
 
 all: $(NAME).nexe run
@@ -21,4 +21,4 @@ run: $(NAME).nexe
 	@$(ZRT_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
 
 clean:
-	rm -f $(NAME).nexe $(NAME).o *.log *.data
+	@rm -f $(NAME).nexe $(NAME).o *.log *.data

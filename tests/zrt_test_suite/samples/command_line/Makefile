@@ -1,6 +1,6 @@
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=$(shell ../../../../setupenv.sh)
 NAME=command_line
-ZRT_ROOT=../..
+ZRT_ROOT=../../../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm
 
 all: $(NAME).o

@@ -18,5 +18,5 @@ run:
 	./run_tests.sh
 
 clean:
-	rm -f some.input
-	rm -f $(NAME).nexe $(NAME).o *.log *.data
+	@rm -f some.input
+	@rm -f $(NAME).nexe $(NAME).o *.log *.data

@@ -1,7 +1,7 @@
 NAME=bigfile
-PNACL_TOOL=$(shell ../../setupenv.sh)
-ZVM_ROOT=../..
-INCLUDE_FLAGS=-I $(ZVM_ROOT)/lib
+PNACL_TOOL=$(shell ../../../../setupenv.sh)
+ZRT_ROOT=../../../..
+INCLUDE_FLAGS=-I $(ZRT_ROOT)/lib
 MACROS_FLAGS=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
 
 all: $(NAME).nexe run
@@ -9,7 +9,7 @@ all: $(NAME).nexe run
 $(NAME).nexe: $(NAME).o
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).nexe -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(DEBUG) $(NAME).o $(ZVM_ROOT)/lib/libzrt.a
+	$(DEBUG) $(NAME).o $(ZRT_ROOT)/lib/libzrt.a
 
 $(NAME).o:
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).o -Wall \
@@ -17,8 +17,8 @@ $(NAME).o:
 
 run:
 	./genmanifest.sh
-	@$(ZVM_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
+	@$(ZRT_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
 	cat stdout.data
 
 clean:
-	rm -f $(NAME).nexe $(NAME).o *.log *.data *.manifest
+	@rm -f $(NAME).nexe $(NAME).o *.log *.data *.manifest

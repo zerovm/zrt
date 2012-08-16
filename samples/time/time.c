@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
-int main()
+int main(int argc, char **argv)
 {
   time_t cur_time;
   struct tm *date_time;

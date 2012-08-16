@@ -12,7 +12,7 @@ Channel = seeker2.data, seeker2.data, 2, 0, 0, 9999999, 9999999
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
-Version = 13072012
+Version = 09082012
 Log = zerovm.log
 Nexe = /home/yaroslav/git/zrt/samples/seek/seek.nexe
 NexeMax = 10000000

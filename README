@@ -3,16 +3,39 @@ ZRT - ZeroVM Run-Time environment for user executables running on virtual hardwa
 ZRT acts as an operating system for user executable and is implemented as libzrt.a static library
 NEXE is a user executable that was produced by nacl_gcc or nacl_g++ (part of Native Client SDK)
 
-[lib] see /zrt/lib/README
-It keeps library sources. Every C user application must include zrt.h to get working main() and 
-must be linked with libzrt.a 
-The main features are: Glibc support, SQLite3 library, Lua scripting language library
-[samples] see /zrt/samples/README
-It contains sample user code based on ZRT library.
-[zvm] 
-zerovm executable and also an API for ZRT library: zvm.h, zvm.o. In next releases zvm.o will replaced by libzvm.a 
+INSTALL & RUN
+1. Install ZeroVM, Consult https://github.com/Dazo-org/zerovm/blob/master/README
+2. Install NaCl SDK. Consult https://developers.google.com/native-client/sdk/download for exact procedure. 
+Below should work okay in most cases.
+cd ~
+wget http://commondatastorage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip 
+unzip nacl_sdk.zip 
+cd nacl_sdk 
+./naclsdk list
+./naclsdk update
+cd ..
+3. Install zrt
+wget https://github.com/Dazo-org/zrt/zipball/master
+unzip master
+mv Dazo-org-zrt* zrt
+cd zrt
+4. edit zrt/setupenv.sh, set path to your location of NACL SDK
+Copy zerovm executable into zvm folder of ZRT project 
+5. run
+cd zrt
+make
+make all_samples
+make zrt_tests
 
-HOW TO RUN:
-In order to launch nexe on ZeroVM platform, we need to pass a manifest file as a paramenter.
-hello world can be launched in this way:
-zerovm -M../samples/hello/hello.manifest
+
+DOCS
+zrt/README
+zrt/zvm/README
+zrt/lib/README
+zrt/lib/lua-5.2.1/README
+zrt/lib/sqlite3/README
+zrt/lib/networking/README
+zrt/lib/mapreduce/README
+zrt/tests/README
+zrt/tests/lua_test_suite/README
+zrt/samples/README

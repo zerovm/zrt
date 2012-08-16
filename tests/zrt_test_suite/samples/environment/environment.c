@@ -3,6 +3,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h> //getenv
+#include <string.h>
+#include <assert.h>
 #include "zrt.h"
 
 int main(int argc, char **argv)
@@ -17,9 +19,12 @@ int main(int argc, char **argv)
 
     printf("\nTEST2: using getenv:\n");
     const char* var = NULL;
+    const char* val = NULL;
     printf("get environment variables, by getenv:\n");
-    var = "TimeStamp";  printf("%s=%s\n", var, getenv(var) );
-    var = "SafeWords";  printf("%s=%s\n", var, getenv(var) );
+    var = "TimeStamp"; val = getenv(var);  printf("%s=%s\n", var, val );
+    assert( !strcmp(val, "1337012520") );
+    var = "SafeWords"; val = getenv(var);  printf("%s=%s\n", var, val );
+    assert( !strcmp(val, "klaato_verada_nikto") );
 
     printf("\nTEST3: using setenv & getenv:\n");
     printf( "before new environment assignemnt\n" );

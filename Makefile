@@ -9,7 +9,7 @@ LIBGTEST=gtest/libgtest.a
 MACROS_FLAGS=-DUSER_SIDE -DDEBUG
 INCLUDE_PATH=-I. -Ilib -Izvm
 
-all: prepare lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING} all_samples
+all: prepare lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING}
 
 prepare:
 	chmod u+rwx setupenv.sh
@@ -45,15 +45,19 @@ ${LIBNETWORKING}:
 ${LIBGTEST}:
 	@PNACL_TOOL=${PNACL_TOOL} make -Cgtest
 
+zrt_tests:
+	@echo Building zrt test
+	make -Ctests/zrt_test_suite/samples/bigfile
+	make -Ctests/zrt_test_suite/samples/command_line
+	make -Ctests/zrt_test_suite/samples/environment	
+	make -Ctests/zrt_test_suite/samples/file_stat
+	make -Ctests/zrt_test_suite/samples/manifest_test
+	make -Ctests/zrt_test_suite/samples/seek
+	
 all_samples:
 	@echo Building samples
-	make -Csamples/command_line
 	make -Csamples/disort
-	make -Csamples/environment	
-	make -Csamples/file_stat
 	make -Csamples/hello
-	make -Csamples/manifest_test
-	make -Csamples/net
 	make -Csamples/readdir
 	make -Csamples/reqrep
 	make -Csamples/sort_paging
@@ -62,19 +66,20 @@ all_samples:
 	make -Csamples/zshell
 	
 clean_samples:
-	@make -Csamples/command_line clean
 	@make -Csamples/disort clean
-	@make -Csamples/environment	clean
-	@make -Csamples/file_stat clean
 	@make -Csamples/hello clean
-	@make -Csamples/manifest_test clean
-	@make -Csamples/net clean
 	@make -Csamples/readdir clean
 	@make -Csamples/reqrep clean
 	@make -Csamples/sort_paging clean
 	@make -Csamples/time clean
 	@make -Csamples/wordcount clean
 	@make -Csamples/zshell clean
+	@make -Ctests/zrt_test_suite/samples/bigfile clean
+	@make -Ctests/zrt_test_suite/samples/command_line clean
+	@make -Ctests/zrt_test_suite/samples/environment	clean
+	@make -Ctests/zrt_test_suite/samples/file_stat clean
+	@make -Ctests/zrt_test_suite/samples/manifest_test clean
+	@make -Ctests/zrt_test_suite/samples/seek clean
 	
 clean: clean_samples
 	@make -Clib/sqlite3 clean

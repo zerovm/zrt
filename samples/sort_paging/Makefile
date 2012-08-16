@@ -35,4 +35,4 @@ cpuid.o:
 	$(INCLUDE_FLAGS)  $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 cpuid.c
 
 clean:
-	rm -f *.nexe *.o *.log *.data *.manifest
+	@rm -f *.nexe *.o *.log *.data *.manifest

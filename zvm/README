@@ -1,0 +1,9 @@
+------------------------------------------
+ZeroVM virtual machine.
+source: https://github.com/Dazo-org/zerovm/blob/master/
+------------------------------------------
+
+1. ZRT library requires zerovm executable to run, it must be built from ZeroVM source 
+2. ZeroVM redistribute package for ZRT also includes:
+zvm.h - ZeroVM API
+zvm.o - Object code to be linked into zrt library

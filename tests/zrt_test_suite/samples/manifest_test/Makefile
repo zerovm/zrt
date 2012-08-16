@@ -1,6 +1,6 @@
 NAME=manifest_test
-PNACL_TOOL=$(shell ../../setupenv.sh)
-ZRT_ROOT=../..
+PNACL_TOOL=$(shell ../../../../setupenv.sh)
+ZRT_ROOT=../../../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I.
 
 all: $(NAME).nexe run
@@ -18,6 +18,6 @@ run:
 	@./run_tests.sh
 
 clean:
-	rm -f $(NAME).nexe *.o *.log *.result *.data
-	rm -f *.manifest
+	@rm -f $(NAME).nexe *.o *.log *.result *.data
+	@rm -f *.manifest
 
