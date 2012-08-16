@@ -53,7 +53,6 @@ extern "C" {
 # define SQLITE_API
 #endif
 
-
 /*
 ** These no-op macros are used in front of interfaces to mark those
 ** interfaces as either deprecated or experimental.  New applications

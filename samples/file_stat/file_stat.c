@@ -113,27 +113,13 @@ int main(int argc, char **argv)
         assert( (s.st_mode & S_IWUSR) == S_IWUSR ); /*it should allow write only access*/
     }
 
-    fname = "randomread";
-    if ( stat( fname, &s) == -1) {
-        perror("stat");
-        exit(EXIT_FAILURE);
-    }
-    else{
-        fprintf(LOGFD, "TEST 6: %s file stat\n", fname); fflush(0);
-        print_stat_data( &s);
-        assert( s.st_nlink == 1 );
-        assert( S_ISREG(s.st_mode) != 0 ); /*it shoud be file*/
-        assert( (s.st_mode & S_IRUSR) == S_IRUSR ); /*it should allow read only access*/
-        //assert( s.st_size != 0 ); /*it should not be null*/
-    }
-
     fname = "randomwrite";
     if ( stat( fname, &s) == -1) {
         perror("stat");
         exit(EXIT_FAILURE);
     }
     else{
-        fprintf(LOGFD, "TEST 7: %s file stat\n", fname); fflush(0);
+        fprintf(LOGFD, "TEST 5: %s file stat\n", fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
         assert( S_ISREG(s.st_mode) != 0 ); /*it shoud be file*/
@@ -146,15 +132,27 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
     else{
-        fprintf(LOGFD, "TEST 5: %s file stat\n", fname); fflush(0);
+        fprintf(LOGFD, "TEST 6: %s file stat\n", fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
         assert( S_ISBLK(s.st_mode) != 0 );
         /*it should allow read,write access*/
         assert( (s.st_mode & S_IRUSR) == S_IRUSR && (s.st_mode & S_IWUSR) == S_IWUSR );
-        assert( s.st_size != 0 );
     }
 
+    fname = "randomread";
+    if ( stat( fname, &s) == -1) {
+        perror("stat");
+        exit(EXIT_FAILURE);
+    }
+    else{
+        fprintf(LOGFD, "TEST 7: %s file stat\n", fname); fflush(0);
+        print_stat_data( &s);
+        assert( s.st_nlink == 1 );
+        assert( S_ISREG(s.st_mode) != 0 ); /*it shoud be file*/
+        assert( (s.st_mode & S_IRUSR) == S_IRUSR ); /*it should allow read only access*/
+        assert( s.st_size != 0 ); /*maped file should have size as read only channel*/
+    }
 	return 0;
 }
 

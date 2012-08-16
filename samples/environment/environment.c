@@ -5,7 +5,7 @@
 #include <stdlib.h> //getenv
 #include "zrt.h"
 
-int main(int argc, char **argv, char **envp)
+int main(int argc, char **argv)
 {
     extern char **environ;
     char **env = environ;
@@ -15,17 +15,13 @@ int main(int argc, char **argv, char **envp)
     while(*env != NULL)
        printf("\"%s\"\n", *env++);
 
-    printf("\nTEST2: using envp:\n");
-    while(*envp != NULL)
-       printf("\"%s\"\n", *envp++);
-
-    printf("\nTEST3: using getenv:\n");
+    printf("\nTEST2: using getenv:\n");
     const char* var = NULL;
     printf("get environment variables, by getenv:\n");
     var = "TimeStamp";  printf("%s=%s\n", var, getenv(var) );
     var = "SafeWords";  printf("%s=%s\n", var, getenv(var) );
 
-    printf("\nTEST4: using setenv & getenv:\n");
+    printf("\nTEST3: using setenv & getenv:\n");
     printf( "before new environment assignemnt\n" );
     var = "Pum";
     printf("%s=%s\n", var, getenv(var) );

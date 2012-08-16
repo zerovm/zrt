@@ -1,57 +1,73 @@
 ZRT - ZeroVM runtime library
 
 Zrt library contains:
-- Simple OS implementation. More of description in folowing section; 
-- Lua 5.2.1 Library, for more see here: zrt\lib\lua-5.2.1\README
-- Sqlite3 Library, for more see here: zrt\lib\sqlite3\README
-- Mapreduce32/128 Library, for more see here: zrt\lib\mapreduce\README 
-- Networking Library, for more see here: zrt\lib\networking\README
+- Simple OS implementation. Described in more details in the folowing section 
+- Lua 5.2.1 Library, see here: zrt\lib\lua-5.2.1\README
+- Sqlite3 Library, see here: zrt\lib\sqlite3\README
+- Mapreduce32/128 Library, see here: zrt\lib\mapreduce\README 
+- Networking Library, see here: zrt\lib\networking\README
 
 ---------------------------------------------------------------
 1.Simple OS implementation
 ---------------------------------------------------------------
 
-1.1. In order to use zrt just include "zrt.h" and set appropriate include path in Makefile.
-Many syscalls has real implementation to provide required abstraction level for untrusted application.
-System calls that receiving untrusted code it's callbacks from trusted side (ZeroVM).
-Since user code was compiled by nacl-gcc or nacl-g++ it support only NACL syscalls;
-For example user will playing with untrusted code and will try to call not NACL syscall, it's guaranteed get error
-result, so user can't use linux syscalls but instead NACL syscalls can be used, although it's just recommended
-to use ZRT libarry; Now ZRT has complete implementation with error handling for folowing syscalls: 
-stat, fstat, seek, open, close, getdents; The rest syscalls has only stub implementation;
-1.2 ZRT has especial group of syscalls that not implemented by zrt, but instead they are call syscall on trusted 
-side by reinstalling of syscallback address. These are: sysbrk, mmap, munmap, tls_get;
+Terms:
+untrusted (application) - user executable running inside ZeroVM
+trusted (application) - ZeroVM itself or a part of it
 
-2. Channels input/output operations available, that can be configured in order to launch ZeroVM:  
-2.1. channel type SGetSPut=0, sequential  get / sequential_put
+1.1. 
+In order to use zrt you can just include "zrt.h" and set appropriate include path in Makefile.
+Many syscalls have real implementation to provide required abstraction level for untrusted application.
+Untrusted code can recieve system calls back into user code if it has a proper callback setup.
+Since user code must be compiled by nacl-gcc or nacl-g++ it supports only NACL syscalls
+If untrusted code will try to call real Linux syscall it will fail. 
+ZRT has complete implementation (with error handling) for the folowing syscalls: 
+stat(), fstat(), seek(), open(), close(), getdents(). The rest of syscalls have only a stub implementation
+
+1.2 
+ZRT has special group of syscalls that are not implemented by ZRT, but instead they call a syscall on trusted 
+side by using syscallback address (see "syscallback" feature in ZeroVM docs). 
+These are: sysbrk(), mmap(), munmap(), tls_get()
+
+---------------------------------------------------------------
+2. Channels I/O
+---------------------------------------------------------------
+
+Channels input/output operations are available, they can be configured as follows:  
+
+2.1. 
+Channel type SGetSPut=0, sequential  get / sequential_put
 RDONLY     Seek pos —     get
 WRONLY     Seek pos —     get
 RDWR       Seek pos —     get
-2.2. channel type RGetSPut=1, Random get / sequential put
+2.2. 
+Channel type RGetSPut=1, Random get / sequential put
 RDONLY     Seek pos — set get 
 WRONLY     Seek pos —     get
 RDWR       Write pos unavailable; Read Seek pos - set get;
-2.3. channel type SGetRPut=2, Sequential get / Random put
+2.3.
+Channel type SGetRPut=2, Sequential get / Random put
 RDONLY     Seek pos —     get
 WRONLY     Seek pos — set get
 RDWR       Read pos unavailable; Write Seek pos - set get;
-2.4. channel type RGetRPut=3, Random get / Random put
+2.4.
+Channel type RGetRPut=3, Random get / Random put
 RDONLY     Seek pos — set get
 WRONLY     Seek pos —     get
 RDWR       Seek pos — set get
 
-3. Filesystem structure:
-Currently all channels with their aliases are used to get manifest file system structure,
-for example channel alias "/dev/debug" will transformed into two entities: 
+---------------------------------------------------------------
+3. File system
+---------------------------------------------------------------
+Currently all channels represent device files in /dev pseudo-filesystem,
+for example channel alias "/dev/input" will be transformed into two entities: 
 directory "/dev"
-file      "/dev/channel" 
-All added directories can be accessed via stat, and realistic stat structure will be returned by stat syscall;
-It was implemented to get readdir working;
+file      "/dev/input" 
+All added directories can be accessed via stat, and realistic stat structure will be returned by stat syscall
+It was implemented to get readdir working
 
 4. ZRT Debugging
-ZRT has own debugging channel associated with alias name "/dev/debug", so if defined this channel all debugging
-zrt information will wrote into debug channel, if it's debug channel not defined no debug info will available;
-TODO: Add remote debugging, to get debug info if nexe was launched on cluster; 
-
-
-
+ZRT has its own debugging channel associated with alias name "/dev/debug"
+If this channel is defined then all debugging ZRT information will go into the debug channel
+If debug channel is not defined no debug info will available (apart from system logs)
+TODO: Add remote debugging, to get debug info if executable was launched on cluster 

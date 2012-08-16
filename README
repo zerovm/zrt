@@ -1,18 +1,18 @@
 ABOUT:
-ZRT - ZeroVM Run-Time environment, for user executable intended to run on virtual hardware represented by ZeroVM.
-ZRT acts as operating system for user nexe and there are implemented in libzrt.a.
-NEXE it's user executable that produced by nacl_gcc or nacl_g++ that part of Native Client SDK;
+ZRT - ZeroVM Run-Time environment for user executables running on virtual hardware represented by ZeroVM.
+ZRT acts as an operating system for user executable and is implemented as libzrt.a static library
+NEXE is a user executable that was produced by nacl_gcc or nacl_g++ (part of Native Client SDK)
 
 [lib] see /zrt/lib/README
-It's keep an library sources. Every C user application should include zrt.h to get working main() and 
-should be linked with zrt static library. 
-The main features are: Glibc support, SQLite3 library, Lua scripting language library;
+It keeps library sources. Every C user application must include zrt.h to get working main() and 
+must be linked with libzrt.a 
+The main features are: Glibc support, SQLite3 library, Lua scripting language library
 [samples] see /zrt/samples/README
-It contains user code based on ZRT library.
+It contains sample user code based on ZRT library.
 [zvm] 
-zerovm executable and also api for ZRT library: zvm.h, zvm.o. In next releases zvm.o will replaced by libzvm.a; 
+zerovm executable and also an API for ZRT library: zvm.h, zvm.o. In next releases zvm.o will replaced by libzvm.a 
 
 HOW TO RUN:
-In order to launch nexe on zerovm, we are need to pass manifest file as paramenter.
+In order to launch nexe on ZeroVM platform, we need to pass a manifest file as a paramenter.
 hello world can be launched in this way:
 zerovm -M../samples/hello/hello.manifest
