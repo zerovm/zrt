@@ -1,6 +1,6 @@
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 ZRT_ROOT=../..
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/lib/networking -I$(ZRT_ROOT)/zvm -I.
+INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/lib/networking -I.
 #DEBUG=-g
 GENNODE=generator.uint32_t
 MANNODE=nodeman

@@ -11,8 +11,8 @@ echo some input text > some.input
 echo -------------------------------run test 1
 echo manifest1 test
 rm 1.errlog -f
-echo ../../zvm/zerovm -M${SCRIPT_PATH}/readdir.manifest
-../../zvm/zerovm -M${SCRIPT_PATH}/readdir.manifest
+echo ${ZEROVM_ROOT}/zerovm -M${SCRIPT_PATH}/readdir.manifest
+${ZEROVM_ROOT}/zerovm -M${SCRIPT_PATH}/readdir.manifest
 echo "stderr output >>>>>>>>>>"
 cat stderr.data
 

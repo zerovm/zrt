@@ -1,4 +1,4 @@
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 NACL_GCC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
 DEBUG=-g -DDEBUG
 ZRT_ROOT=..

@@ -1,4 +1,4 @@
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 
 all: libsqlite3.a
 

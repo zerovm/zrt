@@ -1,7 +1,6 @@
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 DEBUG=-DDEBUG
-ZRT_ROOT=../..
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm
+INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib
 
 all: createdirs reqrep.nexe run
 	

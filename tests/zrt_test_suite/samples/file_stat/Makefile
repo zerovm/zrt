@@ -1,7 +1,6 @@
-PNACL_TOOL=$(shell ../../../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 NAME=file_stat
-ZRT_ROOT=../../../..
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm
+INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib
 
 all: $(NAME).nexe run
 
@@ -15,10 +14,11 @@ $(NAME).o:
 	$(INCLUDE_FLAGS) $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 $(NAME).c
 
 run: $(NAME).nexe
-	echo some data > generated.data
-	echo some data > cdr.data
-	echo some data > randomread.data
-	@$(ZRT_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
+	@echo some data > generated.data
+	@echo some data > cdr.data
+	@echo some data > randomread.data
+	@sed s@{ABS_PATH}@${CURDIR}/@g ${NAME}.manifest.template > ${NAME}.manifest
+	$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
 
 clean:
 	@rm -f $(NAME).nexe $(NAME).o *.log *.data

@@ -1,6 +1,5 @@
 NAME=environment_test
-PNACL_TOOL=$(shell ../../../setupenv.sh)
-ZRT_ROOT=../../..
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/gtest -I$(ZRT_ROOT)
 
 all: $(NAME).nexe gtest_$(NAME).nexe run1 run2
@@ -18,10 +17,12 @@ gtest_$(NAME).nexe:
 	$(DEBUG) gtest$(NAME).o -L$(ZRT_ROOT)/lib -L$(ZRT_ROOT)/gtest -lzrt -lgtest   
 
 run1:
-	@$(ZRT_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
+	sed s@{ABS_PATH}@${CURDIR}/@g ${NAME}.manifest.template > ${NAME}.manifest
+	$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
 	
 run2:
-	@$(ZRT_ROOT)/zvm/zerovm -Mgtest_$(NAME).manifest -v2
+	sed s@{ABS_PATH}@${CURDIR}/@g gtest_${NAME}.manifest.template > gtest_${NAME}.manifest
+	$(ZEROVM_ROOT)/zerovm -Mgtest_$(NAME).manifest -v2
 	
 clean:
 	rm -f *.nexe *.o *.log *.result *.std*

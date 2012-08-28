@@ -1,5 +1,5 @@
 NAME=lua
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 ZRT_ROOT=../..
 SRC_PATH=$(ZRT_ROOT)/lib/lua-5.2.1/src/not_for_lib
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/lib/lua-5.2.1/src 

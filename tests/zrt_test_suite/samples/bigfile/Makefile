@@ -1,6 +1,5 @@
 NAME=bigfile
-PNACL_TOOL=$(shell ../../../../setupenv.sh)
-ZRT_ROOT=../../../..
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 INCLUDE_FLAGS=-I $(ZRT_ROOT)/lib
 MACROS_FLAGS=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
 
@@ -17,7 +16,7 @@ $(NAME).o:
 
 run:
 	./genmanifest.sh
-	@$(ZRT_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
+	@$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
 	cat stdout.data
 
 clean:

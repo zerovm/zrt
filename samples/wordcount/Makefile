@@ -1,9 +1,9 @@
 GTEST_CFLAGS=-DGTEST_HAS_PTHREAD=0
 DEBUG=-g -DDEBUG
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 NACL_GCC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
 ZRT_ROOT=../..
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I$(ZRT_ROOT)/lib/mapreduce -I$(ZRT_ROOT)/lib/networking -Isrc
+INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/lib/mapreduce -I$(ZRT_ROOT)/lib/networking -Isrc
 CFLAGS=-Wall -Wno-long-long -m64 -std=c99
 
 all: createdirs clean map.nexe reduce.nexe

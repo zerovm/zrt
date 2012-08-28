@@ -3,14 +3,14 @@
 == following channels: stdin, stdout, stderr used
 =====================================================================
 Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
-Channel = file_stat.output.data, /dev/stdout, 0, 0, 0, 999999, 999999
-Channel = file_stat.user.log, /dev/stderr, 0, 0, 0, 999999, 999999
-Channel = file_stat.zrt.log, /dev/debug, 0, 0, 0, 999999, 999999
-Channel = generated.data, readdata, 1, 9999, 9999, 0, 0
-Channel = write.data, writedata, 2, 0, 0, 999, 999
-Channel = cdr.data, /dev/image, 1, 999, 999, 999, 999
-Channel = randomread.data, randomread, 3, 999, 999, 0, 0
-Channel = randomwrite.data, randomwrite, 3, 0, 0, 999, 999
+Channel = {ABS_PATH}file_stat.output.data, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}file_stat.user.log, /dev/stderr, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}file_stat.zrt.log, /dev/debug, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}generated.data, readdata, 1, 9999, 9999, 0, 0
+Channel = {ABS_PATH}write.data, writedata, 2, 0, 0, 999, 999
+Channel = {ABS_PATH}cdr.data, /dev/image, 1, 999, 999, 999, 999
+Channel = {ABS_PATH}randomread.data, randomread, 3, 999, 999, 0, 0
+Channel = {ABS_PATH}randomwrite.data, randomwrite, 3, 0, 0, 999, 999
 
 
 =====================================================================
@@ -18,6 +18,7 @@ Channel = randomwrite.data, randomwrite, 3, 0, 0, 999, 999
 == for the internal zerovm needs
 =====================================================================
 Version = 09082012
-Nexe = file_stat.nexe
+Nexe = {ABS_PATH}file_stat.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
+NodeName=filestat,1

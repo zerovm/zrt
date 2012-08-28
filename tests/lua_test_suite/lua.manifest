@@ -1,0 +1,50 @@
+=====================================================================
+== i/o switches. full list. optional. some switches now meaningless,
+== placed here for completeness and future changes
+=====================================================================
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua.input, /dev/stdin, 0, 999999, 999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua.output, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
+
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/all.lua, all.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/big.lua, big.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/checktable.lua, checktable.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/constructs.lua, constructs.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/errors.lua, errors.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/gc.lua, gc.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/literals.lua, literals.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/main.lua, main.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/pm.lua, pm.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/vararg.lua, vararg.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/api.lua, api.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/bitwise.lua, bitwise.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/closure.lua, closure.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/coroutine.lua, coroutine.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/events.lua, events.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/goto.lua, goto.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/locals.lua, locals.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/math.lua, math.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/sort.lua, sort.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/verybig.lua, verybig.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/attrib.lua, attrib.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/calls.lua, calls.lua, 0, 9999999, 9999999, 0, 0                        
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/code.lua, code.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/db.lua, db.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/files.lua, files.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/nextvar.lua, nextvar.lua, 0, 9999999, 9999999, 0, 0
+Channel = /home/yaroslav/git/zrt/tests/lua_test_suite/lua-5.2.1-tests/strings.lua, strings.lua, 0, 9999999, 9999999, 0, 0                                 
+                             
+
+=='@' should be replaced by '=' in user main, currently zerovm does not supported '=' char in command line
+CommandLine = -e_U@true all.lua
+
+Environment = PATH, foo
+
+=====================================================================
+== switches for zerovm. some of them used to control nexe, some
+== for the internal zerovm needs
+=====================================================================
+Version = 09082012
+Nexe = /home/yaroslav/git/zrt/tests/lua_test_suite/lua.nexe
+NodeName=luatests, 1

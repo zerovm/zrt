@@ -1,14 +1,13 @@
 NAME=readdir
-PNACL_TOOL=$(shell ../../setupenv.sh)
-ZVM_ROOT=../..
-INCLUDE_FLAGS=-I $(ZVM_ROOT)/lib
+PNACL_TOOL=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc
+INCLUDE_FLAGS=-I $(ZRT_ROOT)/lib
 
 all: $(NAME).nexe run
 
 $(NAME).nexe: $(NAME).o
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).nexe -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(DEBUG) $(NAME).o -L$(ZVM_ROOT)/lib -lzrt
+	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt
 	
 $(NAME).o:
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).o -Wall \

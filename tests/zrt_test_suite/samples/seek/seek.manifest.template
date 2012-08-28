@@ -1,17 +1,19 @@
 =====================================================================
-== "readdir" example. demo of the new user custom attributes design
+== "environment" example. demo of the new user custom attributes design
 =====================================================================
 Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
-Channel = /home/yaroslav/git/zrt/samples/readdir/stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
-Channel = /home/yaroslav/git/zrt/samples/readdir/stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
-Channel = /home/yaroslav/git/zrt/samples/readdir/zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
+Channel = /dev/null, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
+Channel = {ABS_PATH}seeker.data, seeker.data, 2, 0, 0, 9999999, 9999999
+Channel = {ABS_PATH}seeker2.data, seeker2.data, 2, 0, 0, 9999999, 9999999
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
 Version = 09082012
-Nexe = /home/yaroslav/git/zrt/samples/readdir/readdir.nexe
+Nexe = {ABS_PATH}seek.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
 

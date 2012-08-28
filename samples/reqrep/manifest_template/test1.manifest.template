@@ -7,10 +7,11 @@ Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = /dev/null, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}log/1zrt.log, /dev/debug, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}log/1stderr.log, /dev/stderr, 0, 0, 0, 999999, 999999
-Channel = ipc:///tmp/testa, /dev/in/testa, 0, 999999999, 999999999, 0, 0
-Channel = ipc:///tmp/testb, /dev/out/testb, 0, 0, 0, 999999999, 999999999 
+Channel = tcp:2:, /dev/in/testa, 0, 999999999, 999999999, 0, 0
+Channel = tcp:2:, /dev/out/testb, 0, 0, 0, 999999999, 999999999 
 
 Environment=first,read
+CommandLine = 1
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -19,7 +20,10 @@ Environment=first,read
 Version = 09082012
 Nexe = reqrep.nexe
 NexeMax = 10000000
+MaxMem = 99999999
 SyscallsMax = 3333
 SetupCallsMax = 99999
-Networking = bump
+NodeName = test1, 1
+NameServer = udp:127.0.0.1:54321
+
 

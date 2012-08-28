@@ -8,7 +8,7 @@ SRC_LAST=10
 COUNTER=$SRC_FIRST
 while [  $COUNTER -le $SRC_LAST ]; do
     echo generate data for $COUNTER node
-    ../../zvm/zerovm -Mmanifest/generator"$COUNTER".manifest
+    ${ZEROVM_ROOT}/zerovm -Mmanifest/generator"$COUNTER".manifest
     cat log/"$COUNTER"generator.stderr.log
     let COUNTER=COUNTER+1 
 done

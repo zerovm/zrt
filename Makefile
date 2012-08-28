@@ -1,4 +1,4 @@
-PNACL_TOOL=$(shell ./setupenv.sh)
+PNACL_TOOL=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc
 
 #ported application libraries
 LIBSQLITE=lib/sqlite3/libsqlite3.a
@@ -7,16 +7,16 @@ LIBMAPREDUCE=lib/mapreduce/libmapreduce.a
 LIBNETWORKING=lib/networking/libnetworking.a
 LIBGTEST=gtest/libgtest.a
 MACROS_FLAGS=-DUSER_SIDE -DDEBUG
-INCLUDE_PATH=-I. -Ilib -Izvm
+INCLUDE_PATH=-I. -Ilib -I${ZEROVM_ROOT}/api 
 
 all: prepare lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING}
 
 prepare:
-	chmod u+rwx setupenv.sh
-	echo ${PNACL_TOOL}
 
-lib/libzrt.a: lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/zrtsyscalls.c lib/zrtreaddir.c 
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c zvm/zvm.c -o zvm/zvm.o -Wall -Wno-long-long -O2 -msse4.1 -m64 ${INCLUDE_PATH}
+
+lib/libzrt.a: lib/syscall_manager.S lib/zrt.c ${ZEROVM_ROOT}/api/zvm.c lib/zrtsyscalls.c lib/zrtreaddir.c 
+	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c ${ZEROVM_ROOT}/api/zvm.c -o lib/zvm.o -Wall -Wno-long-long -O2 -msse4.1 -m64 \
+	${INCLUDE_PATH}
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/syscall_manager.S -o lib/syscall_manager.o
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrtreaddir.c -o lib/zrtreaddir.o -Wall -Wno-long-long -O2 -m64 \
 	${MACROS_FLAGS} ${INCLUDE_PATH}
@@ -24,7 +24,7 @@ lib/libzrt.a: lib/syscall_manager.S lib/zrt.c zvm/zvm.c lib/zrtsyscalls.c lib/zr
 	${MACROS_FLAGS} ${INCLUDE_PATH}
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrtsyscalls.c -o lib/zrtsyscalls.o -Wall -Wno-long-long -O2 -m64 \
 	${MACROS_FLAGS} ${INCLUDE_PATH}	
-	@ar rcs lib/libzrt.a lib/syscall_manager.o zvm/zvm.o lib/zrt.o lib/zrtsyscalls.o lib/zrtreaddir.o
+	@ar rcs lib/libzrt.a lib/syscall_manager.o lib/zvm.o lib/zrt.o lib/zrtsyscalls.o lib/zrtreaddir.o
 
 ${LIBSQLITE}:
 	@make -Clib/sqlite3
@@ -51,12 +51,12 @@ zrt_tests:
 	make -Ctests/zrt_test_suite/samples/command_line
 	make -Ctests/zrt_test_suite/samples/environment	
 	make -Ctests/zrt_test_suite/samples/file_stat
-	make -Ctests/zrt_test_suite/samples/manifest_test
 	make -Ctests/zrt_test_suite/samples/seek
 	
 all_samples:
 	@echo Building samples
 	make -Csamples/disort
+	make -Csamples/net
 	make -Csamples/hello
 	make -Csamples/readdir
 	make -Csamples/reqrep
@@ -67,6 +67,7 @@ all_samples:
 	
 clean_samples:
 	@make -Csamples/disort clean
+	@make -Csamples/net clean
 	@make -Csamples/hello clean
 	@make -Csamples/readdir clean
 	@make -Csamples/reqrep clean
@@ -78,7 +79,6 @@ clean_samples:
 	@make -Ctests/zrt_test_suite/samples/command_line clean
 	@make -Ctests/zrt_test_suite/samples/environment	clean
 	@make -Ctests/zrt_test_suite/samples/file_stat clean
-	@make -Ctests/zrt_test_suite/samples/manifest_test clean
 	@make -Ctests/zrt_test_suite/samples/seek clean
 	
 clean: clean_samples

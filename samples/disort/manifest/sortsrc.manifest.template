@@ -4,20 +4,19 @@ Channel = {ABS_PATH}log/sortsrc{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 999999999,
 Channel = /dev/null, /dev/stdout, 0, 0, 0, 99999999, 99999999
 Channel = {ABS_PATH}log/{NODEID}sortsrc.stderr.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
 
-Channel = ipc:///tmp/src{NODEID}-dst1, /dev/out/dst-1, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst2, /dev/out/dst-2, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst3, /dev/out/dst-3, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst4, /dev/out/dst-4, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst5, /dev/out/dst-5, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst5, /dev/out/dst-5, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst6, /dev/out/dst-6, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst7, /dev/out/dst-7, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst8, /dev/out/dst-8, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst9, /dev/out/dst-9, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/src{NODEID}-dst10,/dev/out/dst-10, 0, 0, 0, 99999999, 99999999
+Channel = tcp:12:, /dev/out/dst-1, 0, 0, 0, 99999999, 99999999
+Channel = tcp:13:, /dev/out/dst-2, 0, 0, 0, 99999999, 99999999
+Channel = tcp:14:, /dev/out/dst-3, 0, 0, 0, 99999999, 99999999
+Channel = tcp:15:, /dev/out/dst-4, 0, 0, 0, 99999999, 99999999
+Channel = tcp:16:, /dev/out/dst-5, 0, 0, 0, 99999999, 99999999
+Channel = tcp:17:, /dev/out/dst-6, 0, 0, 0, 99999999, 99999999
+Channel = tcp:18:, /dev/out/dst-7, 0, 0, 0, 99999999, 99999999
+Channel = tcp:19:, /dev/out/dst-8, 0, 0, 0, 99999999, 99999999
+Channel = tcp:20:, /dev/out/dst-9, 0, 0, 0, 99999999, 99999999
+Channel = tcp:21:, /dev/out/dst-10, 0, 0, 0, 99999999, 99999999
 
-Channel = ipc:///tmp/src{NODEID}-man,/dev/out/man, 0, 0, 0, 99999999, 99999999
-Channel = ipc:///tmp/man-src{NODEID},/dev/in/man, 0, 99999999, 99999999, 0, 0
+Channel = tcp:1:,  /dev/out/man, 0, 0, 0, 99999999, 99999999
+Channel = tcp:1:,  /dev/in/man, 0, 99999999, 99999999, 0, 0
 
 Environment =SOURCE_NAME,src,DEST_NAME,dst,MAN_NAME,man
 CommandLine = src-{NODEID}
@@ -31,5 +30,6 @@ Nexe = {ABS_PATH}nodesrc.nexe
 NexeMax = 10000000
 SyscallsMax = 3333333
 SetupCallsMax = 99999999
-
+NodeName=src,{SEQUENTIAL_ID}
+NameServer = udp:127.0.0.1:54321
 

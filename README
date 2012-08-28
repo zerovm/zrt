@@ -19,8 +19,14 @@ wget https://github.com/Dazo-org/zrt/zipball/master
 unzip master
 mv Dazo-org-zrt* zrt
 cd zrt
-4. edit zrt/setupenv.sh, set path to your location of NACL SDK
-Copy zerovm executable into zvm folder of ZRT project 
+4.Set environmant variables on ~/.bashrc
+NACL_SDK_ROOT NaCl pepper path
+ZEROVM_ROOT root of ZeroVM 
+ZRT_ROOT root of ZRT
+For example:
+export NACL_SDK_ROOT=${HOME}/nacl_sdk/pepper_21
+export ZEROVM_ROOT=${HOME}/git/retry-zerovm
+export ZRT_ROOT=${HOME}/git/zrt
 5. run
 cd zrt
 make

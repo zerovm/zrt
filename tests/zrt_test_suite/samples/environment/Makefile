@@ -1,8 +1,7 @@
 NAME=environment
-PNACL_TOOL=$(shell ../../../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 ZRT_ROOT=../../../..
 INCLUDE_FLAGS=-I $(ZRT_ROOT)/lib
-MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
 
 all: $(NAME).nexe run
 
@@ -17,7 +16,7 @@ $(NAME).o:
 
 run:
 	./genmanifest.sh
-	@$(ZRT_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
+	@$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
 	cat stdout.data
 
 clean:

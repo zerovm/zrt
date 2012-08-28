@@ -17,8 +17,8 @@
 
 #include "zrt.h"
 
-#define WRITE_FMT_LOG(fmt, args...) fprintf(stderr, fmt, args)
-#define WRITE_LOG(str) fprintf(stderr, "%s\n", str)
+#define WRITE_FMT_LOG(fmt, args...) fprintf(stderr, fmt, args);fflush(0);
+#define WRITE_LOG(str) fprintf(stderr, "%s\n", str);fflush(0);
 
 #define IN_DIR "/dev/in"
 #define OUT_DIR "/dev/out"
@@ -44,7 +44,7 @@ int main(int argc, char **argv){
 
     WRITE_FMT_LOG("reqrep started, first=%s\n", first);
     if ( strcmp(first, "read") && strcmp(first, "write") ){
-        WRITE_LOG("environment variable FIRST as waiting values (read | write)\n");
+        WRITE_LOG("environment variable FIRST is waiting values (read | write)\n");
         exit(0);
     }
 

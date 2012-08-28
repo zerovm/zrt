@@ -15,4 +15,4 @@ Nexe = {ABS_PATH}generator.uint32_t.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
 CommandLine = 5000000
-
+NodeName=generator,1

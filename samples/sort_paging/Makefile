@@ -1,8 +1,7 @@
-PNACL_TOOL=$(shell ../../setupenv.sh)
+PNACL_TOOL=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/
 NAME_1=generator.uint32_t
 NAME_2=sort_uint_proper_with_args
 NAME_3=tester.uint32_t
-ZRT_ROOT=../..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm
 
 all: $(NAME_1).o $(NAME_2).o $(NAME_3).o cpuid.o

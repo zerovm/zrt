@@ -1,8 +1,7 @@
 NAME=seek
-PNACL_TOOL=$(shell ../../../../setupenv.sh)
+PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 ZRT_ROOT=../../../..
 INCLUDE_FLAGS=-I $(ZRT_ROOT)/lib
-MACROS_FLAGS=-DUSER_SIDE -DZRT_LIB
 
 all: $(NAME).nexe run
 
@@ -16,7 +15,8 @@ $(NAME).o: $(NAME).c
 	$(INCLUDE_FLAGS) $(MACROS_FLAGS) $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 $(NAME).c
 
 run:
-	@$(ZRT_ROOT)/zvm/zerovm -M$(NAME).manifest -v2
+	sed s@{ABS_PATH}@${CURDIR}/@g ${NAME}.manifest.template > ${NAME}.manifest
+	@$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
 
 clean:
 	@rm -f $(NAME).nexe $(NAME).o *.log *.data
