@@ -25,5 +25,5 @@ run2:
 	$(ZEROVM_ROOT)/zerovm -Mgtest_$(NAME).manifest -v2
 	
 clean:
-	rm -f *.nexe *.o *.log *.result *.std*
+	rm -f *.nexe *.o *.log *.result *.std* *.manifest
 
