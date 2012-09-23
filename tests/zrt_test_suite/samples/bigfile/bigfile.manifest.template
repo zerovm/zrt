@@ -5,7 +5,7 @@ Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
-Channel = {ABS_PATH}bigfile.data, bigfile, 2, 0, 0, 999999999999, 999999999999
+Channel = {ABS_PATH}bigfile.data, /dev/bigfile, 2, 0, 0, 5368709121, 5368709121
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -16,4 +16,3 @@ Nexe = {ABS_PATH}bigfile.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
 NodeName=largefile,1
-

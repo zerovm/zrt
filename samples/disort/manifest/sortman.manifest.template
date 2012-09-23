@@ -40,8 +40,6 @@ Channel = tcp:9:,  /dev/out/src-8, 0, 0, 0, 99999999, 99999999
 Channel = tcp:10:, /dev/out/src-9, 0, 0, 0, 99999999, 99999999
 Channel = tcp:11:, /dev/out/src-10, 0, 0, 0, 99999999, 99999999
 
-Channel = tcp:1:, /dev/out/man, 0, 0, 0, 99999999, 99999999
-
 Environment =SOURCE_NAME,src,DEST_NAME,dst,MAN_NAME,man
 CommandLine = man
 

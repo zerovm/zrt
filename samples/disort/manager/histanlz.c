@@ -70,6 +70,8 @@ set_detailed_histogram( struct histogram_worker* worker, struct Histogram* detai
 	if ( detailed_histogram && detailed_histogram->array_len ){
 		int big_histogram_first_item_index = worker->histogram.array[worker->helper.end_histogram_index].item_index;
 		/*test: 0 item index of 'detailed histogram' should be equal to last item index of histogram*/
+		WRITE_FMT_LOG(LOG_DEBUG, "received item index=%d, requested item index=%d\n",
+		        detailed_histogram->array[0].item_index, big_histogram_first_item_index);
 		assert( detailed_histogram->array[0].item_index == big_histogram_first_item_index );
 		free(worker->detailed_histogram.array);
 		worker->detailed_histogram.array = NULL;
@@ -117,10 +119,10 @@ length_current_histogram( const struct histogram_worker* worker ){
 		end_histogram_index = &worker->helper.end_detailed_histogram_index;
 	}
 	int len= histogram->array[ *end_histogram_index ].last_item_index - histogram->array[ *end_histogram_index ].item_index + 1;
-	//WRITE_FMT_LOG(LOG_DEBUG, "item_index=%d, last_item_index=%d",
+	//WRITE_FMT_LOG(LOG_DEBUG, "item_index=%d, last_item_index=%d, end_histogram_index=%d, length_current_histogram=%d\n",
 	//		histogram->array[ *end_histogram_index ].item_index,
-	//		histogram->array[ *end_histogram_index ].last_item_index);
-	//WRITE_FMT_LOG(LOG_DEBUG, "end_histogram_index=%d, length_current_histogram=%d", *end_histogram_index, len);
+	//		histogram->array[ *end_histogram_index ].last_item_index,
+	//		*end_histogram_index, len);
 	return len;
 }
 
@@ -294,8 +296,9 @@ request_assign_detailed_histogram( struct ChannelsConfigInterface *chan_if,
 		request_detailed_histogram[i].last_item_index =
 				min(start_index + current_histogram_len * src_nodes_count, single_src_items_count );
 
-		WRITE_FMT_LOG(LOG_DEBUG,  "Want %d range(%d, %d)\n",
+		WRITE_FMT_LOG(LOG_DEBUG,  "Want dstnode=%d, srcnode=%d range(%d, %d)\n",
 				request_detailed_histogram[i].dst_nodeid,
+				request_detailed_histogram[i].src_nodeid,
 				request_detailed_histogram[i].first_item_index,
 				request_detailed_histogram[i].last_item_index ); fflush(0);
 	}

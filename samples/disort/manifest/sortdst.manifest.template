@@ -2,22 +2,22 @@
 == i/o switches. full list. optional. some switches now meaningless,
 == placed here for completeness and future changes
 =====================================================================
-Channel = /dev/null, /dev/stdin, 0, 99999999, 99999999, 0, 0
-Channel = {ABS_PATH}log/sortdst{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 999999999, 999999999
-Channel = {ABS_PATH}data/{NODEID}sorted.data, /dev/stdout, 0, 0, 0, 99999999, 99999999
+Channel = /dev/null, /dev/stdin, 0, 1, 1, 0, 0
+Channel = {ABS_PATH}log/sortdst{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 19, 19
+Channel = {ABS_PATH}data/{NODEID}sorted.data, /dev/stdout, 0, 0, 0, 1, 1
 Channel = {ABS_PATH}log/{NODEID}sortdst.stderr.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
 
-Channel = tcp:2:, /dev/in/src-1, 0, 99999999, 99999999, 0, 0
-Channel = tcp:3:, /dev/in/src-2, 0, 99999999, 99999999, 0, 0
-Channel = tcp:4:, /dev/in/src-3, 0, 99999999, 99999999, 0, 0
-Channel = tcp:5:, /dev/in/src-4, 0, 99999999, 99999999, 0, 0
-Channel = tcp:6:, /dev/in/src-5, 0, 99999999, 99999999, 0, 0
-Channel = tcp:7:, /dev/in/src-6, 0, 99999999, 99999999, 0, 0
-Channel = tcp:8:, /dev/in/src-7, 0, 99999999, 99999999, 0, 0
-Channel = tcp:9:, /dev/in/src-8, 0, 99999999, 99999999, 0, 0
-Channel = tcp:10:, /dev/in/src-9, 0, 99999999, 99999999, 0, 0
-Channel = tcp:11:, /dev/in/src-10, 0, 99999999, 99999999, 0, 0
-Channel = tcp:2:, /dev/out/man, 0, 0, 0, 99999999, 99999999
+Channel = tcp:2:, /dev/in/src-1, 0, 1, 1, 0, 0
+Channel = tcp:3:, /dev/in/src-2, 0, 1, 1, 0, 0
+Channel = tcp:4:, /dev/in/src-3, 0, 1, 1, 0, 0
+Channel = tcp:5:, /dev/in/src-4, 0, 1, 1, 0, 0
+Channel = tcp:6:, /dev/in/src-5, 0, 1, 1, 0, 0
+Channel = tcp:7:, /dev/in/src-6, 0, 1, 1, 0, 0
+Channel = tcp:8:, /dev/in/src-7, 0, 1, 1, 0, 0
+Channel = tcp:9:, /dev/in/src-8, 0, 1, 1, 0, 0
+Channel = tcp:10:, /dev/in/src-9, 0, 1, 1, 0, 0
+Channel = tcp:11:, /dev/in/src-10, 0, 1, 1, 0, 0
+Channel = tcp:1:, /dev/out/man, 0, 0, 0, 1, 1
 
 Environment =SOURCE_NAME,src,DEST_NAME,dst,MAN_NAME,man
 CommandLine = dst-{NODEID}
@@ -30,6 +30,6 @@ Version = 09082012
 Nexe = {ABS_PATH}nodedst.nexe
 NexeMax = 10000000
 SyscallsMax = 3333333
-SetupCallsMax = 99999999
+SetupCallsMax = 7777777
 NodeName=dst,{SEQUENTIAL_ID}
 NameServer = udp:127.0.0.1:54321

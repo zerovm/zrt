@@ -16,11 +16,12 @@
 
 int main(int argc, char **argv)
 {
-    int fd = open( "bigfile", O_WRONLY );
+    int fd = open( "/dev/bigfile", O_WRONLY );
     assert(fd >= 0);
 
     __off64_t seekpos = 1024*1024*1024;
     seekpos *= 5; /*5 GB*/
+    --seekpos;
     __off64_t pos = lseek( fd, seekpos, SEEK_SET);
     fprintf( stderr, "pos=%lld, seek=%lld\n", pos, seekpos );
     assert( pos == seekpos );

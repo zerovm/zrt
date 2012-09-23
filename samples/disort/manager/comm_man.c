@@ -80,6 +80,8 @@ recv_histograms( struct ChannelsConfigInterface *chan_if, int *src_nodes_list,
 struct Histogram*
 reqrep_detailed_histograms_alloc( int fdw, int fdr, int nodeid,
 		const struct request_data_t* request_data, int complete ){
+    WRITE_FMT_LOG(LOG_DEBUG, "put request [ dstnodeid=%d, f_item_index=%d, l_item_index=%d ]\n",
+            request_data->dst_nodeid, request_data->first_item_index, request_data->last_item_index );
 	WRITE_FMT_LOG(LOG_DEBUG, "[%d] complete=%d, Write detailed histogram requests to %d\n", nodeid, complete, fdw );
 	//send detailed histogram request
 	write_channel(fdw, (const char*)request_data, sizeof(struct request_data_t));
@@ -93,6 +95,10 @@ reqrep_detailed_histograms_alloc( int fdw, int fdr, int nodeid,
 	item->array = malloc(array_size);
 	read_channel(fdr, (char*) item->array, array_size);
 
+	if ( item->array_len ){
+        WRITE_FMT_LOG(LOG_DEBUG, "get response [ srcnodeid=%d, histograms count=%d, first_item_index=%d ]\n",
+                    item->src_nodeid, item->array_len, item->array->item_index );
+	}
 	WRITE_FMT_LOG(LOG_DEBUG, "detailed histograms received from%d: expected len:%d\n",
 			item->src_nodeid, (int)(sizeof(HistogramArrayItem)*item->array_len) );
 	return item;

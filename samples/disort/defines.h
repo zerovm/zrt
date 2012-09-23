@@ -37,6 +37,9 @@ enum { ESourceNode=1, EDestinationNode=2, EManagerNode=3, EInputOutputNode=4 };
 /*If MERGE_ON_FLY defined then sorted chunks received by destination nodes will only merged when obtained*/
 #define MERGE_ON_FLY
 
+////////////////////////// debug channels indetermenism
+#define ZEROVM_DEBUG
+////////////////////////// debug
 
 
 #endif /* DEFINES_H_ */

@@ -62,6 +62,10 @@ int main(int argc, char **argv){
     int res =0;
     WRITE_FMT_LOG(LOG_DEBUG, "Destination node started argv[0]=%s.\n", argv[1] );
 
+#ifdef ZEROVM_DEBUG
+    exit(0);
+#endif //TTTT
+
     /*get node type names via environnment*/
     char *dest_node_type_text = getenv(ENV_DEST_NODE_NAME);
     char *source_node_type_text = getenv(ENV_SOURCE_NODE_NAME);

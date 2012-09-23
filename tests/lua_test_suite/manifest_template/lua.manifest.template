@@ -7,37 +7,37 @@ Channel = {ABS_PATH}lua.output, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}lua.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
 Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
 
-Channel = {LUA_TEST_PATH}all.lua, all.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}big.lua, big.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}checktable.lua, checktable.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}constructs.lua, constructs.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}errors.lua, errors.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}gc.lua, gc.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}literals.lua, literals.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}main.lua, main.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}pm.lua, pm.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}vararg.lua, vararg.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}api.lua, api.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}bitwise.lua, bitwise.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}closure.lua, closure.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}coroutine.lua, coroutine.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}events.lua, events.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}goto.lua, goto.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}locals.lua, locals.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}math.lua, math.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}sort.lua, sort.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}verybig.lua, verybig.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}attrib.lua, attrib.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}calls.lua, calls.lua, 0, 9999999, 9999999, 0, 0                        
-Channel = {LUA_TEST_PATH}code.lua, code.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}db.lua, db.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}files.lua, files.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}nextvar.lua, nextvar.lua, 0, 9999999, 9999999, 0, 0
-Channel = {LUA_TEST_PATH}strings.lua, strings.lua, 0, 9999999, 9999999, 0, 0                                 
+Channel = {LUA_TEST_PATH}all.lua, /dev/lua/all.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}big.lua, /dev/lua/big.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}checktable.lua, /dev/lua/checktable.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}constructs.lua, /dev/lua/constructs.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}errors.lua, /dev/lua/errors.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}gc.lua, /dev/lua/gc.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}literals.lua, /dev/lua/literals.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}main.lua, /dev/lua/main.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}pm.lua, /dev/lua/pm.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}vararg.lua, /dev/lua/vararg.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}api.lua, /dev/lua/api.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}bitwise.lua, /dev/lua/bitwise.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}closure.lua, /dev/lua/closure.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}coroutine.lua, /dev/lua/coroutine.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}events.lua, /dev/lua/events.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}goto.lua, /dev/lua/goto.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}locals.lua, /dev/lua/locals.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}math.lua, /dev/lua/math.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}sort.lua, /dev/lua/sort.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}verybig.lua, /dev/lua/verybig.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}attrib.lua, /dev/lua/attrib.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}calls.lua, /dev/lua/calls.lua, 0, 9999999, 9999999, 0, 0                        
+Channel = {LUA_TEST_PATH}code.lua, /dev/lua/code.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}db.lua, /dev/lua/db.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}files.lua, /dev/lua/files.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}nextvar.lua, /dev/lua/nextvar.lua, 0, 9999999, 9999999, 0, 0
+Channel = {LUA_TEST_PATH}strings.lua, /dev/lua/strings.lua, 0, 9999999, 9999999, 0, 0                                 
                              
 
 =='@' should be replaced by '=' in user main, currently zerovm does not supported '=' char in command line
-CommandLine = -e_U@true all.lua
+CommandLine = -e_U@true /dev/lua/all.lua
 
 Environment = PATH, foo
 

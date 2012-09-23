@@ -1,0 +1,147 @@
+Sep 12 17:25:17 yarik-asus-ubuntu ZeroVM[21899]: zerovm argument list:
+Sep 12 17:25:17 yarik-asus-ubuntu ZeroVM[21899]: /home/yaroslav/git/retry-zerovm/zerovm
+Sep 12 17:25:17 yarik-asus-ubuntu ZeroVM[21899]: -Mbigfile.manifest
+Sep 12 17:25:17 yarik-asus-ubuntu ZeroVM[21899]: -v4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClPerfCounterInterval(SelMain __start__:SnapshotNaclFile): 208819 microsecs
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Loading nacl file /home/yaroslav/git/zrt/tests/zrt_test_suite/samples/bigfile/bigfile.nexe (non-RPC)
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: =================================================
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Elf header
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: ==================================================
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_ident+1 = ELF
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_type = 0x2
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_machine = 0x3e
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_version = 0x1
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_entry = 0x20080
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_phoff = 0x40
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_shoff = 0x120a98
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_flags = 0x200000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_ehsize = 0x40
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_phentsize = 0x38
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_phnum = 0x5
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_shentsize = 0x40
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_shnum = 0x15
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: e_shstrndx = 0x14
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: sizeof(Elf32_Ehdr) = 0x40
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: =================================================
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Elf Program headers
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: ==================================================
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_type: 6
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_offset: 0
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_vaddr: 0
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_paddr: 0
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_filesz: 158
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_memsz: 158
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_flags: 4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:  (PF_R  )
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_align: 8
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: 
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_type: 1
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_offset: 10000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_vaddr: 20000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_paddr: 20000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_filesz: c10a0
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_memsz: c10a0
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_flags: 5
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:  (PF_R  PF_X)
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_align: 10000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: 
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_type: 1
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_offset: e0000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_vaddr: f0000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_paddr: f0000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_filesz: 21540
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_memsz: 21540
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_flags: 4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:  (PF_R  )
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_align: 10000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: 
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_type: 7
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_offset: 101530
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_vaddr: 111530
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_paddr: 111530
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_filesz: 10
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_memsz: 28
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_flags: 4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:  (PF_R  )
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_align: 4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: 
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_type: 1
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_offset: 110000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_vaddr: 120000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_paddr: 120000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_filesz: 10974
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_memsz: 140f4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_flags: 6
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:  (PF_R PF_W )
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: p_align: 10000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: 
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Looking at segment 0, type 0x6, p_flags 0x4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Matched nacl_phdr_check_data[0]
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Ignoring
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Looking at segment 1, type 0x1, p_flags 0x5
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Matched nacl_phdr_check_data[1]
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Looking at segment 2, type 0x1, p_flags 0x4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Matched nacl_phdr_check_data[2]
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Looking at segment 3, type 0x7, p_flags 0x4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Matched nacl_phdr_check_data[4]
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Ignoring
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Looking at segment 4, type 0x1, p_flags 0x6
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Matched nacl_phdr_check_data[3]
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Values from NaClElfImageValidateProgramHeaders:
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: rodata_start = 0x000f0000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: rodata_end   = 0x00111540
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: data_start   = 0x00120000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: data_end     = 0x001340f4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: max_vaddr    = 0x001340f4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClApp addr space layout:
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->static_text_end    = 0x00000000000e10a0
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->dynamic_text_start = 0x0000000000000000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->dynamic_text_end   = 0x0000000000000000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->rodata_start       = 0x00000000000f0000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->data_start         = 0x0000000000120000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->data_end           = 0x00000000001340f4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->break_addr         = 0x00000000001340f4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->initial_entry_pt   = 0x0000000000020080
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->user_entry_pt      = 0x0000000000000000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: nap->bundle_size        = 0x20
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Allocating address space
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClPerfCounterInterval(NaClAppLoadFile __start__:PreAllocAddrSpace): 1184 microsecs
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClAllocAddrSpace: calling NaClAllocateSpace(*,0x0000000100000000)
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClAllocateSpace(*, 0x0000000100000000 bytes).
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:                      Ask: 0000001600000000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:            orig memory at 00002af05b545000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:            Freeing front: 00002af05b545000, 00000000a4abb000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:             Freeing tail: 00002b0600000000, 000000005b545000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:           Aligned memory: 00002af100000000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClAllocateSpace: addr space at 0x00002afb00000000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: allocated memory at 0x2afb00000000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: madvising 0x2afb00140000, 0xfeec0000, MADV_DONTNEED
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: mprotecting 0x2afb00140000, 0xfeec0000, PROT_NONE
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClPerfCounterInterval(NaClAppLoadFile PreAllocAddrSpace:*AllocAddrSpace): 200 microsecs
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Loading into memory
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: loading segment 1
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Seek to position 65536 (0x10000).
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Reading 790688 (0xc10a0) bytes to address 0x2afb00020000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: loading segment 2
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Seek to position 917504 (0xe0000).
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Reading 136512 (0x21540) bytes to address 0x2afb000f0000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: loading segment 4
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Seek to position 1114112 (0x110000).
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Reading 67956 (0x10974) bytes to address 0x2afb00120000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Replacing gap between static text and (ro)data with shareable memory
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClMakeDynamicTextShared: shm_vaddr_base = 000e10a0
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClMakeDynamicTextShared: shm_vaddr_base = 000f0000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClMakeDynamicTextShared:  rodata / data segments not allocation aligned
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]:  not using shm for text
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClPerfCounterInterval(NaClAppLoadFile *AllocAddrSpace:*MakeDynText): 2879 microsecs
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Filling with halts: 2afb000e10a0, 0000ef60 bytes
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Initializing arch switcher
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Installing trampoline
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: Entered NaClMakeDispatchThunk
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaCl_page_alloc_randomized: hint 0x5afeca110000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: sel_memory: NaCl_page_alloc_intern: mmap(0x5afeca110000, 10000, 0, 0x22, -1, 0)
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: NaClMakeDispatchThunk: got addr 0x5afeca110000
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: num_syscalls = 2047 (0x7ff)
+Sep 12 17:25:18 yarik-asus-ubuntu ZeroVM[21899]: call_target_addr = 0x5afeca110000
+Sep 12 17:25:18  ZeroVM[21899]: last message repeated 55 times
+Sep 12 17:25:18 yarik-asus-ubuntu rsyslogd-2177: imuxsock begins to drop messages from pid 21899 due to rate-limiting

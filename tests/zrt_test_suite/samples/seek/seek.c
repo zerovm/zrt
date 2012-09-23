@@ -1,9 +1,11 @@
 /*
  * seek demo tests
  */
+
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <assert.h>
@@ -11,13 +13,22 @@
 
 int main(int argc, char **argv)
 {
-    FILE *f = fopen( "seeker.data", "w" );
+    const char* fname1 = "/seeker.data";
+    const char* fname2 = "/seeker2.data";
+
+//    int ret = creat( fname1, S_IRWXU);
+//    fprintf(stderr, "creat %s ret=%d\n", fname1, ret );
+//    ret = creat( fname2, S_IRWXU);
+//    fprintf(stderr, "creat %s ret=%d\n", fname2, ret );
+
+    FILE *f = fopen( fname1, "w" );
     assert( f>0 );
     const char *str = "hip hop ololey";
     const char *str2 = "opa-opa-opa-pa";
     const char *str3 = "hip hop opa-opa-opa-pa";
     fwrite(str, 1, strlen(str), f);
     fseek( f, 0, SEEK_CUR );
+    fprintf(stderr, "ftell(f)=%d, strlen(str)=%d\n", (int)ftell(f), (int)strlen(str));
     assert( ftell(f) == strlen(str) );
 
     fseek( f, -6, SEEK_CUR );
@@ -30,7 +41,7 @@ int main(int argc, char **argv)
     fclose(f);
 
 
-    int fd = open( "seeker2.data", O_CREAT | O_WRONLY );
+    int fd = open( fname2, O_CREAT | O_WRONLY );
     assert( fd >= 0 );
     write(fd, str, strlen(str));
     off_t off;

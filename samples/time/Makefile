@@ -5,7 +5,7 @@ INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib
 all: $(NAME).o
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).nexe -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt
+	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
 	sed s@{ABS_PATH}@${CURDIR}/@g ${NAME}.manifest.template > ${NAME}.manifest
 	@$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
 

@@ -6,12 +6,13 @@ Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}file_stat.output.data, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}file_stat.user.log, /dev/stderr, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}file_stat.zrt.log, /dev/debug, 0, 0, 0, 999999, 999999
-Channel = {ABS_PATH}generated.data, readdata, 1, 9999, 9999, 0, 0
-Channel = {ABS_PATH}write.data, writedata, 2, 0, 0, 999, 999
+Channel = {ABS_PATH}generated.data, /dev/readdata, 1, 9999, 9999, 0, 0
+Channel = {ABS_PATH}write.data, /dev/writedata, 2, 0, 0, 999, 999
 Channel = {ABS_PATH}cdr.data, /dev/image, 1, 999, 999, 999, 999
-Channel = {ABS_PATH}randomread.data, randomread, 3, 999, 999, 0, 0
-Channel = {ABS_PATH}randomwrite.data, randomwrite, 3, 0, 0, 999, 999
+Channel = {ABS_PATH}randomread.data, /dev/randomread, 1, 999, 999, 0, 0
+Channel = {ABS_PATH}randomwrite.data, /dev/randomwrite, 2, 0, 0, 999, 999
 
+Environment = TimeStamp, 1337012520
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some

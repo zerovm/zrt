@@ -67,6 +67,12 @@ write_histogram( int fdw, const struct Histogram *histogram ){
 int
 read_requests_write_detailed_histograms( int fdr, int fdw, int nodeid, const BigArrayPtr source_array, int array_len){
 	int is_complete = 0;
+#ifdef ZEROVM_DEBUG
+	if ( nodeid != 1 ){
+        exit(0);
+	}
+#endif //ZEROVM_DEBUG
+
 	do {
 		WRITE_FMT_LOG(LOG_DEBUG, "Reading from file %d detailed histograms request\n", fdr );fflush(0);
 		/*receive data needed to create histogram using step=1,
@@ -74,6 +80,9 @@ read_requests_write_detailed_histograms( int fdr, int fdw, int nodeid, const Big
 		struct request_data_t received_histogram_request;
 		read_channel(fdr, (char*) &received_histogram_request, sizeof(struct request_data_t) );
 		read_channel(fdr, (char*) &is_complete, sizeof(is_complete) );
+
+        WRITE_FMT_LOG(LOG_DEBUG, "get request[ fisrt_item_index=%d, last_item_index=%d ]\n",
+                received_histogram_request.first_item_index, received_histogram_request.last_item_index );
 
 		int histogram_len = 0;
 		//set to our offset, check it
@@ -83,13 +92,18 @@ read_requests_write_detailed_histograms( int fdr, int fdw, int nodeid, const Big
 
 		HistogramArrayPtr histogram = alloc_histogram_array_get_len( source_array, offset, requested_length, 1, &histogram_len );
 
-		size_t sending_array_len = histogram_len;
+        WRITE_FMT_LOG(LOG_DEBUG, "put response[ histogram items count=%d, findex=%u, lindex=%u ]\n",
+                histogram_len, histogram->item_index, histogram[histogram_len-1].last_item_index );fflush(0);
+
+        size_t sending_array_len = histogram_len;
 		/*Response to request, entire reply contains requested detailed histogram*/
 		write_channel(fdw, (const char*)&nodeid, sizeof(int) );
 		write_channel(fdw, (const char*)&sending_array_len, sizeof(size_t) );
 		write_channel(fdw, (const char*)histogram, histogram_len*sizeof(HistogramArrayItem) );
 		free( histogram );
-		WRITE_FMT_LOG(LOG_DEBUG, "histograms wrote into file %d\n", fdw );
+#ifdef ZEROVM_DEBUG
+    exit(0);
+#endif //ZEROVM_DEBUG
 	}while(!is_complete);
 	return is_complete;
 }

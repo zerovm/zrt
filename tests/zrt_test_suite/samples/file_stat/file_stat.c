@@ -61,12 +61,14 @@ int main(int argc, char **argv)
 {
     const char *fname = NULL;
 	struct stat s;
+	int testid=0;
 	int i = 0;
 
     /* get information about stderr stream */
-    fprintf(LOGFD, "TEST 1: stderr starting position = %ld\n", ftell(stderr)); fflush(0);
+	++testid;
+    fprintf(LOGFD, "TEST %d: stderr starting position = %ld\n", testid, ftell(stderr)); fflush(0);
     if ( (i=print_fstat( fileno(stderr), &s )) < 0 ){
-        fprintf(LOGFD, "fstat failed %d\n", i) , fflush(0);
+        perror("/dev/stderr");
     }
     else{ //stat ok
         assert( (s.st_mode & S_IWUSR) == S_IWUSR ); /*it should allow write only access*/
@@ -76,9 +78,10 @@ int main(int argc, char **argv)
     /*************************************/
 
     /* get information about stdin stream */
-    fprintf(LOGFD, "TEST 2: stdin starting position = %ld\n", ftell(stdin)); fflush(0);
+    ++testid;
+    fprintf(LOGFD, "TEST %d: stdin starting position = %ld\n", testid, ftell(stdin)); fflush(0);
     if ( (i=print_fstat( fileno(stdin), &s ) ) < 0 ){
-        fprintf(LOGFD, "fstat failed %d\n", i), fflush(0);
+        perror("/dev/stdin");
     }
     else{ //stat ok
         assert( (s.st_mode & S_IRUSR) == S_IRUSR ); /*it should allow read only access*/
@@ -87,52 +90,56 @@ int main(int argc, char **argv)
     }
     /*************************************/
 
-    fname = "readdata";
+    ++testid;
+    fname = "/dev/readdata";
     if ( stat( fname, &s) == -1) {
-        perror("stat");
+        perror(fname);
         exit(EXIT_FAILURE);
     }
     else{
-        fprintf(LOGFD, "TEST 3: %s file stat\n", fname); fflush(0);
+        fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
         assert( S_ISREG(s.st_mode) != 0 ); /*it shoud be file*/
         assert( (s.st_mode & S_IRUSR) == S_IRUSR ); /*it should allow read only access*/
     }
 
-    fname = "writedata";
+    ++testid;
+    fname = "/dev/writedata";
     if ( stat( fname, &s) == -1) {
-        perror("stat");
+        perror(fname);
         exit(EXIT_FAILURE);
     }
     else{
-        fprintf(LOGFD, "TEST 4: %s file stat\n", fname); fflush(0);
+        fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
         assert( S_ISREG(s.st_mode) != 0 );
         assert( (s.st_mode & S_IWUSR) == S_IWUSR ); /*it should allow write only access*/
     }
 
-    fname = "randomwrite";
+    ++testid;
+    fname = "/dev/randomwrite";
     if ( stat( fname, &s) == -1) {
-        perror("stat");
+        perror(fname);
         exit(EXIT_FAILURE);
     }
     else{
-        fprintf(LOGFD, "TEST 5: %s file stat\n", fname); fflush(0);
+        fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
         assert( S_ISREG(s.st_mode) != 0 ); /*it shoud be file*/
         assert( (s.st_mode & S_IWUSR) == S_IWUSR ); /*it should allow read only access*/
     }
 
+    ++testid;
     fname = "/dev/image";
     if ( stat( fname, &s) == -1) {
-        perror("stat");
+        perror(fname);
         exit(EXIT_FAILURE);
     }
     else{
-        fprintf(LOGFD, "TEST 6: %s file stat\n", fname); fflush(0);
+        fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
         assert( S_ISBLK(s.st_mode) != 0 );
@@ -140,19 +147,42 @@ int main(int argc, char **argv)
         assert( (s.st_mode & S_IRUSR) == S_IRUSR && (s.st_mode & S_IWUSR) == S_IWUSR );
     }
 
-    fname = "randomread";
+    ++testid;
+    fname = "/dev/randomread";
     if ( stat( fname, &s) == -1) {
-        perror("stat");
+        perror(fname);
         exit(EXIT_FAILURE);
     }
     else{
-        fprintf(LOGFD, "TEST 7: %s file stat\n", fname); fflush(0);
+        fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
-        assert( S_ISREG(s.st_mode) != 0 ); /*it shoud be file*/
-        assert( (s.st_mode & S_IRUSR) == S_IRUSR ); /*it should allow read only access*/
-        assert( s.st_size != 0 ); /*maped file should have size as read only channel*/
+        assert( S_ISREG(s.st_mode) != 0 ); /*it should be file*/
+        assert( (s.st_mode & S_IRUSR) == S_IRUSR ); /*it should allow read access*/
+        assert( s.st_size != 0 ); /*mapped file should have size as read only channel*/
     }
+
+
+    ++testid;
+    fname = "/tempfs";
+    int fd =creat(fname, S_IRWXU );
+    if ( stat( fname, &s) == -1) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+    else{
+        fprintf(LOGFD, "TEST %d: %s fd=%d file stat\n", testid, fname, fd); fflush(0);
+        print_stat_data( &s);
+        /*fail*/
+        //fprintf(LOGFD, "nlink=%d\n", s.st_nlink); fflush(0);
+        //assert( s.st_nlink == 1 );
+        assert( S_ISREG(s.st_mode) != 0 ); /*it should be file*/
+        fprintf(LOGFD, "st_mode=%d\n", s.st_mode); fflush(0);
+        /*fail*/
+        //assert( (s.st_mode & S_IRWXU) == S_IRWXU ); /*it should allow S_IRWXU access*/
+    }
+
+
 	return 0;
 }
 

@@ -1,115 +1,55 @@
 PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
-ZRT_ROOT=../..
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/lib/networking -I.
+
+CC=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-gcc
+
 #DEBUG=-g
+CFLAGS += -I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/lib/networking -I.
+CFLAGS += -Wall -std=c99 -Wno-long-long -O2 -msse4.1 -m64 $(DEBUG)
+LDFLAGS += -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl \
+-L$(ZRT_ROOT)/lib -lzrt -lnetworking -lfs -lstdc++
+
 GENNODE=generator.uint32_t
 MANNODE=nodeman
 SRCNODE=nodesrc
 DSTNODE=nodedst
 
-all: cleanlog prepare $(GENNODE).nexe $(MANNODE).nexe $(SRCNODE).nexe $(DSTNODE).nexe
+NEXES = $(GENNODE).nexe $(MANNODE).nexe $(SRCNODE).nexe $(DSTNODE).nexe
+GENNODE_OBJECTS = generator.uint32_t.o
+MANNODE_OBJECTS = comm.o bitonic_sort.o manager/main_man.o manager/histanlz.o manager/comm_man.o dsort.o sort.o
+SRCNODE_OBJECTS = comm.o source/comm_src.o source/main_src.o cpuid.o bitonic_sort.o dsort.o sort.o
+DSTNODE_OBJECTS = dest/main_dst.o dest/comm_dst.o comm.o dsort.o sort.o
 
-$(GENNODE).nexe : obj/$(GENNODE).o
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(GENNODE).nexe -s -static -T \
-	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(DEBUG) obj/$(GENNODE).o -L$(ZRT_ROOT)/lib -lzrt
-	
-$(MANNODE).nexe: obj/main_man.o obj/comm_man.o obj/histanlz.o obj/dsort.o obj/comm.o
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(MANNODE).nexe  -s -static -T $(DEBUG) \
-	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	obj/main_man.o obj/comm_man.o obj/histanlz.o obj/dsort.o obj/comm.o \
-	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lnetworking
-	
-$(SRCNODE).nexe: obj/main_src.o obj/sort.o obj/dsort.o obj/comm_src.o obj/bitonic.o obj/cpuid.o obj/comm.o 
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(SRCNODE).nexe  -s -static -T $(DEBUG) \
-	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	obj/main_src.o obj/sort.o obj/dsort.o obj/comm_src.o obj/bitonic.o obj/cpuid.o obj/comm.o \
-	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lnetworking
-	  
-$(DSTNODE).nexe: obj/main_dst.o obj/sort.o obj/dsort.o obj/comm_dst.o obj/comm.o 
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(DSTNODE).nexe  -s -static -T $(DEBUG) \
-	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	obj/main_dst.o obj/sort.o obj/dsort.o obj/comm_dst.o obj/comm.o  \
-	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lnetworking
+all: cleanlog prepare $(NEXES) 
 
-#source node & dest node
-obj/dsort.o: dsort.c
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/dsort.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 dsort.c
+$(GENNODE).nexe: $(GENNODE_OBJECTS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-#source node & dest node
-obj/sort.o: sort.c
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/sort.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 sort.c
+$(MANNODE).nexe: $(MANNODE_OBJECTS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-#destination node
-obj/main_dst.o: dest/main_dst.c defines.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/main_dst.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 -Idest dest/main_dst.c
+$(SRCNODE).nexe: $(SRCNODE_OBJECTS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-#destination node
-obj/comm_dst.o: dest/comm_dst.c defines.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/comm_dst.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 -Idest dest/comm_dst.c
+$(DSTNODE).nexe: $(DSTNODE_OBJECTS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-#source node
-obj/main_src.o: source/main_src.c defines.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/main_src.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 -Isource source/main_src.c
-	
-#source node
-obj/comm_src.o: source/comm_src.c defines.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/comm_src.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 -Isource source/comm_src.c
-
-#manager node
-obj/main_man.o: manager/main_man.c defines.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/main_man.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 -Isource manager/main_man.c
-
-#manager node
-obj/comm_man.o: manager/comm_man.c defines.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/comm_man.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 -Imanager manager/comm_man.c
-
-#manager node
-obj/histanlz.o: manager/histanlz.c defines.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/histanlz.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 -Imanager manager/histanlz.c
-
-#all nodes
-obj/comm.o : comm.c comm.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/comm.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -m64 -Imanager comm.c
-
-obj/bitonic.o: bitonic_sort.c bitonic_sort.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/bitonic.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -msse4.1 -m64 -Imanager bitonic_sort.c
-
-obj/cpuid.o : cpuid.c cpuid.h
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c -o obj/cpuid.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS)  $(DEBUG) -Wno-long-long -O2 -m64 -Imanager cpuid.c
-
-obj/$(GENNODE).o : $(GENNODE).c
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o obj/$(GENNODE).o -Wall \
-	$(INCLUDE_FLAGS)  $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 $(GENNODE).c
 
 cleanlog:
 	@rm -f log/*.log
 	
 prepare: createdirs
+	@chmod u=rwx disort.sh
 	@chmod u=rwx gendata.sh
 	@chmod u=rwx genmanifest.sh
 	@./genmanifest.sh
  	
 createdirs:
-	@mkdir -p obj log data vmlog
+	@mkdir -p log data
 
 clean: cleanlog 
-	@rm -f *.nexe
-	@rm -f obj/*.o
+	@rm -f $(NEXES)
+	@rm -f $(GENNODE_OBJECTS) $(MANNODE_OBJECTS) $(SRCNODE_OBJECTS) $(DSTNODE_OBJECTS)
 	@rm -f manifest/*.manifest
 	@rm -f data/*.data
-	@rm -f $(MANNODE).nexe $(SRCNODE).nexe $(DSTNODE).nexe
-	
+
 
