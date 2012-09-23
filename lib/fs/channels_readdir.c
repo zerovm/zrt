@@ -13,7 +13,6 @@
 #include "zvm.h"
 #include "channels_readdir.h"
 #include "zrtlog.h"
-#include "mounts_observer.h"
 #include "nacl_struct.h"
 #include "channels_mount.h"
 

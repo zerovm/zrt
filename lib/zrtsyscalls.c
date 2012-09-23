@@ -25,7 +25,6 @@
 #include "zrtsyscalls.h"
 #include "zrtlog.h"
 #include "transparent_mount.h"
-#include "mounts_observer.h"
 #include "mounts_manager.h"
 #include "mem_mount_wraper.h"
 #include "nacl_struct.h"
