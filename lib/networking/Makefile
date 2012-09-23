@@ -1,9 +1,9 @@
 PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 NACL_GCC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
 DEBUG=-g -DDEBUG
-ZRT_ROOT=..
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/  -I. 
-CFLAGS=-Wall -Wno-long-long -m64 -std=c99
+CFLAGS=-Wall -Wno-long-long -m64 -std=c99 -I${ZRT_ROOT}/lib
+
 
 all: libnetworking.a
 

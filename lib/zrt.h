@@ -14,10 +14,6 @@
 #include <stdint.h>
 
 
-/* @param channels_count save channels count
- * @return const channels array*/
-const struct ZVMChannel *zvm_channels_c( int *channels_count );
-
 /*
  * user program entry point. old style function prototyping
  * allows to avoid error when main has an empty arguments list

@@ -11,9 +11,11 @@
 #include <assert.h>
 
 #include "zvm.h"
-#include "zrtreaddir.h"
-#include "zrtsyscalls.h"
-
+#include "channels_readdir.h"
+#include "zrtlog.h"
+#include "mounts_observer.h"
+#include "nacl_struct.h"
+#include "channels_mount.h"
 
 
 struct dir_data_t *
@@ -110,7 +112,7 @@ const char* name_from_path_get_path_len(const char *fullpath, int *pathlen){
 }
 
 
-void process_channels_create_dir_list( struct ZVMChannel *channels, int channels_count,
+void process_channels_create_dir_list( const struct ZVMChannel *channels, int channels_count,
         struct manifest_loaded_directories_t *manifest_dirs )
 {
     int i;
@@ -163,7 +165,7 @@ int get_sub_dir_index( struct manifest_loaded_directories_t *manifest_dirs, cons
     return -1;
 }
 
-int get_dir_content_channel_index( struct ZVMChannel *channels, int channels_count,
+int get_dir_content_channel_index( const struct ZVMChannel *channels, int channels_count,
         const char *dirpath, int index )
 {
     int i;
@@ -218,7 +220,7 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
 /*
  *@return readed bytes count*/
 int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTemp *readdir_temp,
-        struct UserManifest *manifest, struct manifest_loaded_directories_t *dirs){
+        const struct ZVMChannel *channels, int channels_count, struct manifest_loaded_directories_t *dirs){
     assert( readdir_temp ); /*should always exist*/
     zrt_log("temp handle=%d, dir_last_index=%d, channel_last_index=%d",
             readdir_temp->dir_data.handle, readdir_temp->dir_last_readed_index, readdir_temp->channel_last_readed_index);
@@ -275,14 +277,14 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
         do{
             zrt_log( "channel_index=%d", readdir_temp->channel_last_readed_index );
             readdir_temp->channel_last_readed_index =
-                    get_dir_content_channel_index(manifest->channels, manifest->channels_count,
+                    get_dir_content_channel_index(channels, channels_count,
                             readdir_temp->dir_data.path, readdir_temp->channel_last_readed_index);
             zrt_log( "channel_index=%d", readdir_temp->channel_last_readed_index );
 
             if ( readdir_temp->channel_last_readed_index != -1 ){
                 /*fetch name from full path*/
                 const char *adding_name = name_from_path_get_path_len(
-                        ( const char*)manifest->channels[readdir_temp->channel_last_readed_index].name, &foo );
+                        ( const char*)channels[readdir_temp->channel_last_readed_index].name, &foo );
 
                 int w = put_dirent_into_buf(
                         buf+retval, bufsize-retval,

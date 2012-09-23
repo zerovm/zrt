@@ -40,8 +40,8 @@
 # include <direct.h>
 # include <io.h>
 #elif GTEST_OS_SYMBIAN || GTEST_OS_NACL
-#  ifdef USER_SIDE
-// for NACL pepper19
+#  ifdef __native_client__
+// for NACL pepper
 #  include <limits.h>
 #  else
 // Symbian OpenC and NaCl have PATH_MAX in sys/syslimits.h

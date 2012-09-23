@@ -30,6 +30,7 @@
 #include "zvm.h"
 #include "zrt.h"
 #include "zrtsyscalls.h"
+#include "zrtlog.h"
 
 // ### revise it
 #undef main /* prevent misuse macro */
@@ -44,7 +45,6 @@ int main(int argc, char **argv, char **envp)
     struct UserManifest *setup = zvm_init();
     if(setup == NULL) return ERR_CODE;
 
-    /* todo(d'b): replace it with a good engine. should be done asap */
     setup->envp = envp; /* user custom attributes passed via environment */
     zrt_setup( setup );
 
@@ -71,6 +71,8 @@ int main(int argc, char **argv, char **envp)
 
     if(zvm_syscallback((intptr_t)syscall_director) == 0)
         return ERR_CODE;
+
+    zrt_setup_finally();
 
     /* call user main() and care about return code */
     return slave_main(argc, argv);

@@ -7,14 +7,11 @@
  */
 
 #define _GNU_SOURCE
-//#define __USE_LARGEFILE64
-//#define _LARGEFILE64_SOURCE
-//#define _FILE_OFFSET_BITS 64
 
 #include <sys/types.h> //off_t
 #include <sys/stat.h>
 #include <string.h> //memcpy
-#include <stdio.h>  //SEEK_SET .. SEEK_END
+#include <stdio.h>
 #include <stdlib.h> //atoi
 #include <stddef.h> //size_t
 #include <unistd.h> //STDIN_FILENO
@@ -25,8 +22,16 @@
 
 #include "zvm.h"
 #include "zrt.h"
-#include "zrtreaddir.h"
 #include "zrtsyscalls.h"
+#include "zrtlog.h"
+#include "transparent_mount.h"
+#include "mounts_observer.h"
+#include "mounts_manager.h"
+#include "mem_mount_wraper.h"
+#include "nacl_struct.h"
+#include "channels_mount.h"
+//#include "nacl-mounts/channels/ChannelsMountWraper.h" //nacl-mounts channels
+//#include "nacl-mounts/base/MountsWrapper.h" //nacl-mounts
 
 
 /* TODO
@@ -62,17 +67,11 @@
  * Syscallbacks debug macros*/
 #ifdef DEBUG
 #define ZRT_LOG_NAME "/dev/debug"
-#define SHOWID(args_p) { s_donotlog=0; zrt_log("syscall arg[0]=%u, arg[1]=%u, arg[2]=%u, arg[3]=%u, arg[4]=%u", \
+#define SHOWID(args_p) { enable_logging_current_syscall(); zrt_log("syscall arg[0]=%u, arg[1]=%u, arg[2]=%u, arg[3]=%u, arg[4]=%u", \
          args_p[0], args_p[1], args_p[2], args_p[3], args_p[4] ); }
 #else
 #define SHOWID()
 #endif
-
-#define MAX(a,b) \
-        ({ __typeof__ (a) _a = (a); \
-        __typeof__ (b) _b = (b); \
-        _a > _b ? _a : _b; })
-
 
 /* ******************************************************************************
  * Syscallback mocks helper macroses*/
@@ -87,113 +86,40 @@
     return code;\
         }
 
-/*0 if check OK*/
-#define CHECK_NEW_POS(offset) ((offset) < 0 ? -1: 0)
-#define CHECK_FLAG(flags, flag) ( (flags & flag) == flag? 1 : 0)
-#define SET_SAFE_OFFSET( whence, pos_p, offset ) \
-        if ( EPosSetRelative == whence ){ \
-            if ( CHECK_NEW_POS( *pos_p+offset ) == -1 ) \
-            { set_zrt_errno( EOVERFLOW ); return -1; } \
-            else return *pos_p +=offset; } \
-        else{ \
-            if ( CHECK_NEW_POS( offset ) == -1 ) \
-            { set_zrt_errno( EOVERFLOW ); return -1; } \
-            else return *pos_p  =offset; }
-
-
-#define CHANNEL_SIZE(handle) s_zrt_channels[handle] ? \
-    MAX( s_zrt_channels[handle]->maxsize, s_manifest->channels[handle].size ) : s_manifest->channels[handle].size;
-
-
-/*manifest should be initialized in zrt main*/
-static struct UserManifest* s_manifest;
-/*runtime information related to channels*/
-static struct ZrtChannelRt **s_zrt_channels;
-/*directories list based on channels list; for getdents syscall/readdir*/
-struct manifest_loaded_directories_t s_manifest_dirs;
-/*getdents temp data for subsequent syscalls*/
-static struct ReadDirTemp s_readdir_temp = {{-1,0,0,0},-1,-1};
-static int s_donotlog=0;
-
-#ifdef DEBUG
-static int s_zrt_log_fd = -1;
-static char s_logbuf[0x1000];
-int debug_handle_get_buf(char **buf){
-    if ( s_donotlog != 0 ) return -1; /*switch off log for some functions*/
-    *buf = s_logbuf;
-    return s_zrt_log_fd;
-}
-#endif
-
-const struct ZVMChannel *zvm_channels_c( int *channels_count ){
-    *channels_count = s_manifest->channels_count;
-    return s_manifest->channels;
-}
+/****************** static data*/
+struct MountsInterface* s_channels_mount=NULL;
+struct MountsInterface* s_mem_mount=NULL;
+static struct MountsManager* s_mounts_manager;
+static struct MountsInterface* s_transparent_mount;
+/****************** */
 
 void set_zrt_errno( int zvm_errno )
 {
-    switch ( zvm_errno ){
-    case INVALID_DESC:
-        errno = EBADF;
-        break;
-    case INVALID_BUFFER:
-        errno = EFAULT;
-        break;
-    case INTERNAL_ERR:
-    case INVALID_ERROR:
-    case OUT_OF_LIMITS:
-    case INVALID_MODE:
-    case INSANE_SIZE:
-    case INSANE_OFFSET:
-    case OUT_OF_BOUNDS:
-    default:
-        errno = zvm_errno;
-        break;
-    }
-
+    errno = zvm_errno;
     zrt_log( "errno=%d", errno );
 }
 
-/*return 0 if specified mode is matches to chan AccessType*/
-static int check_channel_access_mode(const struct ZVMChannel *chan, int access_mode)
-{
-    assert(chan);
-
-    /*check read / write accasebility*/
-    int canberead = chan->limits[GetsLimit] && chan->limits[GetSizeLimit];
-    int canbewrite = chan->limits[PutsLimit] && chan->limits[PutSizeLimit];
-
-    zrt_log("access_mode=%u, canberead=%d, canbewrite=%d", access_mode, canberead, canbewrite );
-
-    /*reset permissions bits, that are not used currently*/
-    access_mode = access_mode & O_ACCMODE;
-    switch( access_mode ){
-    case O_RDONLY:
-        zrt_log("access_mode=%s", "O_RDONLY");
-        return canberead>0 ? 0: -1;
-    case O_WRONLY:
-        zrt_log("access_mode=%s", "O_WRONLY");
-        return canbewrite >0 ? 0 : -1;
-    case O_RDWR:
-    default:
-        /*if case1: O_RDWR ; case2: O_RDWR|O_WRONLY logic error handle as O_RDWR*/
-        zrt_log("access_mode=%s", "O_RDWR");
-        return canberead>0 && canbewrite>0 ? 0 : -1;
-    }
-    return 1;
+/*copy stat to nacl stat, strustures has vriable sizes*/
+void set_nacl_stat( const struct stat* stat, struct nacl_abi_stat* nacl_stat ){
+    nacl_stat->nacl_abi_st_dev = stat->st_dev;
+    nacl_stat->nacl_abi_st_ino = stat->st_ino;
+    nacl_stat->nacl_abi_st_mode = stat->st_mode;
+    nacl_stat->nacl_abi_st_nlink = stat->st_nlink;
+    nacl_stat->nacl_abi_st_uid = stat->st_uid;
+    nacl_stat->nacl_abi_st_gid = stat->st_gid;
+    nacl_stat->nacl_abi_st_rdev = stat->st_rdev;
+    nacl_stat->nacl_abi_st_size = stat->st_size;
+    nacl_stat->nacl_abi_st_blksize = stat->st_blksize;
+    nacl_stat->nacl_abi_st_blocks = stat->st_blocks;
+    nacl_stat->nacl_abi_st_atime = stat->st_atime;
+    nacl_stat->nacl_abi_st_atimensec = 0;
+    nacl_stat->nacl_abi_st_mtime = stat->st_mtime;
+    nacl_stat->nacl_abi_st_mtimensec = 0;
+    nacl_stat->nacl_abi_st_ctime = stat->st_ctime;
+    nacl_stat->nacl_abi_st_ctimensec = 0;
 }
 
-void debug_mes_zrt_channel_runtime( int handle ){
-    const struct ZrtChannelRt *zrt_chan_runtime = s_zrt_channels[handle];
-    zrt_log("handle=%d", handle);
-    if (zrt_chan_runtime){
-        zrt_log("open_mode=%u, flags=%u, sequential_access_pos=%llu, random_access_pos=%llu",
-                zrt_chan_runtime->open_mode, zrt_chan_runtime->flags,
-                zrt_chan_runtime->sequential_access_pos, zrt_chan_runtime->random_access_pos );
-    }
-};
-
-void debug_mes_open_flags( int flags )
+static void debug_mes_open_flags( int flags )
 {
     int all_flags[] = {O_CREAT, O_EXCL, O_TRUNC, O_DIRECT, O_DIRECTORY,
             O_NOATIME, O_APPEND, O_ASYNC, O_SYNC, O_NONBLOCK, O_NDELAY, O_NOCTTY};
@@ -225,226 +151,28 @@ void debug_mes_open_flags( int flags )
      * */
 }
 
-
-/* Add channel to runtime data array
- * @return handle on success or if already opened, otherwise -1 and set errno*/
-static int open_channel( const char *name, int mode, int flags  )
-{
-    zrt_log("name=%s, mode=%u, flags=%u", name, mode, flags);
-    const struct ZVMChannel *chan = NULL;
-
-    /* search for name through the channels list*/
-    int handle;
-    for(handle = 0; handle < s_manifest->channels_count; ++handle)
-        if(strcmp(s_manifest->channels[handle].name, name) == 0){
-            chan = &s_manifest->channels[handle];
-            break; /*handle according to matched filename*/
-        }
-
-    /* if channel name not matched return error*/
-    if ( !chan ){
-        set_zrt_errno( ENOENT );
-        return -1;
-    }
-    zrt_log("channel type=%d", s_manifest->channels[handle].type );
-
-    /*return handle if file already opened*/
-    if ( s_zrt_channels[handle] && s_zrt_channels[handle]->open_mode >= 0 ){
-        zrt_log("channel already opened, handle=%d ", handle );
-        return handle;
-    }
-
-
-    /*check access mode for opening channel, limits not checked*/
-    if( check_channel_access_mode( chan, mode ) != 0 ){
-        zrt_log("can't open channel, handle=%d ", handle );
-        set_zrt_errno( EACCES );
-        return -1;
-    }
-
-    /**DEBUG*******************************************/
-    debug_mes_open_flags(flags);
-    /**DEBUG*******************************************/
-
-    /*alloc zrt runtime channel object or update existing*/
-    if ( !s_zrt_channels[handle] ){
-        s_zrt_channels[handle] = calloc( 1, sizeof(struct ZrtChannelRt) );
-    }
-    s_zrt_channels[handle]->open_mode = mode;
-    s_zrt_channels[handle]->flags = flags;
-
-#ifdef DEBUG
-    debug_mes_zrt_channel_runtime(handle);
-#endif
-    return handle;
+static void debug_mes_stat(struct stat *stat){
+    zrt_log("st_dev=%lld", stat->st_dev);
+    zrt_log("st_ino=%lld", stat->st_ino);
+    zrt_log("nlink=%d", stat->st_nlink);
+    zrt_log("st_mode=%d", stat->st_mode);
+    zrt_log("st_blksize=%d", (int)stat->st_blksize);
+    zrt_log("st_size=%lld", stat->st_size);
+    zrt_log("st_blocks=%d", (int)stat->st_blocks);
 }
-
-
-uint32_t channel_permissions(struct ZVMChannel *channel){
-    uint32_t perm = 0;
-    assert(channel);
-    if ( channel->limits[GetsLimit] != 0 && channel->limits[GetSizeLimit] )
-        perm |= S_IRUSR;
-    if ( channel->limits[PutsLimit] != 0 && channel->limits[PutSizeLimit] )
-        perm |= S_IWUSR;
-    if ( (channel->type == SGetSPut && ( (perm&S_IRWXU)==S_IRUSR || (perm&S_IRWXU)==S_IWUSR )) ||
-         (channel->type == RGetSPut && (perm&S_IRWXU)==S_IWUSR ) ||
-         (channel->type == SGetRPut && (perm&S_IRWXU)==S_IRUSR ) )
-    {
-        perm |= S_IFCHR;
-    }
-    else if ( (channel->type == RGetSPut && (perm&S_IRWXU)==S_IRUSR) ||
-               (channel->type == SGetRPut && (perm&S_IRWXU)==S_IWUSR) ||
-               (channel->type == RGetRPut && ( (perm&S_IRWXU)==S_IWUSR) && (perm&S_IRWXU)!=S_IRUSR) ||
-               (channel->type == RGetRPut && ( (perm&S_IRWXU)!=S_IWUSR) && (perm&S_IRWXU)==S_IRUSR) )
-    {
-        perm |= S_IFREG;
-    }
-    else{
-        perm |= S_IFBLK;
-    }
-    return perm;
-}
-
-
-int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_channel,
-        int8_t whence, int8_t access, int64_t offset ){
-    /*seek get supported by channel for any modes*/
-    if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-    switch ( access ){
-    case EPosSeek:
-        /*seek set does not supported for this channel type*/
-        set_zrt_errno( ESPIPE );
-        return -1;
-    case EPosRead:
-    case EPosWrite:
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
-        break;
-    default:
-        assert(0);
-        break;
-    }
-}
-
-
-int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_channel,
-        int8_t whence, int8_t access, int64_t offset ){
-    switch ( access ){
-    case EPosSeek:
-        if ( CHECK_FLAG( zrt_channel->open_mode, O_RDONLY )
-                || CHECK_FLAG( zrt_channel->open_mode, O_RDWR ) )
-        {
-            if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-            SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
-        }
-        else if ( CHECK_FLAG( zrt_channel->open_mode, O_WRONLY ) == 1 )
-        {
-            if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-            else{
-                /*it's does not supported for seeking sequential write*/
-                set_zrt_errno( ESPIPE );
-                return -1;
-            }
-        }
-        break;
-    case EPosRead:
-        if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
-        break;
-    case EPosWrite:
-        if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
-        break;
-    default:
-        assert(0);
-        break;
-    }
-}
-
-int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channel,
-        int8_t whence, int8_t access, int64_t offset){
-    switch ( access ){
-    case EPosSeek:
-        if ( CHECK_FLAG( zrt_channel->open_mode, O_WRONLY ) == 1
-                || CHECK_FLAG( zrt_channel->open_mode, O_RDWR ) == 1 )
-        {
-            if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-            SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
-        }
-        else if ( CHECK_FLAG( zrt_channel->open_mode, O_RDONLY )  == 1)
-        {
-            if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-            else{
-                /*it's does not supported for seeking sequential read*/
-                set_zrt_errno( ESPIPE );
-                return -1;
-            }
-        }
-        break;
-    case EPosRead:
-        if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
-        break;
-    case EPosWrite:
-        if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
-        break;
-    default:
-        assert(0);
-        break;
-    }
-}
-
-int64_t channel_pos_random_get_random_put(struct ZrtChannelRt *zrt_channel,
-        int8_t whence, int8_t access, int64_t offset){
-    if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-    switch ( access ){
-    case EPosSeek:
-    case EPosRead:
-    case EPosWrite:
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
-        break;
-    default:
-        assert(0);
-        break;
-    }
-}
-
-int64_t channel_pos( int handle, int8_t whence, int8_t access, int64_t offset ){
-    if ( handle>=0 && handle < s_manifest->channels_count && s_zrt_channels[handle] ){
-        struct ZrtChannelRt *zrt_channel = s_zrt_channels[handle];
-        assert( zrt_channel );
-        int8_t access_type = s_manifest->channels[handle].type;
-        switch ( access_type ){
-        case SGetSPut:
-            return channel_pos_sequen_get_sequen_put( zrt_channel, whence, access, offset );
-            break;
-        case RGetSPut:
-            return channel_pos_random_get_sequen_put( zrt_channel, whence, access, offset );
-            break;
-        case SGetRPut:
-            return channel_pos_sequen_get_random_put( zrt_channel, whence, access, offset );
-            break;
-        case RGetRPut:
-            return channel_pos_random_get_random_put( zrt_channel, whence, access, offset );
-            break;
-        }
-    }
-    else{
-        /*bad handle*/
-        set_zrt_errno( EBADF );
-    }
-    return -1;
-}
-
 
 
 /*
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
  * each nacl syscall must be implemented or, at least, mocked. no exclusions!
  */
+static int32_t zrt_nan(uint32_t *args)
+{
+    SHOWID(args);
+    return 0;
+}
+//SYSCALL_MOCK(nan, 0)
 
-SYSCALL_MOCK(nan, 0)
 SYSCALL_MOCK(null, 0)
 SYSCALL_MOCK(nameservice, 0)
 SYSCALL_MOCK(dup, -EPERM) /* duplicate the given file handle. n/a in the simple zrt version */
@@ -462,39 +190,13 @@ static int32_t zrt_open(uint32_t *args)
     char* name = (char*)args[0];
     int flags = (int)args[1];
     int mode = (int)args[2];
-    zrt_log("name=%s", name);
+
+    zrt_log("path=%s", name);
     debug_mes_open_flags(flags);
 
-    /*If specified open flag saying as that trying to open not directory*/
-    if ( CHECK_FLAG(flags, O_DIRECTORY) == 0 ){
-        return open_channel( name, flags, mode );
-    }
-    else { /*trying to open directory*/
-        struct dir_data_t *dir = match_dir_in_directory_list( &s_manifest_dirs, name, strlen(name));
-        /*if valid directory path matched */
-        if ( dir != NULL ){
-            if ( dir->open_mode < 0 ){ /*if not opened*/
-                /*if trying open in read only*/
-                if ( CHECK_FLAG(mode, O_RDONLY) ){  /*it's allowed*/
-                    dir->open_mode = mode;
-                    return dir->handle;
-                }
-                else{  /*Not allowed read-write / write access*/
-                    set_zrt_errno( EACCES );
-                    return -1;
-                }
-            }
-            else { /*already opened, just return handle*/
-                return dir->handle;
-            }
-        }
-        else{
-            /*no matched directory*/
-            set_zrt_errno( ENOENT );
-            return -1;
-        }
-    }
-    return 0;
+    int ret = s_transparent_mount->open( name, flags, mode );
+    zrt_log( "ret=%d, errno=%d", ret, errno );
+    return ret;
 }
 
 
@@ -504,36 +206,10 @@ static int32_t zrt_close(uint32_t *args)
     SHOWID(args);
     errno = 0;
     int handle = (int)args[0];
-    zrt_log("handle=%d", handle);
 
-    /*if valid handle and file was opened previously then perform file close*/
-    if ( handle < s_manifest->channels_count &&
-            s_zrt_channels[handle] && s_zrt_channels[handle]->open_mode >=0  )
-    {
-        s_zrt_channels[handle]->random_access_pos = s_zrt_channels[handle]->sequential_access_pos = 0;
-        s_zrt_channels[handle]->maxsize = 0;
-        s_zrt_channels[handle]->open_mode = -1;
-        zvm_close(handle);
-        return 0;
-    }
-    else{ /*search handle in directories list*/
-        int i;
-        for ( i=0; i < s_manifest_dirs.dircount; i++ ){
-            /*if matched handle*/
-            if ( s_manifest_dirs.dir_array[i].handle == handle &&
-                    s_manifest_dirs.dir_array[i].open_mode >= 0 )
-            {
-                /*close opened dir*/
-                s_manifest_dirs.dir_array[i].open_mode = -1;
-                return 0;
-            }
-        }
-        /*no matched open dir handle*/
-        set_zrt_errno( EBADF );
-        return -1;
-    }
-
-    return 0;
+    int ret = s_transparent_mount->close(handle);
+    zrt_log( "ret=%d, errno=%d", ret, errno );
+    return ret;
 }
 
 
@@ -545,47 +221,10 @@ static int32_t zrt_read(uint32_t *args)
     int handle = (int)args[0];
     void *buf = (void*)args[1];
     int64_t length = (int64_t)args[2];
-    int32_t readed = 0;
 
-    /*file not opened, bad descriptor*/
-    if ( handle < 0 || handle >= s_manifest->channels_count ||
-            !s_zrt_channels[handle] ||
-            s_zrt_channels[handle]->open_mode < 0 )
-    {
-        zrt_log("invalid file descriptor handle=%d", handle);
-        set_zrt_errno( EBADF );
-        return -1;
-    }
-    zrt_log( "channel name=%s", s_manifest->channels[handle].name );
-    debug_mes_zrt_channel_runtime( handle );
-
-    /*check if file was not opened for reading*/
-    int mode= O_ACCMODE & s_zrt_channels[handle]->open_mode;
-    if ( mode != O_RDONLY && mode != O_RDWR  )
-    {
-        zrt_log("file open_mode=%u not allowed read", mode);
-        set_zrt_errno( EINVAL );
-        return -1;
-    }
-
-    int64_t pos = channel_pos(handle, EPosGet, EPosRead, 0);
-    if ( CHECK_NEW_POS( pos+length ) != 0 ){
-        zrt_log("file bad pos=%lld", pos);
-        set_zrt_errno( EOVERFLOW );
-        return -1;
-    }
-
-    readed = zvm_pread(handle, buf, length, pos );
-    if(readed > 0) channel_pos(handle, EPosSetRelative, EPosRead, readed);
-
-    zrt_log("channel handle=%d, bytes readed=%d", handle, readed);
-
-    if ( readed < 0 ){
-        set_zrt_errno( zvm_errno() );
-        return -1;
-    }
-    ///ZEROVM Obsolete design will removed soon
-    return readed;
+    int32_t ret = s_transparent_mount->read(handle, buf, length);
+    zrt_log( "ret=%d, errno=%d", ret, errno );
+    return ret;
 }
 
 /* example how to implement zrt syscall */
@@ -595,58 +234,10 @@ static int32_t zrt_write(uint32_t *args)
     int handle = (int)args[0];
     void *buf = (void*)args[1];
     int64_t length = (int64_t)args[2];
-    int32_t wrote = 0;
 
-    if ( handle < 3 ) s_donotlog = 1;
-
-    /*file not opened, bad descriptor*/
-    if ( handle < 0 || handle >= s_manifest->channels_count ||
-            !s_zrt_channels[handle] ||
-            s_zrt_channels[handle]->open_mode < 0  )
-    {
-        zrt_log("invalid file descriptor handle=%d", handle);
-        set_zrt_errno( EBADF );
-        return -1;
-    }
-
-    zrt_log( "channel name=%s", s_manifest->channels[handle].name );
-    debug_mes_zrt_channel_runtime( handle );
-
-    /*if file was not opened for writing, set errno and get error*/
-    int mode= O_ACCMODE & s_zrt_channels[handle]->open_mode;
-    if ( mode != O_WRONLY && mode != O_RDWR  )
-    {
-        zrt_log("file open_mode=%u not allowed write", mode);
-        set_zrt_errno( EINVAL );
-        return -1;
-    }
-
-    int64_t pos = channel_pos(handle, EPosGet, EPosWrite, 0);
-    if ( CHECK_NEW_POS( pos+length ) != 0 ){
-        set_zrt_errno( EOVERFLOW );
-        return -1;
-    }
-
-    wrote = zvm_pwrite(handle, buf, length, pos );
-    if(wrote > 0) channel_pos(handle, EPosSetRelative, EPosWrite, wrote);
-    zrt_log("channel handle=%d, bytes wrote=%d", handle, wrote);
-
-    if ( wrote < 0 ){
-        set_zrt_errno( zvm_errno() );
-        return -1;
-    }
-
-    /*save maximum writable position for random access write only channels using this as synthetic
-     *size for channel mapped file. Here is works a single rule: maximum writable position can be used as size*/
-    int8_t access_type = s_manifest->channels[handle].type;
-    if ( CHECK_FLAG(s_zrt_channels[handle]->open_mode, O_WRONLY ) &&
-         (access_type == SGetRPut || access_type == RGetRPut) )
-    {
-        s_zrt_channels[handle]->maxsize = channel_pos(handle, EPosGet, EPosWrite, 0);
-        zrt_log("Set channel size=%lld", s_zrt_channels[handle]->maxsize );
-    }
-
-    return wrote;
+    int32_t ret = s_transparent_mount->write(handle, buf, length);
+    zrt_log( "ret=%d, errno=%d", ret, errno );
+    return ret;
 }
 
 /*
@@ -660,46 +251,9 @@ static int32_t zrt_lseek(uint32_t *args)
     off_t offset = *((off_t*)args[1]);
     int whence = (int)args[2];
 
-    zrt_log("offt size=%d, handle=%d, offset=%lld", sizeof(off_t), handle, offset);
-    debug_mes_zrt_channel_runtime( handle );
-
-    /* check handle */
-    if(handle < 0 || handle >= s_manifest->channels_count){
-        set_zrt_errno( EBADF );
-        return -1;
-    }
-    zrt_log( "channel name=%s", s_manifest->channels[handle].name );
-
-    switch(whence)
-    {
-    case SEEK_SET:
-        zrt_log("whence=%s", "SEEK_SET");
-        offset = channel_pos(handle, EPosSetAbsolute, EPosSeek, offset );
-        break;
-    case SEEK_CUR:
-        zrt_log("whence=%s", "SEEK_CUR");
-        if ( !offset )
-            offset = channel_pos(handle, EPosGet, EPosSeek, offset );
-        else
-            offset = channel_pos(handle, EPosSetRelative, EPosSeek, offset );
-        break;
-    case SEEK_END:{
-        off_t size = CHANNEL_SIZE(handle);
-        zrt_log("whence=%s, maxsize=%lld", "SEEK_END", size);
-        /*use runtime size instead static size in zvm channel*/
-        offset = channel_pos(handle, EPosSetAbsolute, EPosSeek, size + offset );
-        break;
-    }
-    default:
-        set_zrt_errno( EPERM ); /* in advanced version should be set to conventional value */
-        return -1;
-    }
-
-    /*
-     * return current position in a special way since 64 bits
-     * doesn't fit to return code (32 bits)
-     */
+    offset = s_transparent_mount->lseek(handle, offset, whence);
     *(off_t *)args[1] = offset;
+    zrt_log( "offset=%lld, errno=%d", offset, errno );
     return offset;
 }
 
@@ -707,66 +261,6 @@ static int32_t zrt_lseek(uint32_t *args)
 SYSCALL_MOCK(ioctl, -EINVAL) /* not implemented in the simple version of zrtlib */
 
 
-void debug_mes_stat(struct nacl_abi_stat *stat){
-    zrt_log("st_dev=%lld", stat->nacl_abi_st_dev);
-    zrt_log("st_ino=%lld", stat->nacl_abi_st_ino);
-    zrt_log("nlink=%d", stat->nacl_abi_st_nlink);
-    zrt_log("st_mode=%d", stat->nacl_abi_st_mode);
-    zrt_log("st_blksize=%d", stat->nacl_abi_st_blksize);
-    zrt_log("st_size=%lld", stat->nacl_abi_st_size);
-    zrt_log("st_blocks=%d", stat->nacl_abi_st_blocks);
-}
-
-/*used by stat, fstat; set stat based on channel type*/
-static void set_stat(struct nacl_abi_stat *stat, int handle)
-{
-    zrt_log("handle=%d", handle);
-
-    int nlink = 1;
-    uint32_t permissions = 0;
-    int64_t size=4096;
-    uint32_t blksize =1;
-    uint64_t ino;
-
-    if ( handle >= s_manifest->channels_count ){ /*if handle is dir handle*/
-        struct dir_data_t *d = match_handle_in_directory_list( &s_manifest_dirs, handle );
-        nlink = d->nlink;
-        ino = INODE_FROM_HANDLE(d->handle);
-        permissions |= S_IRUSR | S_IFDIR;
-    }
-    else{ /*channel handle*/
-        permissions = channel_permissions(&s_manifest->channels[handle]);
-        if ( CHECK_FLAG( permissions, S_IFCHR) ) blksize = 1;
-        else                                     blksize = 4096;
-        ino = INODE_FROM_HANDLE( handle );
-        size = CHANNEL_SIZE(handle);
-    }
-
-    /* return stat object */
-    stat->nacl_abi_st_dev = 2049;     /* ID of device containing handle */
-    stat->nacl_abi_st_ino = ino;     /* inode number */
-    stat->nacl_abi_st_nlink = nlink;      /* number of hard links */;
-    stat->nacl_abi_st_uid = 1000;     /* user ID of owner */
-    stat->nacl_abi_st_gid = 1000;     /* group ID of owner */
-    stat->nacl_abi_st_rdev = 0;       /* device ID (if special handle) */
-    stat->nacl_abi_st_mode = permissions;
-    stat->nacl_abi_st_blksize = blksize;        /* block size for file system I/O */
-    stat->nacl_abi_st_size = size;
-    stat->nacl_abi_st_blocks =               /* number of 512B blocks allocated */
-            ((stat->nacl_abi_st_size + stat->nacl_abi_st_blksize - 1)
-                    / stat->nacl_abi_st_blksize) * stat->nacl_abi_st_blksize / 512;
-
-    /* files are not allowed to have real date/time */
-    stat->nacl_abi_st_atime = 0;      /* time of the last access */
-    stat->nacl_abi_st_mtime = 0;      /* time of the last modification */
-    stat->nacl_abi_st_ctime = 0;      /* time of the last status change */
-    stat->nacl_abi_st_atimensec = 0;
-    stat->nacl_abi_st_mtimensec = 0;
-    stat->nacl_abi_st_ctimensec = 0;
-
-    debug_mes_stat(stat);
-
-}
 /*
  * return synthetic channel information
  * todo(d'b): the function needs update after the channels design will complete
@@ -777,40 +271,14 @@ static int32_t zrt_stat(uint32_t *args)
     errno = 0;
     const char *file = (const char*)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
-    int handle;
-
-    struct ZVMChannel *channel = NULL;
-    struct dir_data_t *dir = NULL;
-
-    zrt_log("file=%s", file);
-
-    if(file == NULL){
-        set_zrt_errno( EFAULT );
-        return -1;
+    struct stat st;
+    int ret = s_transparent_mount->stat(file, &st);
+    if ( ret == 0 ){
+        debug_mes_stat(&st);
+        set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
     }
-
-    for(handle = 0; handle < s_manifest->channels_count; ++handle){
-        if(!strcmp(file, s_manifest->channels[handle].name)){
-            zrt_log("matched handle=%d\n", handle);
-            channel = &s_manifest->channels[handle];
-            break;
-        }
-    }
-
-    if ( channel ){
-        set_stat( sbuf, handle);
-        return 0;
-    }
-    else if ( (dir=match_dir_in_directory_list(&s_manifest_dirs, file, strlen(file))) ){
-        set_stat( sbuf, dir->handle);
-        return 0;
-    }
-    else{
-        set_zrt_errno( ENOENT );
-        return -1;
-    }
-
-    return 0;
+    zrt_log( "ret=%d, errno=%d", ret, errno );
+    return ret;
 }
 
 
@@ -821,22 +289,14 @@ static int32_t zrt_fstat(uint32_t *args)
     errno = 0;
     int handle = (int)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
-
-    zrt_log("handle=%d", handle);
-
-    /* check if user request contain the proper file handle */
-    if(handle >= 0 && handle < s_manifest->channels_count){
-        set_stat( sbuf, handle); /*channel handle*/
+    struct stat st;
+    int ret = s_transparent_mount->fstat( handle, &st);
+    if ( ret == 0 ){
+        debug_mes_stat(&st);
+        set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
     }
-    else if ( match_handle_in_directory_list(&s_manifest_dirs, handle) ){
-        set_stat( sbuf, handle); /*dir handle*/
-    }
-    else{
-        set_zrt_errno( EBADF );
-        return -1;
-    }
-
-    return 0;
+    zrt_log( "ret=%d, errno=%d", ret, errno );
+    return ret;
 }
 
 SYSCALL_MOCK(chmod, -EPERM) /* in a simple version of zrt chmod is not allowed */
@@ -899,18 +359,10 @@ static int32_t zrt_getdents(uint32_t *args)
     int handle = (int)args[0];
     char *buf = (char*)args[1];
     uint32_t count = args[2];
-    zrt_log( "handle=%d, count=%d", handle, count );
 
-    /* check null and  make sure the buffer is aligned */
-    if ( !buf || 0 != ((sizeof(unsigned long) - 1) & (uintptr_t) buf)) {
-        set_zrt_errno( EINVAL );
-        return -1;
-    }
-
-    int retval = readdir_to_buffer( handle, buf, count, &s_readdir_temp, s_manifest, &s_manifest_dirs );
-
-    zrt_log( "retval=%d", retval );
-    return retval;
+    int32_t ret = s_transparent_mount->getdents(handle, buf, count);
+    zrt_log( "ret=%d, errno=%d", ret, errno );
+    return ret;
 }
 
 
@@ -931,24 +383,14 @@ SYSCALL_MOCK(sched_yield, 0)
 SYSCALL_MOCK(sysconf, 0)
 
 /* if given in manifest let user to have it */
-#define TIMESTAMP_STR "TimeStamp="
-#define TIMESTAMP_STRLEN strlen("TimeStamp=")
+#define TIMESTAMP_STR "TimeStamp"
 static int32_t zrt_gettimeofday(uint32_t *args)
 {
     SHOWID(args);
     struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)args[0];
-    char *stamp = NULL;
-    int i;
 
     /* get time stamp from the environment */
-    for(i = 0; s_manifest->envp[i] != NULL; ++i)
-    {
-        if(strncmp(s_manifest->envp[i], TIMESTAMP_STR, TIMESTAMP_STRLEN) != 0)
-            continue;
-
-        stamp = s_manifest->envp[i] + TIMESTAMP_STRLEN;
-        break;
-    }
+    char *stamp = getenv( TIMESTAMP_STR );
 
     /* check if timestampr is set */
     if(stamp == NULL || !*stamp) return -EPERM;
@@ -1151,32 +593,61 @@ int32_t (*zrt_syscalls[])(uint32_t*) = {
 
 
 void zrt_setup( struct UserManifest* manifest ){
-    int i;
-    s_manifest = manifest;
+    /*manage mounted filesystems*/
+    s_mounts_manager = alloc_mounts_manager();
+    /*alloc filesystem based on channels*/
+    s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator,
+            manifest->channels, manifest->channels_count );
+    /*alloc entry point to mounted filesystems*/
+    s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
 
-    /*array of pointers*/
-    s_zrt_channels = calloc( manifest->channels_count, sizeof(struct ZrtChannelRt*) );
-    s_zrt_log_fd = open_channel( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
+    /* using direct call to channels_mount and create debuging log channel*/
+    int zrt_log_fd = s_channels_mount->open( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
+    setup_zrtlog_fd( zrt_log_fd );
 
-    //zrt_log( lformat(s_logbuf, "%s", "started") );
     zrt_log_str( "started" );
-
-    s_manifest_dirs.dircount=0;
-    process_channels_create_dir_list( manifest->channels, manifest->channels_count, &s_manifest_dirs );
-
-#ifdef DEBUG
-    zrt_log("dirs count loaded from manifest=%d", s_manifest_dirs.dircount);
-    for ( i=0; i < s_manifest_dirs.dircount; i++ ){
-        zrt_log( "dir[%d].handle=%d; .path=%s; .nlink=%d", i,
-                s_manifest_dirs.dir_array[i].handle,
-                s_manifest_dirs.dir_array[i].path,
-                s_manifest_dirs.dir_array[i].nlink);
-    }
-#endif
-    /*preallocate sdtin, stdout, stderr channels*/
-    open_channel( DEV_STDIN, O_RDONLY, 0 );
-    open_channel( DEV_STDOUT, O_WRONLY, 0 );
-    open_channel( DEV_STDERR, O_WRONLY, 0 );
 }
 
+void zrt_setup_finally(){
+    /* using of channels_mount directly to preallocate standard channels sdtin, stdout, stderr */
+    s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
+    s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
+    s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
+
+    /*create mem mount*/
+    s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
+
+    /*Mount channels filesystem as root*/
+    s_mounts_manager->mount_add( "/dev", s_channels_mount );
+    s_mounts_manager->mount_add( "/", s_mem_mount );
+
+    /*Alloc mounts after initializing of standard channels, to access logging debug
+     * data if mounts initialization failed*/
+    //zrt_log_str( "create mounts observer" );
+    //s_mounts_observer = alloc_mounts_observer( s_manifest->channels, s_manifest->channels_count );
+    //zrt_log_str( "create mounts observer OK" );
+
+    //zrt_log_str( "create mounts wrapper" );
+    //s_mounts = AllocMountsWraper( s_mounts_observer );
+    //zrt_log_str( "create mounts wrapper channelsOK" );
+
+    /*create directories list got with channels list */
+//    int i;
+//    for ( i=0; i < s_manifest_dirs.dircount; i++ ){
+//        const char* dir_path = s_manifest_dirs.dir_array[i].path;
+//        zrt_log( "mkdir path=%s", dir_path );
+//        errno=0;
+//        int ret = s_mounts->mkdir(dir_path, 0777);
+//        if ( ret && errno != EEXIST ){
+//            zrt_log( "mkdir errno=%d, ret=%d", errno, ret );
+//            assert(ret == 0);
+//        }
+//    }
+
+//    /*mount channels into /dev directory */
+//    ChannelsMount* channels_mount = new ChannelsMount( s_manifest );
+//    ret = s_mounts->mount( "/dev", channels_mount );
+//    assert(ret == 0);
+//    zrt_log_str( "channels mount OK" );
+}
 

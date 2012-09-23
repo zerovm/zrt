@@ -15,109 +15,22 @@
 #define DEV_STDOUT "/dev/stdout"
 #define DEV_STDERR "/dev/stderr"
 
-#define FIRST_NON_RESERVED_INODE 11
-#define INODE_FROM_HANDLE(handle) (FIRST_NON_RESERVED_INODE+handle)
-
-
-#ifdef DEBUG
-#define zrt_log(fmt, ...) \
-        do {\
-            char *buf; \
-            int debug_handle = debug_handle_get_buf(&buf); \
-            int len;\
-            if(debug_handle < 0) break;\
-            len = snprintf(buf, 0x1000, "%s; %s, %d: " fmt "\n", \
-            __FILE__, __func__, __LINE__, __VA_ARGS__);\
-            zvm_pwrite(debug_handle, buf, len, 0); \
-        } while(0)
-
-#define zrt_log_str(text) \
-        do {\
-            char *buf; \
-            int debug_handle = debug_handle_get_buf(&buf); \
-            int len;\
-            if( debug_handle < 0) break;\
-            len = snprintf(buf, 0x1000, "%s; %s, %d: %s\n", \
-            __FILE__, __func__, __LINE__, text);\
-            zvm_pwrite(debug_handle, buf, len, 0); \
-        } while(0)
-
-int debug_handle_get_buf(char **buf);
-#endif
-
-
-struct ZrtChannelRt{
-    int     handle;
-    int     open_mode;             /*For currently opened file contains mode, otherwise -1*/
-    int     flags;                 /*For currently opened file contains flags*/
-    int64_t sequential_access_pos; /*sequential read, sequential write*/
-    int64_t random_access_pos;     /*random read, random write*/
-    int64_t maxsize;               /*synthethic size. maximum position of channel for all I/O requests*/
-};
-
-enum PosAccess{ EPosSeek=0, EPosRead, EPosWrite };
-enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
-/*@param pos_whence If EPosGet offset unused, otherwise check and set offset
- *@return -1 if bad offset, else offset result*/
-int64_t channel_pos( int handle, int8_t whence, int8_t access, int64_t offset );
-
 /*Assign own channels pointer to get it filled with channels at the syscallback*/
 void zrt_setup( struct UserManifest* manifest );
 
-#define USE_PADDING
-struct nacl_abi_dirent {
+void zrt_setup_finally();
 
-    unsigned long long   d_ino;     /*offsets NaCl 0 */
-//#ifdef USE_PADDING
-//    unsigned long padding1;
-//#endif
-
-    unsigned long long  d_off;     /*offsets NaCl 8 */
-//#ifdef USE_PADDING
-//    unsigned long padding2;
-//#endif
-
-    uint16_t  d_reclen;  /*offsets NaCl 16 */
-    char     d_name[];  /*offsets NaCl 18 */
-};
-
-/*
- * temporary fix for nacl. stat != nacl_abi_stat
- * also i had a weird error when tried to use "service_runtime/include/sys/stat.h"
- */
-struct nacl_abi_stat
-{
-    /* must be renamed when ABI is exported */
-    int64_t   nacl_abi_st_dev;       /* not implemented */
-    uint64_t  nacl_abi_st_ino;       /* not implemented */
-    uint32_t  nacl_abi_st_mode;      /* partially implemented. */
-    uint32_t  nacl_abi_st_nlink;     /* link count */
-    uint32_t  nacl_abi_st_uid;       /* not implemented */
-    uint32_t  nacl_abi_st_gid;       /* not implemented */
-    int64_t   nacl_abi_st_rdev;      /* not implemented */
-    int64_t   nacl_abi_st_size;      /* object size */
-    int32_t   nacl_abi_st_blksize;   /* not implemented */
-    int32_t   nacl_abi_st_blocks;    /* not implemented */
-    int64_t   nacl_abi_st_atime;     /* access time */
-    int64_t   nacl_abi_st_atimensec; /* possibly just pad */
-    int64_t   nacl_abi_st_mtime;     /* modification time */
-    int64_t   nacl_abi_st_mtimensec; /* possibly just pad */
-    int64_t   nacl_abi_st_ctime;     /* inode change time */
-    int64_t   nacl_abi_st_ctimensec; /* only nacl; possibly just pad */
-};
-
-
-/* same here */
-struct nacl_abi_timeval {
-    int64_t   nacl_abi_tv_sec;
-    int32_t   nacl_abi_tv_usec;
-};
 
 /*
  * FULL NACL SYSCALL LIST
  */
 #define NACL_sys_null                    1 /* empty syscall. does nothing */
 #define NACL_sys_nameservice             2
+#define NACL_3                           3 /*unknown*/
+#define NACL_4                           4 /*unknown*/
+#define NACL_5                           5 /*unknown*/
+#define NACL_6                           6 /*unknown*/
+#define NACL_7                           7 /*unknown*/
 #define NACL_sys_dup                     8
 #define NACL_sys_dup2                    9
 #define NACL_sys_open                   10
@@ -196,7 +109,6 @@ struct nacl_abi_timeval {
 /* invalid syscall */
 #define NaCl_invalid() ((int32_t (*)()) \
         (999 * 0x20 + 0x10000))()
-
 
 
 #endif //ZRT_LIB_ZRTSYSCALLS_H

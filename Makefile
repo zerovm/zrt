@@ -1,94 +1,73 @@
-PNACL_TOOL=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc
+CC=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-gcc
+CXX=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-g++
 
-#ported application libraries
-LIBSQLITE=lib/sqlite3/libsqlite3.a
-LIBLUA=lib/lua-5.2.1/src/liblua.a
-LIBMAPREDUCE=lib/mapreduce/libmapreduce.a
-LIBNETWORKING=lib/networking/libnetworking.a
-LIBGTEST=gtest/libgtest.a
-MACROS_FLAGS=-DUSER_SIDE -DDEBUG
-INCLUDE_PATH=-I. -Ilib -I${ZEROVM_ROOT}/api 
+############### libzrt.a source files to build
+LIBZRT=lib/libzrt.a
+LIBZRT_SOURCES= ${ZEROVM_ROOT}/api/zvm.c lib/syscall_manager.S lib/zrtlog.c \
+lib/zrt.c lib/zrtsyscalls.c lib/fs/mounts_manager.c lib/fs/handle_allocator.c \
+lib/fs/channels_mount.c lib/fs/channels_readdir.c lib/fs/transparent_mount.c lib/fs/mem_mount_wraper.cc
+LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 
-all: prepare lib/libzrt.a ${LIBSQLITE} ${LIBLUA} ${LIBMAPREDUCE} ${LIBGTEST} ${LIBNETWORKING}
+############## ported libraries build
+LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
+lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/libsqlite3.a 
+
+################# samples to build
+UNSTABLE_SAMPLES= net
+SAMPLES=disort hello readdir reqrep sort_paging time wordcount zshell
+TEST_SAMPLES=bigfile command_line environment file_stat seek
+ 
+################# flags set
+CFLAGS += -Wall -Wno-long-long -O2 -m64
+CFLAGS += -I. -Ilib -Ilib/fs -I${ZEROVM_ROOT}/api
+CFLAGS += -DUSER_SIDE -DDEBUG
+
+CXXFLAGS += -I. -Ilib -Ilib/fs
+
+################# "make all" Build libs 
+all: prepare ${LIBS} ${LIBZRT} 
 
 prepare:
+	@chmod u+rwx ns_start.sh
+	@chmod u+rwx ns_stop.sh
 
+${LIBZRT} : $(LIBZRT_OBJECTS)
+	$(AR) rcs $@ $(LIBZRT_OBJECTS)
 
-lib/libzrt.a: lib/syscall_manager.S lib/zrt.c ${ZEROVM_ROOT}/api/zvm.c lib/zrtsyscalls.c lib/zrtreaddir.c 
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c ${ZEROVM_ROOT}/api/zvm.c -o lib/zvm.o -Wall -Wno-long-long -O2 -msse4.1 -m64 \
-	${INCLUDE_PATH}
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/syscall_manager.S -o lib/syscall_manager.o
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrtreaddir.c -o lib/zrtreaddir.o -Wall -Wno-long-long -O2 -m64 \
-	${MACROS_FLAGS} ${INCLUDE_PATH}
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrt.c -o lib/zrt.o -Wall -Wno-long-long -O2 -m64 \
-	${MACROS_FLAGS} ${INCLUDE_PATH}
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -c lib/zrtsyscalls.c -o lib/zrtsyscalls.o -Wall -Wno-long-long -O2 -m64 \
-	${MACROS_FLAGS} ${INCLUDE_PATH}	
-	@ar rcs lib/libzrt.a lib/syscall_manager.o lib/zvm.o lib/zrt.o lib/zrtsyscalls.o lib/zrtreaddir.o
+############## Build libs, invoke nested Makefiles
+${LIBS}:  
+	@make -C$(dir $@)
+	@mv -f $@ lib	
 
-${LIBSQLITE}:
-	@make -Clib/sqlite3
-	@mv -f ${LIBSQLITE} lib
+############## "make zrt_tests" Build test samples 
+zrt_tests: ${TEST_SAMPLES}
+${TEST_SAMPLES}: 	
+	@make -Ctests/zrt_test_suite/samples/$@
+
+############## "make all_samples" Build samples 
+all_samples: ${SAMPLES} 
+${SAMPLES}: 
+	@make -Csamples/$@
+
+################ "make cleanall" Cleaning libs, tests, samples 	
+cleanall: clean clean_samples
 	
-${LIBLUA}:
-	@make -Clib/lua-5.2.1
-	@mv -f ${LIBLUA} lib	 
+################ "make clean" Cleaning libs 
+LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 
-${LIBMAPREDUCE}:
-	@make -Clib/mapreduce
-	@mv -f ${LIBMAPREDUCE} lib
+clean: ${LIBS_CLEAN} #clean_samples 
+${LIBS_CLEAN}:
+	@make -C$(dir $@) clean 
+	@rm -f $(LIBZRT_OBJECTS)
+	@rm -f lib/*.a
 
-${LIBNETWORKING}:
-	@PNACL_TOOL=${PNACL_TOOL} make -Clib/networking
-	@mv -f ${LIBNETWORKING} lib
+################ "make clean_samples" Cleaning samples 
+SAMPLES_CLEAN =$(foreach smpl, ${SAMPLES}, $(smpl).clean)
+TEST_SAMPLES_CLEAN=$(foreach smpl, ${TEST_SAMPLES}, $(smpl).clean)
 
-${LIBGTEST}:
-	@PNACL_TOOL=${PNACL_TOOL} make -Cgtest
-
-zrt_tests:
-	@echo Building zrt test
-	make -Ctests/zrt_test_suite/samples/bigfile
-	make -Ctests/zrt_test_suite/samples/command_line
-	make -Ctests/zrt_test_suite/samples/environment	
-	make -Ctests/zrt_test_suite/samples/file_stat
-	make -Ctests/zrt_test_suite/samples/seek
-	
-all_samples:
-	@echo Building samples
-	make -Csamples/disort
-	make -Csamples/net
-	make -Csamples/hello
-	make -Csamples/readdir
-	make -Csamples/reqrep
-	make -Csamples/sort_paging
-	make -Csamples/time
-	make -Csamples/wordcount
-	make -Csamples/zshell
-	
-clean_samples:
-	@make -Csamples/disort clean
-	@make -Csamples/net clean
-	@make -Csamples/hello clean
-	@make -Csamples/readdir clean
-	@make -Csamples/reqrep clean
-	@make -Csamples/sort_paging clean
-	@make -Csamples/time clean
-	@make -Csamples/wordcount clean
-	@make -Csamples/zshell clean
-	@make -Ctests/zrt_test_suite/samples/bigfile clean
-	@make -Ctests/zrt_test_suite/samples/command_line clean
-	@make -Ctests/zrt_test_suite/samples/environment	clean
-	@make -Ctests/zrt_test_suite/samples/file_stat clean
-	@make -Ctests/zrt_test_suite/samples/seek clean
-	
-clean: clean_samples
-	@make -Clib/sqlite3 clean
-	@make -Clib/lua-5.2.1 clean
-	@make -Clib/mapreduce clean
-	@make -Clib/networking clean
-	@make -Cgtest clean
-	@rm -f lib/*.o lib/*.a
-
-echo:
-	@echo "PNACL_TOOL=${PNACL_TOOL}"
+clean_samples: ${SAMPLES_CLEAN} ${TEST_SAMPLES_CLEAN}
+${SAMPLES_CLEAN}:
+	@make -Csamples/$(basename $@) clean
+${TEST_SAMPLES_CLEAN}:
+	@make -Ctests/zrt_test_suite/samples/$(basename $@) clean
 		

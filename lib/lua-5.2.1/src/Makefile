@@ -60,7 +60,7 @@ o:	$(ALL_O)
 a:	$(ALL_A)
 
 $(LUA_A): $(BASE_O) # $(LUA_O) $(LUAC_O)
-	@$(AR) $@ $(BASE_O) #$(LUA_O) $(LUAC_O)
+	@$(AR) ../$@ $(BASE_O) #$(LUA_O) $(LUAC_O)
 #	$(RANLIB) $@
 
 #do not build native executables

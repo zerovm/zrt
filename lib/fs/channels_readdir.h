@@ -5,8 +5,8 @@
  *      Author: yaroslav
  */
 
-#ifndef READDIR_H_
-#define READDIR_H_
+#ifndef CHANNELS_READDIR_H_
+#define CHANNELS_READDIR_H_
 
 #define DIRECTORIES_MAX_NUMBER 255
 
@@ -45,7 +45,7 @@ match_handle_in_directory_list(struct manifest_loaded_directories_t *manifest_di
 
 /*reading channels list, fetch directories from channel path and add to manifest_dirs,
  * manifest_dirs should point to valid pointer*/
-void process_channels_create_dir_list( struct ZVMChannel *channels, int channels_count,
+void process_channels_create_dir_list( const struct ZVMChannel *channels, int channels_count,
         struct manifest_loaded_directories_t *manifest_dirs );
 
 /* Search subdir starting from index in manifest_dirs, if matched return matched subdir index
@@ -56,13 +56,13 @@ int get_sub_dir_index( struct manifest_loaded_directories_t *manifest_dirs, cons
 /* Search channel related to dirpath starting from index in manifest_dirs, if matched return matched channel index
  * To search mor than one channel user would call it with index parameter returned by previous function call;
  * @return channel index if found, -1 if not*/
-int get_dir_content_channel_index(struct ZVMChannel *channels, int channels_count, const char *dirpath, int index);
+int get_dir_content_channel_index(const struct ZVMChannel *channels, int channels_count, const char *dirpath, int index);
 
 /* read directory contents into buffer for getdents syscall
  * @param dir_handle directory to get it's content
  * readdir_temp for first launch int fields should be initialized by -1;
  *@return readed bytes count*/
 int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTemp *readdir_temp,
-        struct UserManifest *manifest, struct manifest_loaded_directories_t *dirs);
+        const struct ZVMChannel *channels, int channels_count, struct manifest_loaded_directories_t *dirs);
 
-#endif /* READDIR_H_ */
+#endif /* CHANNELS_READDIR_H_ */
