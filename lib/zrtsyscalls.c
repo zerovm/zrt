@@ -66,10 +66,12 @@
  * Syscallbacks debug macros*/
 #ifdef DEBUG
 #define ZRT_LOG_NAME "/dev/debug"
-#define SHOWID(args_p) { enable_logging_current_syscall(); zrt_log("syscall arg[0]=%u, arg[1]=%u, arg[2]=%u, arg[3]=%u, arg[4]=%u", \
-         args_p[0], args_p[1], args_p[2], args_p[3], args_p[4] ); }
+#define LOG_SYSCALL_START(args_p) { syscall_push(__func__); enable_logging_current_syscall(); zrt_log("syscall arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x, arg[3]=0x%x, arg[4]=0x%x", \
+        args_p[0], args_p[1], args_p[2], args_p[3], args_p[4] ); }
+#define LOG_SYSCALL_FINISH(ret) { zrt_log("ret=0x%x, errno=%d", (int)ret, errno); syscall_pop(); }
 #else
-#define SHOWID()
+#define LOG_SYSCALL_START(args_p)
+#define LOG_SYSCALL_FINISH()
 #endif
 
 /* ******************************************************************************
@@ -81,8 +83,9 @@
 #define SYSCALL_MOCK(name_wo_zrt_prefix, code) \
         static int32_t ZRT_FUNC(name_wo_zrt_prefix)(uint32_t *args)\
         {\
-    SHOWID(args);\
-    return code;\
+    LOG_SYSCALL_START(args);\
+    LOG_SYSCALL_FINISH(code);\
+    return code; \
         }
 
 /****************** static data*/
@@ -167,7 +170,8 @@ static void debug_mes_stat(struct stat *stat){
  */
 static int32_t zrt_nan(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_FINISH(0);
     return 0;
 }
 //SYSCALL_MOCK(nan, 0)
@@ -184,7 +188,7 @@ SYSCALL_MOCK(dup2, -EPERM) /* duplicate the given file handle. n/a in the simple
  */
 static int32_t zrt_open(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     errno=0;
     char* name = (char*)args[0];
     int flags = (int)args[1];
@@ -194,7 +198,7 @@ static int32_t zrt_open(uint32_t *args)
     debug_mes_open_flags(flags);
 
     int ret = s_transparent_mount->open( name, flags, mode );
-    zrt_log( "ret=%d, errno=%d", ret, errno );
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
@@ -202,12 +206,12 @@ static int32_t zrt_open(uint32_t *args)
 /* do nothing but checks given handle */
 static int32_t zrt_close(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     errno = 0;
     int handle = (int)args[0];
 
     int ret = s_transparent_mount->close(handle);
-    zrt_log( "ret=%d, errno=%d", ret, errno );
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
@@ -215,27 +219,27 @@ static int32_t zrt_close(uint32_t *args)
 /* read the file with the given handle number */
 static int32_t zrt_read(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     errno = 0;
     int handle = (int)args[0];
     void *buf = (void*)args[1];
     int64_t length = (int64_t)args[2];
 
     int32_t ret = s_transparent_mount->read(handle, buf, length);
-    zrt_log( "ret=%d, errno=%d", ret, errno );
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
 /* example how to implement zrt syscall */
 static int32_t zrt_write(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     int handle = (int)args[0];
     void *buf = (void*)args[1];
     int64_t length = (int64_t)args[2];
 
     int32_t ret = s_transparent_mount->write(handle, buf, length);
-    zrt_log( "ret=%d, errno=%d", ret, errno );
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
@@ -244,7 +248,7 @@ static int32_t zrt_write(uint32_t *args)
  */
 static int32_t zrt_lseek(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     errno = 0;
     int32_t handle = (int32_t)args[0];
     off_t offset = *((off_t*)args[1]);
@@ -252,7 +256,7 @@ static int32_t zrt_lseek(uint32_t *args)
 
     offset = s_transparent_mount->lseek(handle, offset, whence);
     *(off_t *)args[1] = offset;
-    zrt_log( "offset=%lld, errno=%d", offset, errno );
+    LOG_SYSCALL_FINISH(offset);
     return offset;
 }
 
@@ -266,7 +270,7 @@ SYSCALL_MOCK(ioctl, -EINVAL) /* not implemented in the simple version of zrtlib 
  */
 static int32_t zrt_stat(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     errno = 0;
     const char *file = (const char*)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
@@ -276,7 +280,7 @@ static int32_t zrt_stat(uint32_t *args)
         debug_mes_stat(&st);
         set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
     }
-    zrt_log( "ret=%d, errno=%d", ret, errno );
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
@@ -284,7 +288,7 @@ static int32_t zrt_stat(uint32_t *args)
 /* return synthetic channel information */
 static int32_t zrt_fstat(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     errno = 0;
     int handle = (int)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
@@ -294,7 +298,7 @@ static int32_t zrt_fstat(uint32_t *args)
         debug_mes_stat(&st);
         set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
     }
-    zrt_log( "ret=%d, errno=%d", ret, errno );
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
@@ -310,26 +314,28 @@ SYSCALL_MOCK(chmod, -EPERM) /* in a simple version of zrt chmod is not allowed *
 /* change space allocation */
 static int32_t zrt_sysbrk(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
     retcode = NaCl_sysbrk(args[0]); /* invoke syscall directly */
     zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
 
+    LOG_SYSCALL_FINISH(retcode);
     return retcode;
 }
 
 /* map region of memory */
 static int32_t zrt_mmap(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
     retcode = NaCl_mmap(args[0], args[1], args[2], args[3], args[4], args[5]);
     zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
 
+    LOG_SYSCALL_FINISH(retcode);
     return retcode;
 }
 
@@ -340,27 +346,28 @@ static int32_t zrt_mmap(uint32_t *args)
  */
 static int32_t zrt_munmap(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
     retcode = NaCl_munmap(args[0], args[1]);
     zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
 
+    LOG_SYSCALL_FINISH(retcode);
     return retcode;
 }
 
 
 static int32_t zrt_getdents(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     errno=0;
     int handle = (int)args[0];
     char *buf = (char*)args[1];
     uint32_t count = args[2];
 
     int32_t ret = s_transparent_mount->getdents(handle, buf, count);
-    zrt_log( "ret=%d, errno=%d", ret, errno );
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
@@ -372,8 +379,9 @@ static int32_t zrt_getdents(uint32_t *args)
 static int32_t zrt_exit(uint32_t *args)
 {
     /* no need to check args for NULL. it is always set by syscall_manager */
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     zvm_exit(args[0]);
+    LOG_SYSCALL_FINISH(0);
     return 0; /* unreachable */
 }
 
@@ -385,21 +393,27 @@ SYSCALL_MOCK(sysconf, 0)
 #define TIMESTAMP_STR "TimeStamp"
 static int32_t zrt_gettimeofday(uint32_t *args)
 {
-    SHOWID(args);
+    LOG_SYSCALL_START(args);
     struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)args[0];
+    int ret=0;
 
     /* get time stamp from the environment */
     char *stamp = getenv( TIMESTAMP_STR );
 
     /* check if timestampr is set */
-    if(stamp == NULL || !*stamp) return -EPERM;
-
+    if(stamp == NULL || !*stamp){
+        ret = EPERM;
+    }
     /* check given arguments validity */
-    if(!tv) return -EFAULT;
+    else if(!tv) {
+        ret = EFAULT;
+    }
+    else{
+        tv->nacl_abi_tv_usec = 0; /* to simplify code. yet we can't get msec from nacl code */
+        tv->nacl_abi_tv_sec = atoi(stamp); /* manifest always contain decimal values */
+    }
 
-    tv->nacl_abi_tv_usec = 0; /* to simplify code. yet we can't get msec from nacl code */
-    tv->nacl_abi_tv_sec = atoi(stamp); /* manifest always contain decimal values */
-
+    LOG_SYSCALL_FINISH(0);
     return 0;
 }
 
@@ -439,7 +453,7 @@ SYSCALL_MOCK(thread_nice, 0)
 static int32_t zrt_tls_get(uint32_t *args)
 {
     /* switch off spam
-     * SHOWID(args);*/
+     * LOG_SYSCALL_START(args);*/
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
@@ -457,8 +471,10 @@ SYSCALL_MOCK(second_tls_set, 0)
  */
 static int32_t zrt_second_tls_get(uint32_t *args)
 {
-    SHOWID(args);
-    return zrt_tls_get(NULL);
+    LOG_SYSCALL_START(args);
+    int32_t ret = zrt_tls_get(NULL);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
 }
 
 SYSCALL_MOCK(sem_create, 0)
@@ -631,22 +647,22 @@ void zrt_setup_finally(){
     //zrt_log_str( "create mounts wrapper channelsOK" );
 
     /*create directories list got with channels list */
-//    int i;
-//    for ( i=0; i < s_manifest_dirs.dircount; i++ ){
-//        const char* dir_path = s_manifest_dirs.dir_array[i].path;
-//        zrt_log( "mkdir path=%s", dir_path );
-//        errno=0;
-//        int ret = s_mounts->mkdir(dir_path, 0777);
-//        if ( ret && errno != EEXIST ){
-//            zrt_log( "mkdir errno=%d, ret=%d", errno, ret );
-//            assert(ret == 0);
-//        }
-//    }
+    //    int i;
+    //    for ( i=0; i < s_manifest_dirs.dircount; i++ ){
+    //        const char* dir_path = s_manifest_dirs.dir_array[i].path;
+    //        zrt_log( "mkdir path=%s", dir_path );
+    //        errno=0;
+    //        int ret = s_mounts->mkdir(dir_path, 0777);
+    //        if ( ret && errno != EEXIST ){
+    //            zrt_log( "mkdir errno=%d, ret=%d", errno, ret );
+    //            assert(ret == 0);
+    //        }
+    //    }
 
-//    /*mount channels into /dev directory */
-//    ChannelsMount* channels_mount = new ChannelsMount( s_manifest );
-//    ret = s_mounts->mount( "/dev", channels_mount );
-//    assert(ret == 0);
-//    zrt_log_str( "channels mount OK" );
+    //    /*mount channels into /dev directory */
+    //    ChannelsMount* channels_mount = new ChannelsMount( s_manifest );
+    //    ret = s_mounts->mount( "/dev", channels_mount );
+    //    assert(ret == 0);
+    //    zrt_log_str( "channels mount OK" );
 }
 

@@ -21,8 +21,8 @@
             int debug_handle = debug_handle_get_buf(&buf__123); \
             int len;\
             if(debug_handle < 0) break;\
-            len = snprintf(buf__123, 0x1000, "%s; %s, %d: " fmt "\n", \
-            __FILE__, __func__, __LINE__, __VA_ARGS__);\
+            len = snprintf(buf__123, 0x1000, "%s; [%s]; %s, %d: " fmt "\n", \
+            __FILE__, syscall_stack_str(), __func__, __LINE__, __VA_ARGS__);\
             zrtlog_write(debug_handle, buf__123, len, 0); \
         } while(0)
 
@@ -32,11 +32,14 @@
             int debug_handle = debug_handle_get_buf(&buf__123); \
             int len;\
             if( debug_handle < 0) break;\
-            len = snprintf(buf__123, 0x1000, "%s; %s, %d: %s\n", \
-            __FILE__, __func__, __LINE__, text);\
+            len = snprintf(buf__123, 0x1000, "%s; [%s]; %s, %d: %s\n", \
+            __FILE__, syscall_stack_str(), __func__, __LINE__, text);\
             zrtlog_write(debug_handle, buf__123, len, 0); \
         } while(0)
 
+const char* syscall_stack_str();
+void syscall_push( const char* name );
+void syscall_pop();
 void setup_zrtlog_fd(int fd);
 void enable_logging_current_syscall();
 void disable_logging_current_syscall();
