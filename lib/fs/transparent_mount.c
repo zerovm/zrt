@@ -60,6 +60,7 @@ static int transparent_mkdir(const char* path, uint32_t mode){
         }
     }
     else{
+        zrt_log("errno = ENOENT, path=%s", path);
         errno = ENOENT;
         return -1;
     }

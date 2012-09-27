@@ -87,7 +87,13 @@ struct MountsInterface* mm_mount_byhandle( int handle ){
 }
 
 const char* mm_get_nested_mount_path(struct MountInfo* mount_info, const char* full_path){
-    return &full_path[ strlen( mount_info->mount_path ) ];
+    if ( strlen(mount_info->mount_path) == 1 && mount_info->mount_path[0] == '/' )
+        return full_path; /*use paths mounted on root '/' as is*/
+    else{
+        /*get path relative to mount path.
+         * for example: full_path="/tmp/fire", mount_path="/tmp", returned="/fire"  */
+        return &full_path[ strlen( mount_info->mount_path ) ];
+    }
 }
 
 

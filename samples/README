@@ -1,5 +1,10 @@
 Just samples demonstrates samples using ZRT and running on ZeroVM.
 
+cdrfs/
+  User application specifies tarball archive that accessible through zerovm channel in read-only mode;
+  loaded filesystem contents can be used in read/write modes but all changes made will be lost at exit. 
+  TODO: Add filesystem tests.
+
 zshell/
   run easily lua scripts and sql queries; 
   now lua does not support file system; sqlite can do queries in READ-ONLY mode; 

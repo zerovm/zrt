@@ -60,13 +60,13 @@ int mem_stat(const char* path, struct stat *buf){
 }
 
 int mem_mkdir(const char* path, uint32_t mode){
-    struct stat st;
-    int ret = s_mem_mount_cpp->GetNode( path, &st);
-    zrt_log("ret=%d", ret);
-    if ( ret == 0 )
-        return s_mem_mount_cpp->Mkdir( path, mode, &st);
-    else
-        return ret;
+    //struct stat st;
+    //int ret = s_mem_mount_cpp->GetNode( path, &st);
+    //zrt_log("ret=%d", ret);
+    //if ( ret == 0 )
+        return s_mem_mount_cpp->Mkdir( path, mode, NULL);
+    //else
+      //  return ret;
 }
 
 

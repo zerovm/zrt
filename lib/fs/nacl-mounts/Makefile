@@ -9,7 +9,7 @@ CPPFLAGS += -I..
 CPPFLAGS += -I../..
 CPPFLAGS += -g -DDEBUG
 
-UTIL_SOURCES = $(addprefix util/, Path.cc)
+UTIL_SOURCES = $(addprefix util/, Path.cc )
 MEM_SOURCES = $(addprefix memory/, MemMount.cc MemNode.cc)
 
 SOURCES = $(UTIL_SOURCES) $(BASE_SOURCES) $(MEM_SOURCES) 

@@ -1,92 +1,64 @@
-lib/zrtsyscalls.c; zrt_setup, 608: started
-lib/zrt.c; main, 52: DEBUG INFORMATION FOR 'hello' NODE
-lib/zrt.c; main, 53: user heap pointer address = 1507328
-lib/zrt.c; main, 54: user memory size = 33554432
-lib/zrt.c; main, 55: syscall limit = 1234
-lib/zrt.c; main, 56: 000000000000000000000000000000000000000000000000000000000000
-lib/zrt.c; main, 57: sizeof(struct ZVMChannel) = 56
-lib/zrt.c; main, 58: channels count = 4
-lib/zrt.c; main, 59: 000000000000000000000000000000000000000000000000000000000000
-lib/zrt.c; main, 62: channel[0].name = '/dev/stdin'
-lib/zrt.c; main, 63: channel[0].type = 0
-lib/zrt.c; main, 64: channel[0].size = 0
-lib/zrt.c; main, 65: channel[0].limits[GetsLimit] = 999999
-lib/zrt.c; main, 66: channel[0].limits[GetSizeLimit] = 999999
-lib/zrt.c; main, 67: channel[0].limits[PutsLimit] = 0
-lib/zrt.c; main, 68: channel[0].limits[PutSizeLimit] = 0
-lib/zrt.c; main, 62: channel[1].name = '/dev/stdout'
-lib/zrt.c; main, 63: channel[1].type = 0
-lib/zrt.c; main, 64: channel[1].size = 0
-lib/zrt.c; main, 65: channel[1].limits[GetsLimit] = 0
-lib/zrt.c; main, 66: channel[1].limits[GetSizeLimit] = 0
-lib/zrt.c; main, 67: channel[1].limits[PutsLimit] = 999999
-lib/zrt.c; main, 68: channel[1].limits[PutSizeLimit] = 999999
-lib/zrt.c; main, 62: channel[2].name = '/dev/stderr'
-lib/zrt.c; main, 63: channel[2].type = 0
-lib/zrt.c; main, 64: channel[2].size = 0
-lib/zrt.c; main, 65: channel[2].limits[GetsLimit] = 0
-lib/zrt.c; main, 66: channel[2].limits[GetSizeLimit] = 0
-lib/zrt.c; main, 67: channel[2].limits[PutsLimit] = 999999
-lib/zrt.c; main, 68: channel[2].limits[PutSizeLimit] = 999999
-lib/zrt.c; main, 62: channel[3].name = '/dev/debug'
-lib/zrt.c; main, 63: channel[3].type = 0
-lib/zrt.c; main, 64: channel[3].size = 0
-lib/zrt.c; main, 65: channel[3].limits[GetsLimit] = 0
-lib/zrt.c; main, 66: channel[3].limits[GetSizeLimit] = 0
-lib/zrt.c; main, 67: channel[3].limits[PutsLimit] = 999999
-lib/zrt.c; main, 68: channel[3].limits[PutSizeLimit] = 999999
-lib/zrt.c; main, 70: 000000000000000000000000000000000000000000000000000000000000
-lib/fs/channels_mount.c; channels_open, 678: path=/dev/stdin
-lib/fs/channels_mount.c; open_channel, 143: name=/dev/stdin, mode=0, flags=0
-lib/fs/channels_mount.c; open_channel, 156: channel type=0
-lib/fs/channels_mount.c; check_channel_access_mode, 110: access_mode=0, canberead=1, canbewrite=0
-lib/fs/channels_mount.c; check_channel_access_mode, 116: access_mode=O_RDONLY
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 132: handle=0
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 136: open_mode=0, flags=0, sequential_access_pos=0, random_access_pos=0
-lib/fs/channels_mount.c; channels_open, 678: path=/dev/stdout
-lib/fs/channels_mount.c; open_channel, 143: name=/dev/stdout, mode=1, flags=0
-lib/fs/channels_mount.c; open_channel, 156: channel type=0
-lib/fs/channels_mount.c; check_channel_access_mode, 110: access_mode=1, canberead=0, canbewrite=1
-lib/fs/channels_mount.c; check_channel_access_mode, 119: access_mode=O_WRONLY
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 132: handle=1
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 136: open_mode=1, flags=0, sequential_access_pos=0, random_access_pos=0
-lib/fs/channels_mount.c; channels_open, 678: path=/dev/stderr
-lib/fs/channels_mount.c; open_channel, 143: name=/dev/stderr, mode=1, flags=0
-lib/fs/channels_mount.c; open_channel, 156: channel type=0
-lib/fs/channels_mount.c; check_channel_access_mode, 110: access_mode=1, canberead=0, canbewrite=1
-lib/fs/channels_mount.c; check_channel_access_mode, 119: access_mode=O_WRONLY
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 132: handle=2
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 136: open_mode=1, flags=0, sequential_access_pos=0, random_access_pos=0
-lib/zrtsyscalls.c; zrt_fstat, 288: syscall arg[0]=1, arg[1]=4294966464, arg[2]=4294966608, arg[3]=0, arg[4]=1114116
-lib/fs/channels_mount.c; channels_fstat, 558: fd=1
-lib/fs/channels_mount.c; set_stat, 348: fd=1
-lib/zrtsyscalls.c; zrt_gettimeofday, 389: syscall arg[0]=4294966000, arg[1]=0, arg[2]=1, arg[3]=1, arg[4]=12
-lib/fs/channels_mount.c; set_stat, 390: gettimeofday ret=-1
-lib/zrtsyscalls.c; debug_mes_stat, 155: st_dev=2049
-lib/zrtsyscalls.c; debug_mes_stat, 156: st_ino=12
-lib/zrtsyscalls.c; debug_mes_stat, 157: nlink=1
-lib/zrtsyscalls.c; debug_mes_stat, 158: st_mode=8320
-lib/zrtsyscalls.c; debug_mes_stat, 159: st_blksize=1
-lib/zrtsyscalls.c; debug_mes_stat, 160: st_size=0
-lib/zrtsyscalls.c; debug_mes_stat, 161: st_blocks=0
-lib/zrtsyscalls.c; zrt_fstat, 298: ret=0, errno=1
-lib/zrtsyscalls.c; zrt_mmap, 327: syscall arg[0]=0, arg[1]=4096, arg[2]=3, arg[3]=34, arg[4]=4294967295
-lib/zrtsyscalls.c; zrt_write, 233: syscall arg[0]=1, arg[1]=1114116, arg[2]=12, arg[3]=4294966684, arg[4]=1114116
-lib/fs/channels_mount.c; channels_write, 515: channel name=/dev/stdout
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 132: handle=1
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 136: open_mode=1, flags=0, sequential_access_pos=0, random_access_pos=0
-lib/fs/channels_mount.c; channels_write, 535: channel fd=1, bytes wrote=12
-lib/zrtsyscalls.c; zrt_write, 239: ret=12, errno=38
-lib/zrtsyscalls.c; zrt_write, 233: syscall arg[0]=2, arg[1]=1114129, arg[2]=13, arg[3]=4294966652, arg[4]=1114129
-lib/fs/channels_mount.c; channels_write, 515: channel name=/dev/stderr
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 132: handle=2
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 136: open_mode=1, flags=0, sequential_access_pos=0, random_access_pos=0
-lib/fs/channels_mount.c; channels_write, 535: channel fd=2, bytes wrote=13
-lib/zrtsyscalls.c; zrt_write, 239: ret=13, errno=38
-lib/zrtsyscalls.c; zrt_write, 233: syscall arg[0]=1, arg[1]=16777216, arg[2]=1, arg[3]=4294966684, arg[4]=16777216
-lib/fs/channels_mount.c; channels_write, 515: channel name=/dev/stdout
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 132: handle=1
-lib/fs/channels_mount.c; debug_mes_zrt_channel_runtime, 136: open_mode=1, flags=0, sequential_access_pos=12, random_access_pos=0
-lib/fs/channels_mount.c; channels_write, 535: channel fd=1, bytes wrote=1
-lib/zrtsyscalls.c; zrt_write, 239: ret=1, errno=38
-lib/zrtsyscalls.c; zrt_exit, 376: syscall arg[0]=0, arg[1]=1377387, arg[2]=1445456, arg[3]=0, arg[4]=0
+lib/zrtsyscalls.c; []; zrt_setup, 624: started
+lib/zrt.c; []; main, 52: DEBUG INFORMATION FOR 'hello' NODE
+lib/zrt.c; []; main, 53: user heap pointer address = 1572864
+lib/zrt.c; []; main, 54: user memory size = 33554432
+lib/zrt.c; []; main, 55: syscall limit = 1234
+lib/zrt.c; []; main, 56: 000000000000000000000000000000000000000000000000000000000000
+lib/zrt.c; []; main, 57: sizeof(struct ZVMChannel) = 56
+lib/zrt.c; []; main, 58: channels count = 4
+lib/zrt.c; []; main, 59: 000000000000000000000000000000000000000000000000000000000000
+lib/zrt.c; []; main, 62: channel[0].name = '/dev/stdin'
+lib/zrt.c; []; main, 63: channel[0].type = 0
+lib/zrt.c; []; main, 64: channel[0].size = 0
+lib/zrt.c; []; main, 65: channel[0].limits[GetsLimit] = 999999
+lib/zrt.c; []; main, 66: channel[0].limits[GetSizeLimit] = 999999
+lib/zrt.c; []; main, 67: channel[0].limits[PutsLimit] = 0
+lib/zrt.c; []; main, 68: channel[0].limits[PutSizeLimit] = 0
+lib/zrt.c; []; main, 62: channel[1].name = '/dev/stdout'
+lib/zrt.c; []; main, 63: channel[1].type = 0
+lib/zrt.c; []; main, 64: channel[1].size = 0
+lib/zrt.c; []; main, 65: channel[1].limits[GetsLimit] = 0
+lib/zrt.c; []; main, 66: channel[1].limits[GetSizeLimit] = 0
+lib/zrt.c; []; main, 67: channel[1].limits[PutsLimit] = 999999
+lib/zrt.c; []; main, 68: channel[1].limits[PutSizeLimit] = 999999
+lib/zrt.c; []; main, 62: channel[2].name = '/dev/stderr'
+lib/zrt.c; []; main, 63: channel[2].type = 0
+lib/zrt.c; []; main, 64: channel[2].size = 0
+lib/zrt.c; []; main, 65: channel[2].limits[GetsLimit] = 0
+lib/zrt.c; []; main, 66: channel[2].limits[GetSizeLimit] = 0
+lib/zrt.c; []; main, 67: channel[2].limits[PutsLimit] = 999999
+lib/zrt.c; []; main, 68: channel[2].limits[PutSizeLimit] = 999999
+lib/zrt.c; []; main, 62: channel[3].name = '/dev/debug'
+lib/zrt.c; []; main, 63: channel[3].type = 0
+lib/zrt.c; []; main, 64: channel[3].size = 0
+lib/zrt.c; []; main, 65: channel[3].limits[GetsLimit] = 0
+lib/zrt.c; []; main, 66: channel[3].limits[GetSizeLimit] = 0
+lib/zrt.c; []; main, 67: channel[3].limits[PutsLimit] = 999999
+lib/zrt.c; []; main, 68: channel[3].limits[PutSizeLimit] = 999999
+lib/zrt.c; []; main, 70: 000000000000000000000000000000000000000000000000000000000000
+lib/fs/channels_mount.c; []; channels_open, 679: path=/dev/stdin
+lib/fs/channels_mount.c; []; open_channel, 143: name=/dev/stdin, mode=0, flags=0
+lib/fs/channels_mount.c; []; open_channel, 156: channel type=0
+lib/fs/channels_mount.c; []; check_channel_access_mode, 110: access_mode=0, canberead=1, canbewrite=0
+lib/fs/channels_mount.c; []; check_channel_access_mode, 116: access_mode=O_RDONLY
+lib/fs/channels_mount.c; []; debug_mes_zrt_channel_runtime, 132: handle=0
+lib/fs/channels_mount.c; []; debug_mes_zrt_channel_runtime, 136: open_mode=0, flags=0, sequential_access_pos=0, random_access_pos=0
+lib/fs/channels_mount.c; []; channels_open, 679: path=/dev/stdout
+lib/fs/channels_mount.c; []; open_channel, 143: name=/dev/stdout, mode=1, flags=0
+lib/fs/channels_mount.c; []; open_channel, 156: channel type=0
+lib/fs/channels_mount.c; []; check_channel_access_mode, 110: access_mode=1, canberead=0, canbewrite=1
+lib/fs/channels_mount.c; []; check_channel_access_mode, 119: access_mode=O_WRONLY
+lib/fs/channels_mount.c; []; debug_mes_zrt_channel_runtime, 132: handle=1
+lib/fs/channels_mount.c; []; debug_mes_zrt_channel_runtime, 136: open_mode=1, flags=0, sequential_access_pos=0, random_access_pos=0
+lib/fs/channels_mount.c; []; channels_open, 679: path=/dev/stderr
+lib/fs/channels_mount.c; []; open_channel, 143: name=/dev/stderr, mode=1, flags=0
+lib/fs/channels_mount.c; []; open_channel, 156: channel type=0
+lib/fs/channels_mount.c; []; check_channel_access_mode, 110: access_mode=1, canberead=0, canbewrite=1
+lib/fs/channels_mount.c; []; check_channel_access_mode, 119: access_mode=O_WRONLY
+lib/fs/channels_mount.c; []; debug_mes_zrt_channel_runtime, 132: handle=2
+lib/fs/channels_mount.c; []; debug_mes_zrt_channel_runtime, 136: open_mode=1, flags=0, sequential_access_pos=0, random_access_pos=0
+lib/fs/channels_mount.c; []; channels_open, 679: path=/dev/tarimage
+lib/fs/channels_mount.c; []; open_channel, 143: name=/dev/tarimage, mode=0, flags=0
+lib/fs/channels_mount.c; []; open_channel, 153: errno=2
+lib/fs/unpack/stream_reader.c; []; alloc_stream_reader, 30: filed to open image channel /dev/tarimage
+lib/fs/unpack/image_engine.c; []; deploy_image, 101: mount_path=/

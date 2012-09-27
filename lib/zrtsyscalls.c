@@ -25,12 +25,13 @@
 #include "zrtsyscalls.h"
 #include "zrtlog.h"
 #include "transparent_mount.h"
+#include "stream_reader.h"
+#include "unpack_tar.h" //tar unpacker
 #include "mounts_manager.h"
 #include "mem_mount_wraper.h"
 #include "nacl_struct.h"
+#include "image_engine.h"
 #include "channels_mount.h"
-//#include "nacl-mounts/channels/ChannelsMountWraper.h" //nacl-mounts channels
-//#include "nacl-mounts/base/MountsWrapper.h" //nacl-mounts
 
 
 /* TODO
@@ -635,6 +636,34 @@ void zrt_setup_finally(){
     /*Mount channels filesystem as root*/
     s_mounts_manager->mount_add( "/dev", s_channels_mount );
     s_mounts_manager->mount_add( "/", s_mem_mount );
+
+    /*
+     * *load filesystem from cdr channel. Content of ilesystem is reading from cdr channel that points
+     * to supported archive, read every file and add it contents into MemMount filesystem
+     * */
+    /*create stream reader linked to tar archive that contains filesystem image*/
+    struct StreamReader* stream_reader = alloc_stream_reader( s_channels_mount, "/dev/tarimage" );
+
+    if ( stream_reader ){
+        /*create image loader, passed 1st param: image alias, 2nd param: Root filesystem;
+         * Root filesystem passed instead MemMount to reject adding of files into /dev folder;
+         * For example if archive contains non empty /dev folder, that contents will be ignored*/
+        struct ImageInterface* image_loader = alloc_image_loader( s_transparent_mount );
+        /*create archive unpacker, channels_mount is useing to read channel stream*/
+        struct UnpackInterface* tar_unpacker = alloc_unpacker_tar( stream_reader, image_loader->observer_implementation );
+
+        /*read archive from linked channel and add all contents into Filesystem*/
+        int count_files = image_loader->deploy_image( "/", tar_unpacker );
+        zrt_log( "Added %d files to MemFS", count_files );
+
+        free_unpacker_tar( tar_unpacker );
+        free_image_loader( image_loader );
+        free_stream_reader( stream_reader );
+    }
+
+    //zrt_log_str( "load image" );
+    //int ret = simple_tar_extract( "/dev/tarimage", "/", s_transparent_mount );
+    //zrt_log( "load image ret=%d", ret );
 
     /*Alloc mounts after initializing of standard channels, to access logging debug
      * data if mounts initialization failed*/

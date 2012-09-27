@@ -103,14 +103,14 @@ int main(int argc, char **argv){
     }
     else{
         if ( !strcmp(first, "read") ){
-            for (int i=0; i < 10; i++){
+            for (int i=0; i < 100; i++){
                 ssize_t bread = read(fdr, buf, testlen);
                 WRITE_FMT_LOG("#%d case2: read requested=%d, read=%d\n", i, testlen, (int)bread );
                 assert( bread == testlen );
             }
         }
         else {
-            for (int i=0; i < 10; i++){
+            for (int i=0; i < 100; i++){
                 ssize_t bwrote = write(fdw, buf, testlen);
                 WRITE_FMT_LOG("#%d case2: write passed=%d, wrote=%d\n", i, testlen, (int)bwrote );
                 assert( bwrote == testlen );

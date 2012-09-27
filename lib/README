@@ -6,6 +6,8 @@ Zrt library contains:
 - Sqlite3 Library, see here: zrt\lib\sqlite3\README
 - Mapreduce32/128 Library, see here: zrt\lib\mapreduce\README 
 - Networking Library, see here: zrt\lib\networking\README
+- Rewritable filesystem in memory - MemMount taken from nacl-mounts
+- Read only filesystem loaded from channel, now tarball format supported
 
 ---------------------------------------------------------------
 1.Simple OS implementation
@@ -50,7 +52,7 @@ Channel type SGetRPut=2, Sequential get / Random put
 RDONLY     Seek pos —     get
 WRONLY     Seek pos — set get
 RDWR       Read pos unavailable; Write Seek pos - set get;
-2.4.
+2.4. RGetRPut type=3 Does not supported
 Channel type RGetRPut=3, Random get / Random put
 RDONLY     Seek pos — set get
 WRONLY     Seek pos —     get

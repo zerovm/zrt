@@ -3,14 +3,27 @@ CXX=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-g++
 
 ############### libzrt.a source files to build
 LIBZRT=lib/libzrt.a
-LIBZRT_SOURCES= ${ZEROVM_ROOT}/api/zvm.c lib/syscall_manager.S lib/zrtlog.c \
-lib/zrt.c lib/zrtsyscalls.c lib/fs/mounts_manager.c lib/fs/handle_allocator.c \
-lib/fs/channels_mount.c lib/fs/channels_readdir.c lib/fs/transparent_mount.c lib/fs/mem_mount_wraper.cc
+LIBZRT_SOURCES= ${ZEROVM_ROOT}/api/zvm.c \
+lib/syscall_manager.S \
+lib/zrtlog.c \
+lib/zrt.c \
+lib/zrtsyscalls.c \
+lib/fs/mounts_manager.c \
+lib/fs/handle_allocator.c \
+lib/fs/channels_mount.c \
+lib/fs/channels_readdir.c \
+lib/fs/transparent_mount.c \
+lib/fs/mem_mount_wraper.cc \
+lib/fs/unpack/stream_reader.c \
+lib/fs/unpack/unpack_tar.c \
+lib/fs/unpack/image_engine.c \
+lib/fs/utils/parse_path.c
+
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 
 ############## ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
-lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/libsqlite3.a 
+lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a #lib/sqlite3/libsqlite3.a 
 
 ################# samples to build
 UNSTABLE_SAMPLES= net
@@ -19,7 +32,7 @@ TEST_SAMPLES=bigfile command_line environment file_stat seek
  
 ################# flags set
 CFLAGS += -Wall -Wno-long-long -O2 -m64
-CFLAGS += -I. -Ilib -Ilib/fs -I${ZEROVM_ROOT}/api
+CFLAGS += -I. -Ilib -Ilib/fs -Ilib/fs/unpack -Ilib/fs/utils -I${ZEROVM_ROOT}/api
 CFLAGS += -DUSER_SIDE -DDEBUG
 
 CXXFLAGS += -I. -Ilib -Ilib/fs
@@ -33,7 +46,6 @@ prepare:
 
 ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
-
 
 ############## Build libs, invoke nested Makefiles
 ${LIBS}:  

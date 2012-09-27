@@ -72,6 +72,7 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf) {
 }
 
 int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
+    zrt_log( "path=%s", path.c_str() );
     MemNode *parent;
     MemNode *child;
 
@@ -85,7 +86,7 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
     // Get the parent node.
     int parent_slot = GetParentSlot(path);
     if (parent_slot == -1) {
-        zrt_log_str("errno=ENOENT");
+        zrt_log_str("errno=ENOENT, parent slot error");
         errno = ENOENT;
         return -1;
     }
