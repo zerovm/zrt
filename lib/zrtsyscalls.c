@@ -164,6 +164,42 @@ static void debug_mes_stat(struct stat *stat){
     zrt_log("st_blocks=%d", (int)stat->st_blocks);
 }
 
+/*alloc absolute path, for relative path jut insert into beginning '/' char, for absolute path just alloc and return.
+ *user application can provide relative path, currently any of zrt filesystems does not supported
+ *relative path, so making absolute path is required.
+ * */
+char* alloc_absolute_path_from_relative( const char* path )
+{
+    /*some applications providing relative path, currently any of zrt filesystems does not supported
+     *relative path, so make absolute path just insert '/' into begin of relative path */
+    char* absolute_path = malloc( strlen(path) + 2 );
+    /*if relative path is detected then transform it to absolute*/
+    if ( strlen(path) > 1 && path[0] != '/' ){
+        strcpy( absolute_path, "/\0" );
+    }
+    strcat(absolute_path, path);
+    return absolute_path;
+}
+
+/*glibc substitution. it should be linked instead standard mkdir */
+int mkdir(const char *pathname, mode_t mode){
+    zrt_log("pathname=%s, mode=%u", pathname, (uint32_t)mode);
+
+    char* absolute_path = alloc_absolute_path_from_relative( pathname );
+    int ret = s_transparent_mount->mkdir( absolute_path, mode );
+    free(absolute_path);
+    return ret;
+}
+
+/*glibc substitution. it should be linked instead standard rmdir */
+int rmdir(const char *pathname){
+    zrt_log("pathname=%s", pathname);
+
+    char* absolute_path = alloc_absolute_path_from_relative( pathname );
+    int ret = s_transparent_mount->rmdir( absolute_path );
+    free(absolute_path);
+    return ret;
+}
 
 /*
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
@@ -198,7 +234,9 @@ static int32_t zrt_open(uint32_t *args)
     zrt_log("path=%s", name);
     debug_mes_open_flags(flags);
 
-    int ret = s_transparent_mount->open( name, flags, mode );
+    char* absolute_path = alloc_absolute_path_from_relative( name );
+    int ret = s_transparent_mount->open( absolute_path, flags, mode );
+    free(absolute_path);
     LOG_SYSCALL_FINISH(ret);
     return ret;
 }
@@ -276,7 +314,9 @@ static int32_t zrt_stat(uint32_t *args)
     const char *file = (const char*)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
     struct stat st;
-    int ret = s_transparent_mount->stat(file, &st);
+    char* absolute_path = alloc_absolute_path_from_relative(file);
+    int ret = s_transparent_mount->stat(absolute_path, &st);
+    free(absolute_path);
     if ( ret == 0 ){
         debug_mes_stat(&st);
         set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat

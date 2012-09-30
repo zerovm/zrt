@@ -73,10 +73,6 @@ int main(int argc, char **argv, char **envp)
 
     zrt_setup_finally();
 
-    fprintf( stderr, "first stack variable 'i' pointer=%p\n", &i );
-    int m;
-    fprintf( stderr, "new stack variable 'm' pointer=%p\n", &m );
-
     /* call user main() and care about return code */
     return slave_main(argc, argv);
 }

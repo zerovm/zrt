@@ -399,7 +399,7 @@ static void set_stat(struct stat *stat, int fd)
 //////////// interface implementation
 
 static int channels_chmod(const char* path, uint32_t mode){
-    return -EPERM;
+    return EPERM;
 }
 
 static int channels_stat(const char* path, struct stat *buf){
