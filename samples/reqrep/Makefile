@@ -3,7 +3,7 @@ DEBUG=-DDEBUG
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib
 
 all: createdirs reqrep.nexe run
-	
+
 reqrep.nexe: obj/reqrep.o
 	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o reqrep.nexe  -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
@@ -15,6 +15,7 @@ obj/reqrep.o: reqrep.c
 	
 run:
 	chmod u+rwx genmanifest.sh test.sh 
+	binpatch reqrep.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 	./genmanifest.sh
 	./test.sh	
 

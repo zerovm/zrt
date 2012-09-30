@@ -1,6 +1,7 @@
 
 Channel = {ABS_PATH}data/{NODEID}unsorted.data, /dev/stdin, 0, 99999999, 99999999, 0, 0
-Channel = {ABS_PATH}log/sortsrc{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 999999999, 999999999
+== Channel = /dev/urandom, /dev/stdin, 0, 99999999, 99999999, 0, 0
+== Channel = {ABS_PATH}log/sortsrc{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 999999999, 999999999
 Channel = /dev/null, /dev/stdout, 0, 0, 0, 99999999, 99999999
 Channel = {ABS_PATH}log/{NODEID}sortsrc.stderr.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
 
@@ -27,9 +28,9 @@ CommandLine = src-{NODEID}
 =====================================================================
 Version = 09082012
 Nexe = {ABS_PATH}nodesrc.nexe
-NexeMax = 10000000
+NexeMax = 20000000
 SyscallsMax = 3333333
 SetupCallsMax = 99999999
 NodeName=src,{SEQUENTIAL_ID}
 NameServer = udp:127.0.0.1:54321
-
+Timeout = 60

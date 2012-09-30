@@ -7,7 +7,9 @@ all: $(NAME).o
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
 	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
 	sed s@{ABS_PATH}@${CURDIR}/@g hello.manifest.template > hello.manifest
-	$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
+	cp $(NAME).nexe $(NAME).nexe.back
+	@binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	setarch x86_64 -R $(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
 
 $(NAME).o:
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).o -Wall \

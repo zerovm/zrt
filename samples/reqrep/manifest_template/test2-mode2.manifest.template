@@ -24,3 +24,4 @@ SyscallsMax = 3333
 SetupCallsMax = 99999
 NodeName = test2, 2
 NameServer = udp:127.0.0.1:54321
+Timeout = 10

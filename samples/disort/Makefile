@@ -23,16 +23,19 @@ all: cleanlog prepare $(NEXES)
 
 $(GENNODE).nexe: $(GENNODE_OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
+	binpatch $(GENNODE).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 $(MANNODE).nexe: $(MANNODE_OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
+	binpatch $(MANNODE).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 $(SRCNODE).nexe: $(SRCNODE_OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
+	binpatch $(SRCNODE).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 $(DSTNODE).nexe: $(DSTNODE_OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
-
+	binpatch $(DSTNODE).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 cleanlog:
 	@rm -f log/*.log

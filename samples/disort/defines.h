@@ -38,7 +38,7 @@ enum { ESourceNode=1, EDestinationNode=2, EManagerNode=3, EInputOutputNode=4 };
 #define MERGE_ON_FLY
 
 ////////////////////////// debug channels indetermenism
-#define ZEROVM_DEBUG
+//#define ZEROVM_DEBUG
 ////////////////////////// debug
 
 

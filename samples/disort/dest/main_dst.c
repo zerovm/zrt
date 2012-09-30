@@ -42,9 +42,11 @@ int start_node(struct ChannelsConfigInterface *chan_if, int nodeid){
     const size_t data_size = sizeof(BigArrayItem)*ARRAY_ITEMS_COUNT;
     if ( sorted_array ){
         const ssize_t wrote = write( 1, sorted_array, data_size);
+        WRITE_FMT_LOG( LOG_DEBUG, "wrote=%d, data_size=%d\n", wrote, data_size );
         assert(wrote == data_size );
     }
 
+    /*send crc to manager node*/
     struct UserChannel *channel = chan_if->Channel(chan_if, EManagerNode, 1, EChannelModeWrite);
     write_sort_result( channel->fd, nodeid, sorted_array, ARRAY_ITEMS_COUNT );
 

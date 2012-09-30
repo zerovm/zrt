@@ -141,8 +141,13 @@ int start_node(  struct ChannelsConfigInterface *chan_if, int nodeid ){
     read_requests_write_detailed_histograms( channel->fd, chanw->fd, nodeid, sorted_array, ARRAY_ITEMS_COUNT );
     WRITE_LOG(LOG_UI, "\n!!!!!!!Histograms Sending complete!!!!!!.\n");
 
-    int *src_nodes_list = NULL;
-    int src_nodes_count = chan_if->GetNodesListByType(chan_if, ESourceNode, &src_nodes_list );
+    /* source nodes count not available because not has channels intended to communicate with source nodes
+     * therefore will use dest nodes count because it's equal to source nodes count */
+    int *dst_nodes_list = NULL;
+    int dst_nodes_count = chan_if->GetNodesListByType(chan_if, EDestinationNode, &dst_nodes_list );
+
+    int src_nodes_count = dst_nodes_count;
+    WRITE_FMT_LOG( LOG_DEBUG, "src_nodes_count=%d\n", src_nodes_count );
 
     /*read range request (data start, end, dest node id) from manager node*/
     struct request_data_t req_data_array[src_nodes_count];
@@ -151,8 +156,10 @@ int start_node(  struct ChannelsConfigInterface *chan_if, int nodeid ){
     assert(channel);
     read_range_request( channel->fd, req_data_array );
 
+    WRITE_FMT_LOG( LOG_UI, "qsort array len=%d\n", src_nodes_count);
     /*sort request data by dest node id to be deterministic*/
     qsort( req_data_array, src_nodes_count, sizeof(struct request_data_t), quicksort_reqdata_by_destnodeid_comparator );
+    WRITE_LOG( LOG_UI, "qsort OK" );
 
     /*send array data to the destination nodes, bounds for pieces of data was
      * received previously with range request */
@@ -181,7 +188,7 @@ int main(int argc, char **argv){
     int ownnodeid= -1;
     int extracted_name_len=0;
     int res =0;
-    WRITE_FMT_LOG(LOG_DEBUG, "Source node started argv[0]=%s.\n", argv[1] );
+    WRITE_FMT_LOG(LOG_DEBUG, "Source node started argv[0]=%s\n", argv[1] );
 
     /*get node type names via environnment*/
     char *source_node_type_text = getenv(ENV_SOURCE_NODE_NAME);
