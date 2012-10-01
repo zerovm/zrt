@@ -130,10 +130,10 @@ write_range_request( int fdw, struct request_data_t** range, int len, int i ){
 struct sort_result*
 read_sort_result( struct ChannelsConfigInterface *chan_if ){
     int *src_nodes_list = NULL;
-    int src_nodes_count = chan_if->GetNodesListByType( chan_if, ESourceNode, &src_nodes_list );
+    int src_nodes_count = chan_if->GetNodesListByType( chan_if, EDestinationNode, &src_nodes_list );
 	struct sort_result *results = malloc( src_nodes_count*sizeof(struct sort_result) );
 	for ( int i=0; i < src_nodes_count; i++ ){
-	    struct UserChannel *channel = chan_if->Channel(chan_if, ESourceNode, src_nodes_list[i], EChannelModeRead );
+	    struct UserChannel *channel = chan_if->Channel(chan_if, EDestinationNode, src_nodes_list[i], EChannelModeRead );
 		read_channel( channel->fd, (char*) &results[i], sizeof(struct sort_result) );
 	}
 	return results;

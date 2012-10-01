@@ -176,8 +176,11 @@ char* alloc_absolute_path_from_relative( const char* path )
     /*if relative path is detected then transform it to absolute*/
     if ( strlen(path) > 1 && path[0] != '/' ){
         strcpy( absolute_path, "/\0" );
+        strcat(absolute_path, path);
     }
-    strcat(absolute_path, path);
+    else{
+        strcpy(absolute_path, path);
+    }
     return absolute_path;
 }
 
