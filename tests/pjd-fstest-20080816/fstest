@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#wrapper around fstest.nexe
+#It's prepare nexe environment and launches zerovm
+
+SCRIPT=$(readlink -f "$0")
+CURDIR=`dirname "$SCRIPT"`
+
+NAME=fstest
+COMMAND_LINE=$@
+
+STDIN=fstest.stdin.data
+STDOUT=fstest.stdout.data
+STDERR=fstest.stderr.data
+
+#############################################
+# if searched running fstest copy
+# then write command line parameters into input channel
+#############################################
+FOUTCOUNT=`find . -name ${STDOUT} | xargs wc -l | cut -d' ' -f1`
+FERRCOUNT=`find . -name ${STDERR} | xargs wc -l | cut -d' ' -f1`
+echo foutcount $FOUTCOUNT
+echo ferrcount $FERRCOUNT
+echo fstest ${COMMAND_LINE} $\$ >> ${STDIN}
+
+#############################################
+# if no running copy then launch new instance at background
+#############################################
+
+p=`pgrep -f "zerovm -Mfstest.manifest"`
+if [ "$p" = "" ]
+then
+    sh kill_fstest.sh
+    rm -f ${STDOUT} ${STDERR} zerovm.output
+    sed s@{ABS_PATH}@${CURDIR}/@g ${NAME}.manifest.template | \
+    sed s@{COMMAND_LINE}@"${COMMAND_LINE}"@g | \
+    sed s@{NAME}@${NAME}@g > ${NAME}.manifest
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M${NAME}.manifest -v2 >> zerovm.output &
+fi
+
+#############################################
+# print only appended data from output files
+#############################################
+
+FERRSIZE=$FERRCOUNT
+FOUTSIZE=$FOUTCOUNT
+echo ferrsize $FERRSIZE
+echo foutsize $FERRSIZE
+while [ $FERRSIZE -le $FERRCOUNT ] && [ $FOUTSIZE -le $FOUTCOUNT ]
+do
+    FERRSIZE=`find . -name ${STDERR} | xargs wc -l | cut -d' ' -f1`
+    FOUTSIZE=`find . -name ${STDOUT} | xargs wc -l | cut -d' ' -f1`
+done
+echo ferrsize $FERRSIZE
+echo foutsize $FOUTSIZE
+
+RESULT=`tail -n2 ${STDOUT} 2> /dev/null | cut -d' ' -f1`
+#echo result $RESULT
+if [ "$RESULT" = "0" ]
+then
+    #tail -n2 ${STDERR} 2> /dev/null
+    tail -n1 ${STDOUT} 2> /dev/null
+    exit 0
+else
+    #tail -n2 ${STDERR} 2> /dev/null
+    #it is enough 1 line output as no new line in log 
+    tail -n1 ${STDOUT} 2> /dev/null
+    exit 1
+fi
+
