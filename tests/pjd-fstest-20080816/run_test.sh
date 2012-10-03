@@ -1,5 +1,9 @@
 #!/bin/bash
 
+STDIN=fstest.stdin.data
+STDOUT=fstest.stdout.data
+STDERR=fstest.stderr.data
+
 if [ $# -lt 1 ]
 then
 	echo "required tests path argument, for example:"
@@ -7,6 +11,8 @@ then
 	exit
 fi
 
-prove "$1" -v
+rm -f $STDIN $STDOUT $STDERR
+echo prove "$1" 
+prove ""$1""
 sh kill_fstest.sh
 

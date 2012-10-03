@@ -158,11 +158,38 @@ static void debug_mes_stat(struct stat *stat){
     zrt_log("st_dev=%lld", stat->st_dev);
     zrt_log("st_ino=%lld", stat->st_ino);
     zrt_log("nlink=%d", stat->st_nlink);
-    zrt_log("st_mode=%d", stat->st_mode);
+    zrt_log("st_mode=%o(octal)", stat->st_mode);
     zrt_log("st_blksize=%d", (int)stat->st_blksize);
     zrt_log("st_size=%lld", stat->st_size);
     zrt_log("st_blocks=%d", (int)stat->st_blocks);
 }
+
+//static void debug_log_permissions( mode_t mode ){
+//    S_IFMT     0170000   bit mask for the file type bit fields
+//    S_IFSOCK   0140000   socket
+//    S_IFLNK    0120000   symbolic link
+//    S_IFREG    0100000   regular file
+//    S_IFBLK    0060000   block device
+//    S_IFDIR    0040000   directory
+//    S_IFCHR    0020000   character device
+//    S_IFIFO    0010000   FIFO
+//    S_ISUID    0004000   set UID bit
+//    S_ISGID    0002000   set-group-ID bit (see below)
+//    S_ISVTX    0001000   sticky bit (see below)
+//    S_IRWXU    00700     mask for file owner permissions
+//    S_IRUSR    00400     owner has read permission
+//    S_IWUSR    00200     owner has write permission
+//    S_IXUSR    00100     owner has execute permission
+//    S_IRWXG    00070     mask for group permissions
+//    S_IRGRP    00040     group has read permission
+//    S_IWGRP    00020     group has write permission
+//    S_IXGRP    00010     group has execute permission
+//    S_IRWXO    00007     mask for permissions for others (not in group)
+//    S_IROTH    00004     others have read permission
+//    S_IWOTH    00002     others have write permission
+//    S_IXOTH    00001     others have execute permission
+//
+//}
 
 /*alloc absolute path, for relative path jut insert into beginning '/' char, for absolute path just alloc and return.
  *user application can provide relative path, currently any of zrt filesystems does not supported
@@ -186,10 +213,17 @@ char* alloc_absolute_path_from_relative( const char* path )
 
 /*glibc substitution. it should be linked instead standard mkdir */
 int mkdir(const char *pathname, mode_t mode){
-    zrt_log("pathname=%s, mode=%u", pathname, (uint32_t)mode);
+    zrt_log("pathname=%s, mode=%o(octal)", pathname, (uint32_t)mode);
 
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
     int ret = s_transparent_mount->mkdir( absolute_path, mode );
+    /*print stat data of newly created directory*/
+    struct stat st;
+    int ret2 = s_transparent_mount->stat(absolute_path, &st);
+    if ( ret2 == 0 ){
+        debug_mes_stat(&st);
+    }
+    /**/
     free(absolute_path);
     return ret;
 }
@@ -201,6 +235,18 @@ int rmdir(const char *pathname){
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
     int ret = s_transparent_mount->rmdir( absolute_path );
     free(absolute_path);
+    return ret;
+}
+
+int lstat(const char *path, struct stat *buf){
+    zrt_log("path=%s, buf=%p", path, buf);
+
+    char* absolute_path = alloc_absolute_path_from_relative( path );
+    int ret = s_transparent_mount->stat(absolute_path, buf);
+    free(absolute_path);
+    if ( ret == 0 ){
+        debug_mes_stat(buf);
+    }
     return ret;
 }
 

@@ -94,6 +94,10 @@ class MemNode {
   int slot(void) { return slot_; }
   void set_slot(int slot) { slot_ = slot; }
 
+  /*added by YaroslavLitvinov*/
+  mode_t mode()const { return mode_; }
+  void set_mode(mode_t mode) { mode_ = mode; }
+
  private:
   int slot_;
   std::string name_;
@@ -105,6 +109,9 @@ class MemNode {
   bool is_dir_;
   MemMount *mount_;
   std::list<int> children_;
+  /*added by YaroslavLitvinov
+   *Permissions should be supported by stat*/
+  mode_t mode_;
 
   DISALLOW_COPY_AND_ASSIGN(MemNode);
 };

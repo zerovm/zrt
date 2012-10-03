@@ -4,7 +4,6 @@
 #CFLAGS+=-DHAS_TRUNCATE64
 #CFLAGS+=-DHAS_STAT64
 CFLAGS+=-I$(ZRT_ROOT)/lib 
-CFLAGS+=-D_DEBUG
 
 PNACL_TOOL=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc
 CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
@@ -19,8 +18,8 @@ $(NAME).nexe: $(NAME).o
 	$(NAME).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
 
 run: 
-#	sed s@{ABS_PATH}@${CURDIR}/@g $(NAME).manifest.template | sed s@{NAME}@$(NAME)@g > $(NAME).manifest
-	chmod u+rwx fstest
+	sed s@{ABS_PATH}@${CURDIR}/@g $(NAME).manifest.template | sed s@{NAME}@$(NAME)@g > $(NAME).manifest
+	chmod u+rwx fstest kill_fstest.sh run_test.sh
 	binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 #	setarch x86_64 -R $(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v4
 

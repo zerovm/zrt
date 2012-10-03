@@ -104,6 +104,7 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
     child->set_slot(slot);
     child->set_mount(this);
     child->set_is_dir(true);
+    child->set_mode(mode);
     Path p(path);
     child->set_name(p.Last());
     child->set_parent(parent_slot);

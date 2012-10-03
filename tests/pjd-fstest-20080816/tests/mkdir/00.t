@@ -22,7 +22,7 @@ expect 0 mkdir ${n0} 0755
 expect dir,0755 lstat ${n0} type,mode
 expect 0 rmdir ${n0}
 expect 0 mkdir ${n0} 0151
-expect dir,0151 lstat ${n0} type,mode
+expect dir,0151 lstat ${n0} type,mode  #6
 expect 0 rmdir ${n0}
 expect 0 -U 077 mkdir ${n0} 0151
 expect dir,0100 lstat ${n0} type,mode

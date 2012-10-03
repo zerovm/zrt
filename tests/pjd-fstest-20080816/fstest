@@ -6,22 +6,33 @@
 SCRIPT=$(readlink -f "$0")
 CURDIR=`dirname "$SCRIPT"`
 
-NAME=fstest
-COMMAND_LINE=$@
-
 STDIN=fstest.stdin.data
 STDOUT=fstest.stdout.data
 STDERR=fstest.stderr.data
+
+#get printable characters count via var COUNT
+COUNT=0
+function file_characters_count {
+    CONTENTS=`strings $1 2> /dev/null`
+    COUNT=`echo $CONTENTS | wc -c | cut -d' ' -f1`
+}
+
+NAME=fstest
+COMMAND_LINE=$@
+
 
 #############################################
 # if searched running fstest copy
 # then write command line parameters into input channel
 #############################################
-FOUTCOUNT=`find . -name ${STDOUT} | xargs wc -l | cut -d' ' -f1`
-FERRCOUNT=`find . -name ${STDERR} | xargs wc -l | cut -d' ' -f1`
-echo foutcount $FOUTCOUNT
-echo ferrcount $FERRCOUNT
-echo fstest ${COMMAND_LINE} $\$ >> ${STDIN}
+file_characters_count $STDERR
+FERRCOUNT=$COUNT
+file_characters_count $STDOUT
+FOUTCOUNT=$COUNT
+
+#echo foutcount $FOUTCOUNT
+#echo ferrcount $FERRCOUNT
+echo "fstest ${COMMAND_LINE}" >> ${STDIN}
 
 #############################################
 # if no running copy then launch new instance at background
@@ -30,30 +41,33 @@ echo fstest ${COMMAND_LINE} $\$ >> ${STDIN}
 p=`pgrep -f "zerovm -Mfstest.manifest"`
 if [ "$p" = "" ]
 then
-    sh kill_fstest.sh
-    rm -f ${STDOUT} ${STDERR} zerovm.output
-    sed s@{ABS_PATH}@${CURDIR}/@g ${NAME}.manifest.template | \
-    sed s@{COMMAND_LINE}@"${COMMAND_LINE}"@g | \
-    sed s@{NAME}@${NAME}@g > ${NAME}.manifest
+    rm -f ${STDOUT} ${STDERR}
+    DATE=`date`
     setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M${NAME}.manifest -v2 >> zerovm.output &
 fi
 
 #############################################
-# print only appended data from output files
+# wait while zerovm write new data into stdout or stderr
+# and print tails of these files
 #############################################
 
-FERRSIZE=$FERRCOUNT
-FOUTSIZE=$FOUTCOUNT
-echo ferrsize $FERRSIZE
-echo foutsize $FERRSIZE
-while [ $FERRSIZE -le $FERRCOUNT ] && [ $FOUTSIZE -le $FOUTCOUNT ]
+FERR_UPDATED=$FERRCOUNT
+FOUT_UPDATED=$FOUTCOUNT
+#echo ferrsize $FERRSIZE
+#echo foutsize $FERRSIZE
+#should be used -le operator but not -ne because sometimes file size calculates wrong and get 0
+#file size can only grow
+while [ $FERR_UPDATED -le $FERRCOUNT ] && [ $FOUT_UPDATED -le $FOUTCOUNT ]
 do
-    FERRSIZE=`find . -name ${STDERR} | xargs wc -l | cut -d' ' -f1`
-    FOUTSIZE=`find . -name ${STDOUT} | xargs wc -l | cut -d' ' -f1`
+    file_characters_count $STDERR
+    FERR_UPDATED=$COUNT
+    file_characters_count $STDOUT
+    FOUT_UPDATED=$COUNT
 done
-echo ferrsize $FERRSIZE
-echo foutsize $FOUTSIZE
+#echo ferrsize $FNEWSIZE
+#echo foutsize $FNEWSIZE
 
+echo rr
 RESULT=`tail -n2 ${STDOUT} 2> /dev/null | cut -d' ' -f1`
 #echo result $RESULT
 if [ "$RESULT" = "0" ]

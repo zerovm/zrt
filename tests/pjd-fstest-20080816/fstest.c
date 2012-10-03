@@ -43,6 +43,12 @@
 
 #include "zrt.h"
 
+/*if that data reading from stding application should exit*/
+#define CONTROL_DATA "test12345complete"
+#define PARAM_STRING_MAXSIZE 1000
+#define DEBUG
+#define PARSING_DEBUG
+
 #ifndef HAS_TRUNCATE64
 #define	truncate64	truncate
 #endif
@@ -503,6 +509,7 @@ call_syscall(struct syscall_desc *scall, char *argv[])
         printf("%s\n", serrno);
         return -1;
     }
+    fprintf(stderr, "0\n");
     printf("0\n");
     return (i);
 }
@@ -552,42 +559,39 @@ read_stdin_parameters( char* argv[] ){
     char *lexema=NULL;
 
     lexema = argv[0];
-    //printf("read_stdin_parameters %d\n", 0);
-
     /*read string up to $$ trailing chars*/
     char c;
+    char prev = 0;
     do{
+        prev=c;
         ssize_t bytes = read(stdin, &c, 1);
         if ( bytes <= 0 ){
-            //printf("eof %d\n", bytes);
             continue;
-            //return 0; /*eof*/
         }
 
-        if ( c == ' ' && !cursor )
-            continue; /*space should not be a first char in string*/
-        if ( c == ' ' ){
-            //printf("read_stdin_parameters, space, cursor=%d\n", cursor);
-            /*do not save space but save state about complete word*/
-            lexema[cursor] = '\0';
-            lexema = argv[++words_count];
-            cursor=0;
-            //printf("read_stdin_parameters, space OK, cursor=%d\n", cursor);
+#ifdef PARSING_DEBUG
+        fprintf(stderr, "c=%c\n", c);
+        fprintf(stderr, "words_count=%d, lexema=%s\n", words_count, lexema);
+#endif
+        if ( c == ' ' || c == '\n' ){
+            /*skip space */
         }
         else{
-            //printf("read_stdin_parameters, save, word=%d, cursor=%d\n", words_count, cursor);
+            if ( prev == ' ' || prev == '\n' ){
+                lexema[cursor] = '\0';
+                lexema = argv[++words_count];
+                cursor=0;
+            }
             /*save readed char*/
             lexema[cursor++] = c;
-            //printf("read_stdin_parameters, save OK, word=%d, cursor=%d\n", words_count, cursor);
         }
 
-
-        /*test condition*/
-        if ( cursor == 2 && lexema[cursor-1] == '$' && lexema[cursor-2] == '$' )
+        /*check condition*/
+        if ( c == '\n' )
             condition = 1;
     }while( !condition ); /*condition is 1 only if trailing $$ pair reached*/
 
-#ifdef _DEBUG
+#ifdef DEBUG
     fprintf(stderr, "parsed%s ", ":" );
     int i;
     for(i=0; i < words_count; i++){
@@ -596,7 +600,8 @@ read_stdin_parameters( char* argv[] ){
     fprintf(stderr, "%s", "\n" );
 #endif
 
-    return words_count;
+    /*do not remember last word*/
+    return ++words_count;
 }
 
 int run_syscall(int argc, char *argv[]){
@@ -614,7 +619,7 @@ int run_syscall(int argc, char *argv[]){
     optind=0;
     optopt=0;
 
-#ifdef _DEBUG
+#ifdef DEBUG
     fprintf(stderr, "syscall%s ", ":" );
     int i;
     for(i=0; i < argc; i++){
@@ -692,7 +697,7 @@ int run_syscall(int argc, char *argv[]){
         argc++;
         argv++;
     }
-#ifdef _DEBUG
+#ifdef DEBUG
     fprintf(stderr, "run_syscall %s\n", "ok");
 #endif
     return 0;
@@ -706,7 +711,7 @@ main(int argc, char *argv[])
     char *stdin_argv[array_len];
     int i;
     for ( i=0; i < array_len; i++ ){
-        stdin_argv[i] = malloc(100);
+        stdin_argv[i] = malloc(PARAM_STRING_MAXSIZE);
     }
     /*read while no parameters will be returned*/
     int stdin_argc;
@@ -715,8 +720,15 @@ main(int argc, char *argv[])
          * so we need to copy it to the new array*/
         char *syscall_argv[stdin_argc+1];
         for ( i=0; i < stdin_argc; i++ ){
-            syscall_argv[i] = malloc(100);
+            syscall_argv[i] = malloc(PARAM_STRING_MAXSIZE);
             strcpy( syscall_argv[i], stdin_argv[i] );
+
+            /*check termination control data*/
+            //fprintf(stderr, "cmp '%s'(%d) '%s'(%d)\n", stdin_argv[i], strlen(stdin_argv[i]), CONTROL_DATA, strlen(CONTROL_DATA) );
+            if ( !strcmp(stdin_argv[i], CONTROL_DATA) ){
+                fprintf(stderr, "recevied %s\n", "kill");
+                exit(0);
+            }
         }
         syscall_argv[stdin_argc] = NULL;
 
@@ -727,13 +739,13 @@ main(int argc, char *argv[])
         /*emulate pseudo command line data*/
         run_syscall( stdin_argc, syscall_argv );
 
-#ifdef _DEBUG
+#ifdef DEBUG
         fprintf(stderr, "free %s\n", "syscall string");
 #endif
         for ( i=0; i < stdin_argc; i++ ){
             free( syscall_argv[i] );
         }
-#ifdef _DEBUG
+#ifdef DEBUG
         fprintf(stderr, "free %s\n", "syscall string OK");
 #endif
     }

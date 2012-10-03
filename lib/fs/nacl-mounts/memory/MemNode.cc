@@ -29,7 +29,9 @@ int MemNode::stat(struct stat *buf) {
     memset(buf, 0, sizeof(struct stat));
     buf->st_ino = (ino_t)slot_;
     if (is_dir()) {
-        buf->st_mode = S_IFDIR | 0777;
+        //buf->st_mode = S_IFDIR | 0777;
+        /*YaroslavLitvinov*/
+        buf->st_mode = S_IFDIR | mode_;
     } else {
         buf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH
                 | S_IWOTH;
