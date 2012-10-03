@@ -15,6 +15,8 @@
 #define DEV_STDOUT "/dev/stdout"
 #define DEV_STDERR "/dev/stderr"
 
+#define UMASK_ENV "UMASK"
+
 /*Assign own channels pointer to get it filled with channels at the syscallback*/
 void zrt_setup( struct UserManifest* manifest );
 

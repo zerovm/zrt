@@ -45,9 +45,9 @@
 
 /*if that data reading from stding application should exit*/
 #define CONTROL_DATA "test12345complete"
-#define PARAM_STRING_MAXSIZE 1000
+#define PARAM_STRING_MAXSIZE 10240
 #define DEBUG
-#define PARSING_DEBUG
+//#define PARSING_DEBUG
 
 #ifndef HAS_TRUNCATE64
 #define	truncate64	truncate
@@ -101,6 +101,8 @@ struct syscall_desc {
     enum action	 sd_action;
     int		 sd_args[MAX_ARGS];
 };
+
+static s_counter=0;
 
 static struct syscall_desc syscalls[] = {
         { "open", ACTION_OPEN, { TYPE_STRING, TYPE_STRING, TYPE_NUMBER | TYPE_OPTIONAL, TYPE_NONE } },
@@ -514,7 +516,7 @@ call_syscall(struct syscall_desc *scall, char *argv[])
     return (i);
 }
 
-static void
+static int
 set_gids(char *gids)
 {
     gid_t *gidset;
@@ -529,22 +531,26 @@ set_gids(char *gids)
     for (i = 0, g = strtok(gids, ","); g != NULL; g = strtok(NULL, ","), i++) {
         if (i >= ngroups) {
             fprintf(stderr, "too many gids\n");
-            return ;
+            return 1;
         }
         gidset[i] = strtol(g, &endp, 0);
         if (*endp != '\0' && !isspace((unsigned char)*endp)) {
             fprintf(stderr, "invalid gid '%s' - number expected\n",
                     g);
-            return ;
+            return 1;
         }
     }
     if (setgroups(i, gidset) < 0) {
         fprintf(stderr, "cannot change groups: %s\n", strerror(errno));
-        return ;
+        const char* serrno = err2str(errno);
+        printf("%s\n", serrno);
+        return 1;
     }
     if (setegid(gidset[0]) < 0) {
         fprintf(stderr, "cannot change effective gid: %s\n", strerror(errno));
-        return ;
+        const char* serrno = err2str(errno);
+        printf("%s\n", serrno);
+        return 1;
     }
     free(gidset);
 }
@@ -587,18 +593,20 @@ read_stdin_parameters( char* argv[] ){
         }
 
         /*check condition*/
-        if ( c == '\n' )
+        if ( c == '\n' ){
             condition = 1;
+            lexema[cursor] = '\0';
+        }
     }while( !condition ); /*condition is 1 only if trailing $$ pair reached*/
 
-#ifdef DEBUG
-    fprintf(stderr, "parsed%s ", ":" );
-    int i;
-    for(i=0; i < words_count; i++){
-        fprintf(stderr, "%s ", argv[i] );
-    }
-    fprintf(stderr, "%s", "\n" );
-#endif
+    //#ifdef DEBUG
+    //    fprintf(stderr, "parsed%s ", ":" );
+    //    int i;
+    //    for(i=0; i < words_count; i++){
+    //        fprintf(stderr, "%s ", argv[i] );
+    //    }
+    //    fprintf(stderr, "%s", "\n" );
+    //#endif
 
     /*do not remember last word*/
     return ++words_count;
@@ -613,6 +621,7 @@ int run_syscall(int argc, char *argv[]){
     uid = -1;
     gids = NULL;
     umsk = 0;
+    ++s_counter;
 
     /*reset getopt variables*/
     optarg = NULL;
@@ -620,7 +629,7 @@ int run_syscall(int argc, char *argv[]){
     optopt=0;
 
 #ifdef DEBUG
-    fprintf(stderr, "syscall%s ", ":" );
+    fprintf(stderr, "syscall[%d]:", s_counter );
     int i;
     for(i=0; i < argc; i++){
         fprintf(stderr, "%s ", argv[i] );
@@ -666,19 +675,25 @@ int run_syscall(int argc, char *argv[]){
 
     if (gids != NULL) {
         fprintf(stderr, "changing groups to %s\n", gids);
-        set_gids(gids);
+        return set_gids(gids);
     }
     if (uid != -1) {
         fprintf(stderr, "changing uid to %d\n", uid);
+        errno=ENOSYS;
         if (setuid(uid) < 0) {
             fprintf(stderr, "cannot change uid: %s\n",
                     strerror(errno));
+            const char* serrno = err2str(errno);
+            printf("%s\n", serrno);
             return 1;
         }
     }
 
     /* Change umask to requested value or to 0, if not requested. */
-    umask(umsk);
+    if ( umsk ){
+        mode_t prev = umask(umsk);
+        fprintf( stderr, "get prev umask=%o, new=%o\n", prev, umsk );
+    }
 
     for (;;) {
         scall = find_syscall(argv[0]);
@@ -697,9 +712,9 @@ int run_syscall(int argc, char *argv[]){
         argc++;
         argv++;
     }
-#ifdef DEBUG
-    fprintf(stderr, "run_syscall %s\n", "ok");
-#endif
+    //#ifdef DEBUG
+    //    fprintf(stderr, "run_syscall %s\n", "ok");
+    //#endif
     return 0;
 }
 
@@ -739,15 +754,15 @@ main(int argc, char *argv[])
         /*emulate pseudo command line data*/
         run_syscall( stdin_argc, syscall_argv );
 
-#ifdef DEBUG
-        fprintf(stderr, "free %s\n", "syscall string");
-#endif
+        //#ifdef DEBUG
+        //        fprintf(stderr, "free %s\n", "syscall string");
+        //#endif
         for ( i=0; i < stdin_argc; i++ ){
             free( syscall_argv[i] );
         }
-#ifdef DEBUG
-        fprintf(stderr, "free %s\n", "syscall string OK");
-#endif
+        //#ifdef DEBUG
+        //        fprintf(stderr, "free %s\n", "syscall string OK");
+        //#endif
     }
 
     for ( i=0; i < array_len; i++ ){

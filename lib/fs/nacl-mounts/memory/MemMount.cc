@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 #include <stdio.h>
+#include <limits.h>
+
 extern "C" {
 #include "zrtlog.h"
 }
@@ -76,6 +78,12 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
     MemNode *parent;
     MemNode *child;
 
+    if  ( path.length() > PATH_MAX ){
+        zrt_log("path.length()=%d, PATH_MAX=%d, errno=ENAMETOOLONG", path.length(), PATH_MAX );
+        errno=ENAMETOOLONG;
+        return -1;
+    }
+
     // Make sure it doesn't already exist.
     child = GetMemNode(path);
     if (child) {
@@ -95,6 +103,18 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
         zrt_log_str("errno=ENOTDIR");
         errno = ENOTDIR;
         return -1;
+    }
+
+    /*retrieve directory name, and compare name length with max available*/
+    size_t pos=path.rfind ( '/' );
+    int dirnamelen = 0;
+    if ( pos != std::string::npos ){
+        dirnamelen = path.length() -(pos+1);
+        if ( dirnamelen > NAME_MAX ){
+            zrt_log("dirnamelen=%d, NAME_MAX=%d, errno=ENAMETOOLONG", dirnamelen, NAME_MAX );
+            errno=ENAMETOOLONG;
+            return -1;
+        }
     }
 
     zrt_log_str("create node");
@@ -198,13 +218,28 @@ int MemMount::GetParentSlot(std::string path) {
     return GetSlot(path + "/..");
 }
 
+int MemMount::Chown(ino_t slot, uid_t owner, gid_t group){
+    MemNode *node = slots_.At(slot);
+    if (node == NULL) {
+        errno = ENOENT;
+        return -1;
+    }
+    else{
+        node->set_chown( owner, group );
+        return 0;
+    }
+}
+
 int MemMount::Chmod(ino_t slot, mode_t mode) {
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
         errno = ENOENT;
+        return -1;
     }
-
-    return -1;
+    else{
+        node->set_mode(mode);
+        return 0;
+    }
 }
 
 int MemMount::Stat(ino_t slot, struct stat *buf) {
@@ -221,17 +256,20 @@ int MemMount::Stat(ino_t slot, struct stat *buf) {
 int MemMount::Unlink(const std::string& path) {
     MemNode *node = GetMemNode(path);
     if (node == NULL) {
+        zrt_log_str("errno=ENOENT");
         errno = ENOENT;
         return -1;
     }
     MemNode *parent = GetParentMemNode(path);
     if (parent == NULL) {
         // Can't delete root
+        zrt_log_str("errno=EBUSY");
         errno = EBUSY;
         return -1;
     }
     // Check that it's a file.
     if (node->is_dir()) {
+        zrt_log_str("errno=EISDIR");
         errno = EISDIR;
         return -1;
     }

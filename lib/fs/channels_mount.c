@@ -342,6 +342,17 @@ static int64_t channel_pos( int handle, int8_t whence, int8_t access, int64_t of
     return -1;
 }
 
+static void set_stat_timestamp( struct stat* st )
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    /* files are not allowed to have real date/time */
+    /*currently as time used environment variable TimeStamp*/
+    st->st_atime = tv.tv_sec;      /* time of the last access */
+    st->st_mtime = tv.tv_sec;      /* time of the last modification */
+    st->st_ctime = tv.tv_sec;      /* time of the last status change */
+}
+
 /*used by stat, fstat; set stat based on channel type*/
 static void set_stat(struct stat *stat, int fd)
 {
@@ -385,21 +396,15 @@ static void set_stat(struct stat *stat, int fd)
     stat->st_blocks =               /* number of 512B blocks allocated */
             ((stat->st_size + stat->st_blksize - 1) / stat->st_blksize) * stat->st_blksize / 512;
 
-    struct timeval tv;
-    int ret = gettimeofday(&tv, NULL);
-    zrt_log( "gettimeofday ret=%d", ret );
-    /* files are not allowed to have real date/time */
-    /*currently as time used environment variable TimeStamp*/
-    stat->st_atime = tv.tv_sec;      /* time of the last access */
-    stat->st_mtime = tv.tv_sec;      /* time of the last modification */
-    stat->st_ctime = tv.tv_sec;      /* time of the last status change */
+    set_stat_timestamp( stat );
 }
 
 
 //////////// interface implementation
 
 static int channels_chmod(const char* path, uint32_t mode){
-    return EPERM;
+    SET_ERRNO(EPERM);
+    return -1;
 }
 
 static int channels_stat(const char* path, struct stat *buf){
@@ -551,6 +556,11 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
     }
 
     return wrote;
+}
+
+static int channels_fchmod(int fd, mode_t mode){
+    SET_ERRNO(EPERM);
+    return -1;
 }
 
 static int channels_fstat(int fd, struct stat *buf){
@@ -747,8 +757,19 @@ static int channels_link(const char* path1, const char* path2){
     return -1;
 }
 
+static int channels_chown(const char* p, uid_t u, gid_t g){
+    SET_ERRNO( ENOSYS );
+    return -1;
+}
+
+static int channels_fchown(int f, uid_t u, gid_t g){
+    SET_ERRNO( ENOSYS );
+    return -1;
+}
+
 /*Initialization I/O interface by zeromq functions. Should be used only for interface initialization*/
 static struct MountsInterface s_channels_mount = {
+        channels_chown,
         channels_chmod,
         channels_stat,
         channels_mkdir,
@@ -757,6 +778,8 @@ static struct MountsInterface s_channels_mount = {
         channels_mount,
         channels_read,
         channels_write,
+        channels_fchown,
+        channels_fchmod,
         channels_fstat,
         channels_getdents,
         channels_fsync,

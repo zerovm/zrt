@@ -8,6 +8,7 @@
 
 #define _GNU_SOURCE
 
+#include <time.h>
 #include <sys/types.h> //off_t
 #include <sys/stat.h>
 #include <string.h> //memcpy
@@ -70,6 +71,7 @@
 #define LOG_SYSCALL_START(args_p) { syscall_push(__func__); enable_logging_current_syscall(); zrt_log("syscall arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x, arg[3]=0x%x, arg[4]=0x%x", \
         args_p[0], args_p[1], args_p[2], args_p[3], args_p[4] ); }
 #define LOG_SYSCALL_FINISH(ret) { zrt_log("ret=0x%x, errno=%d", (int)ret, errno); syscall_pop(); }
+#define LOG_START() { syscall_push(__func__); enable_logging_current_syscall(); zrt_log("%s", __func__); }
 #else
 #define LOG_SYSCALL_START(args_p)
 #define LOG_SYSCALL_FINISH()
@@ -162,6 +164,7 @@ static void debug_mes_stat(struct stat *stat){
     zrt_log("st_blksize=%d", (int)stat->st_blksize);
     zrt_log("st_size=%lld", stat->st_size);
     zrt_log("st_blocks=%d", (int)stat->st_blocks);
+    zrt_log("st_atime=%s", ctime(&stat->st_atime) );
 }
 
 //static void debug_log_permissions( mode_t mode ){
@@ -195,13 +198,21 @@ static void debug_mes_stat(struct stat *stat){
  *user application can provide relative path, currently any of zrt filesystems does not supported
  *relative path, so making absolute path is required.
  * */
-char* alloc_absolute_path_from_relative( const char* path )
+static char* alloc_absolute_path_from_relative( const char* path )
 {
     /*some applications providing relative path, currently any of zrt filesystems does not supported
      *relative path, so make absolute path just insert '/' into begin of relative path */
     char* absolute_path = malloc( strlen(path) + 2 );
+    /*transform . path into root /  */
+    if ( strlen(path) == 1 && path[0] == '.' ){
+        strcpy( absolute_path, "/\0" );
+    }
+    /*transform ./ path into root / */
+    else if ( strlen(path) == 2 && path[0] == '.' && path[1] == '/' ){
+        strcpy( absolute_path, "/\0" );
+    }
     /*if relative path is detected then transform it to absolute*/
-    if ( strlen(path) > 1 && path[0] != '/' ){
+    else if ( strlen(path) > 1 && path[0] != '/' ){
         strcpy( absolute_path, "/\0" );
         strcat(absolute_path, path);
     }
@@ -211,12 +222,37 @@ char* alloc_absolute_path_from_relative( const char* path )
     return absolute_path;
 }
 
-/*glibc substitution. it should be linked instead standard mkdir */
+static mode_t get_umask(){
+    mode_t prev_umask=0;
+    const char* prev_umask_str = getenv(UMASK_ENV);
+    if ( prev_umask_str ){
+        sscanf( prev_umask_str, "%o", &prev_umask);
+    }
+    return prev_umask;
+}
+
+static mode_t apply_umask(mode_t mode){
+    mode_t umasked_mode = ~get_umask() & mode; /*reset umask bits for specified mode*/
+    zrt_log( "mode=%o, umasked mode=%o", mode, umasked_mode );
+    return umasked_mode;
+}
+
+
+/*************************************************************************
+ * glibc substitution. Implemented functions below should be linked
+ * instead of standard syscall that not implemented by NACL glibc
+**************************************************************************/
+
+
 int mkdir(const char *pathname, mode_t mode){
+    LOG_START();
+    errno=0;
     zrt_log("pathname=%s, mode=%o(octal)", pathname, (uint32_t)mode);
 
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
+    mode = apply_umask(mode);
     int ret = s_transparent_mount->mkdir( absolute_path, mode );
+    int errno_mkdir = errno; /*save mkdir errno before stat request*/
     /*print stat data of newly created directory*/
     struct stat st;
     int ret2 = s_transparent_mount->stat(absolute_path, &st);
@@ -225,20 +261,27 @@ int mkdir(const char *pathname, mode_t mode){
     }
     /**/
     free(absolute_path);
+    errno = errno_mkdir;/*restore mkdir errno after stat request completed*/
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
 /*glibc substitution. it should be linked instead standard rmdir */
 int rmdir(const char *pathname){
+    LOG_START();
+    errno=0;
     zrt_log("pathname=%s", pathname);
 
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
     int ret = s_transparent_mount->rmdir( absolute_path );
     free(absolute_path);
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
 int lstat(const char *path, struct stat *buf){
+    LOG_START();
+    errno=0;
     zrt_log("path=%s, buf=%p", path, buf);
 
     char* absolute_path = alloc_absolute_path_from_relative( path );
@@ -247,13 +290,93 @@ int lstat(const char *path, struct stat *buf){
     if ( ret == 0 ){
         debug_mes_stat(buf);
     }
+    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
-/*
+
+/*sets umask ang et previous value*/
+mode_t umask(mode_t mask){
+    LOG_START();
+    /*save new umask and return prev*/
+    mode_t prev_umask = get_umask();
+    char umask_str[11];
+    sprintf( umask_str, "%o", mask );
+    setenv( UMASK_ENV, umask_str, 1 );
+    zrt_log("%s", umask_str);
+    LOG_SYSCALL_FINISH(0);
+    return prev_umask;
+}
+
+int chown(const char *path, uid_t owner, gid_t group){
+    LOG_START();
+    errno=0;
+    zrt_log( "path=%s, owner=%u, group=%u", path, owner, group );
+    char* absolute_path = alloc_absolute_path_from_relative(path);
+    int ret = s_transparent_mount->chown(absolute_path, owner, group);
+    free(absolute_path);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
+int fchown(int fd, uid_t owner, gid_t group){
+    LOG_START();
+    errno=0;
+    zrt_log( "fd=%d, owner=%u, group=%u", fd, owner, group );
+    int ret = s_transparent_mount->fchown(fd, owner, group);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
+int lchown(const char *path, uid_t owner, gid_t group){
+    LOG_START();
+    zrt_log( "path=%s, owner=%u, group=%u", path, owner, group );
+    /*do not do transformaton path, it's called in nested chown*/
+    int ret =chown(path, owner, group);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
+int unlink(const char *pathname){
+    LOG_START();
+    errno=0;
+    zrt_log( "pathname=%s", pathname );
+    char* absolute_path = alloc_absolute_path_from_relative(pathname);
+    int ret = s_transparent_mount->unlink(absolute_path);
+    free(absolute_path);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
+int chmod(const char *path, mode_t mode){
+    LOG_START();
+    errno=0;
+    zrt_log( "path=%s, mode=%u", path, mode );
+    mode = apply_umask(mode);
+    char* absolute_path = alloc_absolute_path_from_relative(path);
+    int ret = s_transparent_mount->chmod(absolute_path, mode);
+    free(absolute_path);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
+int fchmod(int fd, mode_t mode){
+    LOG_START();
+    errno=0;
+    zrt_log( "fd=%d, mode=%u", fd, mode );
+    mode = apply_umask(mode);
+    int ret = s_transparent_mount->fchmod(fd, mode);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
+
+
+/********************************************************************************
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
  * each nacl syscall must be implemented or, at least, mocked. no exclusions!
- */
+*********************************************************************************/
+
 static int32_t zrt_nan(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
@@ -278,12 +401,13 @@ static int32_t zrt_open(uint32_t *args)
     errno=0;
     char* name = (char*)args[0];
     int flags = (int)args[1];
-    int mode = (int)args[2];
+    uint32_t mode = (int)args[2];
 
     zrt_log("path=%s", name);
     debug_mes_open_flags(flags);
 
     char* absolute_path = alloc_absolute_path_from_relative( name );
+    mode = apply_umask(mode);
     int ret = s_transparent_mount->open( absolute_path, flags, mode );
     free(absolute_path);
     LOG_SYSCALL_FINISH(ret);
@@ -392,7 +516,7 @@ static int32_t zrt_fstat(uint32_t *args)
     return ret;
 }
 
-SYSCALL_MOCK(chmod, -EPERM) /* in a simple version of zrt chmod is not allowed */
+SYSCALL_MOCK(chmod, -EPERM) /* NACL does not support chmod*/
 
 /*
  * following 3 functions (sysbrk, mmap, munmap) is the part of the
@@ -501,6 +625,7 @@ static int32_t zrt_gettimeofday(uint32_t *args)
     else{
         tv->nacl_abi_tv_usec = 0; /* to simplify code. yet we can't get msec from nacl code */
         tv->nacl_abi_tv_sec = atoi(stamp); /* manifest always contain decimal values */
+        zrt_log("tv->nacl_abi_tv_sec=%lld", tv->nacl_abi_tv_sec );
     }
 
     LOG_SYSCALL_FINISH(0);

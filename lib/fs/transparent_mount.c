@@ -20,6 +20,21 @@
 static struct MountsManager* s_mounts_manager;
 
 
+static int transparent_chown(const char* path, uid_t owner, gid_t group){
+    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
+    if ( mount_info ){
+        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
+            return mount_info->mount->chown( path, owner, group);
+        else{
+            return mount_info->mount->chown( s_mounts_manager->get_nested_mount_path( mount_info, path ), owner, group);
+        }
+    }
+    else{
+        errno = ENOENT;
+        return -1;
+    }
+}
+
 static int transparent_chmod(const char* path, uint32_t mode){
     struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
     if ( mount_info ){
@@ -38,11 +53,13 @@ static int transparent_chmod(const char* path, uint32_t mode){
 static int transparent_stat(const char* path, struct stat *buf){
     struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
     if ( mount_info ){
+        int ret;
         if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->stat( path, buf);
+            ret = mount_info->mount->stat( path, buf);
         else{
-            return mount_info->mount->stat( s_mounts_manager->get_nested_mount_path( mount_info, path ), buf);
+            ret = mount_info->mount->stat( s_mounts_manager->get_nested_mount_path( mount_info, path ), buf);
         }
+        return ret;
     }
     else{
         errno = ENOENT;
@@ -131,10 +148,31 @@ static ssize_t transparent_write(int fd, const void *buf, size_t nbyte){
     }
 }
 
-static int transparent_fstat(int fd, struct stat *buf){
+static int transparent_fchown(int fd, uid_t owner, gid_t group){
     struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
+        return mount->fchown(fd, owner, group);
+    else{
+        errno = EBADF;
+        return -1;
+    }
+}
+
+static int transparent_fchmod(int fd, mode_t mode){
+    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    if ( mount )
+        return mount->fchmod(fd, mode);
+    else{
+        errno = EBADF;
+        return -1;
+    }
+}
+
+static int transparent_fstat(int fd, struct stat *buf){
+    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    if ( mount ){
         return mount->fstat(fd, buf);
+    }
     else{
         errno = EBADF;
         return -1;
@@ -279,6 +317,7 @@ static int transparent_link(const char* path1, const char* path2){
 }
 
 static struct MountsInterface s_transparent_mount = {
+        transparent_chown,
         transparent_chmod,
         transparent_stat,
         transparent_mkdir,
@@ -287,6 +326,8 @@ static struct MountsInterface s_transparent_mount = {
         transparent_mount,
         transparent_read,
         transparent_write,
+        transparent_fchown,
+        transparent_fchmod,
         transparent_fstat,
         transparent_getdents,
         transparent_fsync,

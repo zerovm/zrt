@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 extern "C" {
 #include "zrtlog.h"
@@ -40,6 +41,15 @@ int MemNode::stat(struct stat *buf) {
     buf->st_uid = 1001;
     buf->st_gid = 1002;
     buf->st_blksize = 1024;
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    /* files are not allowed to have real date/time */
+    /*currently as time used environment variable TimeStamp*/
+    buf->st_atime = tv.tv_sec;      /* time of the last access */
+    buf->st_mtime = tv.tv_sec;      /* time of the last modification */
+    buf->st_ctime = tv.tv_sec;      /* time of the last status change */
+
     zrt_log("stat ino=%d", slot_);
     return 0;
 }

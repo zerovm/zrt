@@ -18,7 +18,7 @@ function file_characters_count {
 }
 
 NAME=fstest
-COMMAND_LINE=$@
+COMMAND_LINE="$@"
 
 
 #############################################
@@ -32,7 +32,7 @@ FOUTCOUNT=$COUNT
 
 #echo foutcount $FOUTCOUNT
 #echo ferrcount $FERRCOUNT
-echo "fstest ${COMMAND_LINE}" >> ${STDIN}
+echo fstest "${COMMAND_LINE}" >> ${STDIN}
 
 #############################################
 # if no running copy then launch new instance at background
@@ -67,7 +67,6 @@ done
 #echo ferrsize $FNEWSIZE
 #echo foutsize $FNEWSIZE
 
-echo rr
 RESULT=`tail -n2 ${STDOUT} 2> /dev/null | cut -d' ' -f1`
 #echo result $RESULT
 if [ "$RESULT" = "0" ]

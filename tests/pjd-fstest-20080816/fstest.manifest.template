@@ -15,5 +15,6 @@ Nexe = {ABS_PATH}{NAME}.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
 Timeout=60
+Environment = TimeStamp, 1344719070
 NodeName={NAME},1
 

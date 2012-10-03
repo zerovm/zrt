@@ -4,5 +4,5 @@
 # Known operating systems: FreeBSD, SunOS, Linux
 os=`uname`
 
-# Known file systems: UFS, ZFS, ext3, ntfs-3g, xfs
-fs="ext3"
+# Known file systems: UFS, ZFS, ext3, ntfs-3g, xfs, zrtfs
+fs="zrtfs"

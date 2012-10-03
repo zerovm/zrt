@@ -12,6 +12,7 @@
 
 extern "C" {
 #include "zrtlog.h"
+#include "channels_mount.h"
 }
 #include "mem_mount_wraper.h"
 #include "nacl-mounts/memory/MemMount.h"
@@ -39,7 +40,17 @@ static ssize_t get_file_len(ino_t node) {
     return (ssize_t) st.st_size;
 }
 
-int mem_chmod(const char* path, uint32_t mode){
+static int mem_chown(const char* path, uid_t owner, gid_t group){
+    struct stat st;
+    int ret = s_mem_mount_cpp->GetNode( path, &st);
+    zrt_log("ret=%d", ret);
+    if ( ret == 0 )
+        return s_mem_mount_cpp->Chown( st.st_ino, owner, group);
+    else
+        return ret;
+}
+
+static int mem_chmod(const char* path, uint32_t mode){
     struct stat st;
     int ret = s_mem_mount_cpp->GetNode( path, &st);
     zrt_log("ret=%d", ret);
@@ -49,7 +60,7 @@ int mem_chmod(const char* path, uint32_t mode){
         return ret;
 }
 
-int mem_stat(const char* path, struct stat *buf){
+static int mem_stat(const char* path, struct stat *buf){
     struct stat st;
     int ret = s_mem_mount_cpp->GetNode( path, &st);
     zrt_log("ret=%d", ret);
@@ -59,7 +70,7 @@ int mem_stat(const char* path, struct stat *buf){
         return ret;
 }
 
-int mem_mkdir(const char* path, uint32_t mode){
+static int mem_mkdir(const char* path, uint32_t mode){
     //struct stat st;
     //int ret = s_mem_mount_cpp->GetNode( path, &st);
     //zrt_log("ret=%d", ret);
@@ -70,7 +81,7 @@ int mem_mkdir(const char* path, uint32_t mode){
 }
 
 
-int mem_rmdir(const char* path){
+static int mem_rmdir(const char* path){
     struct stat st;
     int ret = s_mem_mount_cpp->GetNode( path, &st);
     zrt_log("ret=%d", ret);
@@ -80,19 +91,19 @@ int mem_rmdir(const char* path){
         return ret;
 }
 
-int mem_umount(const char* path){
+static int mem_umount(const char* path){
     errno = ENOSYS;
     zrt_log_str("errno=ENOSYS");
     return -1;
 }
 
-int mem_mount(const char* path, void *mount){
+static int mem_mount(const char* path, void *mount){
     errno = ENOSYS;
     zrt_log_str("errno=ENOSYS");
     return -1;
 }
 
-ssize_t mem_read(int fd, void *buf, size_t nbyte){
+static ssize_t mem_read(int fd, void *buf, size_t nbyte){
     ino_t node;
     /*search inode by file descriptor*/
     int ret = s_handle_allocator->get_inode( fd, &node );
@@ -115,7 +126,7 @@ ssize_t mem_read(int fd, void *buf, size_t nbyte){
     }
 }
 
-ssize_t mem_write(int fd, const void *buf, size_t nbyte){
+static ssize_t mem_write(int fd, const void *buf, size_t nbyte){
     ino_t node;
     int ret = s_handle_allocator->get_inode( fd, &node );
     zrt_log("ret=%d", ret);
@@ -136,7 +147,35 @@ ssize_t mem_write(int fd, const void *buf, size_t nbyte){
     }
 }
 
-int mem_fstat(int fd, struct stat *buf){
+static int mem_fchown(int fd, uid_t owner, gid_t group){
+    ino_t node;
+    int ret = s_handle_allocator->get_inode( fd, &node );
+    zrt_log("ret=%d, fd=%d, inode=%d", ret, fd, (int)node);
+    if ( ret == 0 ){
+        return s_mem_mount_cpp->Chown( node, owner, group);
+    }
+    else{
+        errno=EBADF;
+        zrt_log_str("errno=EBADF");
+        return -1;
+    }
+}
+
+static int mem_fchmod(int fd, uint32_t mode){
+    ino_t node;
+    int ret = s_handle_allocator->get_inode( fd, &node );
+    zrt_log("ret=%d, fd=%d, inode=%d", ret, fd, (int)node);
+    if ( ret == 0 ){
+        return s_mem_mount_cpp->Chmod( node, mode);
+    }
+    else{
+        SET_ERRNO(EBADF);
+        return -1;
+    }
+}
+
+
+static int mem_fstat(int fd, struct stat *buf){
     ino_t node;
     int ret = s_handle_allocator->get_inode( fd, &node );
     zrt_log("ret=%d, fd=%d, inode=%d", ret, fd, (int)node);
@@ -150,7 +189,7 @@ int mem_fstat(int fd, struct stat *buf){
     }
 }
 
-int mem_getdents(int fd, void *buf, unsigned int count){
+static int mem_getdents(int fd, void *buf, unsigned int count){
     ino_t node;
     int ret = s_handle_allocator->get_inode( fd, &node );
     zrt_log("ret=%d", ret);
@@ -173,12 +212,12 @@ int mem_getdents(int fd, void *buf, unsigned int count){
     }
 }
 
-int mem_fsync(int fd){
+static int mem_fsync(int fd){
     errno=ENOSYS;
     return -1;
 }
 
-int mem_close(int fd){
+static int mem_close(int fd){
     ino_t node;
     int ret = s_handle_allocator->get_inode( fd, &node );
     zrt_log("ret=%d", ret);
@@ -194,7 +233,7 @@ int mem_close(int fd){
     }
 }
 
-off_t mem_lseek(int fd, off_t offset, int whence){
+static off_t mem_lseek(int fd, off_t offset, int whence){
     ino_t node;
     int ret = s_handle_allocator->get_inode( fd, &node );
     zrt_log("ret=%d", ret);
@@ -245,7 +284,7 @@ off_t mem_lseek(int fd, off_t offset, int whence){
     }
 }
 
-int mem_open(const char* path, int oflag, uint32_t mode){
+static int mem_open(const char* path, int oflag, uint32_t mode){
     struct stat st;
     zrt_log("path=%s", path);
 
@@ -285,35 +324,37 @@ int mem_open(const char* path, int oflag, uint32_t mode){
         return -1;
 }
 
-int mem_remove(const char* path){
+static int mem_remove(const char* path){
     return -1;
 }
 
-int mem_unlink(const char* path){
+static int mem_unlink(const char* path){
+    zrt_log("path=%s", path);
+    return s_mem_mount_cpp->Unlink(path);
+}
+
+static int mem_access(const char* path, int amode){
     return -1;
 }
 
-int mem_access(const char* path, int amode){
+static int mem_isatty(int fd){
     return -1;
 }
 
-int mem_isatty(int fd){
+static int mem_dup(int oldfd){
     return -1;
 }
 
-int mem_dup(int oldfd){
+static int mem_dup2(int oldfd, int newfd){
     return -1;
 }
 
-int mem_dup2(int oldfd, int newfd){
-    return -1;
-}
-
-int mem_link(const char* path1, const char* path2){
+static int mem_link(const char* path1, const char* path2){
     return -1;
 }
 
 static struct MountsInterface s_mem_mount_wraper = {
+        mem_chown,
         mem_chmod,
         mem_stat,
         mem_mkdir,
@@ -322,6 +363,8 @@ static struct MountsInterface s_mem_mount_wraper = {
         mem_mount,
         mem_read,
         mem_write,
+        mem_fchown,
+        mem_fchmod,
         mem_fstat,
         mem_getdents,
         mem_fsync,

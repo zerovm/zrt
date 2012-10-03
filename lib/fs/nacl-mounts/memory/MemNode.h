@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <list>
 #include <string>
+
 #include "../util/macros.h"
 #include "../util/SlotAllocator.h"
 
@@ -98,6 +99,11 @@ class MemNode {
   mode_t mode()const { return mode_; }
   void set_mode(mode_t mode) { mode_ = mode; }
 
+  /*added by YaroslavLitvinov*/
+  uint32_t uid()const { return uid_; }
+  uint32_t gid()const { return gid_; }
+  void set_chown(uint32_t uid, uint32_t gid) { uid_=uid; gid_=gid; }
+
  private:
   int slot_;
   std::string name_;
@@ -112,6 +118,8 @@ class MemNode {
   /*added by YaroslavLitvinov
    *Permissions should be supported by stat*/
   mode_t mode_;
+  uint32_t uid_;
+  uint32_t gid_;
 
   DISALLOW_COPY_AND_ASSIGN(MemNode);
 };

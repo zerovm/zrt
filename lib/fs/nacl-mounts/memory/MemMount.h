@@ -56,6 +56,7 @@ class MemMount {
   // a directory.
   int Rmdir(ino_t node);
 
+  int Chown(ino_t slot, uid_t owner, gid_t group);
   int Chmod(ino_t slot, mode_t mode);
   int Stat(ino_t node, struct stat *buf);
   int Getdents(ino_t node, off_t offset, DIRENT *dirp,

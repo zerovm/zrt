@@ -23,6 +23,7 @@ struct MountsInterface{
     // find the node, the kernel proxy calls the corresponding mounts GetNode()
     // method.  The corresponding  method will be called.  If the node
     // cannot be found, errno is set and -1 is returned.
+    int (*chown)(const char* path, uid_t owner, gid_t group);
     int (*chmod)(const char* path, uint32_t mode);
     int (*stat)(const char* path, struct stat *buf);
     int (*mkdir)(const char* path, uint32_t mode);
@@ -36,6 +37,8 @@ struct MountsInterface{
     // associated mount's function will be called.
     ssize_t (*read)(int fd, void *buf, size_t nbyte);
     ssize_t (*write)(int fd, const void *buf, size_t nbyte);
+    int (*fchown)(int fd, uid_t owner, gid_t group);
+    int (*fchmod)(int fd, uint32_t mode);
     int (*fstat)(int fd, struct stat *buf);
     int (*getdents)(int fd, void *buf, unsigned int count);
     int (*fsync)(int fd);
