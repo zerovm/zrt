@@ -16,13 +16,25 @@ extern "C" {
 }
 #include "mem_mount_wraper.h"
 #include "nacl-mounts/memory/MemMount.h"
+#include "nacl-mounts/util/Path.h"
 #include "handle_allocator.h"
 
 static MemMount* s_mem_mount_cpp = NULL;
 static struct HandleAllocator* s_handle_allocator = NULL;
 static struct MountsInterface* s_this=NULL;
 
-int is_dir( ino_t inode ){
+static const char* name_from_path( std::string path ){
+    /*retrieve directory name, and compare name length with max available*/
+    size_t pos=path.rfind ( '/' );
+    int namelen = 0;
+    if ( pos != std::string::npos ){
+        namelen = path.length() -(pos+1);
+        return path.c_str()+path.length()-namelen;
+    }
+    return NULL;
+}
+
+static int is_dir( ino_t inode ){
     struct stat st;
     int ret = s_mem_mount_cpp->Stat( inode, &st );
     assert( ret == 0 );
@@ -53,7 +65,7 @@ static int mem_chown(const char* path, uid_t owner, gid_t group){
 static int mem_chmod(const char* path, uint32_t mode){
     struct stat st;
     int ret = s_mem_mount_cpp->GetNode( path, &st);
-    zrt_log("ret=%d", ret);
+    zrt_log("ret=%d, errno=%d", ret, errno);
     if ( ret == 0 )
         return s_mem_mount_cpp->Chmod( st.st_ino, mode);
     else
@@ -71,13 +83,12 @@ static int mem_stat(const char* path, struct stat *buf){
 }
 
 static int mem_mkdir(const char* path, uint32_t mode){
-    //struct stat st;
-    //int ret = s_mem_mount_cpp->GetNode( path, &st);
-    //zrt_log("ret=%d", ret);
-    //if ( ret == 0 )
+    int ret = s_mem_mount_cpp->GetNode( path, NULL);
+    zrt_log("ret=%d", ret);
+    if ( ret == 0 || (ret == -1&&errno==ENOENT) )
         return s_mem_mount_cpp->Mkdir( path, mode, NULL);
-    //else
-      //  return ret;
+    else
+        return ret;
 }
 
 
@@ -85,8 +96,16 @@ static int mem_rmdir(const char* path){
     struct stat st;
     int ret = s_mem_mount_cpp->GetNode( path, &st);
     zrt_log("ret=%d", ret);
-    if ( ret == 0 )
+    if ( ret == 0 ){
+        const char* name = name_from_path(path);
+        zrt_log( "name=%s", name );
+        if ( name && !strcmp(name, ".\0")  ){
+            zrt_log_str("errno = EINVAL");
+            errno = EINVAL; /*should be specified real path for rmdir*/
+            return -1;
+        }
         return s_mem_mount_cpp->Rmdir( st.st_ino );
+    }
     else
         return ret;
 }

@@ -735,7 +735,7 @@ main(int argc, char *argv[])
          * so we need to copy it to the new array*/
         char *syscall_argv[stdin_argc+1];
         for ( i=0; i < stdin_argc; i++ ){
-            syscall_argv[i] = malloc(PARAM_STRING_MAXSIZE);
+            syscall_argv[i] = malloc( strlen(stdin_argv[i])+1 );
             strcpy( syscall_argv[i], stdin_argv[i] );
 
             /*check termination control data*/

@@ -8,7 +8,7 @@ dir=`dirname $0`
 
 if [ "$fs" = "zrtfs" ]
 then
-    echo "1..21"
+    echo "1..26"
 else
     echo "1..36"
 fi    
@@ -67,19 +67,16 @@ time=`${fstest} stat . ctime`
 sleep 1
 expect 0 mkdir ${n0} 0755  #19
 
-if [ "$fs" != "zrtfs" ] #zrtfs support only static time specified by TimeStamp; excluded 5 tests
-then
-    atime=`${fstest} stat ${n0} atime` 
-    test_check $time -lt $atime
-    mtime=`${fstest} stat ${n0} mtime`
-    test_check $time -lt $mtime
-    ctime=`${fstest} stat ${n0} ctime`
-    test_check $time -lt $ctime
-    mtime=`${fstest} stat . mtime`
-    test_check $time -lt $mtime
-    ctime=`${fstest} stat . ctime`
-    test_check $time -lt $ctime
-fi
+atime=`${fstest} stat ${n0} atime` 
+test_check $time -lt $atime
+mtime=`${fstest} stat ${n0} mtime`
+test_check $time -lt $mtime
+ctime=`${fstest} stat ${n0} ctime`
+test_check $time -lt $ctime
+mtime=`${fstest} stat . mtime`
+test_check $time -lt $mtime
+ctime=`${fstest} stat . ctime`
+test_check $time -lt $ctime
     
 expect 0 rmdir ${n0}
 cd ${cdir}

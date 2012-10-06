@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "zvm.h"
 #include "zrtlog.h"
@@ -37,20 +38,18 @@ const char* syscall_stack_str(){
     return s_nested_syscalls_str;
 }
 
-void syscall_push( const char* name ){
+void log_push_name( const char* name ){
     int len = strlen(name);
     if ( (strlen(s_nested_syscalls_str) + len + 3) < MAX_NESTED_SYSCALL_LEN ){
         snprintf( s_nested_syscalls_str + strlen(s_nested_syscalls_str), MAX_NESTED_SYSCALL_LEN-len,
                 " %s", name );
-        //memcpy( s_nested_syscalls_str + strlen(s_nested_syscalls_str), " \0", 2 ); //copy space and null char
-        //memcpy( s_nested_syscalls_str + strlen(s_nested_syscalls_str), name, len );//copy name
-        //memcpy( s_nested_syscalls_str + len, "\0", 1 ); //copy null char
     }
 }
 
-void syscall_pop(){
+void log_pop_name( const char* name ) {
     char *s = strrchr(s_nested_syscalls_str, ' ');
     if ( s ){
+        assert( !strcmp(name, s+1) ); /*check if popped name is equal to awaitings*/
         s[0] = '\0';
     }
 }

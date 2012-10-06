@@ -21,7 +21,6 @@ run:
 	sed s@{ABS_PATH}@${CURDIR}/@g $(NAME).manifest.template | sed s@{NAME}@$(NAME)@g > $(NAME).manifest
 	chmod u+rwx fstest kill_fstest.sh run_test.sh
 	binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
-#	setarch x86_64 -R $(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v4
 
 clean:
 	@rm -f $(NAME).nexe $(NAME).o *.log *.data *.manifest

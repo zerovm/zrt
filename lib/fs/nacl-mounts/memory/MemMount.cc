@@ -60,6 +60,7 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf) {
     child = slots_.At(slot);
     child->set_slot(slot);
     child->set_is_dir(false);
+    child->set_mode(mode);
     child->set_mount(this);
     Path p(path);
     child->set_name(p.Last());
@@ -77,12 +78,6 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
     zrt_log( "path=%s", path.c_str() );
     MemNode *parent;
     MemNode *child;
-
-    if  ( path.length() > PATH_MAX ){
-        zrt_log("path.length()=%d, PATH_MAX=%d, errno=ENAMETOOLONG", path.length(), PATH_MAX );
-        errno=ENAMETOOLONG;
-        return -1;
-    }
 
     // Make sure it doesn't already exist.
     child = GetMemNode(path);
@@ -106,15 +101,11 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
     }
 
     /*retrieve directory name, and compare name length with max available*/
-    size_t pos=path.rfind ( '/' );
-    int dirnamelen = 0;
-    if ( pos != std::string::npos ){
-        dirnamelen = path.length() -(pos+1);
-        if ( dirnamelen > NAME_MAX ){
-            zrt_log("dirnamelen=%d, NAME_MAX=%d, errno=ENAMETOOLONG", dirnamelen, NAME_MAX );
-            errno=ENAMETOOLONG;
-            return -1;
-        }
+    Path path_name(path);
+    if ( path_name.Last().length() > NAME_MAX ){
+        zrt_log("dirnamelen=%d, NAME_MAX=%d, errno=ENAMETOOLONG", path_name.Last().length(), NAME_MAX );
+        errno=ENAMETOOLONG;
+        return -1;
     }
 
     zrt_log_str("create node");
@@ -139,9 +130,26 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
 
 int MemMount::GetNode(const std::string& path, struct stat *buf) {
     zrt_log("path=%s", path.c_str());
+    Path path_name(path);
+    /*if name too long*/
+    if ( path_name.Last().length() > NAME_MAX ){
+        zrt_log("namelen=%d, NAME_MAX=%d, errno=ENAMETOOLONG", path_name.Last().length(), NAME_MAX );
+        errno=ENAMETOOLONG;
+        return -1;
+    }
+    /*if path too long*/
+    if  ( path.length() > PATH_MAX ){
+        zrt_log("path.length()=%d, PATH_MAX=%d, errno=ENAMETOOLONG", path.length(), PATH_MAX );
+        errno=ENAMETOOLONG;
+        return -1;
+    }
+
+    errno=0; /*getslot can raise specific errno, so reset errno*/
     int slot = GetSlot(path);
     if (slot == -1) {
-        errno = ENOENT;
+        if ( errno == 0 ){
+            errno = ENOENT; /*set generic errno if no errno returned*/
+        }
         return -1;
     }
     if (!buf) {
@@ -293,6 +301,8 @@ int MemMount::Rmdir(ino_t slot) {
         errno = ENOTEMPTY;
         return -1;
     }
+    zrt_log( "node->name()=%s", node->name().c_str() );
+
     // if this isn't the root node, remove from parent's
     // children list
     if (slot != 0) {

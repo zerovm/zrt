@@ -6,7 +6,12 @@ desc="rmdir returns EACCES or EPERM if the directory containing the directory to
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
-echo "1..15"
+if [ "${fs}" != "zrtfs" ]
+then
+    echo "1..15"
+else
+    echo "1..4"
+fi    
 
 n0=`namegen`
 n1=`namegen`
@@ -20,21 +25,25 @@ expect 0 mkdir ${n0} 0755
 expect 0 chown ${n0} 65534 65534
 expect 0 chmod ${n0} 01777
 
-# User owns both: the sticky directory and the directory to be removed.
-expect 0 -u 65534 -g 65534 mkdir ${n0}/${n1} 0755
-expect 0 -u 65534 -g 65534 rmdir ${n0}/${n1}
-# User owns the directory to be removed, but doesn't own the sticky directory.
-expect 0 -u 65533 -g 65533 mkdir ${n0}/${n1} 0755
-expect 0 -u 65533 -g 65533 rmdir ${n0}/${n1}
-# User owns the sticky directory, but doesn't own the directory to be removed.
-expect 0 -u 65533 -g 65533 mkdir ${n0}/${n1} 0755
-expect 0 -u 65534 -g 65534 rmdir ${n0}/${n1}
-# User doesn't own the sticky directory nor the directory to be removed.
-expect 0 -u 65534 -g 65534 mkdir ${n0}/${n1} 0755
-expect "EACCES|EPERM" -u 65533 -g 65533 rmdir ${n0}/${n1}
-expect 0 rmdir ${n0}/${n1}
+if [ "${fs}" != "zrtfs" ]
+then
+    # User owns both: the sticky directory and the directory to be removed.
+    expect 0 -u 65534 -g 65534 mkdir ${n0}/${n1} 0755
+    expect 0 -u 65534 -g 65534 rmdir ${n0}/${n1}
+    # User owns the directory to be removed, but doesn't own the sticky directory.
+    expect 0 -u 65533 -g 65533 mkdir ${n0}/${n1} 0755
+    expect 0 -u 65533 -g 65533 rmdir ${n0}/${n1}
+    # User owns the sticky directory, but doesn't own the directory to be removed.
+    expect 0 -u 65533 -g 65533 mkdir ${n0}/${n1} 0755
+    expect 0 -u 65534 -g 65534 rmdir ${n0}/${n1}
+    # User doesn't own the sticky directory nor the directory to be removed.
+    expect 0 -u 65534 -g 65534 mkdir ${n0}/${n1} 0755
+    expect "EACCES|EPERM" -u 65533 -g 65533 rmdir ${n0}/${n1}
 
-expect 0 rmdir ${n0}
+    expect 0 rmdir ${n0}/${n1}
 
-cd ${cdir}
-expect 0 rmdir ${n2}
+    expect 0 rmdir ${n0}
+
+    cd ${cdir}
+    expect 0 rmdir ${n2}
+fi

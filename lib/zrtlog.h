@@ -38,8 +38,8 @@
         } while(0)
 
 const char* syscall_stack_str();
-void syscall_push( const char* name );
-void syscall_pop();
+void log_push_name( const char* name );
+void log_pop_name( const char* name );
 void setup_zrtlog_fd(int fd);
 void enable_logging_current_syscall();
 void disable_logging_current_syscall();

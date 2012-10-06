@@ -8,7 +8,7 @@ dir=`dirname $0`
 
 require chflags
 
-echo "1..40"
+echo "1..40"    #prove even not trying to run these tests
 
 n0=`namegen`
 

@@ -6,6 +6,11 @@ desc="chmod returns ELOOP if too many symbolic links were encountered in transla
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
+if [ "${fs}" = "zrtfs" ] #zrtfs does not support symlinks
+then
+    quick_exit
+fi
+
 echo "1..6"
 
 n0=`namegen`
@@ -17,3 +22,4 @@ expect ELOOP chmod ${n0}/test 0644
 expect ELOOP chmod ${n1}/test 0644
 expect 0 unlink ${n0}
 expect 0 unlink ${n1}
+

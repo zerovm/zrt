@@ -6,11 +6,17 @@ desc="chmod changes permission"
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
-if supported lchmod; then
-	echo "1..77"
+if [ "${fs}" != "zrtfs" ] #zrtfs not support pipes, symlinks;
+then
+    if supported lchmod; then
+    	echo "1..77"
+    else
+	   echo "1..58"
+	fi
 else
-	echo "1..58"
+    echo "1..19"	   
 fi
+
 
 n0=`namegen`
 n1=`namegen`
@@ -32,20 +38,23 @@ expect 0 chmod ${n0} 0753
 expect 0753 stat ${n0} mode
 expect 0 rmdir ${n0}
 
-expect 0 mkfifo ${n0} 0644
-expect 0644 stat ${n0} mode
-expect 0 chmod ${n0} 0310
-expect 0310 stat ${n0} mode
-expect 0 unlink ${n0}
+if [ "${fs}" != "zrtfs"  ] #zrtfs not support pipes, symlinks; 13 tests were excluded
+then
+    expect 0 mkfifo ${n0} 0644
+    expect 0644 stat ${n0} mode
+    expect 0 chmod ${n0} 0310
+    expect 0310 stat ${n0} mode
+    expect 0 unlink ${n0}
 
-expect 0 create ${n0} 0644
-expect 0 symlink ${n0} ${n1}
-expect 0644 stat ${n1} mode
-expect 0 chmod ${n1} 0321
-expect 0321 stat ${n1} mode
-expect 0321 lstat ${n0} mode
-expect 0 unlink ${n0}
-expect 0 unlink ${n1}
+    expect 0 create ${n0} 0644
+    expect 0 symlink ${n0} ${n1}
+    expect 0644 stat ${n1} mode
+    expect 0 chmod ${n1} 0321
+    expect 0321 stat ${n1} mode
+    expect 0321 lstat ${n0} mode
+    expect 0 unlink ${n0}
+    expect 0 unlink ${n1}
+fi
 
 if supported lchmod; then
 	expect 0 create ${n0} 0644
@@ -67,7 +76,7 @@ ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect 0 chmod ${n0} 0111
 ctime2=`${fstest} stat ${n0} ctime`
-test_check $ctime1 -lt $ctime2
+test_check $ctime1 -lt $ctime2  #14 zrtfs
 expect 0 unlink ${n0}
 
 expect 0 mkdir ${n0} 0755
@@ -78,6 +87,11 @@ ctime2=`${fstest} stat ${n0} ctime`
 test_check $ctime1 -lt $ctime2
 expect 0 rmdir ${n0}
 
+if [ "${fs}" = "zrtfs"  ] #zrtfs not support pipes, symlinks, uid, gid; rest tests are excluded
+then
+    exit
+fi    
+
 expect 0 mkfifo ${n0} 0644
 ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
@@ -85,6 +99,7 @@ expect 0 chmod ${n0} 0310
 ctime2=`${fstest} stat ${n0} ctime`
 test_check $ctime1 -lt $ctime2
 expect 0 unlink ${n0}
+
 
 if supported lchmod; then
 	expect 0 symlink ${n1} ${n0}
@@ -97,7 +112,7 @@ if supported lchmod; then
 fi
 
 # unsuccessful chmod(2) does not update ctime.
-expect 0 create ${n0} 0644
+expect 0 create ${n0} 0644    #20 zrtfs
 ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect EPERM -u 65534 chmod ${n0} 0111

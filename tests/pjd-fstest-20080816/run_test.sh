@@ -7,12 +7,11 @@ STDERR=fstest.stderr.data
 if [ $# -lt 1 ]
 then
 	echo "required tests path argument, for example:"
-	echo "sh run_test.sh tests/mkdir/00.t"
+	echo "sh run_test.sh "tests -r -f""
 	exit
 fi
 
 rm -f $STDIN $STDOUT $STDERR
-echo prove "$1" 
 prove ""$1""
 sh kill_fstest.sh
 

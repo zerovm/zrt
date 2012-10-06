@@ -34,8 +34,7 @@ int MemNode::stat(struct stat *buf) {
         /*YaroslavLitvinov*/
         buf->st_mode = S_IFDIR | mode_;
     } else {
-        buf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH
-                | S_IWOTH;
+        buf->st_mode = S_IFREG | mode_;
         buf->st_size = len_;
     }
     buf->st_uid = 1001;
@@ -50,6 +49,7 @@ int MemNode::stat(struct stat *buf) {
     buf->st_mtime = tv.tv_sec;      /* time of the last modification */
     buf->st_ctime = tv.tv_sec;      /* time of the last status change */
 
+    zrt_log("stat st_atime=%lld", buf->st_atime);
     zrt_log("stat ino=%d", slot_);
     return 0;
 }
