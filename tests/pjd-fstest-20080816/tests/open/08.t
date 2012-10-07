@@ -6,6 +6,7 @@ desc="open returns EACCES when O_CREAT is specified, the file does not exist, an
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
+quick_exit  #zrtfs not support uid,gid
 echo "1..3"
 
 n0=`namegen`

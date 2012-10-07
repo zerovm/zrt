@@ -316,9 +316,13 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
             zrt_log_str("return-1");
             return -1;
         }else{
+            errno=0;
             if (0 != s_mem_mount_cpp->GetNode(path, &st)) {
-                zrt_log_str("return-1, errno=ENOENT");
-                errno = ENOENT;
+                /*if GetNode dont raised specifiec errno then set generic*/
+                if ( errno == 0  ){
+                    zrt_log_str("return-1, errno=ENOENT");
+                    errno = ENOENT;
+                }
                 return -1;
             }
         }

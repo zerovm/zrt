@@ -1,8 +1,9 @@
 #!/bin/bash
 
-STDIN=fstest.stdin.data
-STDOUT=fstest.stdout.data
-STDERR=fstest.stderr.data
+STDIN=data/fstest.stdin.data
+STDOUT=data/fstest.stdout.data
+STDERR=data/fstest.stderr.data
+ZEROVM_OUTPUT=data/zerovm.output
 
 if [ $# -lt 1 ]
 then
@@ -11,7 +12,7 @@ then
 	exit
 fi
 
-rm -f $STDIN $STDOUT $STDERR
+rm -f $STDIN $STDOUT $STDERR $ZEROVM_OUTPUT
 prove ""$1""
-sh kill_fstest.sh
+./kill_fstest.sh
 

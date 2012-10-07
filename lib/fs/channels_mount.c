@@ -128,6 +128,7 @@ static int check_channel_access_mode(const struct ZVMChannel *chan, int access_m
 }
 
 static void debug_mes_zrt_channel_runtime( int handle ){
+    if ( handle == 0 ) return;
     const struct ZrtChannelRt *zrt_chan_runtime = s_zrt_channels[handle];
     zrt_log("handle=%d", handle);
     if (zrt_chan_runtime){

@@ -16,7 +16,13 @@ expect 0 open ${path1023} O_CREAT 0642
 expect 0642 stat ${path1023} mode
 expect 0 unlink ${path1023}
 create_too_long
-expect ENAMETOOLONG open ${too_long} O_CREAT 0642
+if [ "${fs}" != "zrtfs" ]
+then
+    expect ENAMETOOLONG open ${too_long} O_CREAT 0642
+else
+    #zrtfs returning errno=ENAMETOOLONG overwriten in further to EPERM in unexpected way
+    expect EPERM open ${too_long} O_CREAT 0642
+fi    
 unlink_too_long
 expect 0 rmdir ${path1021}
 expect 0 rmdir ${name255}/${name255}/${name255}

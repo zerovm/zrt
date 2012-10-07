@@ -131,6 +131,7 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
 int MemMount::GetNode(const std::string& path, struct stat *buf) {
     zrt_log("path=%s", path.c_str());
     Path path_name(path);
+    path_name.Last();
     /*if name too long*/
     if ( path_name.Last().length() > NAME_MAX ){
         zrt_log("namelen=%d, NAME_MAX=%d, errno=ENAMETOOLONG", path_name.Last().length(), NAME_MAX );
@@ -143,7 +144,13 @@ int MemMount::GetNode(const std::string& path, struct stat *buf) {
         errno=ENAMETOOLONG;
         return -1;
     }
-
+    // Get the directory its in.
+    int parent_slot = GetParentSlot(path);
+    if (parent_slot == -1) {
+        zrt_log_str("return -1, errno = ENOTDIR; parent_slot == -1");
+        errno = ENOTDIR;
+        return -1;
+    }
     errno=0; /*getslot can raise specific errno, so reset errno*/
     int slot = GetSlot(path);
     if (slot == -1) {
@@ -229,6 +236,7 @@ int MemMount::GetParentSlot(std::string path) {
 int MemMount::Chown(ino_t slot, uid_t owner, gid_t group){
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
+        zrt_log_str("errno = ENOENT");
         errno = ENOENT;
         return -1;
     }

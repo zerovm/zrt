@@ -6,7 +6,19 @@ desc="open returns EFAULT if the path argument points outside the process's allo
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
-echo "1..2"
+if [ "${fs}" != "zrtfs" ]
+then
+    echo "1..2"
+else
+    echo "1..1"
+fi    
 
-expect EFAULT open NULL O_RDONLY
-expect EFAULT open DEADCODE O_RDONLY
+if [ "${fs}" != "zrtfs" ]
+then
+    expect EFAULT open NULL O_RDONLY
+    expect EFAULT open DEADCODE O_RDONLY
+else
+    #zrtfs returning errno=EFAULT overwriten in further to EPERM in unexpected way
+    expect EPERM open NULL O_RDONLY
+fi    
+

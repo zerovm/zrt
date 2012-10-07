@@ -11,4 +11,10 @@ echo "1..4"
 expect 0 open ${name255} O_CREAT 0620
 expect 0620 stat ${name255} mode
 expect 0 unlink ${name255}
-expect ENAMETOOLONG open ${name256} O_CREAT 0620
+if [ "${fs}" != "zrtfs" ]
+then
+    expect ENAMETOOLONG open ${name256} O_CREAT 0620
+else
+    #zrtfs returning errno=ENAMETOOLONG overwriten in further to EPERM in unexpected way
+    expect EPERM open ${name256} O_CREAT 0620
+fi    

@@ -1,24 +1,21 @@
-$FreeBSD: src/tools/regression/fstest/README,v 1.1 2007/01/28 00:10:28 pjd Exp $
+Some changes was made in pjd-fstests engine to support zerovm filesystem testing.
+fstest every time invoked by prove just send command line into background process
+fstest.nexe test via zerovm stdin channel, result of every test are retrieved by
+fstest script and returned into test suite.
+every invocation of run_test.sh run all pointed tests in the same background process,
+after completion of all tests background process fstest.nexe is closing by kill_ftest.sh  
 
-Few notes on how to use fstest in short steps:
-
-	# cd fstest
-	# vi tests/conf
-	Change 'fs' to file system type you want to test. These can be:
-	UFS, ZFS, ext3, ntfs-3g and xfs.
-	# vi Makefile
-	You may need to manually tweak few things by editing CFLAGS lines
-	at the top of the file.
-	# make
-	It will compile fstest utility which is used by regression tests.
-	# cd /path/to/file/system/you/want/to/test/
-	The test must be run as root user.
-	# prove -r /path/to/fstest/
+Run all zrtfs tests:
+    #./run_zrtfs_tests.sh
+Run single test
+    #./run_test "tests/mkdir/00.t"
+Run whole tests directory
+    #./run_test "tests/mkdir -r -v"    
 
 That's all. Enjoy.
 
-Currently supported operating systems: FreeBSD, Solaris, Linux.
-Currently supported file system types: UFS, ZFS, ext3, ntfs-3g, xfs.
+Currently supported operating systems: Linux.
+Currently supported file system types: zrtfs.
 
 Author: 
 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -26,3 +23,6 @@ Pawel Jakub Dawidek <pjd@FreeBSD.org>
 Linux port:
 Jean-Pierre Andre <jean-pierre.andre@wanadoo.fr>
 Szabolcs Szakacsits <szaka@ntfs-3g.org>
+
+ZeroVM port:
+Yaroslav Litvinov <yaroslav.litvinov@gmail.com>

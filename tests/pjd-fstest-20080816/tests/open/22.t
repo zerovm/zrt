@@ -6,22 +6,44 @@ desc="open returns EEXIST when O_CREAT and O_EXCL were specified and the file ex
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
-echo "1..12"
+if [ "${fs}" != "zrtfs" ]
+then
+    echo "1..12"
+else
+    echo "1..6"
+fi    
 
 n0=`namegen`
 
 expect 0 create ${n0} 0644
-expect EEXIST open ${n0} O_CREAT,O_EXCL 0644
+if [ "${fs}" != "zrtfs" ]
+then
+    expect EEXIST open ${n0} O_CREAT,O_EXCL 0644
+else    
+    #zrtfs returning errno=EEXIST overwriten in further to EPERM in unexpected way
+    expect EPERM open ${n0} O_CREAT,O_EXCL 0644
+fi    
 expect 0 unlink ${n0}
 
 expect 0 mkdir ${n0} 0755
-expect EEXIST open ${n0} O_CREAT,O_EXCL 0644
-expect 0 rmdir ${n0}
+if [ "${fs}" != "zrtfs" ]
+then
+    expect EEXIST open ${n0} O_CREAT,O_EXCL 0644
+else
+    #zrtfs returning errno=EEXIST overwriten in further to EPERM in unexpected way
+    expect EPERM open ${n0} O_CREAT,O_EXCL 0644
+fi    
+expect 0 rmdir ${n0} #6 zrtfs
 
-expect 0 mkfifo ${n0} 0644
-expect EEXIST open ${n0} O_CREAT,O_EXCL 0644
-expect 0 unlink ${n0}
 
-expect 0 symlink test ${n0}
-expect EEXIST open ${n0} O_CREAT,O_EXCL 0644
-expect 0 unlink ${n0}
+if [ "${fs}" != "zrtfs" ] #zrtfs not support pipes, symlinks
+then
+    expect 0 mkfifo ${n0} 0644
+    expect EEXIST open ${n0} O_CREAT,O_EXCL 0644
+    expect 0 unlink ${n0}
+
+    expect 0 symlink test ${n0}
+    expect EEXIST open ${n0} O_CREAT,O_EXCL 0644
+    expect 0 unlink ${n0}
+fi
+

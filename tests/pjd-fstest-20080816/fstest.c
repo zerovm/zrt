@@ -42,6 +42,7 @@
 #include <assert.h>
 
 #include "zrt.h"
+#include "zrtlog.h"
 
 /*if that data reading from stding application should exit*/
 #define CONTROL_DATA "test12345complete"
@@ -429,6 +430,7 @@ call_syscall(struct syscall_desc *scall, char *argv[])
             }
             rval = open(STR(0), flags);
         }
+        fprintf(stderr, "rval=%d, errno=%d\n", rval, errno);
         break;
     case ACTION_CREATE:
         rval = open(STR(0), O_CREAT | O_EXCL, NUM(1));
@@ -599,16 +601,16 @@ read_stdin_parameters( char* argv[] ){
         }
     }while( !condition ); /*condition is 1 only if trailing $$ pair reached*/
 
-    //#ifdef DEBUG
-    //    fprintf(stderr, "parsed%s ", ":" );
-    //    int i;
-    //    for(i=0; i < words_count; i++){
-    //        fprintf(stderr, "%s ", argv[i] );
-    //    }
-    //    fprintf(stderr, "%s", "\n" );
-    //#endif
+    #ifdef PARSING_DEBUG
+        fprintf(stderr, "parsed%s ", ":" );
+        int i;
+        for(i=0; i < words_count; i++){
+            fprintf(stderr, "%s ", argv[i] );
+        }
+        fprintf(stderr, "%s", "\n" );
+    #endif
 
-    /*do not remember last word*/
+    /*do not forget last word*/
     return ++words_count;
 }
 
@@ -712,9 +714,6 @@ int run_syscall(int argc, char *argv[]){
         argc++;
         argv++;
     }
-    //#ifdef DEBUG
-    //    fprintf(stderr, "run_syscall %s\n", "ok");
-    //#endif
     return 0;
 }
 
@@ -739,7 +738,6 @@ main(int argc, char *argv[])
             strcpy( syscall_argv[i], stdin_argv[i] );
 
             /*check termination control data*/
-            //fprintf(stderr, "cmp '%s'(%d) '%s'(%d)\n", stdin_argv[i], strlen(stdin_argv[i]), CONTROL_DATA, strlen(CONTROL_DATA) );
             if ( !strcmp(stdin_argv[i], CONTROL_DATA) ){
                 fprintf(stderr, "recevied %s\n", "kill");
                 exit(0);
@@ -747,22 +745,14 @@ main(int argc, char *argv[])
         }
         syscall_argv[stdin_argc] = NULL;
 
-        //for( i=0; i < stdin_argc; i++ ){
-        //    printf( "read: i=%d, %s\n", i, stdin_argv[i] );
-        //}
-
         /*emulate pseudo command line data*/
-        run_syscall( stdin_argc, syscall_argv );
-
-        //#ifdef DEBUG
-        //        fprintf(stderr, "free %s\n", "syscall string");
-        //#endif
+        int ret = run_syscall( stdin_argc, syscall_argv );
+#ifdef DEBUG
+        fprintf(stderr, "run_syscall complete %d\n", ret);
+#endif
         for ( i=0; i < stdin_argc; i++ ){
             free( syscall_argv[i] );
         }
-        //#ifdef DEBUG
-        //        fprintf(stderr, "free %s\n", "syscall string OK");
-        //#endif
     }
 
     for ( i=0; i < array_len; i++ ){

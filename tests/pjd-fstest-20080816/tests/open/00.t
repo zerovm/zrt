@@ -6,7 +6,12 @@ desc="open opens (and eventually creates) a file"
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
-echo "1..47"
+if [ "${fs}" != "zrtfs" ]
+then 
+    echo "1..47"
+else    
+    echo "1..37"
+fi    
 
 n0=`namegen`
 n1=`namegen`
@@ -35,23 +40,27 @@ expect regular,0305 lstat ${n0} type,mode
 expect 0 unlink ${n0}
 expect 0 -U 0501 open ${n0} O_CREAT,O_WRONLY 0345
 expect regular,0244 lstat ${n0} type,mode
-expect 0 unlink ${n0}
+expect 0 unlink ${n0}  #16
 
 # POSIX: (If O_CREAT is specified and the file doesn't exist) [...] the user ID
 # of the file shall be set to the effective user ID of the process; the group ID
 # of the file shall be set to the group ID of the file's parent directory or to
 # the effective group ID of the process [...]
 expect 0 chown . 65535 65535
-expect 0 -u 65535 -g 65535 open ${n0} O_CREAT,O_WRONLY 0644
-expect 65535,65535 lstat ${n0} uid,gid
-expect 0 unlink ${n0}
-expect 0 -u 65535 -g 65534 open ${n0} O_CREAT,O_WRONLY 0644
-expect "65535,6553[45]" lstat ${n0} uid,gid
-expect 0 unlink ${n0}
-expect 0 chmod . 0777
-expect 0 -u 65534 -g 65533 open ${n0} O_CREAT,O_WRONLY 0644
-expect "65534,6553[35]" lstat ${n0} uid,gid
-expect 0 unlink ${n0}
+
+if [ "${fs}" != "zrtfs" ]
+    then
+    expect 0 -u 65535 -g 65535 open ${n0} O_CREAT,O_WRONLY 0644
+    expect 65535,65535 lstat ${n0} uid,gid
+    expect 0 unlink ${n0}
+    expect 0 -u 65535 -g 65534 open ${n0} O_CREAT,O_WRONLY 0644
+    expect "65535,6553[45]" lstat ${n0} uid,gid
+    expect 0 unlink ${n0}
+    expect 0 chmod . 0777
+    expect 0 -u 65534 -g 65533 open ${n0} O_CREAT,O_WRONLY 0644
+    expect "65534,6553[35]" lstat ${n0} uid,gid
+    expect 0 unlink ${n0}
+fi
 
 # Update parent directory ctime/mtime if file didn't exist.
 expect 0 chown . 0 0
@@ -77,7 +86,7 @@ dctime=`${fstest} stat . ctime`
 sleep 1
 expect 0 open ${n0} O_CREAT,O_RDONLY 0644
 mtime=`${fstest} stat . mtime`
-test_check $dmtime -eq $mtime
+test_check $dmtime -eq $mtime  #zrtfs 28
 ctime=`${fstest} stat . ctime`
 test_check $dctime -eq $ctime
 expect 0 unlink ${n0}

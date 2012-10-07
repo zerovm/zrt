@@ -1,14 +1,19 @@
 #!/bin/bash
 
-#wrapper around fstest.nexe
-#It's prepare nexe environment and launches zerovm
-
+#It's executable script is wrapper around fstest.nexe
+#that prepare nexe environment and launches zerovm in background
+#input parameters of script that was invoked by prove testsystem
+#is writing into STDIN input file of fstest.nexe.
+#nexe running on background and reading input parameters while
+#not readed killdata sent by kill_fstest.sh script
+ 
 SCRIPT=$(readlink -f "$0")
 CURDIR=`dirname "$SCRIPT"`
 
-STDIN=fstest.stdin.data
-STDOUT=fstest.stdout.data
-STDERR=fstest.stderr.data
+STDIN=data/fstest.stdin.data
+STDOUT=data/fstest.stdout.data
+STDERR=data/fstest.stderr.data
+ZEROVM_OUTPUT=data/zerovm.output
 
 #get printable characters count via var COUNT
 COUNT=0
@@ -43,7 +48,7 @@ if [ "$p" = "" ]
 then
     rm -f ${STDOUT} ${STDERR}
     DATE=`date`
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M${NAME}.manifest -v2 >> zerovm.output &
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M${NAME}.manifest -v2 > ${ZEROVM_OUTPUT} &
 fi
 
 #############################################

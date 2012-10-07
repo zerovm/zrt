@@ -6,3 +6,6 @@ run all tests for db in memory
 
 zrt test suite 
 Planning move most of samples and wrap it as gtests
+
+pjd-fstest
+Test suite suitable for testing of zerovm in memory filesystem

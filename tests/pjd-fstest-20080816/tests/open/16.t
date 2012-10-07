@@ -6,6 +6,8 @@ desc="open returns EMLINK/ELOOP when O_NOFOLLOW was specified and the target is 
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
+quick_exit #zrtfs not support symlinks
+
 echo "1..6"
 
 n0=`namegen`

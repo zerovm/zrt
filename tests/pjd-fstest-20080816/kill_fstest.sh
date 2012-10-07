@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#Close background fstest.nexe process or kill it if did not respond
+
 if [ "`pgrep -f fstest.manifest`" != "" ]
 then
     echo "kill fstest.nexe instance"

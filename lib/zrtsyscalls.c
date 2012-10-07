@@ -25,6 +25,7 @@
 #include "zvm.h"
 #include "zrt.h"
 #include "zrtsyscalls.h"
+#include "zrt_helper_macros.h"
 #include "zrtlog.h"
 #include "transparent_mount.h"
 #include "stream_reader.h"
@@ -38,75 +39,20 @@
 
 /* TODO
  * RESEARCH
- * fstat / stat changes according to channel types
+ * #include <mcheck.h> research debugging capabilities
  * rename : ENOSYS 38 Function not implemented
- * CURRENTLY
- * fseek uses long offset
- * lseek uses off_t offset
- * ftell pos for std* streams
- * SUPPORT
- * fstat for /etc/localtime, set timestamp as localtime
- * big file size 5gb _FILE_OFFSET_BITS=64
- * use fpos64_t; fgetpos64, fsetpos64
- * * _FILE_OFFSET_BITS=32
- * use fpos_t; fgetpos, fsetpos
- * EOF all cases:
- * - zvm_pread return 0 bytes, errno 0;
- * - zvm_pread return err code, if limits reached;
- * - read - bytes read is returned (zero indicates end of file;
- * - pread - zero indicates that end of file
- * - test EOF for channel files: getchar, getline
- * - feof - returning nonzero if it is set to EOF
- * TESTS
- * : EOF correctly return by read, fread, feof,*
- * : channels close, reopen, reclose
- * : try to test fstat returned data
+ * channels close, reopen, reclose
  * BUGS
- * : fdopen failed, ftell fread
+ * fdopen failed, ftell fread
  * */
 
 /*If it's enabled then zrt will try to load tarball from /dev/tarball channel*/
 #define TARBALLFS
 
-/* ******************************************************************************
- * Syscallbacks debug macros*/
 #ifdef DEBUG
-#define ZRT_LOG_NAME "/dev/debug"
-#define LOG_SYSCALL_START(args_p) { log_push_name(__func__); enable_logging_current_syscall(); zrt_log("syscall arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x, arg[3]=0x%x, arg[4]=0x%x", \
-        args_p[0], args_p[1], args_p[2], args_p[3], args_p[4] ); }
-#define LOG_SYSCALL_FINISH(ret){ \
-        if ( ret == -1 ){ zrt_log("ret=0x%x, errno=%d", (int)ret, errno);} \
-        else{ zrt_log("ret=0x%x", (int)ret);} \
-        log_pop_name(__func__); }
-#define LOG_START() { log_push_name(__func__); enable_logging_current_syscall(); zrt_log("%s", __func__); }
-#else
-#define LOG_SYSCALL_START(args_p)
-#define LOG_SYSCALL_FINISH()
-#endif
+    #define ZRT_LOG_NAME "/dev/debug"
+#endif //DEBUG
 
-
-/* ******************************************************************************
- * Syscallback mocks helper macroses*/
-#define JOIN(x,y) x##y
-#define ZRT_FUNC(x) JOIN(zrt_, x)
-
-/* mock. replacing real syscall handler */
-#define SYSCALL_MOCK(name_wo_zrt_prefix, code) \
-        static int32_t ZRT_FUNC(name_wo_zrt_prefix)(uint32_t *args)\
-        {\
-    LOG_SYSCALL_START(args);\
-    LOG_SYSCALL_FINISH(code);\
-    return code; \
-        }
-
-#define SYSCALL_VALIDATE_POINTER(arg_pointer) \
-        if ( arg_pointer == NULL ) \
-        { errno=EFAULT; LOG_SYSCALL_FINISH(-1); return -1; }
-
-#define BUGGY_SYSCALL_VALIDATE_POINTER(arg_pointer) { \
-        char str[20]; sprintf(str, "%p", arg_pointer); \
-        if ( arg_pointer == NULL || !strcmp(str, "(nil)") ) \
-        { errno=EFAULT; LOG_SYSCALL_FINISH(-1); return -1; } }
 
 
 /****************** static data*/
@@ -118,20 +64,27 @@ static struct MountsManager* s_mounts_manager;
 static struct MountsInterface* s_transparent_mount;
 /****************** */
 
-void update_cached_time()
+/*return 0 if not valid, 1 if valid*/
+static int validate_pointer_range(const void* ptr){
+    if ( s_manifest && ptr ){
+        if ( ptr < s_manifest->heap_ptr ){
+            return 0;
+        }
+        else
+            return 1;
+    }else
+        return 0;
+}
+
+static void update_cached_time()
 {
     /* update time value
      * update seconds because updating miliseconds has no effect*/
     ++s_cached_timeval.tv_sec;
 }
 
-void set_zrt_errno( int zvm_errno )
-{
-    errno = zvm_errno;
-    zrt_log( "errno=%d", errno );
-}
-
-/*copy stat to nacl stat, strustures has vriable sizes*/
+/* defined in nacl_struct.h
+ * copy stat to nacl stat, strustures has vriable sizes*/
 void set_nacl_stat( const struct stat* stat, struct nacl_abi_stat* nacl_stat ){
     nacl_stat->nacl_abi_st_dev = stat->st_dev;
     nacl_stat->nacl_abi_st_ino = stat->st_ino;
@@ -165,22 +118,6 @@ static void debug_mes_open_flags( int flags )
             zrt_log("flag %s=%d", all_texts[i], CHECK_FLAG(flags, all_flags[i]) );
         }
     }
-    /*
-     * O_CREAT,      cdr =
-     * O_EXCL,       cdr
-     * O_TRUNC      provided by trusted side
-     * O_LARGEFILE,  native support should be
-     * O_DIRECT              required _GNU_SOURCE define do we need it?
-     * O_DIRECTORY,  cdr     required _GNU_SOURCE define
-     * O_NOATIME, ignore     required _GNU_SOURCE define
-     * O_NOFOLLOW, ignore    (absent in nacl headers)
-     * O_APPEND support for cdr
-     * O_CREAT  provided by trusted side
-     * O_ASYNC
-     * O_CLOEXEC ignore non portable
-     * O_SYNC, ignore
-     * O_NONBLOCK, O_NDELAY, O_NOCTTY,   does not supported
-     * */
 }
 
 static void debug_mes_stat(struct stat *stat){
@@ -195,52 +132,8 @@ static void debug_mes_stat(struct stat *stat){
     zrt_log("st_mtime=%lld", stat->st_mtime );
 }
 
-//static void get_tm_from_timeval(const struct timeval* tv, struct tm* tm){
-//#define SECONDS_IN_YEAR
-////    struct tm {
-////         int tm_sec;         /* seconds */
-////         int tm_min;         /* minutes */
-////         int tm_hour;        /* hours */
-////         int tm_mday;        /* day of the month */
-////         int tm_mon;         /* month */
-////         int tm_year;        /* year */
-////         int tm_wday;        /* day of the week */
-////         int tm_yday;        /* day in the year */
-////         int tm_isdst;       /* daylight saving time */
-////     };
-//
-//
-//    tv->tv_sec
-//}
 
-//static void debug_log_permissions( mode_t mode ){
-//    S_IFMT     0170000   bit mask for the file type bit fields
-//    S_IFSOCK   0140000   socket
-//    S_IFLNK    0120000   symbolic link
-//    S_IFREG    0100000   regular file
-//    S_IFBLK    0060000   block device
-//    S_IFDIR    0040000   directory
-//    S_IFCHR    0020000   character device
-//    S_IFIFO    0010000   FIFO
-//    S_ISUID    0004000   set UID bit
-//    S_ISGID    0002000   set-group-ID bit (see below)
-//    S_ISVTX    0001000   sticky bit (see below)
-//    S_IRWXU    00700     mask for file owner permissions
-//    S_IRUSR    00400     owner has read permission
-//    S_IWUSR    00200     owner has write permission
-//    S_IXUSR    00100     owner has execute permission
-//    S_IRWXG    00070     mask for group permissions
-//    S_IRGRP    00040     group has read permission
-//    S_IWGRP    00020     group has write permission
-//    S_IXGRP    00010     group has execute permission
-//    S_IRWXO    00007     mask for permissions for others (not in group)
-//    S_IROTH    00004     others have read permission
-//    S_IWOTH    00002     others have write permission
-//    S_IXOTH    00001     others have execute permission
-//
-//}
-
-/*alloc absolute path, for relative path jut insert into beginning '/' char, for absolute path just alloc and return.
+/*alloc absolute path, for relative path just insert into beginning '/' char, for absolute path just alloc and return.
  *user application can provide relative path, currently any of zrt filesystems does not supported
  *relative path, so making absolute path is required.
  * */
@@ -290,11 +183,11 @@ static mode_t apply_umask(mode_t mode){
  **************************************************************************/
 
 int mkdir(const char* pathname, mode_t mode){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     errno=0;
     zrt_log("pathname=%p, mode=%o(octal), (pathname==0)=%d, (pathname==NULL)=%d, %X", pathname,
             (uint32_t)mode, (pathname==0), (pathname==NULL), (uintptr_t)pathname);
-    BUGGY_SYSCALL_VALIDATE_POINTER(pathname);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
     mode = apply_umask(mode);
     int ret = s_transparent_mount->mkdir( absolute_path, mode );
@@ -314,10 +207,10 @@ int mkdir(const char* pathname, mode_t mode){
 
 /*glibc substitution. it should be linked instead standard rmdir */
 int rmdir(const char *pathname){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     errno=0;
     zrt_log("pathname=%s", pathname);
-    BUGGY_SYSCALL_VALIDATE_POINTER(pathname);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
     int ret = s_transparent_mount->rmdir( absolute_path );
     free(absolute_path);
@@ -326,10 +219,10 @@ int rmdir(const char *pathname){
 }
 
 int lstat(const char *path, struct stat *buf){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     errno=0;
     zrt_log("path=%s, buf=%p", path, buf);
-    BUGGY_SYSCALL_VALIDATE_POINTER(path);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     char* absolute_path = alloc_absolute_path_from_relative( path );
     int ret = s_transparent_mount->stat(absolute_path, buf);
     free(absolute_path);
@@ -343,7 +236,7 @@ int lstat(const char *path, struct stat *buf){
 
 /*sets umask ang et previous value*/
 mode_t umask(mode_t mask){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     /*save new umask and return prev*/
     mode_t prev_umask = get_umask();
     char umask_str[11];
@@ -355,10 +248,10 @@ mode_t umask(mode_t mask){
 }
 
 int chown(const char *path, uid_t owner, gid_t group){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     errno=0;
     zrt_log( "path=%s, owner=%u, group=%u", path, owner, group );
-    BUGGY_SYSCALL_VALIDATE_POINTER(path);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     char* absolute_path = alloc_absolute_path_from_relative(path);
     int ret = s_transparent_mount->chown(absolute_path, owner, group);
     free(absolute_path);
@@ -367,7 +260,7 @@ int chown(const char *path, uid_t owner, gid_t group){
 }
 
 int fchown(int fd, uid_t owner, gid_t group){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     errno=0;
     zrt_log( "fd=%d, owner=%u, group=%u", fd, owner, group );
     int ret = s_transparent_mount->fchown(fd, owner, group);
@@ -376,9 +269,9 @@ int fchown(int fd, uid_t owner, gid_t group){
 }
 
 int lchown(const char *path, uid_t owner, gid_t group){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     zrt_log( "path=%s, owner=%u, group=%u", path, owner, group );
-    BUGGY_SYSCALL_VALIDATE_POINTER(path);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     /*do not do transformaton path, it's called in nested chown*/
     int ret =chown(path, owner, group);
     LOG_SYSCALL_FINISH(ret);
@@ -386,10 +279,10 @@ int lchown(const char *path, uid_t owner, gid_t group){
 }
 
 int unlink(const char *pathname){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     errno=0;
     zrt_log( "pathname=%s", pathname );
-    BUGGY_SYSCALL_VALIDATE_POINTER(pathname);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     char* absolute_path = alloc_absolute_path_from_relative(pathname);
     int ret = s_transparent_mount->unlink(absolute_path);
     free(absolute_path);
@@ -398,10 +291,10 @@ int unlink(const char *pathname){
 }
 
 int chmod(const char *path, mode_t mode){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     errno=0;
     zrt_log( "path=%s, mode=%u", path, mode );
-    BUGGY_SYSCALL_VALIDATE_POINTER(path);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     mode = apply_umask(mode);
     char* absolute_path = alloc_absolute_path_from_relative(path);
     int ret = s_transparent_mount->chmod(absolute_path, mode);
@@ -411,7 +304,7 @@ int chmod(const char *path, mode_t mode){
 }
 
 int fchmod(int fd, mode_t mode){
-    LOG_START();
+    LOG_SYSCALL_START(NULL);
     errno=0;
     zrt_log( "fd=%d, mode=%u", fd, mode );
     mode = apply_umask(mode);
@@ -454,7 +347,7 @@ static int32_t zrt_open(uint32_t *args)
     uint32_t mode = (int)args[2];
 
     zrt_log("path=%s", name);
-    SYSCALL_VALIDATE_POINTER(name);
+    VALIDATE_SYSCALL_PTR(name);
     debug_mes_open_flags(flags);
 
     char* absolute_path = alloc_absolute_path_from_relative( name );
@@ -486,7 +379,7 @@ static int32_t zrt_read(uint32_t *args)
     errno = 0;
     int handle = (int)args[0];
     void *buf = (void*)args[1];
-    SYSCALL_VALIDATE_POINTER(buf);
+    VALIDATE_SYSCALL_PTR(buf);
     int64_t length = (int64_t)args[2];
 
     int32_t ret = s_transparent_mount->read(handle, buf, length);
@@ -498,10 +391,19 @@ static int32_t zrt_read(uint32_t *args)
 static int32_t zrt_write(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
+    zrt_log("errno=%d", errno);
     int handle = (int)args[0];
     void *buf = (void*)args[1];
-    SYSCALL_VALIDATE_POINTER(buf);
+    VALIDATE_SYSCALL_PTR(buf);
     int64_t length = (int64_t)args[2];
+
+#ifdef DEBUG
+    /*disable logging write calls related to debug, stdout and stderr channel */
+    if ( handle <= 2 || handle == zrt_log_fd() ){
+        disable_logging_current_syscall();
+    }
+#endif
+
 
     int32_t ret = s_transparent_mount->write(handle, buf, length);
     LOG_SYSCALL_FINISH(ret);
@@ -539,8 +441,8 @@ static int32_t zrt_stat(uint32_t *args)
     errno = 0;
     const char *file = (const char*)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
-    SYSCALL_VALIDATE_POINTER(file);
-    SYSCALL_VALIDATE_POINTER(sbuf);
+    VALIDATE_SYSCALL_PTR(file);
+    VALIDATE_SYSCALL_PTR(sbuf);
     struct stat st;
     char* absolute_path = alloc_absolute_path_from_relative(file);
     int ret = s_transparent_mount->stat(absolute_path, &st);
@@ -561,7 +463,7 @@ static int32_t zrt_fstat(uint32_t *args)
     errno = 0;
     int handle = (int)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
-    SYSCALL_VALIDATE_POINTER(sbuf);
+    VALIDATE_SYSCALL_PTR(sbuf);
     struct stat st;
     int ret = s_transparent_mount->fstat( handle, &st);
     if ( ret == 0 ){
@@ -581,7 +483,7 @@ SYSCALL_MOCK(chmod, -EPERM) /* NACL does not support chmod*/
  * zrt lib will help user to do it transparently.
  */
 
-/* change space allocation */
+/* change space allocation. ZRT nothing do here just call sysbrk NACL syscall.*/
 static int32_t zrt_sysbrk(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
@@ -595,7 +497,7 @@ static int32_t zrt_sysbrk(uint32_t *args)
     return retcode;
 }
 
-/* map region of memory */
+/* map region of memory. ZRT nothing do here just call mmap NACL syscall.*/
 static int32_t zrt_mmap(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
@@ -613,7 +515,7 @@ static int32_t zrt_mmap(uint32_t *args)
  * unmap region of memory
  * note: zerovm doesn't use it in memory management.
  * instead of munmap it use mmap with protection 0
- */
+ * ZRT nothing do here just call  munmap NACL syscall.*/
 static int32_t zrt_munmap(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
@@ -634,7 +536,7 @@ static int32_t zrt_getdents(uint32_t *args)
     errno=0;
     int handle = (int)args[0];
     char *buf = (char*)args[1];
-    SYSCALL_VALIDATE_POINTER(buf);
+    VALIDATE_SYSCALL_PTR(buf);
     uint32_t count = args[2];
 
     int32_t ret = s_transparent_mount->getdents(handle, buf, count);
@@ -890,7 +792,7 @@ void zrt_setup( struct UserManifest* manifest ){
 
     /* using direct call to channels_mount and create debuging log channel*/
     int zrt_log_fd = s_channels_mount->open( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
-    setup_zrtlog_fd( zrt_log_fd );
+    set_zrtlog_fd( zrt_log_fd );
 
     zrt_log_str( "started" );
 }

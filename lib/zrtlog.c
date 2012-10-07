@@ -30,8 +30,12 @@ void disable_logging_current_syscall(){
     s_donotlog = 1; //switch off logging
 }
 
-void setup_zrtlog_fd(int fd){
+void set_zrtlog_fd(int fd){
     s_zrt_log_fd = fd;
+}
+
+int zrt_log_fd(){
+    return s_zrt_log_fd;
 }
 
 const char* syscall_stack_str(){

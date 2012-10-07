@@ -33,7 +33,10 @@ class Path {
   // Last() returns the last path component in the path
   // represented by this Path.  This can represent
   // the file or directory name of the path.
-  std::string Last(void) { return path_.back(); }
+  std::string Last(void) {
+      /*YaroslavLitvinov std::list::back() for empty container is falls*/
+      if ( !path_.empty() ) return path_.back();
+      else return "/"; }
 
   // AppendPath returns a Path that represents the
   // path of this Path with the argument path appended.

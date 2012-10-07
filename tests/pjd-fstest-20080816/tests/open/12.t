@@ -6,6 +6,8 @@ desc="open returns ELOOP if too many symbolic links were encountered in translat
 dir=`dirname $0`
 . ${dir}/../misc.sh
 
+quick_exit  #zrtfs not support symlink
+
 echo "1..6"
 
 n0=`namegen`

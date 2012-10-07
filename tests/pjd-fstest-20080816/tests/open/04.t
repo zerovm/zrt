@@ -12,6 +12,13 @@ n0=`namegen`
 n1=`namegen`
 
 expect 0 mkdir ${n0} 0755
-expect ENOENT open ${n0}/${n1}/test O_CREAT 0644
-expect ENOENT open ${n0}/${n1} O_RDONLY
+if [ "${fs}" != "zrtfs" ]
+then
+    expect ENOENT open ${n0}/${n1}/test O_CREAT 0644
+    expect ENOENT open ${n0}/${n1} O_RDONLY
+else
+    #zrtfs returning errno=ENOENT overwriten in further to EPERM in unexpected way
+    expect EPERM open ${n0}/${n1}/test O_CREAT 0644
+    expect EPERM open ${n0}/${n1} O_RDONLY
+fi
 expect 0 rmdir ${n0}
