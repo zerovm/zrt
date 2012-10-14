@@ -71,8 +71,6 @@ int main(int argc, char **argv, char **envp)
     zrt_setup_finally();
 
     /* call user main() and care about return code */
-    char mainid[] = {"slave_main"};
     return slave_main(argc, argv);
-    (void)mainid;
 }
 

@@ -15,17 +15,18 @@
 
 
 /*
- * user program entry point. old style function prototyping
- * allows to avoid error when main has an empty arguments list
- * note: arguments still can be passed (see "command_line.c")
- *
- * when (and if) "blob engine" will be developed this cheat will
- * be removed
+ * user program entry point. Explicit set of paramenters require
+ * the same arguments list to be defined in user main.
  */
 #define main slave_main
 int slave_main(int argc, char **argv);
 
-/* entry point for zrt library sample (see "syscall_manager.S" file) */
+/* entry point into untrasted syscalls implementation. It using syscallback
+ * mechanism that allows to handle syscalls implemented on untrasted side, 
+ * described by zrt_syscalls array in zrtsyscalls.c file; 
+ * (see implementation of syscallback in "syscall_manager.S" file ) 
+*/
 void syscall_director(void);
+
 
 #endif /* _LIB_ZRT_H_ */
