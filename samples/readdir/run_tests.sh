@@ -13,8 +13,9 @@ echo manifest1 test
 rm 1.errlog -f
 echo ${ZEROVM_ROOT}/zerovm -M${SCRIPT_PATH}/readdir.manifest
 ${ZEROVM_ROOT}/zerovm -M${SCRIPT_PATH}/readdir.manifest
-echo "stderr output >>>>>>>>>>"
-cat stderr.data
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M${SCRIPT_PATH}/readdir.manifest
+echo "stdout output >>>>>>>>>>"
+cat stdout.data
 
 
 

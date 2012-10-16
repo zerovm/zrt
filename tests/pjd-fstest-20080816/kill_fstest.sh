@@ -6,7 +6,7 @@ if [ "`pgrep -f fstest.manifest`" != "" ]
 then
     echo "kill fstest.nexe instance"
     #send controldata to kill fstest 
-    echo test12345complete >> fstest.stdin.data
+    echo test12345complete >> data/fstest.stdin.data
     sleep 1
     if [ "`pgrep -f fstest.manifest`" != "" ]
     then

@@ -1,6 +1,6 @@
 PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
-TESTS_ROOT=src
+#TESTS_ROOT=src
 #it should be used release version of zerovm
 ZEROVM=$(ZEROVM_ROOT)/zerovm.rel
 
@@ -24,7 +24,7 @@ CFLAGS+=-Wno-long-long -O2 -msse4.1 -m64
 CFLAGS+=-I.. -I. -I../api -Isrc
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
-#CFLAGS+=-Isrc/rt
+
 
 LDFLAGS+= -m64 -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl
 LDFLAGS+= -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++ 
@@ -32,6 +32,8 @@ LDFLAGS+= -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
 LDFLAGS+= -lrt
 #For dlopen
 LDFLAGS+= -ldl
+#math
+LDFLAGS+= -lm
 
 
 all: clean $(ZEROVM) $(TEST_NEXES)
@@ -62,4 +64,4 @@ $(TEST_NEXES):  $(TEST_INCLUDES)
 	 sed s@{GLIBC_FS}@$(ZRT_ROOT)/archive/lib.tar@g > $(CURDIR)/$(BASENAME).manifest
 #Run test under zerovm and display returned error code
 	@echo -n "retcode="
-	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest -v2 | awk '{if (NR == 2) { print }}'
+	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest | awk '{if (NR == 2) { print }}'

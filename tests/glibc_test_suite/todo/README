@@ -1,0 +1,2 @@
+gmp
+math/atest-sincos require libgmp (absent headers) seems to be should be ported

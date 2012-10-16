@@ -14,5 +14,6 @@ Nodename = readdir
 Version = 09082012
 Nexe = {ABS_PATH}readdir.nexe
 NexeMax = 10000000
+MemMax = 268435456
 SyscallsMax = 3333
-
+Timeout=10

@@ -1,0 +1,30 @@
+тесты которые запускает native client и результат работы на zerovm:
+
+intl/
+tst-ngettext.c 	       	      	PASS
+csu/
+test-as-const-ucontext_i.c	PASS
+iconv/       
+tst-iconv5.c			PASS
+tst-iconv3.c			PASS
+tst-iconv1.c			PASS
+tst-iconv2.c			PASS
+locale/
+tst-C-locale.c			PASS
+iconvdata/
+bug-iconv3.c			PASS
+ctype/
+test_ctype.c			PASS
+math/
+test-float.c			FAIL
+============================================
+
+math/atest-sincos		FAIL	GMP required
+============================================
+csu/
+tst-atomic.c			SKIP
+test-as-const-tcb-offsets.c 	SKIP	tls, threads
+test-as-const-tlsdesc.c 	SKIP
+
+math/
+test-fenv.c			EXCLUDED_IN_NACL
