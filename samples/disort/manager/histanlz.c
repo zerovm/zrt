@@ -310,8 +310,10 @@ request_assign_detailed_histogram( struct ChannelsConfigInterface *chan_if,
 	    struct UserChannel *chanw = chan_if->Channel( chan_if, ESourceNode, src_nodes_list[i], EChannelModeWrite );
 	    assert(chanr);
 	    assert(chanw);
+#if LOG_LEVEL == LOG_DEBUG
 	    chanw->DebugPrint(chanw, stderr);
 	    chanr->DebugPrint(chanr, stderr);
+#endif
 		struct Histogram *detld_histogram = reqrep_detailed_histograms_alloc(
 				chanw->fd, chanr->fd, chan_if->ownnodeid, &request_detailed_histogram[i], last_request );
 		/*save received detailed histograms into workers array, transfers pointer ownership*/

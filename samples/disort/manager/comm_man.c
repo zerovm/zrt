@@ -26,7 +26,9 @@ read_crcs(struct ChannelsConfigInterface *chan_if, int *src_nodes_list, uint32_t
 	for( int i=0; i < array_len; i++ ){
 		struct UserChannel *channel = chan_if->Channel(chan_if, ESourceNode, src_nodes_list[i], EChannelModeRead );
 		assert(channel);
+#if LOG_LEVEL == LOG_DEBUG
 		channel->DebugPrint(channel, stderr);
+#endif
 		WRITE_FMT_LOG(LOG_DEBUG, "Reading fd=%d, crc #%d; ", channel->fd, i);
 		read_channel(channel->fd, (char*) &crc_array[i], sizeof(uint32_t) );
 		WRITE_FMT_LOG(LOG_DEBUG, "Read OK crc=%u\n", crc_array[i]);
@@ -45,7 +47,9 @@ recv_histograms( struct ChannelsConfigInterface *chan_if, int *src_nodes_list,
 	for( int i=0; i < wait_histograms_count; i++ ){
 	    struct UserChannel *channel = chan_if->Channel(chan_if, ESourceNode, src_nodes_list[i], EChannelModeRead);
 	    assert(channel);
+#if LOG_LEVEL == LOG_DEBUG
 	    channel->DebugPrint(channel, stderr);
+#endif
 		WRITE_FMT_LOG(LOG_DEBUG,"Reading fd=%d, histogram #%d\n", channel->fd, i);
 		struct packet_data_t t; t.type = EPACKET_UNKNOWN;
 		read_channel(channel->fd, (char*) &t, sizeof(t) );

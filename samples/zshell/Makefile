@@ -5,13 +5,14 @@ NACL_GCC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I$(ZRT_ROOT)/lib/lua-5.2.1/src -I$(ZRT_ROOT)/lib/sqlite3 -I.
 CFLAGS=-Wall -Wno-long-long -m64 -std=c99
 
-all: createdirs clean zshell.nexe #zshell_gcc
+all: createdirs clean zshell.nexe
 
 zshell.nexe: obj/luaexec.o obj/main.o obj/sqlitequery.o
 	$(NACL_GCC) -o zshell.nexe  -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static \
 	-melf64_nacl -m64 obj/luaexec.o obj/main.o obj/sqlitequery.o \
 	-Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -llua -lm -lsqlite3 -lfs -lstdc++ $(DEBUG)  
-		
+	binpatch zshell.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+
 obj/main.o: main.c
 	$(NACL_GCC) -c -o obj/main.o     $(INCLUDE_FLAGS) ${CFLAGS} $(DEBUG) main.c -DUSER_SIDE -D_GNU_SOURCE
 
@@ -32,5 +33,5 @@ clean:
 	@rm -f sqlite/*.manifest
 	@rm -f lua/*.manifest
 	@rm -f zshell.nexe zshell_gcc
-	
+
 

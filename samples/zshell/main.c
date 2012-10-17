@@ -63,7 +63,7 @@ int SearchNewLine( const char *buffer ){
 		return -1;
 }
 
-int main(int argc, char **argv){
+int zmain(int argc, char **argv){
 	/* Read to buffer from stdin which contains text script; first line should always begin on '#';
 	 * First line can be one of these: #lua, #sqlite  */
 	int fdscript = 0; //stdin

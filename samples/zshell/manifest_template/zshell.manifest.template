@@ -16,5 +16,7 @@ CommandLine = {COMMAND_LINE}
 Version = 09082012
 Nexe = {ABS_PATH}zshell.nexe
 NexeMax = 10000000
+MemMax=134217728
+Timeout=30
 SyscallsMax = 3333333
 SetupCallsMax = 99999999

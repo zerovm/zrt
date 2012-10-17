@@ -16,7 +16,7 @@
 #define OUTFILE "/dev/out/out"
 #define SIGNATURE argv[1][0]
 
-int main(int argc, char **argv)
+int zmain(int argc, char **argv)
 {
   char message[CHUNK_SIZE];
   char in_message[CHUNK_SIZE];

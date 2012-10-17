@@ -9,6 +9,7 @@ $(NAME).nexe: $(NAME).o
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).nexe -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
 	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt -llua -lm -lfs -lstdc++  
+	binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 $(NAME).o: $(SRC_PATH)/$(NAME).c
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).o -Wall \

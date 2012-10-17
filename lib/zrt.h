@@ -7,19 +7,22 @@
 
 #ifndef _LIB_ZRT_H_
 #define _LIB_ZRT_H_
+
+#include <stdint.h>
+
+/*do we need either?*/
 #ifndef USER_SIDE
 #define USER_SIDE
 #endif
 
-#include <stdint.h>
-
+/*zmain should be explicitly defined as entry point in user application*/
+#define main zmain_fake
 
 /*
- * user program entry point. Explicit set of paramenters require
- * the same arguments list to be defined in user main.
+ * user program entry point. should be defined by user application
+ * instead, also explicit set of paramenters required;
  */
-#define main slave_main
-int slave_main(int argc, char **argv);
+int zmain(int argc, char **argv);
 
 /* entry point into untrasted syscalls implementation. It using syscallback
  * mechanism that allows to handle syscalls implemented on untrasted side, 

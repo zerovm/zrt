@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include "zrt.h"
 
-int main(int argc, char **argv)
+int zmain(int argc, char **argv)
 {
   /* write to default device (in our case it is stdout) */
   printf("hello, world\n");

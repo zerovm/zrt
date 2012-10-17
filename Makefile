@@ -23,13 +23,13 @@ LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 
 ############## ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
-lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a #lib/sqlite3/libsqlite3.a 
+lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/libsqlite3.a 
 
 ################# samples to build
 UNSTABLE_SAMPLES= net
 SAMPLES=disort hello readdir reqrep sort_paging time wordcount zshell
 TEST_SAMPLES=bigfile command_line environment file_stat seek
- 
+
 ################# flags set
 CFLAGS += -Wall -Wno-long-long -O2 -m64
 CFLAGS += -I. -Ilib -Ilib/fs -Ilib/fs/unpack -Ilib/fs/utils -I${ZEROVM_ROOT}/api
@@ -64,7 +64,7 @@ ${SAMPLES}:
 
 ################ "make cleanall" Cleaning libs, tests, samples 	
 cleanall: clean clean_samples
-	
+
 ################ "make clean" Cleaning libs 
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 
@@ -83,4 +83,4 @@ ${SAMPLES_CLEAN}:
 	@make -Csamples/$(basename $@) clean
 ${TEST_SAMPLES_CLEAN}:
 	@make -Ctests/zrt_test_suite/samples/$(basename $@) clean
-		
+

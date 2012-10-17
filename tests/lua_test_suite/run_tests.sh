@@ -10,7 +10,7 @@ sed s@{ABS_PATH}@$SCRIPT_PATH/@g manifest_template/lua.manifest.template | \
 sed s@{LUA_TEST_PATH}@$LUA_TEST_PATH/@g > lua.manifest
 
 echo some input text > lua.input
-${ZEROVM_ROOT}/zerovm -M$SCRIPT_PATH/lua.manifest
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M$SCRIPT_PATH/lua.manifest
 
 
 

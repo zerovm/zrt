@@ -55,7 +55,7 @@ int start_node(struct ChannelsConfigInterface *chan_if, int nodeid){
     return 0;
 }
 
-int main(int argc, char **argv){
+int zmain(int argc, char **argv){
     /* argv[0] is node name
      * expecting in format : "name-%d",
      * format for single node without decimal id: "name" */

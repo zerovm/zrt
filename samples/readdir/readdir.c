@@ -103,7 +103,7 @@ int listdir(const char *path) {
 
 
 
-int main(int argc, char **argv)
+int zmain(int argc, char **argv)
 {
     listdir("/dev");fflush(0);
     syscall_listdir("/dev");fflush(0);

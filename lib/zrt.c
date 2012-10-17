@@ -25,8 +25,7 @@
 #include "zrtsyscalls.h"
 #include "zrtlog.h"
 
-// ### revise it
-#undef main /* prevent misuse macro */
+#undef main
 
 /*
  * initialize zerovm api, get the user manifest, install syscallback
@@ -71,6 +70,6 @@ int main(int argc, char **argv, char **envp)
     zrt_setup_finally();
 
     /* call user main() and care about return code */
-    return slave_main(argc, argv);
+    return zmain(argc, argv);
 }
 

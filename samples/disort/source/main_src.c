@@ -111,7 +111,9 @@ int start_node(  struct ChannelsConfigInterface *chan_if, int nodeid ){
 
     struct UserChannel *channel = chan_if->Channel( chan_if, EManagerNode, 1, EChannelModeWrite );
     assert(channel);
+#if LOG_LEVEL == LOG_DEBUG
     channel->DebugPrint(channel, stderr);
+#endif
     /*send crc of sorted array to the manager node*/
     uint32_t crc = array_crc( sorted_array, ARRAY_ITEMS_COUNT );
     WRITE_FMT_LOG(LOG_DEBUG, "write crc=%u into fd=%d", crc, channel->fd);
@@ -181,7 +183,7 @@ int start_node(  struct ChannelsConfigInterface *chan_if, int nodeid ){
 }
 
 
-int main(int argc, char **argv){
+int zmain(int argc, char **argv){
     /* argv[0] is node name
      * expecting in format : "name-%d",
      * format for single node without decimal id: "name" */

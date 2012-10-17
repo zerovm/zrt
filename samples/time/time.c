@@ -1,14 +1,15 @@
 /*
  * demonstration of zrt_gettimeofday()
  */
-#include <stdio.h>
+#include <unistd.h>
 #include <time.h>
+#include <stdint.h>
+#include <stdio.h>
+
 #include "zrt.h"
 
-#include <stdint.h>
-#include <unistd.h>
 
-int main(int argc, char **argv)
+int zmain(int argc, char **argv)
 {
   time_t cur_time;
   struct tm *date_time;

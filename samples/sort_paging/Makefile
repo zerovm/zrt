@@ -14,7 +14,11 @@ all: $(NAME_1).o $(NAME_2).o $(NAME_3).o cpuid.o
 	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME_3).nexe -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
 	$(DEBUG) $(NAME_3).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
-	
+#
+	binpatch $(NAME_1).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	binpatch $(NAME_2).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	binpatch $(NAME_3).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+#
 	chmod u+rwx run_test.sh genmanifest.sh
 	./run_test.sh
 

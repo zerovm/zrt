@@ -61,7 +61,9 @@ int start_node(struct ChannelsConfigInterface *chan_if){
     for (int i=0; i < src_nodes_count; i++ ){
         struct UserChannel *channel = chan_if->Channel(chan_if, ESourceNode, range[0][i].src_nodeid, EChannelModeWrite );
         assert(channel);
+#if LOG_LEVEL == LOG_DEBUG
         channel->DebugPrint(channel, stderr);
+#endif
         WRITE_FMT_LOG(LOG_DEBUG, "write_sorted_ranges fdw=%d\n", channel->fd );
         write_range_request( channel->fd, range, src_nodes_count, i );
     }
@@ -101,7 +103,7 @@ int start_node(struct ChannelsConfigInterface *chan_if){
     return 0;
 }
 
-int main(int argc, char **argv){
+int zmain(int argc, char **argv){
     int res =0;
     WRITE_FMT_LOG(LOG_DEBUG, "Manager node started argv[0]=%s.\n", argv[1] );
 

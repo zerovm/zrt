@@ -8,7 +8,8 @@ all: $(NAME).o
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
 	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
 	sed s@{ABS_PATH}@${CURDIR}/@g $(NAME).manifest.template > $(NAME).manifest
-	$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v4
+	binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	setarch x86_64 -R $(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v4
 
 $(NAME).o:
 	$(CC) -o $(NAME).o -Wall \

@@ -47,4 +47,6 @@ Environment = PATH, foo
 =====================================================================
 Version = 09082012
 Nexe = {ABS_PATH}lua.nexe
+MemMax=134217728
+Timeout=10
 NodeName=luatests, 1
