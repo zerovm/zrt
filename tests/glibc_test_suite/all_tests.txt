@@ -1,30 +1,303 @@
 тесты которые запускает native client и результат работы на zerovm:
 
-intl/
-tst-ngettext.c 	       	      	PASS
-csu/
-test-as-const-ucontext_i.c	PASS
-iconv/       
-tst-iconv5.c			PASS
-tst-iconv3.c			PASS
-tst-iconv1.c			PASS
-tst-iconv2.c			PASS
-locale/
-tst-C-locale.c			PASS
-iconvdata/
-bug-iconv3.c			PASS
-ctype/
-test_ctype.c			PASS
-math/
+		intl/
+tst-ngettext.c 	       	      	PASS.
+		csu/
+tst-empty.c			PASS.
+test-as-const-ucontext_i.c	PASS.
+		iconv/       
+tst-iconv5.c			PASS.
+tst-iconv3.c			PASS.
+tst-iconv1.c			PASS.
+tst-iconv2.c			PASS.
+		locale/
+tst-C-locale.c			PASS.
+		iconvdata/
+bug-iconv3.c			FAIL.	nexe didn't start
+		ctype/
+test_ctype.c			PASS.
+		math/
+test-matherr.c			PASS.
+basic-test.c			PASS.
+test-fpucw.c			PASS.
+tst-definitions.c		PASS.
+test-tgmath-int.c		PASS.
+test-tgmath-ret.c		PASS.
+test-tgmath.c			FAIL.
+test-tgmath2.c			FAIL.	nexe didn't start
+test-misc.c			FAIL.
 test-float.c			FAIL
+bug-nextafter.c			COPIED.
+bug-tgmath1.c			COPIED.
+test-double.c			FAIL.	nexe didn't start
+test-idouble.c			PASS.
+		setjmp/
+tst-setjmp.c			PASS.
+jmpbug.c			COPIED.
+bug269-setjmp.c			COPIED.
+		signal/
+tst-sigset.c			COPIED.
+		stdlib/
+tst-strtol.c			PASS.
+testrand.c			COPIED.
+testsort.c			COPIED.
+testdiv.c			COPIED.
+test-canon2.c			COPIED.
+tst-strtoll.c			PASS.
+tst-environ.c			PASS.
+tst-xpg-basename.c		PASS.
+tst-random.c			PASS.
+tst-random2.c			PASS.
+tst-bsearch.c			PASS.
+tst-limits.c			PASS.
+tst-rand48.c			PASS.
+test-a641.c			VERSION.
+tst-qsort.c			PASS.
+bug-strtod2.c			COPIED.
+tst-atof1.c			PASS.
+tst-atof2.c			PASS.
+tst-strtod2.c			PASS.
+tst-rand48-2.c			PASS.
+tst-qsort2.c			PASS.
+tst-strtod6.c			PASS.
+		stdio-common/
+test_rdwr.c			COPIED.
+tstgetln.c			COPIED.
+test-fseek.c			COPIED.
+tst-fileno.c			PASS.
+bug18a.c			COPIED.
+bug17.c				COPIED.
+bug19.c				COPIED.
+bug8.c				COPIED.
+bug13.c				COPIED.
+bug3.c				COPIED.
+bug16.c				COPIED.
+bug5.c				COPIED.
+bug4.c				COPIED.
+bug1.c				COPIED.
+bug21.c				COPIED.
+bug20.c				COPIED.
+bug19a.c			COPIED.
+bug2.c				COPIED.
+bug12.c				COPIED.
+bug11.c				COPIED.
+bug10.c				COPIED.
+bug18.c				COPIED.
+bug6.c				COPIED.
+bug7.c				COPIED.
+bug9.c				COPIED.
+bug15.c				COPIED.
+bug14.c				COPIED.
+bug22.c				COPIED.
+tfformat.c			COPIED.
+tiformat.c			COPIED.
+tllformat.c			COPIED.
+tstdiomisc.c			COPIED.
+tst-printfsz.c			PASS.
+tst-wc-printf.c			PASS.
+scanf7.c			COPIED.
+scanf11.c			COPIED.
+scanf15.c			COPIED.
+scanf2.c			COPIED.
+scanf4.c			COPIED.
+scanf3.c			COPIED.
+scanf9.c			COPIED.
+scanf17.c			COPIED.
+scanf14.c			COPIED.
+scanf16.c			COPIED.
+scanf8.c			COPIED.
+scanf.c				COPIED.
+scanf10.c			COPIED.
+scanf13.c			COPIED.
+scanf1.c			COPIED.
+scanf12.c			COPIED.
+scanf5.c			COPIED.
+tst-cookie.c			COPIED.
+tst-obprintf.c			PASS.
+tst-sscanf.c			PASS.
+tst-fmemopen.c			PASS.
+tst-sprintf.c			FAIL.	Signal 11 from untrusted code
+tst-fphex.c			PASS.
+tst-fmemopen2.c			PASS.
+tst-fgets.c			PASS.
+tst-swscanf.c			PASS.
+tst-sprintf2.c			PASS.
+		libio/
+tst-ext2.c			FAIL.	nexe didn't start
+tst-sscanf.c			PASS.
+bug-ungetc.c			COPIED.
+bug-fseek.c			COPIED.
+tst-mmap-eofsync.c		FAIL.	nexe didn't start
+tst-mmap-fflushsync.c		FAIL.	nexe didn't start
+tst-mmap-offend.c		FAIL.	nexe didn't start
+bug-wfflush.c			COPIED.
+bug-fopena+.c			COPIED.
+bug-mmap-fflush.c		COPIED.
+bug-rewind.c			COPIED.
+bug-memstream1.c		COPIED.
+bug-ftell.c			COPIED.
+bug-ungetc3.c			COPIED.
+bug-ungetc4.c			COPIED.
+bug-ungetwc2.c			COPIED.
+bug-rewind2.c			COPIED.
+bug-ungetwc1.c			COPIED.
+bug-ungetc2.c			COPIED.
+bug-wmemstream1.c		COPIED.
+tst-memstream1.c		PASS.
+tst-memstream2.c		PASS.
+tst-wmemstream1.c		PASS.
+tst-wmemstream2.c		PASS.
+		dlfcn/
+errmsg1.c			COPIED.
+bug-dlopen1.c			COPIED.
+		malloc/
+mallocbug.c			COPIED.
+tst-malloc.c			FAIL.
+tst-valloc.c			PASS.
+tst-calloc.c			PASS.
+tst-obstack.c			PASS.
+tst-mallocstate.c		PASS.
+tst-mcheck.c			FAIL.
+tst-trim1.c			PASS.
+		string/
+tester.c			COPIED.
+inl-tester.c			COPIED.
+noinl-tester.c			COPIED.
+testcopy.c			COPIED.
+test-ffs.c			COPIED.
+tst-strlen.c			PASS.
+stratcliff.c			COPIED.
+tst-svc.c			PASS.
+tst-inlcall.c			PASS.
+bug-strncat1.c			COPIED.
+bug-strspn1.c			COPIED.
+bug-strtok1.c			COPIED.
+bug-strpbrk1.c			COPIED.
+bug-envz1.c			COPIED.
+bug-strcoll1.c			COPIED.
+tst-bswap.c			FAIL.
+tst-strtok.c			PASS.
+tst-strfry.c			PASS.
+tst-endian.c			FAIL.
+tst-wcstof.c			PASS.
+		wcsmbs/
+wcsmbs-tst1.c			COPIED.
+tst-wcsnlen.c			PASS.
+tst-wcrtomb.c			PASS.
+tst-wcpncpy.c			PASS.
+tst-mbsrtowcs.c			PASS.
+tst-wchar-h.c			PASS.
+wcsatcliff.c			COPIED.
+		time/
+test_time.c			COPIED.
+tst-posixtz.c			PASS.
+tst_wcsftime.c			COPIED.
+tst-mktime.c			PASS.
+tst-strftime.c			PASS.
+tst-mktime3.c			PASS.
+tst-strptime2.c			-
+bug-mktime1.c			COPIED.
+bug-asctime.c			COPIED.
+bug-asctime_r.c			COPIED.
+bug-getdate1.c			COPIED.
+		dirent/
+list.c				COPIED.
+tst-seekdir.c			-
+tst-fdopendir2.c		-
+		pwd/
+tst-getpw.c			-
+		posix/
+testfnm.c			COPIED.
+globtest.c			COPIED.
+test-vfork.c			COPIED.
+runptests.c			COPIED.
+wordexp-test.c			COPIED.
+runtests.c			COPIED.
+regexbug1.c			COPIED.
+tst-getlogin.c			-
+tst-getaddrinfo.c		-
+tst-fnmatch.c			-
+bug-ga1.c
+bug-regex27.c
+bug-regex16.c
+bug-regex23.c
+bug-regex8.c
+bug-glob2.c
+bug-regex3.c
+bug-regex11.c
+bug-regex15.c
+bug-regex12.c
+bug-regex7.c
+bug-regex18.c
+bug-regex24.c
+bug-regex1.c
+bug-regex5.c
+bug-regex17.c
+bug-regex20.c
+bug-regex25.c
+bug-regex9.c
+bug-ga2.c
+bug-regex10.c
+bug-regex28.c
+bug-regex13.c
+bug-regex22.c
+bug-glob1.c
+bug-regex21.c
+bug-regex2.c
+bug-regex19.c
+bug-regex6.c
+bug-regex14.c
+bug-regex4.c
+bug-regex26.c
+transbug.c			COPIED.
+		io/
+test-stat.c			COPIED.
+		gnulib/
+tst-gcc.c			COPIED.
+		wctype/
+test_wcfuncs.c			COPIED.
+test_wctype.c			COPIED.
+		crypt/
+cert.c				COPIED.
+md5test.c			COPIED
+md5c-test.c			COPIED.
+sha256test.c			COPIED.
+sha256c-test.c			COPIED.
+sha512test.c			COPIED.
+sha512c-test.c			COPIED.
+		elf/
+nodlopen.c			COPIED.
+nodlopen2.c			COPIED.
+tst-dlmopen2.c			-
+tst-thrlock.c			-
+
+
+
+
+============================================
+TODO:
+		math/
+atest-sincos.c			GMP required	
+atest-exp2.c  			GMP required
+atest-exp.c			GMP required
 ============================================
 
-math/atest-sincos		FAIL	GMP required
 ============================================
-csu/
-tst-atomic.c			SKIP
-test-as-const-tcb-offsets.c 	SKIP	tls, threads
-test-as-const-tlsdesc.c 	SKIP
+SKIP:
+		csu/
+tst-atomic.c			SKIP.
+test-as-const-tcb-offsets.c 	SKIP.	tls, threads
+test-as-const-tlsdesc.c 	SKIP.	tls, threads
 
-math/
+		nptl/
+tls, theads, mutex, ...		SKIP.
+
+     	     	math/
 test-fenv.c			EXCLUDED_IN_NACL
+
+		debug/
+backtrace-tst.c			SKIP
+		inet/
+9 tests				SKIP
+
+============================================

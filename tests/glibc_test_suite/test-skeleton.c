@@ -137,36 +137,10 @@ create_temp_file (const char *base, char **filename)
 
   return fd;
 }
-//
-//#ifdef CLEANUP_HANDLER
-//  CLEANUP_HANDLER;
-//#endif
-//
-//  /* If we expected this signal: good!  */
-//#ifdef EXPECTED_SIGNAL
-//  if (EXPECTED_SIGNAL == SIGALRM)
-//    exit (0);
-//#endif
-//
-//  if (killed == 0 || (WIFSIGNALED (status) && WTERMSIG (status) == SIGKILL))
-//    fputs ("Timed out: killed the child process\n", stderr);
-//  else if (WIFSTOPPED (status))
-//    fprintf (stderr, "Timed out: the child process was %s\n",
-//       strsignal (WSTOPSIG (status)));
-//  else if (WIFSIGNALED (status))
-//    fprintf (stderr, "Timed out: the child process got signal %s\n",
-//       strsignal (WTERMSIG (status)));
-//  else
-//    fprintf (stderr, "Timed out: killed the child process but it exited %d\n",
-//       WEXITSTATUS (status));
-//
-//  /* Exit with an error.  */
-//  exit (1);
-//}
 
 /* We provide the entry point here.  */
 int
-main (int argc, char **argv)
+zmain (int argc, char **argv)
 {
   int direct = 1;   /* In Native Client fork is not implemented.  */
   int status;
@@ -246,57 +220,5 @@ main (int argc, char **argv)
 #endif
 
   /* Launch test always directly under zerovm, because threads are not supported*/
-  if (direct){
-    return TEST_FUNCTION;
-  }
-
-  /* Set up the test environment:
-     - prevent core dumps
-     - set up the timer
-     - fork and execute the function.  */
-
-  {
-    /* This is the child.  */
-#ifdef RLIMIT_CORE
-    /* Try to avoid dumping core.  */
-    struct rlimit core_limit;
-    core_limit.rlim_cur = 0;
-    core_limit.rlim_max = 0;
-    setrlimit (RLIMIT_CORE, &core_limit);
-#endif
-
-#ifdef RLIMIT_DATA
-    /* Try to avoid eating all memory if a test leaks.  */
-    struct rlimit data_limit;
-    if (getrlimit (RLIMIT_DATA, &data_limit) == 0)
-      {
-	if (TEST_DATA_LIMIT == RLIM_INFINITY)
-	  data_limit.rlim_cur = data_limit.rlim_max;
-	else if (data_limit.rlim_cur > (rlim_t) TEST_DATA_LIMIT)
-	  data_limit.rlim_cur = MIN ((rlim_t) TEST_DATA_LIMIT,
-				     data_limit.rlim_max);
-	if (setrlimit (RLIMIT_DATA, &data_limit) < 0)
-	  perror ("setrlimit: RLIMIT_DATA");
-      }
-    else
-      perror ("getrlimit: RLIMIT_DATA");
-#endif
-
-    /* Execute the test function and exit with the return value.   */
-    exit (TEST_FUNCTION);
-  }
-
-  /* Simply exit with the return value of the test.  */
-#ifndef EXPECTED_STATUS
-  return WEXITSTATUS (status);
-#else
-  if (WEXITSTATUS (status) != EXPECTED_STATUS)
-    {
-      fprintf (stderr, "Expected status %d, got %d\n",
-	       EXPECTED_STATUS, WEXITSTATUS (status));
-      exit (1);
-    }
-
-  return 0;
-#endif
+  return TEST_FUNCTION;
 }

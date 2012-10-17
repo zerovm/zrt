@@ -39,7 +39,6 @@
 # include <utmp.h>
 #endif
 
-
 #if _HAVE_UT_TYPE || defined UTMPX
 
 /* Prototype for our test function.  */

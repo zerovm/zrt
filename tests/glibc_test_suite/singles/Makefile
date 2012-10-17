@@ -15,12 +15,23 @@ TEST_LOG_DEBUG=$(addsuffix .zrtdebug.log, $(basename $(TEST_SOURCES) ) )
 TEST_NEXES=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
 TEST_LIST=$(basename $(TEST_SOURCES) )
 
+#get pipe from zerovm and parse output
+PRINT_ERRCODE=awk '{ \
+if (NR == 2) { RETCODE=$$1 } \
+if (NR == 5) { \
+	if (RETCODE == 0) { RESULT="PASS" } \
+	else { RESULT="FAIL" } \
+	if ($$0 != "ok") { RESULT="FAIL" } \
+print RESULT,"zvmstatus=",$$0 } \
+}'
+
 TESTBASE=
 EXCL=
 
+CFLAGS+=-O2 #optimization
 CFLAGS+=-std=gnu99
 CFLAGS+=-D_GNU_SOURCE
-CFLAGS+=-Wno-long-long -O2 -msse4.1 -m64
+CFLAGS+=-Wno-long-long -m64
 CFLAGS+=-I.. -I. -I../api -Isrc
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
@@ -34,6 +45,30 @@ LDFLAGS+= -lrt
 LDFLAGS+= -ldl
 #math
 LDFLAGS+= -lm
+
+################ strings CFLAGS
+CFLAGS-inl-tester.c = -fno-builtin
+CFLAGS-noinl-tester.c = -fno-builtin
+CFLAGS-tst-strlen.c = -fno-builtin
+CFLAGS-stratcliff.c = -fno-builtin
+CFLAGS-test-ffs.c = -fno-builtin
+CFLAGS-tst-inlcall.c = -fno-builtin
+################ math CFLAGS
+CFLAGS-test-float.c= -fno-inline -ffloat-store -fno-builtin
+CFLAGS-test-double.c= -fno-inline -ffloat-store -fno-builtin
+CFLAGS-test-ldouble.c= -fno-inline -ffloat-store -fno-builtin
+CFLAGS-test-tgmath.c= -fno-builtin
+CFLAGS-test-tgmath2.c= -fno-builtin
+CFLAGS-test-tgmath-ret.c= -fno-builtin
+# CPPFLAGS was in origin math Makefile
+CLAGS-test-ifloat.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
+			 -DTEST_FAST_MATH -fno-builtin
+CLAGS-test-idouble.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
+			 -DTEST_FAST_MATH -fno-builtin
+CLAGS-test-ildoubl.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
+			  -DTEST_FAST_MATH -fno-builtin
+################
+
 
 
 all: clean $(ZEROVM) $(TEST_NEXES)
@@ -56,12 +91,13 @@ $(ZEROVM):
 
 $(TEST_NEXES):  $(TEST_INCLUDES)
 	$(eval BASENAME:=$(basename $@))
+	$(eval NAMEONLY:=$(notdir $(BASENAME)))
+	$(eval SPECIFIC_TEST_FLAGS:=$(CFLAGS-$(NAMEONLY).c))
 	@echo -n "TEST RUN $@ "
-	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(BASENAME).c
+	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
 	@$(CC) -o $@ $(BASENAME).o $(LDFLAGS)
 	@binpatch $@ 4c01fc0f3148c1e2 4c01fc909048c1e2 > /dev/null
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
 	 sed s@{GLIBC_FS}@$(ZRT_ROOT)/archive/lib.tar@g > $(CURDIR)/$(BASENAME).manifest
 #Run test under zerovm and display returned error code
-	@echo -n "retcode="
-	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest | awk '{if (NR == 2) { print }}'
+	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest | $(PRINT_ERRCODE)
