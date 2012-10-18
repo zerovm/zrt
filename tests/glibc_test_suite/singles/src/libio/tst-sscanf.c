@@ -4,7 +4,7 @@
 #define WCS_LENGTH 256
 
 int
-main (void)
+zmain (void)
 {
   const char cnv[] ="%l[abc]";
   const char str[] = "abbcXab";

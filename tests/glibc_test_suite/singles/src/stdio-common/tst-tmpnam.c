@@ -21,7 +21,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   const char *name;
   int retval = 0;

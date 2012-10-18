@@ -3,7 +3,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   int res = 0;
   char buf[100];

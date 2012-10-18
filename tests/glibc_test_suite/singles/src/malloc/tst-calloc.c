@@ -106,7 +106,7 @@ null_test (void)
 
 
 int
-main (void)
+zmain (void)
 {
   /* We are allocating blocks with `calloc' and check whether every
      block is completely cleared.  We first try this for some fixed

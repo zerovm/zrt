@@ -32,7 +32,7 @@ static FILE *fp;
 
 
 int
-main (void)
+zmain (void)
 {
   void *root = NULL;
   size_t linelen = 0;

@@ -6,7 +6,7 @@
 #define size_t unsigned int
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   char *dummy0;
   char *dummy1;

@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 int
-main (int argc, char* argv[])
+zmain (int argc, char* argv[])
 {
   setlocale (LC_ALL, argv[1]);
 

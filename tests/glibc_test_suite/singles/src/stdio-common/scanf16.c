@@ -41,7 +41,7 @@ xfscanf (FILE *f, const char *fmt, ...)
 }
 
 int
-main (void)
+zmain (void)
 {
   wchar_t *lsp;
   char *sp;

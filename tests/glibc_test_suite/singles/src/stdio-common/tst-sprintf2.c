@@ -4,7 +4,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
 #if LDBL_MANT_DIG >= 106
   volatile union { long double l; long long x[2]; } u, v;

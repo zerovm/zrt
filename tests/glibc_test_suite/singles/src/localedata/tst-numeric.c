@@ -40,7 +40,7 @@
 #define EXIT_SNPRINTF 3
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   char *s = malloc (201);
   double val;

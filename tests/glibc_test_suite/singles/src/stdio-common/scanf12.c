@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int
-main (void)
+zmain (void)
 {
   double d;
   int c;

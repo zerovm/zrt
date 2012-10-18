@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 int
-main (void)
+zmain (void)
 {
   char name[] = "/tmp/tst-freopen.XXXXXX";
   const char * const test = "Let's test freopen.\n";

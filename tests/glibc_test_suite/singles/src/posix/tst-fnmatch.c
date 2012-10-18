@@ -34,7 +34,7 @@ static char *escape (const char *str, size_t *reslenp, char **resbuf);
 
 
 int
-main (void)
+zmain (void)
 {
   char *linebuf = NULL;
   size_t linebuflen = 0;

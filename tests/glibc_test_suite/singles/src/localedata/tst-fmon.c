@@ -39,7 +39,7 @@
 #define EXIT_STRFMON 3
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   char *s = malloc (201);
 

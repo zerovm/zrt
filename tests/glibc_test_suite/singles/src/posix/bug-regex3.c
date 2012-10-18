@@ -25,7 +25,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   regex_t re;
   int n;

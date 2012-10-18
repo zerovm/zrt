@@ -59,7 +59,7 @@ test (const char *locale)
 
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   int result = 0;
 

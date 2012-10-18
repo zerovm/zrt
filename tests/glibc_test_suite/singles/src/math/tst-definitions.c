@@ -23,7 +23,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   int result = 0;
 

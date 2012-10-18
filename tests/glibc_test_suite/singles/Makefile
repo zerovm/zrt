@@ -1,6 +1,8 @@
 PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
 CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
-#TESTS_ROOT=src
+ifndef TESTS_ROOT
+TESTS_ROOT=src
+endif
 #it should be used release version of zerovm
 ZEROVM=$(ZEROVM_ROOT)/zerovm.rel
 
@@ -32,19 +34,28 @@ CFLAGS+=-O2 #optimization
 CFLAGS+=-std=gnu99
 CFLAGS+=-D_GNU_SOURCE
 CFLAGS+=-Wno-long-long -m64
+CFLAGS+=-Werror-implicit-function-declaration
 CFLAGS+=-I.. -I. -I../api -Isrc
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
 
 
+#libzrt should be encluded before generic object file of test, because it contains itself main
+#declaration, in case if test source didn't explicitly defined zmain it raises linking error;
+#in case if libzrt linking after test object file, then linker is using wrong entry point
+#if test was not properly ported to zerovm
+LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
+
 LDFLAGS+= -m64 -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl
-LDFLAGS+= -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++ 
+LDFLAGS+= -lfs -lstdc++ 
 #For rt tests
 LDFLAGS+= -lrt
 #For dlopen
 LDFLAGS+= -ldl
 #math
 LDFLAGS+= -lm
+#crypt
+LDFLAGS+= -lcrypt
 
 ################ strings CFLAGS
 CFLAGS-inl-tester.c = -fno-builtin
@@ -53,6 +64,8 @@ CFLAGS-tst-strlen.c = -fno-builtin
 CFLAGS-stratcliff.c = -fno-builtin
 CFLAGS-test-ffs.c = -fno-builtin
 CFLAGS-tst-inlcall.c = -fno-builtin
+################ libio CFLAGS
+CFLAGS-tst_putwc.c = -DOBJPFX=\"$(CURDIR)\"
 ################ math CFLAGS
 CFLAGS-test-float.c= -fno-inline -ffloat-store -fno-builtin
 CFLAGS-test-double.c= -fno-inline -ffloat-store -fno-builtin
@@ -95,7 +108,7 @@ $(TEST_NEXES):  $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_FLAGS:=$(CFLAGS-$(NAMEONLY).c))
 	@echo -n "TEST RUN $@ "
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
-	@$(CC) -o $@ $(BASENAME).o $(LDFLAGS)
+	@$(CC) -o $@ $(LDFLAGS_ZMAIN) $(BASENAME).o $(LDFLAGS)
 	@binpatch $@ 4c01fc0f3148c1e2 4c01fc909048c1e2 > /dev/null
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
 	 sed s@{GLIBC_FS}@$(ZRT_ROOT)/archive/lib.tar@g > $(CURDIR)/$(BASENAME).manifest

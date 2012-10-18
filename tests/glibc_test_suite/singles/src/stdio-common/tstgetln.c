@@ -22,7 +22,7 @@
 #define ssize_t _IO_ssize_t
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   char *buf = NULL;
   size_t size = 0;

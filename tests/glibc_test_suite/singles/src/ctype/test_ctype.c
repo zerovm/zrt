@@ -39,7 +39,7 @@ print_char (unsigned char c)
 }
 
 int
-main (int argc, char **argv)
+zmain (int argc, char **argv)
 {
   unsigned short int c;
   int lose = 0;

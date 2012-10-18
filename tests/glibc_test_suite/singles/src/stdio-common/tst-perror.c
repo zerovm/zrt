@@ -25,7 +25,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   int fd;
   char fname[] = "/tmp/tst-perror.XXXXXX";

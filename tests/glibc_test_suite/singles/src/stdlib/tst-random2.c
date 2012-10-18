@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 int
-main (void)
+zmain (void)
 {
   int pass;
   int ret = 0;

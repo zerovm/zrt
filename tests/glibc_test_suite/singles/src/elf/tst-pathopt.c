@@ -5,7 +5,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   void *h;
   int (*fp) (int);

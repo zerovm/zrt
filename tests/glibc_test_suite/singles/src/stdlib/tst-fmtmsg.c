@@ -8,7 +8,7 @@
 #define MM_TEST 10
 
 int
-main (void)
+zmain (void)
 {
   int result = 0;
 

@@ -6,7 +6,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   struct addrinfo req, *ai;
   char name[] = "3ffe:0200:0064:0000:0202:b3ff:fe16:ddc5";

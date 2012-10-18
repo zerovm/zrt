@@ -23,7 +23,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   int failures = 0;
   int i;

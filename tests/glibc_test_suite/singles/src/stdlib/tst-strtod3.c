@@ -31,8 +31,11 @@ do_test (void)
   for (int i = 0; i < NTESTS; ++i)
     {
       char *ep;
+#ifdef __native_client__
+      double r = strtod (tests[i].in, &ep); /*not the same as internal with param=1*/
+#else
       double r = __strtod_internal (tests[i].in, &ep, 1);
-
+#endif
       if (strcmp (ep, tests[i].out) != 0)
 	{
 	  printf ("%d: got rest string \"%s\", expected \"%s\"\n",

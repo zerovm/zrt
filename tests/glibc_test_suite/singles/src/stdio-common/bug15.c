@@ -2,7 +2,7 @@
 #include <locale.h>
 
 int
-main (void)
+zmain (void)
 {
   char buf[10];
   setlocale (LC_ALL, "vi_VN.TCVN-5712");

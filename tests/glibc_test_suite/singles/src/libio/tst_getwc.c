@@ -23,7 +23,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   wchar_t buf[100];
   size_t n = 0;

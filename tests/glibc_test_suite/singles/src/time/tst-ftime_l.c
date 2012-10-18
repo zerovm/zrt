@@ -7,7 +7,7 @@
 
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   locale_t l;
   locale_t old;

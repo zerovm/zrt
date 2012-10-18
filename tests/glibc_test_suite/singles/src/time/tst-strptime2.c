@@ -27,7 +27,7 @@ static const struct
 
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   int result = 0;
 

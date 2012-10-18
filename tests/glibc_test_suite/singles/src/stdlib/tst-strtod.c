@@ -80,7 +80,7 @@ static int long_dbl (void);
 static int locale_test (void);
 
 int
-main (int argc, char ** argv)
+zmain (int argc, char ** argv)
 {
   char buf[100];
   register const struct ltest *lt;
@@ -254,7 +254,11 @@ locale_test (void)
 
       /* We call __strtod_interal here instead of strtod to tests the
 	 handling of grouping.  */
+#ifdef __native_client__
+      d = strtod (tests[n].str, &endp); /*it's not the same as internal with param=1*/
+#else
       d = __strtod_internal (tests[n].str, &endp, 1);
+#endif
       if (d != tests[n].exp)
 	{
 	  printf ("strtod(\"%s\") returns %g and not %g\n",

@@ -5,7 +5,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   struct addrinfo hints, *res;
   int i, ret;

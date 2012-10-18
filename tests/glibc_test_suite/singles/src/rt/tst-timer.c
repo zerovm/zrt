@@ -22,7 +22,7 @@
 /* This file is only used if there is no other implementation and it should
    means that there is no implementation of POSIX timers.  */
 int
-main (void)
+zmain (void)
 {
 #ifdef _POSIX_TIMERS
   /* There should be a test.  */

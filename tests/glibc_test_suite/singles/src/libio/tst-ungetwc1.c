@@ -8,7 +8,7 @@
 #include <wchar.h>
 
 int
-main (void)
+zmain (void)
 {
   FILE *fp;
   const char *str = "abcdef";

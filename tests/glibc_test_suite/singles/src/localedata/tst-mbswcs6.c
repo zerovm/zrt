@@ -58,7 +58,7 @@ do_test (const char *loc)
 
 
 int
-main (void)
+zmain (void)
 {
   int res;
 

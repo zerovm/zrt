@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int
-main (void)
+zmain (void)
 {
   int a = 1;
   int b = 2;

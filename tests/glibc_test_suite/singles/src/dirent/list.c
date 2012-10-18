@@ -60,7 +60,7 @@ test (const char *name)
 }
 
 int
-main (int argc, char **argv)
+zmain (int argc, char **argv)
 {
   int retval = 0;
   --argc;

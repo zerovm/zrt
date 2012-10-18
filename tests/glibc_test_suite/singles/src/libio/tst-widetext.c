@@ -33,7 +33,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   char name[] = "/tmp/widetext.out.XXXXXX";
   char mbbuf[SIZE];

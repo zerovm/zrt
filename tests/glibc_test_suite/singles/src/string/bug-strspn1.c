@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   const char *a = "abc";
   const char *b = a;

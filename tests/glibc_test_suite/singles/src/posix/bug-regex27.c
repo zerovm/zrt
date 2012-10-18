@@ -36,7 +36,7 @@ struct tests
 };
 
 int
-main (void)
+zmain (void)
 {
   regex_t r;
   size_t i;

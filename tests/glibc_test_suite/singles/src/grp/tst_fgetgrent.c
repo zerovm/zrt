@@ -98,7 +98,7 @@ test_fgetgrent (const char *filename)
 
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   char *file = tmpnam (NULL);
   int i = 0;

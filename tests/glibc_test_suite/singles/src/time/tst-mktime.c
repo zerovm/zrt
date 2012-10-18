@@ -4,7 +4,7 @@
 #include <time.h>
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   struct tm time_str, *tm;
   time_t t;

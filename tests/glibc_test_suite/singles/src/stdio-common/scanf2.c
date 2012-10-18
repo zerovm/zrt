@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int
-main(int argc, char *argv[])
+zmain(int argc, char *argv[])
 {
     int point, x, y;
 

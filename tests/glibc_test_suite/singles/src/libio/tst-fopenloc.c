@@ -31,7 +31,7 @@ static const char inputfile[] = "../iconvdata/testdata/ISO-8859-1";
 
 
 int
-main (void)
+zmain (void)
 {
   FILE *fp;
 

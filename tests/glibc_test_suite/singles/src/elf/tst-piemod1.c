@@ -7,7 +7,7 @@ foo (void)
 }
 
 int
-main (void)
+zmain (void)
 {
   int val = foo ();
   if (val != 34)

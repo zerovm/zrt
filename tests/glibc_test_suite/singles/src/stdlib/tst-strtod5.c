@@ -61,8 +61,13 @@ do_test (void)
       char *ep;
       double r;
 
-      if (tests[i].group)
+      if (tests[i].group){
+#ifdef __native_client__
+	r = strtod (tests[i].in, &ep); /*it's not the same as internal with param=1*/
+#else
 	r = __strtod_internal (tests[i].in, &ep, 1);
+#endif
+      }
       else
 	r = strtod (tests[i].in, &ep);
 

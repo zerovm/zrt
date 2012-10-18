@@ -27,7 +27,7 @@
 char putenv_val[100] = VAR "=some longer value";
 
 int
-main (void)
+zmain (void)
 {
   int result = 0;
   const char *valp;

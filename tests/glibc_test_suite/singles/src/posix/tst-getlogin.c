@@ -21,7 +21,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   char *login;
   int errors = 0;

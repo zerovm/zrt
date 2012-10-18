@@ -5,7 +5,7 @@
 int stdio_block_read = 1, stdio_block_write = 1;
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   FILE *f;
   int i;

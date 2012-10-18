@@ -113,7 +113,7 @@ static struct wprintf_int_test
 
 
 int
-main (void)
+zmain (void)
 {
   int cnt;
   int failures;

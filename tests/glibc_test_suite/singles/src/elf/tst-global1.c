@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int
-main (void)
+zmain (void)
 {
   void *h1 = dlopen ("$ORIGIN/testobj6.so", RTLD_GLOBAL|RTLD_LAZY);
   if (h1 == NULL)

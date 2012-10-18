@@ -3,7 +3,7 @@
 #include <locale.h>
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   const char t1[] = "0-0-0-0-0-0-0-0-0-0.COM";
   const char t2[] = "00000-00000.COM";

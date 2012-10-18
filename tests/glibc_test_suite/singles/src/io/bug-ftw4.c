@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "ztests64_compatibility.h"
+
 static int cb_called;
 
 static int
@@ -35,7 +37,7 @@ cb (const char *name, const struct stat64 *st, int type)
 }
 
 int
-main (void)
+zmain (void)
 {
   char name[32] = "/tmp/ftwXXXXXX", *p;
   int ret, i, result = 0, fd, fd1, fd2;

@@ -32,6 +32,7 @@ TEST_SAMPLES=bigfile command_line environment file_stat seek
 
 ################# flags set
 CFLAGS += -Wall -Wno-long-long -O2 -m64
+CFLAGS += -Werror-implicit-function-declaration
 CFLAGS += -I. -Ilib -Ilib/fs -Ilib/fs/unpack -Ilib/fs/utils -I${ZEROVM_ROOT}/api
 CFLAGS += -DUSER_SIDE -DDEBUG
 

@@ -74,7 +74,7 @@ report_date_error (int err)
 
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   int errors = 0;
   size_t i;

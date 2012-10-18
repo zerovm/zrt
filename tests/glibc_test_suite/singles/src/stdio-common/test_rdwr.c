@@ -23,7 +23,7 @@
 
 
 int
-main (int argc, char **argv)
+zmain (int argc, char **argv)
 {
   static const char hello[] = "Hello, world.\n";
   static const char replace[] = "Hewwo, world.\n";

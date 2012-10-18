@@ -140,7 +140,7 @@ check_called (void)
 
 
 int
-main (void)
+zmain (void)
 {
   atexit (check_called);
 

@@ -20,7 +20,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include <libioP.h>
+#include "libioP.h"
 
 
 /* Read formatted input from stdin according to the format string FORMAT.  */

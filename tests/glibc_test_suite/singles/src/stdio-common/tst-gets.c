@@ -22,7 +22,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   char buf[100];
   int result = 0;

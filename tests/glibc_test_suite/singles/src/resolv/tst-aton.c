@@ -44,7 +44,7 @@ static struct tests
 
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   int result = 0;
   size_t cnt;

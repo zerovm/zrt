@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 int
-main (void)
+zmain (void)
 {
   int err = 0;
   int i, j;

@@ -8,7 +8,7 @@
 char d[3] = "\0\1\2";
 
 int
-main (void)
+zmain (int argc, char**argv)
 {
   strncat (d, "\5\6", 1);
   if (d[0] != '\5')

@@ -10,7 +10,7 @@
 #include <wchar.h>
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   int a = 3;
   int fd;

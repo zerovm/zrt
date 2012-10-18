@@ -1,2 +1,8 @@
 gmp
 math/atest-sincos require libgmp (absent headers) seems to be should be ported
+stdio-common/scanf.c require libiop (absent libioP.h)
+posix/bug-regex5.c (absent localeinfo.h)
+posix/bug-regex20.c (absent regex_internal.h)
+crypt/testmd5.c (absent md5.h)
+crypt/sha512test.c (absent sha512.h)
+crypt/sha256test.c (absent sha256.h)

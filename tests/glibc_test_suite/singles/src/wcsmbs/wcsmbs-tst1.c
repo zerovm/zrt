@@ -8,7 +8,7 @@
 #include <locale.h>
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   int test = 0;
   int idx = 0;

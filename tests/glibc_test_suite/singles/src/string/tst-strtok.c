@@ -3,7 +3,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   char buf[1] = { 0 };
   int result = 0;

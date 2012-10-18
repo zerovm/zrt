@@ -28,7 +28,7 @@ static int check_ascii (const char *locname);
 
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   int result = 0;
 

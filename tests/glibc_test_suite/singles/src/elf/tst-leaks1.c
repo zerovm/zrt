@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 int
-main (void)
+zmain (void)
 {
   mtrace ();
 

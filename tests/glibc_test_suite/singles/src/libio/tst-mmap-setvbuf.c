@@ -23,7 +23,8 @@
 #include <string.h>
 #include <unistd.h>
 
-int main (void)
+int 
+zmain (void)
 {
   char name[] = "/tmp/tst-mmap-setvbuf.XXXXXX";
   char buf[4096];

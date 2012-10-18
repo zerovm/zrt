@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 int
-main (int arc, char *argv[])
+zmain (int arc, char *argv[])
 {
   int n, res;
   unsigned int val;

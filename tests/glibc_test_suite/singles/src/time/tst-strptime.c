@@ -122,7 +122,7 @@ test_tm (void)
 
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char **argv)
 {
   struct tm tm;
   size_t i;

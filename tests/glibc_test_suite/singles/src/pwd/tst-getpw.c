@@ -27,7 +27,7 @@ check (uid_t uid)
 }
 
 int
-main (void)
+zmain (void)
 {
   uid_t uid;
 

@@ -469,7 +469,7 @@ run_test (const char *locname)
 
 
 int
-main(int argc, char** argv)
+zmain(int argc, char** argv)
 {
   int result;
 

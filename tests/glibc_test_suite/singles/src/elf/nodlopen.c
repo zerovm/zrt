@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int
-main (void)
+zmain (void)
 {
   if (dlopen ("nodlopenmod.so", RTLD_LAZY) != NULL)
     {

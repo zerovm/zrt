@@ -202,7 +202,7 @@ special (void)
 
 
 int
-main (void)
+zmain (void)
 {
   test (ecvt_tests, ecvt, "ecvt");
   test (fcvt_tests, fcvt, "fcvt");

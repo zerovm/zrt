@@ -6,7 +6,7 @@
 #include <wchar.h>
 
 int
-main (void)
+zmain (void)
 {
   struct re_pattern_buffer regex;
   struct re_registers regs;

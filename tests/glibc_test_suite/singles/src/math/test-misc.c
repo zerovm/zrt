@@ -27,7 +27,7 @@
 #include "zrt.h"
 
 int
-main (int argc, char** argv)
+zmain (int argc, char** argv)
 {
   int result = 0;
 #ifndef NO_LONG_DOUBLE

@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
+#include "ztests64_compatibility.h"
 
 static int
 do_test (void)

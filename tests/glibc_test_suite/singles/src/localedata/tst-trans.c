@@ -26,7 +26,7 @@
 #include <wctype.h>
 
 int
-main (void)
+zmain (void)
 {
   char buf[30];
   wchar_t wbuf[30];

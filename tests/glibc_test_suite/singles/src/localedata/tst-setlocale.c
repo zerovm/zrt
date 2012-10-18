@@ -4,7 +4,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   char q[30];
   char *s;

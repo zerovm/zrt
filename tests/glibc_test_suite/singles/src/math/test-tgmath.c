@@ -56,7 +56,7 @@ int count_cldouble;
 #define NCCALLS    47
 
 int
-main (void)
+zmain (void)
 {
   int result = 0;
 

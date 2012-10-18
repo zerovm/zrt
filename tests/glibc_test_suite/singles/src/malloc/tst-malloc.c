@@ -31,7 +31,7 @@ merror (const char *msg)
 }
 
 int
-main (void)
+zmain (void)
 {
   void *p, *q;
   int save;

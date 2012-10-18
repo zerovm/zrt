@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
 #include <wchar.h>
 
+#include "ztests64_compatibility.h"
 
 static int
 do_test (void)

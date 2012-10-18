@@ -24,7 +24,7 @@
 
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   FILE *fp;
 

@@ -5,7 +5,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   struct obstack ob;
   int n;

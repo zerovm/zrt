@@ -23,8 +23,10 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+#include "ztests64_compatibility.h"
+
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   int i;
   int result = 0;

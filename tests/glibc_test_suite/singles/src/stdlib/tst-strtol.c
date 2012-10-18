@@ -97,7 +97,7 @@ static const struct ltest tests[] =
 static void expand (char *dst, int c);
 
 int
-main (void)
+zmain (void)
 {
   register const struct ltest *lt;
   char *ep;

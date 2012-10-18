@@ -23,7 +23,7 @@
 #include <wchar.h>
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   const unsigned char buf[] = { 'a', 'b', '\0', 'c', 'd', '\0', 'e' };
   wchar_t out[sizeof (buf)];

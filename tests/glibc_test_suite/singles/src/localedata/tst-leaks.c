@@ -2,7 +2,7 @@
 #include <mcheck.h>
 
 int
-main (void)
+zmain (void)
 {
   int cnt;
 

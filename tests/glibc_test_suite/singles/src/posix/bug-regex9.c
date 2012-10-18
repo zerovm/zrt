@@ -28,7 +28,7 @@
 static const char text[] = "#! /bin/sh";
 
 int
-main (void)
+zmain (void)
 {
   regex_t re;
   regmatch_t rm[2];

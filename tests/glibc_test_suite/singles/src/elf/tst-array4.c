@@ -1,11 +1,11 @@
 #include <dlfcn.h>
 
-#define main array1_main
+#define zmain array1_main
 #include "tst-array1.c"
-#undef main
+#undef zmain
 
 int
-main (void)
+zmain (void)
 {
   void *handle = dlopen ("tst-array2dep.so", RTLD_LAZY);
 

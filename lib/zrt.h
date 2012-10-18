@@ -10,17 +10,9 @@
 
 #include <stdint.h>
 
-/*do we need either?*/
-#ifndef USER_SIDE
-#define USER_SIDE
-#endif
-
-/*zmain should be explicitly defined as entry point in user application*/
-#define main zmain_fake
-
 /*
- * user program entry point. should be defined by user application
- * instead, also explicit set of paramenters required;
+ * user program entry point. should be explicitly defined by user 
+ * application instead of main.
  */
 int zmain(int argc, char **argv);
 

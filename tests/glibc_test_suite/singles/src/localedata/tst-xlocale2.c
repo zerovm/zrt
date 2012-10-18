@@ -7,7 +7,7 @@
 static int do_test (__locale_t l);
 
 int
-main (void)
+zmain (void)
 {
   locale_t l;
   locale_t l2;

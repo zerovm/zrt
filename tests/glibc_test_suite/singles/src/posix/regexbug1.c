@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 int
-main (void)
+zmain (void)
 {
   regex_t re;
   regmatch_t ma[2];

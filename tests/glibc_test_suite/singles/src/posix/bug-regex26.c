@@ -23,7 +23,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   struct re_pattern_buffer r;
   struct re_registers s;

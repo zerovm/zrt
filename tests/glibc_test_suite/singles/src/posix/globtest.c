@@ -23,7 +23,7 @@
 #include <glob.h>
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   int i, j;
   int glob_flags = 0;

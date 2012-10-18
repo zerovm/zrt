@@ -67,7 +67,7 @@ test (size_t nmemb, size_t size)
 }
 
 int
-main (int argc, char **argv)
+zmain (int argc, char **argv)
 {
   int ret = 0;
   if (argc >= 2)

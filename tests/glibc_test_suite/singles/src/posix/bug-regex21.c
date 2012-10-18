@@ -22,7 +22,8 @@
 #include <regex.h>
 #include <stdio.h>
 
-int main (void)
+int 
+zmain (void)
 {
   regex_t re;
   int i;

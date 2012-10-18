@@ -198,7 +198,7 @@ static struct argp argp = {
 };
 
 int
-main (int argc, char **argv)
+zmain (int argc, char **argv)
 {
   struct params params;
   params.foonly = 0;

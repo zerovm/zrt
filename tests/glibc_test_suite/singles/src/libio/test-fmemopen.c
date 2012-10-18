@@ -24,7 +24,7 @@ static char buffer[] = "foobar";
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   int ch;
   FILE *stream;

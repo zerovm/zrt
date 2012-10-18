@@ -27,7 +27,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   const char *strs[2] = { "singular", "plural" };
   unsigned long int i;

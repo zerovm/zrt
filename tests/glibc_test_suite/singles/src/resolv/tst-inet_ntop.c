@@ -5,7 +5,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   struct in_addr addr4;
   struct in6_addr addr6;

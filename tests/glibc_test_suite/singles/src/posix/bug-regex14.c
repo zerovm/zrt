@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 int
-main (void)
+zmain (void)
 {
   const char *err;
   size_t i;

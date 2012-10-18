@@ -62,7 +62,7 @@ callback (const char *fname, const struct stat *st, int flag)
 
 
 int
-main (void)
+zmain (void)
 {
   mtrace ();
 

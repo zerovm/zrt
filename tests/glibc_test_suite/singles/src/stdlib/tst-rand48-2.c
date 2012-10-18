@@ -4,7 +4,7 @@
 #include <time.h>
 
 int
-main (void)
+zmain (void)
 {
   time_t t = time (NULL);
   int i, ret = 0;

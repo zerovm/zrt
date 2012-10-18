@@ -21,7 +21,7 @@
 #define TESTFILE "/tmp/test.dat"
 
 int
-main (void)
+zmain (void)
 {
   FILE *fp;
   int i, j;

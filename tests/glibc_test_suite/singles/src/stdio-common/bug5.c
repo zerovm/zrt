@@ -10,7 +10,7 @@
 static char buf[8192];
 
 int
-main (void)
+zmain (void)
 {
   FILE *in;
   FILE *out;

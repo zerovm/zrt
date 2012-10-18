@@ -63,7 +63,7 @@ static struct classes
 
 
 int
-main (void)
+zmain (void)
 {
   const char *cp;
   const char *cp2;

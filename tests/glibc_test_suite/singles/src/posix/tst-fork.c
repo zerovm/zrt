@@ -31,7 +31,7 @@ static const char testdata2[] = "And here we go again";
 
 
 int
-main (void)
+zmain (void)
 {
   const char *tmpdir = getenv ("TMPDIR");
   char buf[100];

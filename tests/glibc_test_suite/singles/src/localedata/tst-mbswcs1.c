@@ -35,7 +35,7 @@
   putc ('\n', stdout)
 
 int
-main (void)
+zmain (void)
 {
   const unsigned char buf[6] = { 0x25,  0xe2, 0x82, 0xac,  0xce, 0xbb };
   mbstate_t state;

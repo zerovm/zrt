@@ -4,7 +4,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   FILE *fp;
   const char teststring[] = "hello world";

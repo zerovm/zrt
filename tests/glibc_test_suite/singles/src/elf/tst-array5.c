@@ -44,7 +44,7 @@ void (*const init_array []) (int, char **)
 };
 
 int
-main (void)
+zmain (void)
 {
   return 0;
 }

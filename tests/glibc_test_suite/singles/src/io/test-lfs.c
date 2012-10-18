@@ -27,6 +27,8 @@
 #include <errno.h>
 #include <sys/resource.h>
 
+#include "ztests64_compatibility.h"
+
 /* Prototype for our test function.  */
 extern void do_prepare (int argc, char *argv[]);
 extern int do_test (int argc, char *argv[]);

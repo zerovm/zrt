@@ -140,7 +140,7 @@ map_paramstr (const char *str)
 #endif
 
 int
-main (void)
+zmain (void)
 {
   int result = 0;
 

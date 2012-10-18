@@ -27,7 +27,7 @@ const char *str1 = "\xa3\xd8\xa3\xc9\xa3\xc9";
 const char *str2 = "\xa3\xd8\xa3\xc9";
 
 int
-main (void)
+zmain (void)
 {
   setlocale (LC_ALL, "ja_JP.eucJP");
 

@@ -28,7 +28,7 @@
 static const char text[] = "This is a test; this is a test";
 
 int
-main (void)
+zmain (void)
 {
   regex_t re;
   regmatch_t rm[2];

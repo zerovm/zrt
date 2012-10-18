@@ -38,7 +38,7 @@ struct test
 
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   size_t cnt;
   int errors = 0;

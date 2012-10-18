@@ -5,7 +5,7 @@
 #include <wctype.h>
 
 int
-main (void)
+zmain (int argc, char** argv)
 {
   int result = 0;
   char buf[100];

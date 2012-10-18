@@ -25,19 +25,20 @@
 #include "zrtsyscalls.h"
 #include "zrtlog.h"
 
-#undef main
-
 /*
  * initialize zerovm api, get the user manifest, install syscallback
  * and invoke user code
  */
-int main(int argc, char **argv, char **envp)
+//__attribute__((externally_visible))
+int main(int argc, char** argv, char** envp)
 {
     int i;
     struct UserManifest *setup = zvm_init();
     if(setup == NULL) return ERR_CODE;
 
-    setup->envp = envp; /* user custom attributes passed via environment */
+    /* user custom attributes passed via environment. 
+     * do we need this? */
+    setup->envp = envp;
     zrt_setup( setup );
 
     /* debug print */

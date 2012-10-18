@@ -26,7 +26,7 @@
 #include <wctype.h>
 
 int
-main (void)
+zmain (void)
 {
   wctype_t wct;
   wchar_t buf[1000];

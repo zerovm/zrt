@@ -16,7 +16,7 @@
 char buffer[256];
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   char *name;
   FILE *fp = NULL;

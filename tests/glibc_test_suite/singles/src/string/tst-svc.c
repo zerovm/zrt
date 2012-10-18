@@ -14,7 +14,7 @@ compare (const void *p1, const void *p2)
 }
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char** argv)
 {
   char line[MAX_LINE_SIZE + 1];
   char *str[MAX_STRINGS];

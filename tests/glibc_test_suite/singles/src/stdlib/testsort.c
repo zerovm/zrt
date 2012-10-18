@@ -9,7 +9,7 @@ compare (const void *a, const void *b)
 }
 
 int
-main (void)
+zmain (void)
 {
   char bufs[500][20];
   char *lines[500];

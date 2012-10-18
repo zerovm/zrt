@@ -22,7 +22,7 @@
 #include <wctype.h>
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   int result = 0;
   wctype_t bit_alnum = wctype ("alnum");

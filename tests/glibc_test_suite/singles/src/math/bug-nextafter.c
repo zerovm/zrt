@@ -8,7 +8,7 @@ float zero = 0.0;
 float inf = INFINITY;
 
 int
-main (void)
+zmain (void)
 {
   int result = 0;
 

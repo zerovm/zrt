@@ -64,7 +64,7 @@ cb (const char *name, const struct stat *st, int flag, struct FTW *f)
 }
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   int opt;
   int r;

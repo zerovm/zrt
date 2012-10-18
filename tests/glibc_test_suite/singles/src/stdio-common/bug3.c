@@ -2,7 +2,7 @@
 #include <string.h>
 
 int
-main (void)
+zmain (void)
 {
   FILE *f;
   int i;

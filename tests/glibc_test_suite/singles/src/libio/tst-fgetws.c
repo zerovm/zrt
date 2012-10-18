@@ -11,7 +11,7 @@
 #define WIDE_STR_LEN 32
 
 int
-main (int argc, char *argv[])
+zmain (int argc, char *argv[])
 {
   size_t i;
   FILE   *fp;

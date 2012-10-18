@@ -15,7 +15,7 @@ matherr (struct exception *s)
 }
 
 int
-main (void)
+zmain (void)
 {
   _LIB_VERSION = _SVID_;
   acos (2.0);

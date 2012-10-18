@@ -28,7 +28,7 @@ compare (void const *a1, void const *b1)
 }
 
 int
-main (int argc, char **argv)
+zmain (int argc, char **argv)
 {
   size_t i;
   size_t array_members = argv[1] ? atoi (argv[1]) : 50;

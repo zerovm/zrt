@@ -9,7 +9,7 @@
 
 
 int
-main (void)
+zmain (void)
 {
   unsigned short int xs[3] = { 0x0001, 0x0012, 0x0123 };
   unsigned short int lxs[7];
