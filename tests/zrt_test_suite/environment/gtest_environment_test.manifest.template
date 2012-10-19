@@ -15,5 +15,5 @@ Version = 09082012
 NodeName=envtest,1
 Nexe = {ABS_PATH}gtest_environment_test.nexe
 NexeMax = 10000000
-SyscallsMax = 3333333
-SetupCallsMax = 99999999
+MemMax=100000000
+Timeout=10

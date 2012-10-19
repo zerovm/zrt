@@ -4,8 +4,11 @@
  *  Date: 26.07.2012
  */
 
-#include "zrt.h"
 #include <stdio.h>
+extern "C"{
+#include "zrt.h"
+} //extern "C"
+
 #ifdef GTEST
 #include "gtest/gtest.h"
 
@@ -21,12 +24,12 @@ TEST_F(ZrtTests, TestEnvironment) {
 }
 #endif
 
-extern "C"{
-int main(int argc, char **argv, char **envp) {
+
+int zmain(int argc, char **argv) {
     printf("test\n");fflush(0);
 	//testing::InitGoogleTest(&argc, argv);
 	//return RUN_ALL_TESTS();
 	return 0;
-}
+
 }
 

@@ -5,6 +5,7 @@
 Channel = /dev/null, /dev/stdin, 0, 1, 1, 0, 0
 Channel = {ABS_PATH}environment_test.stdout, /dev/stdout, 0, 0, 0, 99999, 99999
 Channel = /dev/null, /dev/stderr, 0, 0, 0, 1, 1
+Channel = {ABS_PATH}debug.log, /dev/debug, 0, 0, 0, 99999999, 9999999
 
 ==Environment= test1, /123/45/234/2/56/2/57///ty/er/ty/ety/wret/[q45123-\59132532, TEST, **********************************************
 
@@ -16,5 +17,5 @@ Version = 09082012
 Nexe = {ABS_PATH}environment_test.nexe
 NodeName=envtest,1
 NexeMax = 10000000
-SyscallsMax = 3333333
-SetupCallsMax = 99999999
+MemMax=100000000
+Timeout=10
