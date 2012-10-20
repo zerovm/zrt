@@ -13,8 +13,8 @@ cat log/lua1.stdout
 ./genmanifest.sh lua/scripts/pngparse.lua log/lua2.stdout lua/scripts/280x.png log/lua2.stderr.log "/dev/input" > lua/pngparse_lua.manifest 
 echo -------------------------------run lua #2: png parse
 rm log/lua2.stdout -f
-echo ${ZEROVM_ROOT}/zerovm -Mlua/pngparse_lua.manifest
-${ZEROVM_ROOT}/zerovm -Mlua/pngparse_lua.manifest
+echo ${ZEROVM_ROOT}/zerovm -v4 -Mlua/pngparse_lua.manifest
+${ZEROVM_ROOT}/zerovm -v4 -Mlua/pngparse_lua.manifest
 echo "stderr output >>>>>>>>>>"
 cat log/lua2.stdout
 

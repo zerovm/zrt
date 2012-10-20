@@ -54,7 +54,6 @@
 # define TEST_DATA_LIMIT (64 << 20) /* Data limit (bytes) to run with.  */
 #endif
 
-#define OPT_DIRECT 1000
 #define OPT_TESTDIR 1001
 
 static struct option options[] =
@@ -62,7 +61,6 @@ static struct option options[] =
 #ifdef CMDLINE_OPTIONS
     CMDLINE_OPTIONS
 #endif
-    { "direct", no_argument, NULL, OPT_DIRECT },
     { "test-dir", required_argument, NULL, OPT_TESTDIR },
     { NULL, 0, NULL, 0 }
   };
@@ -142,12 +140,9 @@ create_temp_file (const char *base, char **filename)
 int
 zmain (int argc, char **argv)
 {
-  int direct = 1;   /* In Native Client fork is not implemented.  */
   int status;
   int opt;
   unsigned int timeoutfactor = 1;
-
-  setenv("","",0);
 
   /* Make uses of freed and uninitialized memory known.  */
   mallopt (M_PERTURB, 42);
@@ -161,9 +156,6 @@ zmain (int argc, char **argv)
       {
       case '?':
 	exit (1);
-      case OPT_DIRECT:
-	direct = 1;
-	break;
       case OPT_TESTDIR:
 	test_dir = optarg;
 	break;
@@ -171,19 +163,6 @@ zmain (int argc, char **argv)
 	CMDLINE_PROCESS
 #endif
 	  }
-
-  /* If set, read the test TIMEOUTFACTOR value from the environment.
-     This value is used to scale the default test timeout values. */
-  char *envstr_timeoutfactor = getenv ("TIMEOUTFACTOR");
-  if (envstr_timeoutfactor != NULL)
-    {
-      char *envstr_conv = envstr_timeoutfactor;
-      unsigned long int env_fact;
-
-      env_fact = strtoul (envstr_timeoutfactor, &envstr_conv, 0);
-      if (*envstr_conv == '\0' && envstr_conv != envstr_timeoutfactor)
-	timeoutfactor = MAX (env_fact, 1);
-    }
 
   /* Set TMPDIR to specified test directory.  */
   if (test_dir != NULL)

@@ -11,6 +11,8 @@ extern "C" {
 }
 #include "MemMount.h"
 
+//#define LOG_INTERMEDIATE_ERROR
+
 MemMount::MemMount() {
     // Don't use the zero slot
     slots_.Alloc();
@@ -181,7 +183,9 @@ int MemMount::GetSlot(std::string path) {
 
     // Get in canonical form.
     if (path.length() == 0) {
+#ifdef LOG_INTERMEDIATE_ERROR
         zrt_log_str("return -1, path.length() ==0");
+#endif
         return -1;
     }
     // Check if it is an absolute path
@@ -196,7 +200,9 @@ int MemMount::GetSlot(std::string path) {
             path_it != path_components.end(); ++path_it) {
         // check if we are at a non-directory
         if (!(slots_.At(slot)->is_dir())) {
+#ifdef LOG_INTERMEDIATE_ERROR
             zrt_log_str("return -1, errno = ENOTDIR");
+#endif
             errno = ENOTDIR;
             return -1;
         }
@@ -209,7 +215,9 @@ int MemMount::GetSlot(std::string path) {
         }
         // check for failure
         if (it == children->end()) {
+#ifdef LOG_INTERMEDIATE_ERROR
             zrt_log_str("return -1, errno = ENOENT");
+#endif
             errno = ENOENT;
             return -1;
         } else {
@@ -218,7 +226,9 @@ int MemMount::GetSlot(std::string path) {
     }
     // We should now have completed the walk.
     if (slot == 0 && path_components.size() > 1) {
+#ifdef LOG_INTERMEDIATE_ERROR
         zrt_log_str("return -1, path_components.size() > 1");
+#endif
         return -1;
     }
     zrt_log("slot=%d", slot);

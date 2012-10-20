@@ -30,7 +30,7 @@ print RESULT,"zvmstatus=",$$0 } \
 TESTBASE=
 EXCL=
 
-CFLAGS+=-O2 #optimization
+#CFLAGS+=-O2 #optimization
 CFLAGS+=-std=gnu99
 CFLAGS+=-D_GNU_SOURCE
 CFLAGS+=-Wno-long-long -m64
@@ -111,6 +111,6 @@ $(TEST_NEXES):  $(TEST_INCLUDES)
 	@$(CC) -o $@ $(LDFLAGS_ZMAIN) $(BASENAME).o $(LDFLAGS)
 	@binpatch $@ 4c01fc0f3148c1e2 4c01fc909048c1e2 > /dev/null
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
-	 sed s@{GLIBC_FS}@$(ZRT_ROOT)/archive/lib.tar@g > $(CURDIR)/$(BASENAME).manifest
+	 sed s@{GLIBC_FS}@$(CURDIR)/archive/glibc-fs.tar@g > $(CURDIR)/$(BASENAME).manifest
 #Run test under zerovm and display returned error code
 	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest | $(PRINT_ERRCODE)
