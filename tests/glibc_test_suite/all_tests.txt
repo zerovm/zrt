@@ -147,6 +147,7 @@ tst-memstream1.c		PASS.
 tst-memstream2.c		PASS.
 tst-wmemstream1.c		PASS.
 tst-wmemstream2.c		PASS.
+test-freopen.c			NOT_NACL_PART
 		dlfcn/
 errmsg1.c			COPIED.
 bug-dlopen1.c			COPIED.
@@ -208,7 +209,7 @@ tst-fdopendir2.c		-
 tst-getpw.c			-
 		posix/
 testfnm.c			COPIED.
-globtest.c			COPIED.
+globtest.c			NOT_NACL_PART
 test-vfork.c			COPIED.
 runptests.c			COPIED.
 wordexp-test.c			COPIED.
@@ -236,7 +237,7 @@ bug-regex17.c
 bug-regex20.c
 bug-regex25.c
 bug-regex9.c
-bug-ga2.c
+bug-ga2.c			NOT_NACL_PART
 bug-regex10.c
 bug-regex28.c
 bug-regex13.c
@@ -289,7 +290,11 @@ tst-atomic.c			SKIP.
 test-as-const-tcb-offsets.c 	SKIP.	tls, threads
 test-as-const-tlsdesc.c 	SKIP.	tls, threads
 
+		rt/
+tst-timer.c			SKIP.
+
 		nptl/
+tst-timer.c			SKIP.
 tls, theads, mutex, ...		SKIP.
 
      	     	math/

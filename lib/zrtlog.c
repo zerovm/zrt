@@ -18,7 +18,7 @@
 #define MAX_NESTED_SYSCALL_LEN 50
 static int s_donotlog=0;
 static int s_zrt_log_fd = -1;
-static char s_logbuf[0x1000];
+static char s_logbuf[LOG_BUFFER_SIZE];
 
 static char s_nested_syscalls_str[MAX_NESTED_SYSCALL_LEN] = "\0";
 

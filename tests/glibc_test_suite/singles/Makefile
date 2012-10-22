@@ -31,6 +31,7 @@ TESTBASE=
 EXCL=
 
 #CFLAGS+=-O2 #optimization
+CFLAGS+=-g #debug
 CFLAGS+=-std=gnu99
 CFLAGS+=-D_GNU_SOURCE
 CFLAGS+=-Wno-long-long -m64
@@ -65,7 +66,7 @@ CFLAGS-stratcliff.c = -fno-builtin
 CFLAGS-test-ffs.c = -fno-builtin
 CFLAGS-tst-inlcall.c = -fno-builtin
 ################ libio CFLAGS
-CFLAGS-tst_putwc.c = -DOBJPFX=\"$(CURDIR)\"
+CFLAGS-tst_putwc.c = -DOBJPFX=\"/tmp/\"
 ################ math CFLAGS
 CFLAGS-test-float.c= -fno-inline -ffloat-store -fno-builtin
 CFLAGS-test-double.c= -fno-inline -ffloat-store -fno-builtin
@@ -80,9 +81,11 @@ CLAGS-test-idouble.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
 			 -DTEST_FAST_MATH -fno-builtin
 CLAGS-test-ildoubl.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
 			  -DTEST_FAST_MATH -fno-builtin
-################
+################ posix CFLAGS
 
-
+################ posix CommandLine
+CMDLINE-tst-pcre.c=/tmp/PCRE.tests
+CMDLINE-tst-boost.c=/tmp/BOOST.tests
 
 all: clean $(ZEROVM) $(TEST_NEXES)
 
@@ -102,15 +105,17 @@ $(ZEROVM):
 	@echo "$(ZEROVM) does not exist, and it should be compiled for Release"
 	@exit 1
 
-$(TEST_NEXES):  $(TEST_INCLUDES)
+$(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval BASENAME:=$(basename $@))
 	$(eval NAMEONLY:=$(notdir $(BASENAME)))
 	$(eval SPECIFIC_TEST_FLAGS:=$(CFLAGS-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_CMDLINE:=$(CMDLINE-$(NAMEONLY).c))
 	@echo -n "TEST RUN $@ "
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
 	@$(CC) -o $@ $(LDFLAGS_ZMAIN) $(BASENAME).o $(LDFLAGS)
 	@binpatch $@ 4c01fc0f3148c1e2 4c01fc909048c1e2 > /dev/null
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
-	 sed s@{GLIBC_FS}@$(CURDIR)/archive/glibc-fs.tar@g > $(CURDIR)/$(BASENAME).manifest
+	 sed s@{GLIBC_FS}@$(CURDIR)/archive/glibc-fs.tar@g | \
+	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).manifest
 #Run test under zerovm and display returned error code
 	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest | $(PRINT_ERRCODE)

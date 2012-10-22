@@ -13,6 +13,7 @@ Channel = {ABS_PATH}sort.stderr.log, /dev/stderr, 0, 0, 0, 99999999, 99999999
 Version = 09082012
 Nexe = {ABS_PATH}sort_uint_proper_with_args.nexe
 NexeMax = 10000000
-MemMax=134217728
+==MemMax=134217728
+MemMax=234217728
 Timeout=20
 CommandLine = 67108864

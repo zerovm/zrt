@@ -13,9 +13,10 @@
 #include "zrtlog.h"
 #include "handle_allocator.h"
 
-#define CHECK_HANDLE(handle) { \
-    zrt_log( "handle=%d", handle ); \
-    if ( handle < 0 || handle >= MAX_HANDLES_COUNT ) return -1; \
+#define CHECK_HANDLE(handle)						\
+    {									\
+	zrt_log( "handle=%d", handle );					\
+	if ( handle < 0 || handle >= MAX_HANDLES_COUNT ) return -1;	\
     }
 
 
@@ -51,7 +52,7 @@ static struct MountsInterface* mount_interface(int handle){
 static int get_inode(int handle, ino_t* inode ){
     CHECK_HANDLE(handle);
     zrt_log( "handle=%d, inode=%d, inode pointer=%p",
-            handle, (int)s_handle_slots[handle].inode, &(s_handle_slots[handle]).inode );
+	     handle, (int)s_handle_slots[handle].inode, &(s_handle_slots[handle]).inode );
     *inode = s_handle_slots[handle].inode;
     return 0;
 }
@@ -109,14 +110,14 @@ static int free_handle(int handle){
 
 
 static struct HandleAllocator s_handle_allocator = {
-        allocate_handle,
-        allocate_reserved_handle,
-        free_handle,
-        mount_interface,
-        get_inode,
-        set_inode,
-        get_offset,
-        set_offset
+    allocate_handle,
+    allocate_reserved_handle,
+    free_handle,
+    mount_interface,
+    get_inode,
+    set_inode,
+    get_offset,
+    set_offset
 };
 
 

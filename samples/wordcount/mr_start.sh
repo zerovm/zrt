@@ -19,16 +19,16 @@ time
 
 COUNTER=$MAP_FIRST
 while [  $COUNTER -le $MAP_LAST ]; do
-    gnome-terminal --geometry=80x20 -t "map$COUNTER" -x sh -c "./zerovm -M../samples/wordcount/manifest/map$COUNTER.manifest"
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M../samples/wordcount/manifest/map$COUNTER.manifest > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 COUNTER=$REDUCE_FIRST
 while [  $COUNTER -le $REDUCE_LAST ]; do
-    gnome-terminal --geometry=80x20 -t "reduce$COUNTER" -x sh -c "./zerovm -M../samples/wordcount/manifest/reduce$COUNTER.manifest"
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M../samples/wordcount/manifest/reduce$COUNTER.manifest  > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
-time ./zerovm -M../samples/wordcount/manifest/reduce"$REDUCE_LAST".manifest
+time setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M../samples/wordcount/manifest/reduce"$REDUCE_LAST".manifest
 
 

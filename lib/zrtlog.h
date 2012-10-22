@@ -15,13 +15,14 @@
 #endif
 
 #ifdef DEBUG
+#define LOG_BUFFER_SIZE 0x1000
 #define zrt_log(fmt, ...) \
         do {\
             char *buf__123; \
             int debug_handle = debug_handle_get_buf(&buf__123); \
             int len;\
             if(debug_handle < 0) break;\
-            len = snprintf(buf__123, 0x1000, "%s; [%s]; %s, %d: " fmt "\n", \
+            len = snprintf(buf__123, LOG_BUFFER_SIZE, "%s; [%s]; %s, %d: " fmt "\n", \
             __FILE__, syscall_stack_str(), __func__, __LINE__, __VA_ARGS__);\
             zrtlog_write(debug_handle, buf__123, len, 0); \
         } while(0)
@@ -32,10 +33,21 @@
             int debug_handle = debug_handle_get_buf(&buf__123); \
             int len;\
             if( debug_handle < 0) break;\
-            len = snprintf(buf__123, 0x1000, "%s; [%s]; %s, %d: %s\n", \
+            len = snprintf(buf__123, LOG_BUFFER_SIZE, "%s; [%s]; %s, %d: %s\n", \
             __FILE__, syscall_stack_str(), __func__, __LINE__, text);\
             zrtlog_write(debug_handle, buf__123, len, 0); \
         } while(0)
+
+#define ZRT_LOG_DELIMETER \
+        do {\
+            char *buf__123; \
+            int debug_handle = debug_handle_get_buf(&buf__123); \
+            int len;\
+            if( debug_handle < 0) break;\
+            len = snprintf(buf__123, LOG_BUFFER_SIZE, "%060d\n", 0 );\
+            zrtlog_write(debug_handle, buf__123, len, 0); \
+        } while(0)
+
 
 const char* syscall_stack_str();
 void log_push_name( const char* name );

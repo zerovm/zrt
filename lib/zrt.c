@@ -49,10 +49,10 @@ int main(int argc, char** argv, char** envp)
         zrt_log("calculated heap end address= 0x%x", (intptr_t)setup->heap_ptr+setup->heap_size);
     }
     zrt_log("heap bounds [0x%X-0xFFFFFFFF]", 0xFFFFFFFF-0x1000000);
-    zrt_log("%060d", 0 );
+    ZRT_LOG_DELIMETER;
     zrt_log("sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel));
     zrt_log("channels count = %d", setup->channels_count);
-    zrt_log("%060d", 0);
+    ZRT_LOG_DELIMETER;
     for(i = 0; i < setup->channels_count; ++i)
     {
         zrt_log("channel[%d].name = '%s'", i, setup->channels[i].name);
@@ -63,7 +63,7 @@ int main(int argc, char** argv, char** envp)
         zrt_log("channel[%d].limits[PutsLimit] = %lld", i, setup->channels[i].limits[PutsLimit]);
         zrt_log("channel[%d].limits[PutSizeLimit] = %lld", i, setup->channels[i].limits[PutSizeLimit]);
     }
-    zrt_log("%060d", 0);
+    ZRT_LOG_DELIMETER;
 
     if(zvm_syscallback((intptr_t)syscall_director) == 0)
         return ERR_CODE;

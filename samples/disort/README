@@ -6,43 +6,14 @@ Simplified networking data flow is in here:
 https://github.com/YaroslavLitvinov/Distributed-Sort/blob/master/zeromq-diagram.pdf
 
 =========================== Required Packages =========================
-On Trusted size ZeroVM virtual machine is using additional packages, described below:
-Ubuntu Linux 11.x 64bit
-Required packages: ZeroMQ 2.1.x
-Recommended package : sqlite-autoconf-3071100, Executive file sqlite3 can be useful to create and insert data into databases; 
-sqlite-amalgamation already is part of project and located in sqlite dir;  
-in terminal >
-
-echo Install sqlite-autoconf
-wget http://www.sqlite.org/sqlite-autoconf-3071200.tar.gz
-tar xvfz sqlite-autoconf-3071200.tar.gz
-cd sqlite-autoconf-3071200/
-make
-sudo make install
-echo to be sure about sqlite3
-sudo ldconfig
-
-echo install packages required by zeromq
-sudo apt-get install uuid-dev
-echo Install zeromq
-wget http://download.zeromq.org/zeromq-2.2.0.tar.gz
-tar xvfz zeromq-2.2.0.tar.gz
-cd zeromq-2.2.0
-./configure
-make
-sudo make install
+Should be configured zerovm 
 
 ============================= Run Distributed Sort =========================
-Currently by default you can build and run sorting with 5 source and 5 destination nodes;
-Before build of zerovm do you need enable NETWORKING section in Makefile 
+Currently by default you can build and run sorting with 10 source and 10 destination nodes;
 You can run Distributed sort folowing this, in terminal >
-cd ~/git/zerovm
-make
-cd ~/git/zerovm/samples/disort
+cd $(ZRT_ROOT)/samples/disort
 make
 ./disort.sh
-echo To see results:
-cat log/sortman.stderr.log
 
  ============================ Brief info of project contents ============================
  ./disort.sh distributed sort executer
@@ -69,5 +40,5 @@ src_node - Client of distributed sort that acts as source node, Number of src no
 by SRC_NODES_COUNT from defines.h, at least 3 nodes should be set;
 dst_nodes - Same as src_node, but act as destination node with predefined instances number;
 ============================= Logging ==================================
-User application Logs are located in log/ dir.
-Zerovm Logs are located in vmlog/ dir. 
+Every node doing logging, logs are located in log/ dir.
+

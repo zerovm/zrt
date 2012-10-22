@@ -2,7 +2,7 @@
 
 ${ZRT_ROOT}/ns_start.sh 2
 
-gnome-terminal --geometry=80x20 -t "zerovm test2.manifest" -x sh -c "setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest2.manifest -v10"
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest2.manifest -v10&
 setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest1.manifest -v10
 
 sleep 1

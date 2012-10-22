@@ -50,7 +50,7 @@
 #define TARBALLFS
 
 #ifdef DEBUG
-    #define ZRT_LOG_NAME "/dev/debug"
+#define ZRT_LOG_NAME "/dev/debug"
 #endif //DEBUG
 
 
@@ -76,7 +76,7 @@ static int validate_pointer_range(const void* ptr){
         return 0;
 }
 
-static void update_cached_time()
+static inline void update_cached_time()
 {
     /* update time value
      * update seconds because updating miliseconds has no effect*/
@@ -107,9 +107,9 @@ void set_nacl_stat( const struct stat* stat, struct nacl_abi_stat* nacl_stat ){
 static void debug_mes_open_flags( int flags )
 {
     int all_flags[] = {O_CREAT, O_EXCL, O_TRUNC, O_DIRECT, O_DIRECTORY,
-            O_NOATIME, O_APPEND, O_ASYNC, O_SYNC, O_NONBLOCK, O_NDELAY, O_NOCTTY};
+		       O_NOATIME, O_APPEND, O_ASYNC, O_SYNC, O_NONBLOCK, O_NDELAY, O_NOCTTY};
     char *all_texts[] = {"O_CREAT", "O_EXCL", "O_TRUNC", "O_DIRECT", "O_DIRECTORY",
-            "O_NOATIME", "O_APPEND", "O_ASYNC", "O_SYNC", "O_NONBLOCK", "O_NDELAY", "O_NOCTTY"};
+			 "O_NOATIME", "O_APPEND", "O_ASYNC", "O_SYNC", "O_NONBLOCK", "O_NDELAY", "O_NOCTTY"};
     int i;
     assert( sizeof(all_flags)/sizeof(int) == sizeof(all_texts)/sizeof(char*) );
 
@@ -133,14 +133,17 @@ static void debug_mes_stat(struct stat *stat){
 }
 
 
-/*alloc absolute path, for relative path just insert into beginning '/' char, for absolute path just alloc and return.
- *user application can provide relative path, currently any of zrt filesystems does not supported
- *relative path, so making absolute path is required.
- * */
+/*
+ * alloc absolute path, for relative path just insert into beginning '/' char, 
+ * for absolute path just alloc and return. user application can provide relative path, 
+ * currently any of zrt filesystems does not supported relative path, so making absolute 
+ * path is required.
+ */
 static char* alloc_absolute_path_from_relative( const char* path )
 {
-    /*some applications providing relative path, currently any of zrt filesystems does not supported
-     *relative path, so make absolute path just insert '/' into begin of relative path */
+    /* some applications providing relative path, currently any of zrt filesystems 
+     * does not support relative path, so make absolute path just insert '/' into
+     * begin of relative path */
     char* absolute_path = malloc( strlen(path) + 2 );
     /*transform . path into root /  */
     if ( strlen(path) == 1 && path[0] == '.' ){
@@ -313,20 +316,21 @@ int fchmod(int fd, mode_t mode){
     return ret;
 }
 
-
+/*override system glibc implementation due to bad errno at errors*/
+int fseek(FILE *stream, long offset, int whence){
+    LOG_SYSCALL_START(NULL);
+    errno = 0;
+    int handle = fileno(stream);
+    int ret = s_transparent_mount->lseek(handle, offset, whence);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
 
 /********************************************************************************
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
  * each nacl syscall must be implemented or, at least, mocked. no exclusions!
  *********************************************************************************/
 
-static int32_t zrt_nan(uint32_t *args)
-{
-    LOG_SYSCALL_START(args);
-    LOG_SYSCALL_FINISH(0);
-    return 0;
-}
-//SYSCALL_MOCK(nan, 0)
 
 SYSCALL_MOCK(null, 0)
 SYSCALL_MOCK(nameservice, 0)
@@ -658,124 +662,187 @@ SYSCALL_MOCK(dyncode_modify, 0)
 SYSCALL_MOCK(dyncode_delete, 0)
 SYSCALL_MOCK(test_infoleak, 0)
 
+/* Every SYSCALL_NOT_IMPLEMENTED should have appropriate SYSCALL_STUB_IMPLEMENTATION 
+ * to be correctly referenced inside of zrt_syscalls list*/
+SYSCALL_STUB_IMPLEMENTATION(0)
+SYSCALL_STUB_IMPLEMENTATION(3)
+SYSCALL_STUB_IMPLEMENTATION(4)
+SYSCALL_STUB_IMPLEMENTATION(5)
+SYSCALL_STUB_IMPLEMENTATION(6)
+SYSCALL_STUB_IMPLEMENTATION(7)
+SYSCALL_STUB_IMPLEMENTATION(19)
+SYSCALL_STUB_IMPLEMENTATION(24)
+SYSCALL_STUB_IMPLEMENTATION(25)
+SYSCALL_STUB_IMPLEMENTATION(26)
+SYSCALL_STUB_IMPLEMENTATION(27)
+SYSCALL_STUB_IMPLEMENTATION(28)
+SYSCALL_STUB_IMPLEMENTATION(29)
+SYSCALL_STUB_IMPLEMENTATION(34)
+SYSCALL_STUB_IMPLEMENTATION(35)
+SYSCALL_STUB_IMPLEMENTATION(36)
+SYSCALL_STUB_IMPLEMENTATION(37)
+SYSCALL_STUB_IMPLEMENTATION(38)
+SYSCALL_STUB_IMPLEMENTATION(39)
+SYSCALL_STUB_IMPLEMENTATION(43)
+SYSCALL_STUB_IMPLEMENTATION(44)
+SYSCALL_STUB_IMPLEMENTATION(45)
+SYSCALL_STUB_IMPLEMENTATION(46)
+SYSCALL_STUB_IMPLEMENTATION(47)
+SYSCALL_STUB_IMPLEMENTATION(48)
+SYSCALL_STUB_IMPLEMENTATION(49)
+SYSCALL_STUB_IMPLEMENTATION(50)
+SYSCALL_STUB_IMPLEMENTATION(51)
+SYSCALL_STUB_IMPLEMENTATION(52)
+SYSCALL_STUB_IMPLEMENTATION(53)
+SYSCALL_STUB_IMPLEMENTATION(54)
+SYSCALL_STUB_IMPLEMENTATION(55)
+SYSCALL_STUB_IMPLEMENTATION(56)
+SYSCALL_STUB_IMPLEMENTATION(57)
+SYSCALL_STUB_IMPLEMENTATION(58)
+SYSCALL_STUB_IMPLEMENTATION(59)
+SYSCALL_STUB_IMPLEMENTATION(67)
+SYSCALL_STUB_IMPLEMENTATION(68)
+SYSCALL_STUB_IMPLEMENTATION(69)
+SYSCALL_STUB_IMPLEMENTATION(78)
+SYSCALL_STUB_IMPLEMENTATION(87)
+SYSCALL_STUB_IMPLEMENTATION(88)
+SYSCALL_STUB_IMPLEMENTATION(89)
+SYSCALL_STUB_IMPLEMENTATION(90)
+SYSCALL_STUB_IMPLEMENTATION(91)
+SYSCALL_STUB_IMPLEMENTATION(92)
+SYSCALL_STUB_IMPLEMENTATION(93)
+SYSCALL_STUB_IMPLEMENTATION(94)
+SYSCALL_STUB_IMPLEMENTATION(95)
+SYSCALL_STUB_IMPLEMENTATION(96)
+SYSCALL_STUB_IMPLEMENTATION(97)
+SYSCALL_STUB_IMPLEMENTATION(98)
+SYSCALL_STUB_IMPLEMENTATION(99)
+SYSCALL_STUB_IMPLEMENTATION(107)
+SYSCALL_STUB_IMPLEMENTATION(108)
+
+
+
 /*
  * array of the pointers to zrt syscalls
  *
  * each zrt function (syscall) has uniform prototype: int32_t syscall(uint32_t *args)
  * where "args" pointer to syscalls' arguments. number and types of arguments
  * can be found in the nacl "nacl_syscall_handlers.c" file.
+ * 
+ * SYSCALL_NOT_IMPLEMENTED would be used for unsupported syscalls, any that definition
+ * should have appropriate SYSCALL_STUB_IMPLEMENTATION to be correctly referenced
  */
 int32_t (*zrt_syscalls[])(uint32_t*) = {
-        zrt_nan,                   /* 0 -- not implemented syscall */
-        zrt_null,                  /* 1 -- empty syscall. does nothing */
-        zrt_nameservice,           /* 2 */
-        zrt_nan,                   /* 3 -- not implemented syscall */
-        zrt_nan,                   /* 4 -- not implemented syscall */
-        zrt_nan,                   /* 5 -- not implemented syscall */
-        zrt_nan,                   /* 6 -- not implemented syscall */
-        zrt_nan,                   /* 7 -- not implemented syscall */
-        zrt_dup,                   /* 8 */
-        zrt_dup2,                  /* 9 */
-        zrt_open,                  /* 10 */
-        zrt_close,                 /* 11 */
-        zrt_read,                  /* 12 */
-        zrt_write,                 /* 13 */
-        zrt_lseek,                 /* 14 */
-        zrt_ioctl,                 /* 15 */
-        zrt_stat,                  /* 16 */
-        zrt_fstat,                 /* 17 */
-        zrt_chmod,                 /* 18 */
-        zrt_nan,                   /* 19 -- not implemented syscall */
-        zrt_sysbrk,                /* 20 */
-        zrt_mmap,                  /* 21 */
-        zrt_munmap,                /* 22 */
-        zrt_getdents,              /* 23 */
-        zrt_nan,                   /* 24 -- not implemented syscall */
-        zrt_nan,                   /* 25 -- not implemented syscall */
-        zrt_nan,                   /* 26 -- not implemented syscall */
-        zrt_nan,                   /* 27 -- not implemented syscall */
-        zrt_nan,                   /* 28 -- not implemented syscall */
-        zrt_nan,                   /* 29 -- not implemented syscall */
-        zrt_exit,                  /* 30 -- must use trap:exit() */
-        zrt_getpid,                /* 31 */
-        zrt_sched_yield,           /* 32 */
-        zrt_sysconf,               /* 33 */
-        zrt_nan,                   /* 34 -- not implemented syscall */
-        zrt_nan,                   /* 35 -- not implemented syscall */
-        zrt_nan,                   /* 36 -- not implemented syscall */
-        zrt_nan,                   /* 37 -- not implemented syscall */
-        zrt_nan,                   /* 38 -- not implemented syscall */
-        zrt_nan,                   /* 39 -- not implemented syscall */
-        zrt_gettimeofday,          /* 40 */
-        zrt_clock,                 /* 41 */
-        zrt_nanosleep,             /* 42 */
-        zrt_nan,                   /* 43 -- not implemented syscall */
-        zrt_nan,                   /* 44 -- not implemented syscall */
-        zrt_nan,                   /* 45 -- not implemented syscall */
-        zrt_nan,                   /* 46 -- not implemented syscall */
-        zrt_nan,                   /* 47 -- not implemented syscall */
-        zrt_nan,                   /* 48 -- not implemented syscall */
-        zrt_nan,                   /* 49 -- not implemented syscall */
-        zrt_nan,                   /* 50 -- not implemented syscall */
-        zrt_nan,                   /* 51 -- not implemented syscall */
-        zrt_nan,                   /* 52 -- not implemented syscall */
-        zrt_nan,                   /* 53 -- not implemented syscall */
-        zrt_nan,                   /* 54 -- not implemented syscall */
-        zrt_nan,                   /* 55 -- not implemented syscall */
-        zrt_nan,                   /* 56 -- not implemented syscall */
-        zrt_nan,                   /* 57 -- not implemented syscall */
-        zrt_nan,                   /* 58 -- not implemented syscall */
-        zrt_nan,                   /* 59 -- not implemented syscall */
-        zrt_imc_makeboundsock,     /* 60 */
-        zrt_imc_accept,            /* 61 */
-        zrt_imc_connect,           /* 62 */
-        zrt_imc_sendmsg,           /* 63 */
-        zrt_imc_recvmsg,           /* 64 */
-        zrt_imc_mem_obj_create,    /* 65 */
-        zrt_imc_socketpair,        /* 66 */
-        zrt_nan,                   /* 67 -- not implemented syscall */
-        zrt_nan,                   /* 68 -- not implemented syscall */
-        zrt_nan,                   /* 69 -- not implemented syscall */
-        zrt_mutex_create,          /* 70 */
-        zrt_mutex_lock,            /* 71 */
-        zrt_mutex_trylock,         /* 72 */
-        zrt_mutex_unlock,          /* 73 */
-        zrt_cond_create,           /* 74 */
-        zrt_cond_wait,             /* 75 */
-        zrt_cond_signal,           /* 76 */
-        zrt_cond_broadcast,        /* 77 */
-        zrt_nan,                   /* 78 -- not implemented syscall */
-        zrt_cond_timed_wait_abs,   /* 79 */
-        zrt_thread_create,         /* 80 */
-        zrt_thread_exit,           /* 81 */
-        zrt_tls_init,              /* 82 */
-        zrt_thread_nice,           /* 83 */
-        zrt_tls_get,               /* 84 */
-        zrt_second_tls_set,        /* 85 */
-        zrt_second_tls_get,        /* 86 */
-        zrt_nan,                   /* 87 -- not implemented syscall */
-        zrt_nan,                   /* 88 -- not implemented syscall */
-        zrt_nan,                   /* 89 -- not implemented syscall */
-        zrt_nan,                   /* 90 -- not implemented syscall */
-        zrt_nan,                   /* 91 -- not implemented syscall */
-        zrt_nan,                   /* 92 -- not implemented syscall */
-        zrt_nan,                   /* 93 -- not implemented syscall */
-        zrt_nan,                   /* 94 -- not implemented syscall */
-        zrt_nan,                   /* 95 -- not implemented syscall */
-        zrt_nan,                   /* 96 -- not implemented syscall */
-        zrt_nan,                   /* 97 -- not implemented syscall */
-        zrt_nan,                   /* 98 -- not implemented syscall */
-        zrt_nan,                   /* 99 -- not implemented syscall */
-        zrt_sem_create,            /* 100 */
-        zrt_sem_wait,              /* 101 */
-        zrt_sem_post,              /* 102 */
-        zrt_sem_get_value,         /* 103 */
-        zrt_dyncode_create,        /* 104 */
-        zrt_dyncode_modify,        /* 105 */
-        zrt_dyncode_delete,        /* 106 */
-        zrt_nan,                   /* 107 -- not implemented syscall */
-        zrt_nan,                   /* 108 -- not implemented syscall */
-        zrt_test_infoleak          /* 109 */
+    SYSCALL_NOT_IMPLEMENTED(0),/* 0 -- not implemented syscall */
+    zrt_null,                  /* 1 -- empty syscall. does nothing */
+    zrt_nameservice,           /* 2 */
+    SYSCALL_NOT_IMPLEMENTED(3),/* 3 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(4),/* 4 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(5),/* 5 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(6),/* 6 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(7),/* 7 -- not implemented syscall */
+    zrt_dup,                   /* 8 */
+    zrt_dup2,                  /* 9 */
+    zrt_open,                  /* 10 */
+    zrt_close,                 /* 11 */
+    zrt_read,                  /* 12 */
+    zrt_write,                 /* 13 */
+    zrt_lseek,                 /* 14 */
+    zrt_ioctl,                 /* 15 */
+    zrt_stat,                  /* 16 */
+    zrt_fstat,                 /* 17 */
+    zrt_chmod,                 /* 18 */
+    SYSCALL_NOT_IMPLEMENTED(19),/* 19 -- not implemented syscall */
+    zrt_sysbrk,                /* 20 */
+    zrt_mmap,                  /* 21 */
+    zrt_munmap,                /* 22 */
+    zrt_getdents,              /* 23 */
+    SYSCALL_NOT_IMPLEMENTED(24),/* 24 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(25),/* 25 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(26),/* 26 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(27),/* 27 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(28),/* 28 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(29),/* 29 -- not implemented syscall */
+    zrt_exit,                  /* 30 -- must use trap:exit() */
+    zrt_getpid,                /* 31 */
+    zrt_sched_yield,           /* 32 */
+    zrt_sysconf,               /* 33 */
+    SYSCALL_NOT_IMPLEMENTED(34),/* 34 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(35),/* 35 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(36),/* 36 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(37),/* 37 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(38),/* 38 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(39),/* 39 -- not implemented syscall */
+    zrt_gettimeofday,          /* 40 */
+    zrt_clock,                 /* 41 */
+    zrt_nanosleep,             /* 42 */
+    SYSCALL_NOT_IMPLEMENTED(43),/* 43 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(44),/* 44 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(45),/* 45 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(46),/* 46 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(47),/* 47 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(48),/* 48 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(49),/* 49 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(50),/* 50 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(51),/* 51 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(52),/* 52 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(53),/* 53 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(54),/* 54 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(55),/* 55 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(56),/* 56 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(57),/* 57 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(58),/* 58 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(59),/* 59 -- not implemented syscall */
+    zrt_imc_makeboundsock,     /* 60 */
+    zrt_imc_accept,            /* 61 */
+    zrt_imc_connect,           /* 62 */
+    zrt_imc_sendmsg,           /* 63 */
+    zrt_imc_recvmsg,           /* 64 */
+    zrt_imc_mem_obj_create,    /* 65 */
+    zrt_imc_socketpair,        /* 66 */
+    SYSCALL_NOT_IMPLEMENTED(67),/* 67 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(68),/* 68 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(69),/* 69 -- not implemented syscall */
+    zrt_mutex_create,          /* 70 */
+    zrt_mutex_lock,            /* 71 */
+    zrt_mutex_trylock,         /* 72 */
+    zrt_mutex_unlock,          /* 73 */
+    zrt_cond_create,           /* 74 */
+    zrt_cond_wait,             /* 75 */
+    zrt_cond_signal,           /* 76 */
+    zrt_cond_broadcast,        /* 77 */
+    SYSCALL_NOT_IMPLEMENTED(78),/* 78 -- not implemented syscall */
+    zrt_cond_timed_wait_abs,   /* 79 */
+    zrt_thread_create,         /* 80 */
+    zrt_thread_exit,           /* 81 */
+    zrt_tls_init,              /* 82 */
+    zrt_thread_nice,           /* 83 */
+    zrt_tls_get,               /* 84 */
+    zrt_second_tls_set,        /* 85 */
+    zrt_second_tls_get,        /* 86 */
+    SYSCALL_NOT_IMPLEMENTED(87),/* 87 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(88),/* 88 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(89),/* 89 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(90),/* 90 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(91),/* 91 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(92),/* 92 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(93),/* 93 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(94),/* 94 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(95),/* 95 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(96),/* 96 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(97),/* 97 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(98),/* 98 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(99),/* 99 -- not implemented syscall */
+    zrt_sem_create,            /* 100 */
+    zrt_sem_wait,              /* 101 */
+    zrt_sem_post,              /* 102 */
+    zrt_sem_get_value,         /* 103 */
+    zrt_dyncode_create,        /* 104 */
+    zrt_dyncode_modify,        /* 105 */
+    zrt_dyncode_delete,        /* 106 */
+    SYSCALL_NOT_IMPLEMENTED(107),/* 107 -- not implemented syscall */
+    SYSCALL_NOT_IMPLEMENTED(108),/* 108 -- not implemented syscall */
+    zrt_test_infoleak          /* 109 */
 };
 
 
@@ -786,7 +853,7 @@ void zrt_setup( struct UserManifest* manifest ){
     s_mounts_manager = alloc_mounts_manager();
     /*alloc filesystem based on channels*/
     s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator,
-            manifest->channels, manifest->channels_count );
+					     manifest->channels, manifest->channels_count );
     /*alloc entry point to mounted filesystems*/
     s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
 
@@ -824,7 +891,7 @@ void zrt_setup_finally(){
      * to supported archive, read every file and add it contents into MemMount filesystem
      * */
     /*create stream reader linked to tar archive that contains filesystem image*/
-    struct StreamReader* stream_reader = alloc_stream_reader( s_channels_mount, "/dev/tarimage" );
+    struct StreamReader* stream_reader = alloc_stream_reader( s_channels_mount, DEV_IMAGE );
 
     if ( stream_reader ){
         /*create image loader, passed 1st param: image alias, 2nd param: Root filesystem;
@@ -842,6 +909,7 @@ void zrt_setup_finally(){
         free_image_loader( image_loader );
         free_stream_reader( stream_reader );
     }
+    ZRT_LOG_DELIMETER;
 #endif
 }
 
