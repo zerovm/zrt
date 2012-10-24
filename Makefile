@@ -1,5 +1,6 @@
 CC=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-gcc
 CXX=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-g++
+AR=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-ar
 
 ############### libzrt.a source files to build
 LIBZRT=lib/libzrt.a
@@ -8,6 +9,7 @@ lib/syscall_manager.S \
 lib/zrtlog.c \
 lib/zrt.c \
 lib/zrtsyscalls.c \
+lib/enum_strings.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
 lib/fs/channels_mount.c \

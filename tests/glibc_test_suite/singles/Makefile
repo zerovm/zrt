@@ -3,9 +3,11 @@ CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
 ifndef TESTS_ROOT
 TESTS_ROOT=src
 endif
-#it should be used release version of zerovm
+#it should be zerovm release version
 ZEROVM=$(ZEROVM_ROOT)/zerovm.rel
 
+OUTPUT_LAST=last_test.output
+OUTPUT_FAIL=fail_tests.output
 TEST_INCLUDES=$(shell find $(TESTS_ROOT) -name "*.h")
 TEST_SOURCES=$(shell find $(TESTS_ROOT) -name "*.c")
 TEST_OBJECTS=$(addsuffix .o, $(basename $(TEST_SOURCES) ) )
@@ -16,6 +18,7 @@ TEST_LOG_ZVM=$(addsuffix .zerovm.log, $(basename $(TEST_SOURCES) ) )
 TEST_LOG_DEBUG=$(addsuffix .zrtdebug.log, $(basename $(TEST_SOURCES) ) )
 TEST_NEXES=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
 TEST_LIST=$(basename $(TEST_SOURCES) )
+COUNTER=0
 
 #get pipe from zerovm and parse output
 PRINT_ERRCODE=awk '{ \
@@ -25,6 +28,12 @@ if (NR == 5) { \
 	else { RESULT="FAIL" } \
 	if ($$0 != "ok") { RESULT="FAIL" } \
 print RESULT,"zvmstatus=",$$0 } \
+}'
+
+DISPLAY_FAIL=awk '{\
+if ( match($$0, "FAIL zvmstatus") != 0 ) {\
+	print $$0\
+	}\
 }'
 
 TESTBASE=
@@ -87,12 +96,14 @@ CLAGS-test-ildoubl.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
 CMDLINE-tst-pcre.c=/tmp/PCRE.tests
 CMDLINE-tst-boost.c=/tmp/BOOST.tests
 
-all: clean $(ZEROVM) $(TEST_NEXES)
+all: clean $(ZEROVM) $(TEST_NEXES) report
 
 resume:$(ZEROVM) $(TEST_NEXES)
 
 clean:
 	@rm -f *.o
+	@rm -f $(OUTPUT_LAST)
+	@rm -f $(OUTPUT_FAIL)
 	@rm -f $(TEST_OBJECTS) 
 	@rm -f $(TEST_STDOUTS)
 	@rm -f $(TEST_STDERRS)
@@ -102,20 +113,49 @@ clean:
 	@rm -f $(TEST_LOG_DEBUG)
 
 $(ZEROVM):
-	@echo "$(ZEROVM) does not exist, and it should be compiled for Release"
-	@exit 1
+	$(error "$(ZEROVM) does not exist")
 
 $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
+#increase test counter
+	$(eval COUNTER:=$(shell echo $$(($(COUNTER)+1))) )
+#prrepare variables
 	$(eval BASENAME:=$(basename $@))
 	$(eval NAMEONLY:=$(notdir $(BASENAME)))
 	$(eval SPECIFIC_TEST_FLAGS:=$(CFLAGS-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_CMDLINE:=$(CMDLINE-$(NAMEONLY).c))
 	@echo -n "TEST RUN $@ "
+#compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
 	@$(CC) -o $@ $(LDFLAGS_ZMAIN) $(BASENAME).o $(LDFLAGS)
+#prepare binary
 	@binpatch $@ 4c01fc0f3148c1e2 4c01fc909048c1e2 > /dev/null
+#prepare manifest
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
 	 sed s@{GLIBC_FS}@$(CURDIR)/archive/glibc-fs.tar@g | \
 	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).manifest
 #Run test under zerovm and display returned error code
-	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest | $(PRINT_ERRCODE)
+#$shell should not be used to get test result from file because it unexpectadly
+#using contents of previosly saved test output, and it is the main reason why using awk;
+#parsing correct output retrieved via pipe
+	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest \
+	| $(PRINT_ERRCODE) > $(OUTPUT_LAST)
+	@cat $(OUTPUT_LAST)
+#save failed tests to displaytheir at report
+	@cat $(OUTPUT_LAST) | awk '{\
+if ( match($$0, "FAIL zvmstatus") != 0 ) {\
+	print test,$$0\
+	}\
+}' test="$@" >> $(OUTPUT_FAIL)
+
+report: $(OUTPUT_FAIL)
+#display tests resuts
+	@echo --------------------------------------------
+	@echo $(COUNTER) tests was executed
+	@echo -n "Failed "
+	@echo -n `cat $(OUTPUT_FAIL) | wc -l`
+	@echo " tests:"
+	@cat $(OUTPUT_FAIL)
+
+$(OUTPUT_FAIL):
+#has no output fail if this rule is active
+	$(error Nothing output)

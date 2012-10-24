@@ -35,6 +35,7 @@
 #include "nacl_struct.h"
 #include "image_engine.h"
 #include "channels_mount.h"
+#include "enum_strings.h"
 
 
 /* TODO
@@ -65,16 +66,16 @@ static struct MountsInterface* s_transparent_mount;
 /****************** */
 
 /*return 0 if not valid, 1 if valid*/
-static int validate_pointer_range(const void* ptr){
-    if ( s_manifest && ptr ){
-        if ( ptr < s_manifest->heap_ptr ){
-            return 0;
-        }
-        else
-            return 1;
-    }else
-        return 0;
-}
+/* static int validate_pointer_range(const void* ptr){ */
+/*     if ( s_manifest && ptr ){ */
+/*         if ( ptr < s_manifest->heap_ptr ){ */
+/*             return 0; */
+/*         } */
+/*         else */
+/*             return 1; */
+/*     }else */
+/*         return 0; */
+/* } */
 
 static inline void update_cached_time()
 {
@@ -102,22 +103,6 @@ void set_nacl_stat( const struct stat* stat, struct nacl_abi_stat* nacl_stat ){
     nacl_stat->nacl_abi_st_mtimensec = 0;
     nacl_stat->nacl_abi_st_ctime = stat->st_ctime;
     nacl_stat->nacl_abi_st_ctimensec = 0;
-}
-
-static void debug_mes_open_flags( int flags )
-{
-    int all_flags[] = {O_CREAT, O_EXCL, O_TRUNC, O_DIRECT, O_DIRECTORY,
-		       O_NOATIME, O_APPEND, O_ASYNC, O_SYNC, O_NONBLOCK, O_NDELAY, O_NOCTTY};
-    char *all_texts[] = {"O_CREAT", "O_EXCL", "O_TRUNC", "O_DIRECT", "O_DIRECTORY",
-			 "O_NOATIME", "O_APPEND", "O_ASYNC", "O_SYNC", "O_NONBLOCK", "O_NDELAY", "O_NOCTTY"};
-    int i;
-    assert( sizeof(all_flags)/sizeof(int) == sizeof(all_texts)/sizeof(char*) );
-
-    for ( i=0; i < sizeof(all_flags)/sizeof(int); i++ ){
-        if ( CHECK_FLAG(flags, all_flags[i]) ){
-            zrt_log("flag %s=%d", all_texts[i], CHECK_FLAG(flags, all_flags[i]) );
-        }
-    }
 }
 
 static void debug_mes_stat(struct stat *stat){
@@ -317,14 +302,14 @@ int fchmod(int fd, mode_t mode){
 }
 
 /*override system glibc implementation due to bad errno at errors*/
-int fseek(FILE *stream, long offset, int whence){
-    LOG_SYSCALL_START(NULL);
-    errno = 0;
-    int handle = fileno(stream);
-    int ret = s_transparent_mount->lseek(handle, offset, whence);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
+/* int fseek(FILE *stream, long offset, int whence){ */
+/*     LOG_SYSCALL_START(NULL); */
+/*     errno = 0; */
+/*     int handle = fileno(stream); */
+/*     int ret = s_transparent_mount->lseek(handle, offset, whence); */
+/*     LOG_SYSCALL_FINISH(ret); */
+/*     return ret; */
+/* } */
 
 /********************************************************************************
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
@@ -352,8 +337,9 @@ static int32_t zrt_open(uint32_t *args)
 
     zrt_log("path=%s", name);
     VALIDATE_SYSCALL_PTR(name);
-    debug_mes_open_flags(flags);
 
+    log_file_open_flags(flags);
+    
     char* absolute_path = alloc_absolute_path_from_relative( name );
     mode = apply_umask(mode);
     int ret = s_transparent_mount->open( absolute_path, flags, mode );
@@ -408,15 +394,11 @@ static int32_t zrt_write(uint32_t *args)
     }
 #endif
 
-
     int32_t ret = s_transparent_mount->write(handle, buf, length);
     LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
-/*
- * seek for the new zerovm channels design
- */
 static int32_t zrt_lseek(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
@@ -435,10 +417,6 @@ static int32_t zrt_lseek(uint32_t *args)
 SYSCALL_MOCK(ioctl, -EINVAL) /* not implemented in the simple version of zrtlib */
 
 
-/*
- * return synthetic channel information
- * todo(d'b): the function needs update after the channels design will complete
- */
 static int32_t zrt_stat(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
@@ -460,7 +438,6 @@ static int32_t zrt_stat(uint32_t *args)
 }
 
 
-/* return synthetic channel information */
 static int32_t zrt_fstat(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
@@ -505,12 +482,16 @@ static int32_t zrt_sysbrk(uint32_t *args)
 static int32_t zrt_mmap(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
-    int32_t retcode;
+    int32_t retcode = -1;
+    //void* addr = (void*)args[0];
+    //uint32_t length = args[1];
+    uint32_t prot = args[2];
+    //uint32_t flags = args[3];
+    //uint32_t fd = args[4];
+    //off_t offset = (off_t)args[5];
 
-    zvm_syscallback(0); /* uninstall syscallback */
-    retcode = NaCl_mmap(args[0], args[1], args[2], args[3], args[4], args[5]);
-    zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
-
+    log_mmap_prot(prot);
+  
     LOG_SYSCALL_FINISH(retcode);
     return retcode;
 }
@@ -884,6 +865,11 @@ void zrt_setup_finally(){
     /*Mount channels filesystem as root*/
     s_mounts_manager->mount_add( "/dev", s_channels_mount );
     s_mounts_manager->mount_add( "/", s_mem_mount );
+
+    /*explicitly create /dev directory in memmount, it's required for consistent
+      FS structure, readdir now can list /dev dir recursively from root
+     */
+    s_mem_mount->mkdir( "/dev", 0777 );
 
 #ifdef TARBALLFS
     /*

@@ -8,23 +8,28 @@
 #ifndef ZRT_HELPER_MACROS_H_
 #define ZRT_HELPER_MACROS_H_
 
+#define CHECK_FLAG(flags, flag) ( (flags & flag) == flag? 1 : 0)
+
+
 /* ******************************************************************************
  * Syscallbacks debug macros*/
 #ifdef DEBUG
 /* Push current NACL syscall into logging stack that printing for every log invocation.
  * Enable logging for NACL syscall, and printing arguments*/
 #define LOG_SYSCALL_START(args_p) {					\
-        uint32_t* args_123 = (uint32_t*)args_p;				\
-        log_push_name(__func__);					\
-        enable_logging_current_syscall();				\
-        if ( args_p == NULL ) {						\
-            zrt_log("%s", __func__);					\
-        }								\
-        else {								\
-            zrt_log("syscall "						\
-		    "arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x, arg[3]=0x%x, arg[4]=0x%x", \
-                    args_123[0], args_123[1], args_123[2], args_123[3], args_123[4] ); \
-        }								\
+	uint32_t* args_123 = (uint32_t*)args_p;				\
+	log_push_name(__func__);					\
+	enable_logging_current_syscall();				\
+	if ( args_p == NULL ) {						\
+	    zrt_log("%s", __func__);					\
+	}								\
+	else {								\
+	    zrt_log("syscall"						\
+		    " arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x, arg[3]=0x%x, arg[4]=0x%x" \
+		    " \nstarted with errno=%d",				\
+		    args_123[0], args_123[1], args_123[2], args_123[3], args_123[4], \
+		    errno );						\
+	}								\
     }
 /* Pop from logging stack current syscall function.
  * Prints retcode and errno*/

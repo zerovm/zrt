@@ -405,10 +405,14 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
         errno = ENOENT;
         return -1;
     }
+    zrt_log("node->len()=%d, offset=%lld, count=%d", node->len(), offset, count);
     // Limit to the end of the file.
-    size_t len = count;
+    ssize_t len = count;
     if (len > node->len() - offset) {
         len = node->len() - offset;
+	if ( len < 0 )
+	    len =0;
+	zrt_log("limited len=%d", len);
     }
 
     // Do the read.

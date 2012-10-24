@@ -1,53 +1,56 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int
 zmain (void)
 {
-  FILE *f;
-  int i;
-  const char filename[] = "/tmp/bug3.test";
+    FILE *f;
+    int i;
+    const char filename[] = "/tmp/bug3.test";
 
-  f = fopen(filename, "w+");
-  for (i=0; i<9000; i++)
-    putc ('x', f);
-  fseek (f, 8180L, 0);
-  fwrite ("Where does this text go?", 1, 24, f);
-  fflush (f);
+    f = fopen(filename, "w+");
+    for (i=0; i<9000; i++)
+	putc ('x', f);
+    
+    fseek (f, 8180L, 0);
+    fwrite ("Where does this text go?", 1, 24, f);
+    fflush (f);
 
-  rewind (f);
-  for (i=0; i<9000; i++)
-    {
-      int j;
+    rewind (f);
 
-      if ((j = getc(f)) != 'x')
+    for (i=0; i<9000; i++)
 	{
-	  if (i != 8180)
-	    {
-	      printf ("Test FAILED!");
-	      return 1;
-	    }
-	  else
-	    {
-	      char buf[25];
+	    int j;
 
-	      buf[0] = j;
-	      fread (buf + 1, 1, 23, f);
-	      buf[24] = '\0';
-	      if (strcmp (buf, "Where does this text go?") != 0)
+	    if ((j = getc(f)) != 'x')
 		{
-		  printf ("%s\nTest FAILED!\n", buf);
-		  return 1;
+		    if (i != 8180)
+			{
+			    printf ("Test FAILED! %d", i);
+			    return 1;
+			}
+		    else
+			{
+			    char buf[25];
+
+			    buf[0] = j;
+			    fread (buf + 1, 1, 23, f);
+			    buf[24] = '\0';
+			    if (strcmp (buf, "Where does this text go?") != 0)
+				{
+				    printf ("%s\nTest FAILED!\n", buf);
+				    return 1;
+				}
+			    i += 23;
+			}
 		}
-	      i += 23;
-	    }
 	}
-    }
 
-  fclose(f);
-  remove(filename);
+    fclose(f);
+    remove(filename);
 
-  puts ("Test succeeded.");
+    puts ("Test succeeded.");
 
-  return 0;
+    return 0;
 }
