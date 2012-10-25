@@ -3,8 +3,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef PACKAGES_LIBRARIES_NACL_MOUNTS_MEMORY_MEMMOUNT_H_
-#define PACKAGES_LIBRARIES_NACL_MOUNTS_MEMORY_MEMMOUNT_H_
+#ifndef __MEM_MOUNT_H__
+#define __MEM_MOUNT_H__
 
 #include <assert.h>
 #include <errno.h>
@@ -59,8 +59,7 @@ class MemMount {
   int Chown(ino_t slot, uid_t owner, gid_t group);
   int Chmod(ino_t slot, mode_t mode);
   int Stat(ino_t node, struct stat *buf);
-  int Getdents(ino_t node, off_t offset, DIRENT *dirp,
-               unsigned int count);
+  int Getdents(ino_t node, off_t offset, void *buf, unsigned int count);
   ssize_t Read(ino_t node, off_t offset, void *buf, size_t count);
   ssize_t Write(ino_t node, off_t offset, const void *buf, size_t count);
 
@@ -95,4 +94,4 @@ class MemMount {
   DISALLOW_COPY_AND_ASSIGN(MemMount);
 };
 
-#endif  // PACKAGES_LIBRARIES_NACL_MOUNTS_MEMORY_MEMMOUNT_H_
+#endif  // __MEM_MOUNT_H__

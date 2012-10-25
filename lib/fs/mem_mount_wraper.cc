@@ -149,7 +149,6 @@ static ssize_t mem_read(int fd, void *buf, size_t nbyte){
 static ssize_t mem_write(int fd, const void *buf, size_t nbyte){
     ino_t node;
     int ret = s_handle_allocator->get_inode( fd, &node );
-    zrt_log("ret=%d", ret);
     if ( ret == 0 ){
 	off_t offset;
 	ret = s_handle_allocator->get_offset( fd, &offset );
@@ -210,14 +209,13 @@ static int mem_fstat(int fd, struct stat *buf){
 }
 
 static int mem_getdents(int fd, void *buf, unsigned int count){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    zrt_log("ret=%d", ret);
+    ino_t inode;
+    int ret = s_handle_allocator->get_inode( fd, &inode );
     if ( ret == 0 ){
 	off_t offset;
 	ret = s_handle_allocator->get_offset( fd, &offset );
 	assert( ret == 0 );
-	ssize_t readed = s_mem_mount_cpp->Getdents( node, offset, (DIRENT*)buf, count);
+	ssize_t readed = s_mem_mount_cpp->Getdents( inode, offset, (DIRENT*)buf, count);
 	if ( readed != -1 ){
 	    offset += readed;
 	    ret = s_handle_allocator->set_offset( fd, offset );

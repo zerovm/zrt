@@ -67,4 +67,5 @@ int debug_handle_get_buf(char **buf){
     *buf = s_logbuf;
     return s_zrt_log_fd;
 }
+
 #endif

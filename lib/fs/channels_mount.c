@@ -113,15 +113,12 @@ static int check_channel_access_mode(const struct ZVMChannel *chan, int access_m
     access_mode = access_mode & O_ACCMODE;
     switch( access_mode ){
     case O_RDONLY:
-        zrt_log("access_mode=%s", "O_RDONLY");
         return canberead>0 ? 0: -1;
     case O_WRONLY:
-        zrt_log("access_mode=%s", "O_WRONLY");
         return canbewrite >0 ? 0 : -1;
     case O_RDWR:
     default:
         /*if case1: O_RDWR ; case2: O_RDWR|O_WRONLY logic error handle as O_RDWR*/
-        zrt_log("access_mode=%s", "O_RDWR");
         return canberead>0 && canbewrite>0 ? 0 : -1;
     }
     return 1;
@@ -141,10 +138,10 @@ static void debug_mes_zrt_channel_runtime( int handle ){
 
 static int open_channel( const char *name, int mode, int flags  )
 {
-    zrt_log("name=%s, mode=%u, flags=%u", name, mode, flags);
+    int handle = channel_handle(name);
+    zrt_log("name=%s, handle=%d, mode=%u, flags=%u", name, handle, mode, flags);
     const struct ZVMChannel *chan = NULL;
 
-    int handle = channel_handle(name);
     if ( handle != -1 ){
         CHANNEL_ASSERT_IF_FAIL( handle );
         chan = &s_channels_list[handle];
@@ -154,7 +151,6 @@ static int open_channel( const char *name, int mode, int flags  )
         SET_ERRNO( ENOENT );
         return -1;
     }
-    zrt_log("channel type=%d", chan->type );
 
     /*return handle if file already opened*/
     if ( s_zrt_channels[handle] && s_zrt_channels[handle]->open_mode >= 0 ){
@@ -179,6 +175,7 @@ static int open_channel( const char *name, int mode, int flags  )
 #ifdef DEBUG
     debug_mes_zrt_channel_runtime(handle);
 #endif
+    zrt_log("channel open ok, handle=%d ", handle );
     return handle;
 }
 
@@ -347,8 +344,7 @@ static void set_stat_timestamp( struct stat* st )
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    /* files are not allowed to have real date/time */
-    /*currently as time used environment variable TimeStamp*/
+    /* files does not have real date/time */
     st->st_atime = tv.tv_sec;      /* time of the last access */
     st->st_mtime = tv.tv_sec;      /* time of the last modification */
     st->st_ctime = tv.tv_sec;      /* time of the last status change */
@@ -687,7 +683,6 @@ static off_t channels_lseek(int fd, off_t offset, int whence){
 
 static int channels_open(const char* path, int oflag, uint32_t mode){
     errno=0;
-    zrt_log("path=%s", path);
 
     /*If specified open flag saying as that trying to open not directory*/
     if ( CHECK_FLAG(oflag, O_DIRECTORY) == 0 ){
@@ -768,7 +763,7 @@ static int channels_fchown(int f, uid_t u, gid_t g){
     return -1;
 }
 
-/*Initialization I/O interface by zeromq functions. Should be used only for interface initialization*/
+/*filesystem interface initialisation*/
 static struct MountsInterface s_channels_mount = {
         channels_chown,
         channels_chmod,

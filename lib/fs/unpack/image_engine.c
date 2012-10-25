@@ -58,10 +58,9 @@ static int extract_entry( struct UnpackInterface* unpacker, TypeFlag type, const
     int parsed_dir_count = parse_path( &path_observer, name );
     zrt_log( "parsed_dir_count=%d", parsed_dir_count );
 
-    zrt_log_str( "create new file" );
     int out_fd = unpacker->observer->mounts->open(name, O_WRONLY | O_CREAT, S_IRWXU);
     if (out_fd < 0) {
-        zrt_log( "create file error path=%s", name );
+        zrt_log( "create new file error, name=%s", name );
         return -1;
     }
 

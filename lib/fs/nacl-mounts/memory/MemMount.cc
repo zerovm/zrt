@@ -8,10 +8,11 @@
 
 extern "C" {
 #include "zrtlog.h"
+#include "fs/channels_readdir.h"
 }
 #include "MemMount.h"
 
-//#define LOG_INTERMEDIATE_ERROR
+#define LOG_INTERMEDIATE_ERROR
 
 MemMount::MemMount() {
     // Don't use the zero slot
@@ -231,7 +232,6 @@ int MemMount::GetSlot(std::string path) {
 #endif
         return -1;
     }
-    zrt_log("slot=%d", slot);
     return slot;
 }
 
@@ -356,15 +356,10 @@ void MemMount::Unref(ino_t slot) {
     slots_.Free(node->slot());
 }
 
-int MemMount::Getdents(ino_t slot, off_t offset,
-        DIRENT *dir, unsigned int count) {
+int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_size) {
     MemNode *node = slots_.At(slot);
-    if (node == NULL) {
-        errno = ENOTDIR;
-        return -1;
-    }
-    // Check that it is a directory.
-    if (!(node->is_dir())) {
+    // Check that node exist and it is a directory.
+    if (node == NULL || !node->is_dir()) {
         errno = ENOTDIR;
         return -1;
     }
@@ -384,17 +379,16 @@ int MemMount::Getdents(ino_t slot, off_t offset,
     }
 
     for (; it != children->end() &&
-    bytes_read + sizeof(DIRENT) <= count;
+    bytes_read + sizeof(DIRENT) <= buf_size;
     ++it) {
-        memset(dir, 0, sizeof(DIRENT));
-        // We want d_ino to be non-zero because readdir()
-        // will return null if d_ino is zero.
-        dir->d_ino = 0x60061E;
-        dir->d_reclen = sizeof(DIRENT);
-        strncpy(dir->d_name, slots_.At(*it)->name().c_str(), sizeof(dir->d_name));
-        ++dir;
+	MemNode *node = slots_.At(*it);
+	/*format in buf dirent structure, of variable size, and save current file data;
+	  original MemMount implementation was used dirent as having constant size */
+	bytes_read += 
+	    put_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
+				 slot, 0,
+				 node->name().c_str(), node->name().length() );
         ++pos;
-        bytes_read += sizeof(DIRENT);
     }
     return bytes_read;
 }

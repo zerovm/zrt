@@ -183,9 +183,9 @@ int get_dir_content_channel_index( const struct ZVMChannel *channels, int channe
 
 
 
-#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
 size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsigned long d_off,
         const char *d_name, int namelength ){
+    #define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
     struct nacl_abi_dirent *dirent = (struct nacl_abi_dirent *) buf;
     zrt_log( "dirent offset: ino_off=%u, off_off=%u, reclen_off=%u, name_off=%u",
             offsetof(struct nacl_abi_dirent, d_ino ),
@@ -193,8 +193,14 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
             offsetof(struct nacl_abi_dirent, d_reclen ),
             offsetof(struct nacl_abi_dirent, d_name ) );
 
-    uint32_t adjusted_size = offsetof(struct nacl_abi_dirent, d_name) + namelength +1 /* NUL termination */;
+    /*dirent structure not have constant size it's can be vary depends on name length.       
+      also dirent size should be multiple of the 8 bytes, so adjust it*/
+    uint32_t adjusted_size = 
+	offsetof(struct nacl_abi_dirent, d_name) + namelength +1 /* NUL termination */;
     adjusted_size = ROUND_UP( adjusted_size, 8 );
+
+    /*if size of the current dirent data is less than available buffer size
+     then fill it by data*/
     if ( adjusted_size < buf_size ){
         dirent->d_reclen = ROUND_UP( adjusted_size, 8 );
         dirent->d_ino = d_ino;
@@ -205,10 +211,16 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
 
         memcpy( dirent->d_name, d_name, namelength );
         ((char*)dirent->d_name)[namelength] = '\0';
-        zrt_log( "dirent: name=%s, ino=%u, d_off=%u, d_reclen=%d, namel=%d",
-                d_name, (unsigned int)d_ino, (unsigned int)d_off, dirent->d_reclen, namelength );
+
+        zrt_log("dirent: name=%s, ino=%u, d_off=%u, d_reclen=%d, namel=%d",
+                d_name, 
+		(unsigned int)d_ino, 
+		(unsigned int)d_off, 
+		dirent->d_reclen, 
+		namelength );
         return dirent->d_reclen;
     }
+    /*buffer is not enough to save current dirent structure*/
     else{
         zrt_log("no enough buffer, data_size=%d, buf_size=%d", adjusted_size, buf_size);
         return -1; /*no enough buffer size*/
@@ -233,17 +245,22 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
         readdir_temp->dir_data = *d;
         readdir_temp->dir_last_readed_index = 0;
         readdir_temp->channel_last_readed_index = 0;
-        zrt_log("new readdir call: handle=%d, path= %s", readdir_temp->dir_data.handle, readdir_temp->dir_data.path );
+        zrt_log("new readdir call: handle=%d, path= %s", 
+		readdir_temp->dir_data.handle, readdir_temp->dir_data.path );
     }
-    else if ( readdir_temp->dir_last_readed_index == -1 && readdir_temp->channel_last_readed_index == -1 ){
+    /*if it's not continue of previous getdents then just reset temporary data */
+    else if ( readdir_temp->dir_last_readed_index == -1 && 
+	      readdir_temp->channel_last_readed_index == -1 ){
         /*come last of subsequent calls, now reset handle*/
         readdir_temp->dir_data.handle = -1;
         return 0;
     }
 
     /*if currently is in reading state of specified handle and also
-     *dir/channel _last_related_index > 0 then start/continue readdir, else if < 0 then reading complete*/
-    if ( readdir_temp->dir_data.handle == dir_handle && readdir_temp->dir_last_readed_index >= 0 ){
+     *dir/channel _last_related_index > 0 then start/continue readdir, 
+     else if < 0 then reading complete*/
+    if ( readdir_temp->dir_data.handle == dir_handle && 
+	 readdir_temp->dir_last_readed_index >= 0 ){
         /*add sub dirs*/
         do{
             zrt_log( "dir_index=%d", readdir_temp->dir_last_readed_index );
@@ -257,6 +274,9 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
                 const char *adding_name = name_from_path_get_path_len(
                         dirs->dir_array[readdir_temp->dir_last_readed_index].path, &foo );
 
+		/*format dirent structure and write by offset buf+retval of existing buffer;
+		 w used as result of operation, if no data saved into buffer then 
+		 w hold negative value, at success it contains wrote bytes count; */
                 int w = put_dirent_into_buf(
                         buf+retval, bufsize-retval,
                         INODE_FROM_HANDLE(dirs->dir_array[readdir_temp->dir_last_readed_index].handle),
@@ -271,7 +291,8 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
         readdir_temp->dir_last_readed_index =-1;
     }
 
-    if( readdir_temp->dir_data.handle == dir_handle && readdir_temp->channel_last_readed_index >= 0 ){
+    if( readdir_temp->dir_data.handle == dir_handle && 
+	readdir_temp->channel_last_readed_index >= 0 ){
         /*add directory files*/
         do{
             zrt_log( "channel_index=%d", readdir_temp->channel_last_readed_index );

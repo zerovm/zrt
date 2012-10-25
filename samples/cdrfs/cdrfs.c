@@ -17,13 +17,37 @@
 #include "zrt.h"
 
 struct stat s_temp_stat;
-char s_file_name[4096];
+
+/*return count backslashes count */
+int path_deep_level(const char* path){
+    int counter=0;
+    do{
+	path = strchr(path, '/');
+	if ( path ){
+	    ++path;
+	    ++counter;
+	}
+    }while(path);
+    return counter;
+}
+
+void print_prefix( int deep_level ){
+    int i;
+    for (i=0; i<deep_level; i++ ){
+	printf("%2$*1$c", (i+1)*2, '|');
+    }
+}
+
 
 int recursive_listdir( const char *path) {
     struct dirent *entry;
     DIR *dp;
     int files_count=0;
-    printf("Folder '%s')\n", path);
+    
+    int deep_level=path_deep_level(path);
+    if ( strlen(path) > 1 ) ++deep_level;
+    print_prefix(deep_level);
+    printf("--%s Folder\n", path);
     dp = opendir(path);
 
     if (dp == NULL) {
@@ -32,44 +56,50 @@ int recursive_listdir( const char *path) {
     }
 
     while ( (entry = readdir(dp)) ){
+	int compound_path_len = strlen(path) + strlen(entry->d_name) + 2;
+	char* compound_path = malloc( compound_path_len );
 	int len = strlen(path);
-	/*construct full filename*/
+	/*construct full filename for current processing file returned by readdir*/
 	if ( len > 0 && path[len-1] == '/' ){
 	    /*path already contains trailing slahs*/
-	    sprintf( s_file_name, "%s%s", path, entry->d_name ); 
+	    snprintf( compound_path, compound_path_len,  "%s%s", path, entry->d_name ); 
 	}
 	else{
 	    /*add slahs because subdirs has no that*/
-	    sprintf( s_file_name, "%s/%s", path, entry->d_name ); 
+	    snprintf( compound_path, compound_path_len, "%s/%s", path, entry->d_name ); 
 	}
 
-	int err = stat( s_file_name, &s_temp_stat ); /*retrieve stat for file type and size*/
-	assert( err == 0 ); /*stat should not fail*/
-
-        printf( "%s [d_ino=%u, d_name=%s, ", s_file_name, 
-		(uint32_t)entry->d_ino, entry->d_name );	
+	/*retrieve stat for file type and size and assert on error
+	 stat should not get fail for now*/
+	int err = stat( compound_path, &s_temp_stat );
+	assert( err == 0 ); 
 
 	if ( S_ISDIR(s_temp_stat.st_mode) ){
-	    printf( "directory" );	
+	    /*do notoutput directory because it's name will output 
+	      by next recursive call*/
 	}
 	else{
 	    ++files_count;
+	    print_prefix(path_deep_level(compound_path));
+	    printf( "%s, size=%u, ", 
+		    compound_path, (uint32_t)s_temp_stat.st_size );
 	    if ( S_ISREG(s_temp_stat.st_mode) ){
-		printf( "regular file" );	
+		printf("reg file");
 	    }
 	    else if ( S_ISBLK(s_temp_stat.st_mode) ){
-		printf( "character device" );	
+		printf("char dev");
 	    }
 	    else{
-		printf( "unknown %d", s_temp_stat.st_mode );	
+		printf( "%s, %u", "unknown", s_temp_stat.st_mode );
 	    }
+	    printf( "\n" );	
 	}
-	printf( "\n" );	
 	
 	/*for non current directory do listdir*/
-	if ( S_ISDIR(s_temp_stat.st_mode) && strcmp(path, s_file_name) != 0 ){
-	    files_count+=recursive_listdir(s_file_name);
+	if ( S_ISDIR(s_temp_stat.st_mode) && strcmp(path, compound_path) != 0 ){
+	    files_count+=recursive_listdir(compound_path);
 	}
+	free(compound_path);
     }
 
     closedir(dp);
@@ -82,7 +112,6 @@ int zmain(int argc, char **argv)
     /*recursively print filesystem contents*/
     int files = 0;
     files += recursive_listdir("/");fflush(0);
-    files += recursive_listdir("/dev");fflush(0);
     printf("All files count is %d\n", files);
     return 0;
 }

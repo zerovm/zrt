@@ -8,6 +8,8 @@
 #ifndef CHANNELS_READDIR_H_
 #define CHANNELS_READDIR_H_
 
+#include <stddef.h> //size_t 
+
 #define DIRECTORIES_MAX_NUMBER 255
 
 //forwards
@@ -51,18 +53,28 @@ void process_channels_create_dir_list( const struct ZVMChannel *channels, int ch
 /* Search subdir starting from index in manifest_dirs, if matched return matched subdir index
  * To search many subdirs user would call it with index parameter returned by previous function call;
  * @return subdir index if found, -1 if not*/
-int get_sub_dir_index( struct manifest_loaded_directories_t *manifest_dirs, const char *dirpath, int index );
+int get_sub_dir_index( struct manifest_loaded_directories_t *manifest_dirs, 
+		       const char *dirpath, 
+		       int index );
 
 /* Search channel related to dirpath starting from index in manifest_dirs, if matched return matched channel index
  * To search mor than one channel user would call it with index parameter returned by previous function call;
  * @return channel index if found, -1 if not*/
-int get_dir_content_channel_index(const struct ZVMChannel *channels, int channels_count, const char *dirpath, int index);
+int get_dir_content_channel_index(const struct ZVMChannel *channels, int channels_count, 
+				  const char *dirpath, int index);
 
 /* read directory contents into buffer for getdents syscall
  * @param dir_handle directory to get it's content
  * readdir_temp for first launch int fields should be initialized by -1;
  *@return readed bytes count*/
-int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTemp *readdir_temp,
-        const struct ZVMChannel *channels, int channels_count, struct manifest_loaded_directories_t *dirs);
+int readdir_to_buffer( int dir_handle, 
+		       char *buf, int bufsize, 
+		       struct ReadDirTemp *readdir_temp,
+		       const struct ZVMChannel *channels, int channels_count, 
+		       struct manifest_loaded_directories_t *dirs);
+
+/*low level function, just fill derent structure by data and adjust structure size */
+size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsigned long d_off,
+			    const char *d_name, int namelength );
 
 #endif /* CHANNELS_READDIR_H_ */

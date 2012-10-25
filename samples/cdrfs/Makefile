@@ -9,7 +9,7 @@ all: $(NAME).o
 	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
 	sed s@{ABS_PATH}@${CURDIR}/@g $(NAME).manifest.template > $(NAME).manifest
 	binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
-	setarch x86_64 -R $(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v4
+	setarch x86_64 -R $(ZEROVM_ROOT)/zerovm -M$(NAME).manifest
 
 $(NAME).o:
 	$(CC) -o $(NAME).o -Wall \

@@ -524,9 +524,9 @@ static int32_t zrt_getdents(uint32_t *args)
     VALIDATE_SYSCALL_PTR(buf);
     uint32_t count = args[2];
 
-    int32_t ret = s_transparent_mount->getdents(handle, buf, count);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
+    int32_t bytes_readed = s_transparent_mount->getdents(handle, buf, count);
+    LOG_SYSCALL_FINISH(bytes_readed);
+    return bytes_readed;
 }
 
 

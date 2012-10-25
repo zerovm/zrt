@@ -87,7 +87,6 @@ void log_file_open_flags( int flags ){
 	       s_file_open_flags, s_file_open_texts );
 }
 
-
 void log_mmap_prot( int prot ){
     /*array size of flags and their textual representation shoul be equal*/
     assert( sizeof(s_mmap_prot_flags)/sizeof(*s_mmap_prot_flags) == 

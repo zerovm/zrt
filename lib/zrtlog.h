@@ -38,6 +38,12 @@
             zrtlog_write(debug_handle, buf__123, len, 0); \
         } while(0)
 
+#define zrt_log_errno( errcode ) \
+    {\
+	zrt_log( "errno=%d, %s", errcode, strerror(errcode) );	\
+    }
+
+
 #define ZRT_LOG_DELIMETER \
         do {\
             char *buf__123; \
