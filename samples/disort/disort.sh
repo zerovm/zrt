@@ -12,18 +12,18 @@ DST_LAST=10
 
 COUNTER=$SRC_FIRST
 while [  $COUNTER -le $SRC_LAST ]; do
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortsrc"$COUNTER".manifest -e -v4 > /dev/null &
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortsrc"$COUNTER".manifest -e > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 COUNTER=$DST_FIRST
 while [  $COUNTER -le $DST_LAST ]; do
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortdst"$COUNTER".manifest -e -v4 > /dev/null &
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortdst"$COUNTER".manifest -e > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 date > /tmp/time
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortman.manifest -e -v4
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortman.manifest -e
 date >> /tmp/time
 
 cat log/sortman.stderr.log
