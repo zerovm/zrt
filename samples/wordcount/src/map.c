@@ -1,6 +1,6 @@
 /*
- * main_test1.c
- *
+ *  map.c
+ *  Maper node as part of wordcount implementation based on mapreduce 32/128;
  *  Created on: 3.07.2012
  *      Author: YaroslavLitvinov
  */
@@ -24,7 +24,7 @@
 #include "helpers/dyn_array.h"
 
 
-int main(int argc, char **argv){
+int zmain(int argc, char **argv){
     /* argv[0] is node name
      * expecting in format : "name-%d",
      * format for single node without decimal id: "name" */

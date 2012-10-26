@@ -83,14 +83,19 @@ int recursive_listdir( const char *path) {
 	    print_prefix(path_deep_level(compound_path));
 	    printf( "%s, size=%u, ", 
 		    compound_path, (uint32_t)s_temp_stat.st_size );
-	    if ( S_ISREG(s_temp_stat.st_mode) ){
-		printf("reg file");
-	    }
-	    else if ( S_ISBLK(s_temp_stat.st_mode) ){
-		printf("char dev");
-	    }
-	    else{
-		printf( "%s, %u", "unknown", s_temp_stat.st_mode );
+	    switch( s_temp_stat.st_mode&S_IFMT  ){
+	    case S_IFREG:
+		printf("regular file");
+		break;
+	    case S_IFCHR:
+		printf("character device");
+		break;
+	    case S_IFBLK:
+		printf("block device");
+		break;
+	    default:
+		printf( "%s, %o", "unknown", s_temp_stat.st_mode&S_IFMT );
+		break;
 	    }
 	    printf( "\n" );	
 	}

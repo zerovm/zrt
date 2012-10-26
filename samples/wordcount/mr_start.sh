@@ -1,13 +1,10 @@
 #!/bin/bash
 
-mkdir debug/zerovm/files
-rm data/*.res
+rm data/*.res -f
 rm log/* -f
-rm debug/zerovm/files/* -f
 ./genmanifest.sh
-#files for reading specified in manifest should be exist for a start moment
-./debug/zerovm/touches_read.sh
-cd ../../zvm
+
+${ZRT_ROOT}/ns_start.sh 9
 
 #config for mapreduce network
 MAP_FIRST=1
@@ -19,16 +16,18 @@ time
 
 COUNTER=$MAP_FIRST
 while [  $COUNTER -le $MAP_LAST ]; do
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M../samples/wordcount/manifest/map$COUNTER.manifest > /dev/null &
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/map$COUNTER.manifest > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 COUNTER=$REDUCE_FIRST
-while [  $COUNTER -le $REDUCE_LAST ]; do
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M../samples/wordcount/manifest/reduce$COUNTER.manifest  > /dev/null &
+#run reduce nodes -1 count
+while [  $COUNTER -lt $REDUCE_LAST ]; do
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/reduce$COUNTER.manifest  > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
-time setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M../samples/wordcount/manifest/reduce"$REDUCE_LAST".manifest
+#run last reduce node
+time setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/reduce"$REDUCE_LAST".manifest
 
-
+${ZRT_ROOT}/ns_stop.sh

@@ -8,8 +8,8 @@
 #ifndef ZRT_HELPER_MACROS_H_
 #define ZRT_HELPER_MACROS_H_
 
-#define CHECK_FLAG(flags, flag) ( (flags & flag) == flag? 1 : 0)
-
+#define CHECK_FLAG(flags, flag) ( (flags & (flag)) == (flag)? 1 : 0)
+#define SET_ERRNO(err) {errno=err;ZRT_LOG_ERRNO(errno);}
 
 /* ******************************************************************************
  * Syscallbacks debug macros*/
@@ -25,9 +25,11 @@
 	}								\
 	else {								\
 	    zrt_log("syscall"						\
-		    " arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x, arg[3]=0x%x, arg[4]=0x%x" \
+		    " arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x,"           \
+		    " arg[3]=0x%x, arg[4]=0x%x, arg[6]=0x%x"		\
 		    " \nstarted with errno=%d",				\
-		    args_123[0], args_123[1], args_123[2], args_123[3], args_123[4], \
+		    args_123[0], args_123[1], args_123[2], args_123[3], \
+		    args_123[4], args_123[5],				\
 		    errno );						\
 	}								\
     }

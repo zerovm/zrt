@@ -1,6 +1,6 @@
 /*
- * main_test1.c
- *
+ *  reduce.c
+ *  Reducer node as part of wordcount implementation based on mapreduce 32/128;
  *  Created on: 3.07.2012
  *      Author: YaroslavLitvinov
  */
@@ -25,7 +25,7 @@
 
 #define STDOUT 1 //fd
 
-int main(int argc, char **argv){
+int zmain(int argc, char **argv){
     /* argv[0] is node name
      * expecting in format : "name-%d",
      * format for single node without decimal id: "name" */

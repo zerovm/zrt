@@ -38,7 +38,7 @@
             zrtlog_write(debug_handle, buf__123, len, 0); \
         } while(0)
 
-#define zrt_log_errno( errcode ) \
+#define ZRT_LOG_ERRNO( errcode ) \
     {\
 	zrt_log( "errno=%d, %s", errcode, strerror(errcode) );	\
     }

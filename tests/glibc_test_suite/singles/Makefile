@@ -96,6 +96,12 @@ CLAGS-test-ildoubl.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
 CMDLINE-tst-pcre.c=/tmp/PCRE.tests
 CMDLINE-tst-boost.c=/tmp/BOOST.tests
 
+################ libio Environment 
+#LOCPATH is set to /lib/locale only for demonstration of setting env var
+#by glibc test suite, in anyway envvar was set into default path for localedata 
+#that uses glibc, so another localisation tests will work withouth LOCPATH env
+ENV-tst-swscanf.c=, LOCPATH, /lib/locale
+
 all: clean $(ZEROVM) $(TEST_NEXES) report
 
 resume:$(ZEROVM) $(TEST_NEXES)
@@ -123,6 +129,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval NAMEONLY:=$(notdir $(BASENAME)))
 	$(eval SPECIFIC_TEST_FLAGS:=$(CFLAGS-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_CMDLINE:=$(CMDLINE-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_ENV:=$(ENV-$(NAMEONLY).c))
 	@echo -n "TEST RUN $@ "
 #compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
@@ -132,6 +139,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #prepare manifest
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
 	 sed s@{GLIBC_FS}@$(CURDIR)/archive/glibc-fs.tar@g | \
+	 sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g | \
 	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).manifest
 #Run test under zerovm and display returned error code
 #$shell should not be used to get test result from file because it unexpectadly

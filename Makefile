@@ -10,6 +10,7 @@ lib/zrtlog.c \
 lib/zrt.c \
 lib/zrtsyscalls.c \
 lib/enum_strings.c \
+lib/memory/memory.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
 lib/fs/channels_mount.c \
@@ -35,7 +36,7 @@ TEST_SAMPLES=bigfile command_line environment file_stat seek
 ################# flags set
 CFLAGS += -Wall -Wno-long-long -O2 -m64
 CFLAGS += -Werror-implicit-function-declaration
-CFLAGS += -I. -Ilib -Ilib/fs -Ilib/fs/unpack -Ilib/fs/utils -I${ZEROVM_ROOT}/api
+CFLAGS += -I. -Ilib -Ilib/memory -Ilib/fs -Ilib/fs/unpack -Ilib/fs/utils -I${ZEROVM_ROOT}/api
 CFLAGS += -DUSER_SIDE -DDEBUG
 
 CXXFLAGS += -I. -Ilib -Ilib/fs

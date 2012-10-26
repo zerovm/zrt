@@ -21,6 +21,6 @@ SyscallsMax = 3333
 ==MemMax=134217728
 MemMax=234217728
 Timeout=10
-Environment = TimeStamp, 1344719070
+Environment = TimeStamp, 1344719070 {ENVIRONMENT}
 NodeName=glibc-test,1
 

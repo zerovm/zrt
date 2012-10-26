@@ -10,8 +10,6 @@
 
 #include "mounts_interface.h"
 
-#define CHECK_FLAG(flags, flag) ( (flags & flag) == flag? 1 : 0)
-#define SET_ERRNO(err) {errno=err;zrt_log("errno=%d", err);}
 #define FIRST_NON_RESERVED_INODE 11
 #define INODE_FROM_HANDLE(handle) (FIRST_NON_RESERVED_INODE+handle)
 

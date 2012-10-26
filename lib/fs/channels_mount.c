@@ -22,6 +22,7 @@
 #include "zvm.h"
 #include "channels_readdir.h"
 #include "zrtlog.h"
+#include "zrt_helper_macros.h"
 #include "nacl_struct.h"
 #include "handle_allocator.h"
 #include "channels_mount.h"
@@ -192,13 +193,6 @@ static uint32_t channel_permissions(const struct ZVMChannel *channel){
             (channel->type == SGetRPut && (perm&S_IRWXU)==S_IRUSR ) )
     {
         perm |= S_IFCHR;
-    }
-    else if ( (channel->type == RGetSPut && (perm&S_IRWXU)==S_IRUSR) ||
-            (channel->type == SGetRPut && (perm&S_IRWXU)==S_IWUSR) ||
-            (channel->type == RGetRPut && ( (perm&S_IRWXU)==S_IWUSR) && (perm&S_IRWXU)!=S_IRUSR) ||
-            (channel->type == RGetRPut && ( (perm&S_IRWXU)!=S_IWUSR) && (perm&S_IRWXU)==S_IRUSR) )
-    {
-        perm |= S_IFREG;
     }
     else{
         perm |= S_IFBLK;

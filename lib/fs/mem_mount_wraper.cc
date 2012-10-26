@@ -12,6 +12,7 @@
 
 extern "C" {
 #include "zrtlog.h"
+#include "zrt_helper_macros.h"
 #include "channels_mount.h"
 }
 #include "mem_mount_wraper.h"

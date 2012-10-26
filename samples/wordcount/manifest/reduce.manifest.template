@@ -6,10 +6,10 @@ Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}log/reduce{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 999999999, 999999999
 Channel = {ABS_PATH}data/{NODEID}reduce.res, /dev/stdout, 0, 0, 0, 99999999, 99999999
 Channel = {ABS_PATH}log/reduce{NODEID}.stderr.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
-Channel = ipc:///tmp/map1-red{NODEID}, r_red{NODEID}-map-1, 0, 99999999, 99999999, 0, 0
-Channel = ipc:///tmp/map2-red{NODEID}, r_red{NODEID}-map-2, 0, 99999999, 99999999, 0, 0
-Channel = ipc:///tmp/map3-red{NODEID}, r_red{NODEID}-map-3, 0, 99999999, 99999999, 0, 0
-Channel = ipc:///tmp/map4-red{NODEID}, r_red{NODEID}-map-4, 0, 99999999, 99999999, 0, 0
+Channel = tcp:1:, r_red{NODEID}-map-1, 0, 99999999, 99999999, 0, 0
+Channel = tcp:2:, r_red{NODEID}-map-2, 0, 99999999, 99999999, 0, 0
+Channel = tcp:3:, r_red{NODEID}-map-3, 0, 99999999, 99999999, 0, 0
+Channel = tcp:4:, r_red{NODEID}-map-4, 0, 99999999, 99999999, 0, 0
 
 Environment =MAP_NAME,map,REDUCE_NAME,red
 CommandLine = red-{NODEID}
@@ -20,6 +20,7 @@ CommandLine = red-{NODEID}
 =====================================================================
 Version = 09082012
 Nexe = {ABS_PATH}reduce.nexe
-NexeMax = 10000000
-SyscallsMax = 3333333
-SetupCallsMax = 99999999
+MemMax = 134217728
+NameServer = udp:127.0.0.1:54321
+Timeout=60
+NodeName=red,{SEQUENTIAL_ID}

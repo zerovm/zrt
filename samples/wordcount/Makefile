@@ -10,12 +10,14 @@ all: createdirs clean map.nexe reduce.nexe
 map.nexe: obj/map.o obj/user_implem.o
 	@$(NACL_GCC) -o map.nexe  -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 $(DEBUG) \
-	obj/map.o obj/user_implem.o -Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lfs -lmapreduce -lnetworking -lstdc++   
-	
+	obj/map.o obj/user_implem.o -Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lfs -lmapreduce -lnetworking -lstdc++
+	binpatch map.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+
 reduce.nexe: obj/reduce.o obj/user_implem.o
 	@$(NACL_GCC) -o reduce.nexe  -s -static -T \
 	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 $(DEBUG) \
-	obj/reduce.o obj/user_implem.o -Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lfs -lmapreduce -lnetworking -lstdc++   	
+	obj/reduce.o obj/user_implem.o -Wall -std=c99 -L${ZRT_ROOT}/lib -lzrt -lfs -lmapreduce -lnetworking -lstdc++
+	binpatch reduce.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 obj/map.o: src/map.c
 	@$(NACL_GCC) -c -o obj/map.o                  $(INCLUDE_FLAGS) ${CFLAGS} $(DEBUG) src/map.c -DUSER_SIDE 
@@ -36,5 +38,5 @@ clean:
 	@rm -f data/*.res
 	@rm -f manifest/*.manifest	
 	@rm -f *.nexe gcc_map gcc_reduce
-	
+
 

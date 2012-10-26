@@ -1,6 +1,7 @@
 #include <locale.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <wchar.h>
 
 
@@ -13,6 +14,8 @@ zmain (void)
   int result;
 
   result = do_test ("C");
+  setlocale (LC_ALL, "de_DE.ISO-8859-1");
+  exit(0);
   result |= do_test ("de_DE.ISO-8859-1");
   result |= do_test ("de_DE.UTF-8");
   result |= do_test ("ja_JP.EUC-JP");

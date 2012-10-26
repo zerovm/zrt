@@ -25,8 +25,9 @@
 #include "zvm.h"
 #include "zrt.h"
 #include "zrtsyscalls.h"
-#include "zrt_helper_macros.h"
+#include "memory.h"
 #include "zrtlog.h"
+#include "zrt_helper_macros.h"
 #include "transparent_mount.h"
 #include "stream_reader.h"
 #include "unpack_tar.h" //tar unpacker
@@ -63,6 +64,7 @@ struct MountsInterface* s_channels_mount=NULL;
 struct MountsInterface* s_mem_mount=NULL;
 static struct MountsManager* s_mounts_manager;
 static struct MountsInterface* s_transparent_mount;
+static struct MemoryInterface* s_memory_interface;
 /****************** */
 
 /*return 0 if not valid, 1 if valid*/
@@ -278,6 +280,8 @@ int unlink(const char *pathname){
     return ret;
 }
 
+/*todo: check if syscall chmod is supported by NACL then use it
+*instead of this glibc substitution*/
 int chmod(const char *path, mode_t mode){
     LOG_SYSCALL_START(NULL);
     errno=0;
@@ -468,48 +472,37 @@ SYSCALL_MOCK(chmod, -EPERM) /* NACL does not support chmod*/
 static int32_t zrt_sysbrk(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
-    int32_t retcode;
-
-    zvm_syscallback(0); /* uninstall syscallback */
-    retcode = NaCl_sysbrk(args[0]); /* invoke syscall directly */
-    zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
-
-    LOG_SYSCALL_FINISH(retcode);
-    return retcode;
+    int32_t retaddr = s_memory_interface->sysbrk(s_memory_interface, (void*)args[0] );
+    LOG_SYSCALL_FINISH(retaddr);
+    return retaddr;
 }
 
-/* map region of memory. ZRT nothing do here just call mmap NACL syscall.*/
+/* map region of memory. ZRT simple implementation;*/
 static int32_t zrt_mmap(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
     int32_t retcode = -1;
-    //void* addr = (void*)args[0];
-    //uint32_t length = args[1];
+    void* addr = (void*)args[0];
+    uint32_t length = args[1];
     uint32_t prot = args[2];
-    //uint32_t flags = args[3];
-    //uint32_t fd = args[4];
-    //off_t offset = (off_t)args[5];
+    uint32_t flags = args[3];
+    uint32_t fd = args[4];
+    off_t offset = (off_t)args[5];
 
     log_mmap_prot(prot);
+    log_mmap_flags(flags);
+    retcode = s_memory_interface->mmap(s_memory_interface, addr, length, prot, 
+		  flags, fd, offset);
   
     LOG_SYSCALL_FINISH(retcode);
     return retcode;
 }
 
-/*
- * unmap region of memory
- * note: zerovm doesn't use it in memory management.
- * instead of munmap it use mmap with protection 0
- * ZRT nothing do here just call  munmap NACL syscall.*/
 static int32_t zrt_munmap(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
-    int32_t retcode;
-
-    zvm_syscallback(0); /* uninstall syscallback */
-    retcode = NaCl_munmap(args[0], args[1]);
-    zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
-
+    int32_t retcode = s_memory_interface->munmap(s_memory_interface, 
+						 (void*)args[0], args[1]);
     LOG_SYSCALL_FINISH(retcode);
     return retcode;
 }
@@ -843,6 +836,8 @@ void zrt_setup( struct UserManifest* manifest ){
     set_zrtlog_fd( zrt_log_fd );
 
     zrt_log_str( "started" );
+    s_memory_interface = memory_interface( manifest->heap_ptr, manifest->heap_size );
+    zrt_log_str( "memory interface created" );	
 }
 
 void zrt_setup_finally(){

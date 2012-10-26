@@ -7,14 +7,5 @@ But value can be set up to 128 then configuring mapreduce library;
 User Map function: It's parsing every chunk of input data provided by MapReduce library as words delimeted by
 space and '\0' null terminated chars and add to map(keys buffer, values buffer) as pair KEY_HASH=1;
 
-wordcount builds by both gcc, nacl_gcc;
-
-to launch gcc version without of zerovm: you need run folowed scripts:
-./create_gcc_channels_stub.sh
-./mr_gcc_start.sh
-
 to launch on zerovm
 ./mr_start.sh
-
-gcc version using for communication generic filesystem files accessible only for reading or writing.
-nacl_gcc version using for communication channels represented by shared files accessible for read and write;

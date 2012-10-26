@@ -37,6 +37,19 @@ static const char*
 s_mmap_prot_texts[] = {"PROT_EXEC", "PROT_READ", "PROT_WRITE", "PROT_NONE"};
 
 
+/*these pair of arrays intended to use as mmap flags logging*/
+static const int
+s_mmap_flags[] = {MAP_SHARED, MAP_PRIVATE, MAP_32BIT, MAP_ANON, MAP_ANONYMOUS, 
+		       MAP_DENYWRITE, MAP_EXECUTABLE, MAP_FILE, MAP_FIXED, 
+		       MAP_GROWSDOWN, MAP_LOCKED, MAP_NONBLOCK, 
+		       MAP_NORESERVE, MAP_POPULATE, MAP_STACK};
+static const char*
+s_mmap_flags_texts[] = {"MAP_SHARED", "MAP_PRIVATE", "MAP_32BIT", "MAP_ANON", "MAP_ANONYMOUS", 
+		       "MAP_DENYWRITE", "MAP_EXECUTABLE", "MAP_FILE", "MAP_FIXED", 
+		       "MAP_GROWSDOWN", "MAP_LOCKED", "MAP_NONBLOCK", 
+		       "MAP_NORESERVE", "MAP_POPULATE", "MAP_STACK"};
+
+
 static void log_flags(char* name, int flags, int array_len, 
 	       const int flags_array[], const char* flags_texts[] )
 {
@@ -99,3 +112,14 @@ void log_mmap_prot( int prot ){
 }
 
 
+void log_mmap_flags( int flags ){
+    /*array size of flags and their textual representation shoul be equal*/
+    assert( sizeof(s_mmap_flags)/sizeof(*s_mmap_flags) == 
+	    sizeof(s_mmap_flags_texts)/sizeof(*s_mmap_flags_texts) );
+
+    /* pass array length as dedicated paramenter for statically constructed array
+    *  because array passed as parameter can't determine own size correctly.*/
+    log_flags( "mmap flags", flags, sizeof(s_mmap_flags)/sizeof(*s_mmap_flags),
+	       s_mmap_flags, s_mmap_flags_texts );
+
+}
