@@ -1,4 +1,6 @@
 #!/bin/bash
+SCRIPT=$(readlink -f "$0")
+SCRIPT_PATH=`dirname "$SCRIPT"`
 
 if [ $# -lt 1 ]
 then
@@ -8,6 +10,6 @@ fi
 
 NAMESERVICE=ns_server.py
 pkill -f ${NAMESERVICE}
-echo "python ${ZRT_ROOT}/${NAMESERVICE} $1 54321 > nameservice.log &"
-python ${ZRT_ROOT}/${NAMESERVICE} $1 54321 > nameservice.log &
+echo "python ${SCRIPT_PATH}/${NAMESERVICE} $1 54321 > nameservice.log &"
+python ${SCRIPT_PATH}/${NAMESERVICE} $1 54321 > nameservice.log &
 

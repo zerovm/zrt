@@ -34,12 +34,12 @@ SAMPLES=disort hello readdir reqrep sort_paging time wordcount zshell
 TEST_SAMPLES=bigfile command_line environment file_stat seek
 
 ################# flags set
-CFLAGS += -Wall -Wno-long-long -O2 -m64
+CFLAGS = -Wall -Wno-long-long -O2 -m64
 CFLAGS += -Werror-implicit-function-declaration
 CFLAGS += -I. -Ilib -Ilib/memory -Ilib/fs -Ilib/fs/unpack -Ilib/fs/utils -I${ZEROVM_ROOT}/api
 CFLAGS += -DUSER_SIDE -DDEBUG
 
-CXXFLAGS += -I. -Ilib -Ilib/fs
+CXXFLAGS = -I. -Ilib -Ilib/fs
 
 ################# "make all" Build libs 
 all: prepare ${LIBS} ${LIBZRT} 
