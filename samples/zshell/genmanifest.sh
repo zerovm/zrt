@@ -37,7 +37,7 @@ sed s@$VAR_NAME_2@$SCRIPT_PATH/$2@g | \
 sed $SED_3 | \
 sed $SED_4 | \
 sed s@$VAR_NAME_5@"$5"@ | \
-sed s@{ABS_PATH}@$SCRIPT_PATH/@ 
-
+sed s@{ABS_PATH}@$SCRIPT_PATH/@ | \
+sed s@{DEBUG_FILE_PATH}@$SCRIPT_PATH/$4.zrt.log@g
 
 

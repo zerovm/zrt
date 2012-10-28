@@ -5,6 +5,11 @@ NACL_GCC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
 INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/zvm -I$(ZRT_ROOT)/lib/lua-5.2.1/src -I$(ZRT_ROOT)/lib/sqlite3 -I.
 CFLAGS=-Wall -Wno-long-long -m64 -std=c99
 
+#ZSHELL is supported mode working without filesytem available
+#in this case Database can be opened in READ_ONLY mode
+#and only native read queries are available
+CFLAGS+=-DREAD_ONLY_SQL
+
 all: createdirs clean zshell.nexe
 
 zshell.nexe: obj/luaexec.o obj/main.o obj/sqlitequery.o
@@ -20,8 +25,8 @@ obj/luaexec.o: luaexec.c
 	$(NACL_GCC) -c -o obj/luaexec.o  $(INCLUDE_FLAGS) ${CFLAGS} $(DEBUG) luaexec.c -DUSER_SIDE
 
 obj/sqlitequery.o: sqlitequery.c
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o obj/sqlitequery.o -Wall -std=c99 \
-	$(INCLUDE_FLAGS) $(DEBUG) -c -Wno-long-long -O2 -m64 sqlitequery.c 
+	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o obj/sqlitequery.o \
+	$(INCLUDE_FLAGS) $(DEBUG) $(CFLAGS) -c sqlitequery.c 
 
 createdirs:
 	chmod u+rwx genmanifest.sh run_lua_samples.sh run_sqlite_samples.sh

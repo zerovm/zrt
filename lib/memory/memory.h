@@ -43,8 +43,9 @@ struct MemoryInterface{
     int (*munmap)(struct MemoryInterface* this, void *addr, size_t length);
 
     //data
-    void *heap_ptr;
+    void* heap_ptr;
     uint32_t heap_size;
+    void* brk;
 };
 
 struct MemoryInterface* memory_interface( void *heap_ptr, uint32_t heap_size );

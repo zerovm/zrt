@@ -40,6 +40,7 @@ static void
 init(struct MemoryInterface* this, void *heap_ptr, uint32_t heap_size){
     this->heap_ptr = heap_ptr;
     this->heap_size = heap_size;
+    this->brk = heap_ptr;  /*brk by default*/
 }
 
 
@@ -48,9 +49,15 @@ static int32_t
 sysbrk(struct MemoryInterface* this, void *addr){
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
-    if ( addr >= this->heap_ptr && addr <= this->heap_ptr+this->heap_size ){
+    if ( addr < this->heap_ptr ){
 	errno=0;
-	return (intptr_t)addr;
+	//return (intptr_t)addr; /*return requsted break, to get worked sqlite*/
+	return (intptr_t)this->brk; /*return current brk*/
+    }
+    else if ( addr <= this->heap_ptr+this->heap_size ){
+	errno=0;
+	this->brk = addr;
+	return (intptr_t)this->brk;
     }
     else{
 	errno=ENOMEM;

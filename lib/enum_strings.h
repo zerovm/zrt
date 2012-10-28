@@ -24,4 +24,7 @@ void log_mmap_prot( int prot );
 /*log to zrt debug mmap flags*/
 void log_mmap_flags( int flags );
 
+/*log to zrt debug seek whence flags*/
+void log_seek_whence( int whence );
+
 #endif //__ENUM_STRINGS_H__

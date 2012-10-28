@@ -17,6 +17,7 @@
 #define STDIN 0
 #define STDERR 2
 
+
 /* In use case it's should not be directly called, but only as callback for sqlite API;
  *@param argc columns count
  *@param argv columns values */
@@ -29,28 +30,47 @@ int get_dbrecords_callback(void *not_used, int argc, char **argv, char **az_col_
     return 0;
 }
 
+int open_db(const char* path, sqlite3** db)
+{
+    int rc=0;
+#ifdef READ_ONLY_SQL
+    /*open db filename that will be used by sqlite VFS*/
+    int database_fd = open( path, O_RDONLY );
+    assert( database_fd >= 0 );
+
+    /*setup mode that forcing opening DB in special READ-ONLY mode
+      with using VFS feature that natively supported by SQLITE but
+      VFS implementation is part of libsqlite3 provided among ZRT library*/
+    int regerr = register_fs_channel( database_fd );
+    assert( SQLITE_OK == regerr );
+
+    /*Open sqlite db, hosted on our registered VFS, it's used "fake" name
+     that will not be used because sqlite was tuned to use database_fd 
+     descriptor of already opened file*/
+    fprintf( stderr, "open db in read only mode\n");
+    rc = sqlite3_open_v2( "fake",      /* fake DB name will not be used */
+			  db,         /* OUT: SQLite db handle */
+			  SQLITE_OPEN_MAIN_DB|SQLITE_OPEN_READONLY,    /* Flags */
+			  FS_VFS_NAME  /* Name of VFS module to use */
+			  );
+#else
+    fprintf( stderr, "open db in read/write mode\n");
+    rc = sqlite3_open( path,  /* Database filename (UTF-8) */
+		       db    /* OUT: SQLite db handle */
+		       );
+#endif
+    return rc;
+}
+
 /*Issue db request.
  * @param nodename which records are needed
  * @param db_records data structure to get results, should be only valid pointer*/
-int exec_query_print_results(const char *query_string){
-    sqlite3 *db = NULL;
+int exec_query_print_results(sqlite3* db, const char *query_string){
     char *zErrMsg = 0;
     int rc = 0;
 
-    fprintf( stderr, "open db\n");
-    /*Open sqlite db hosted on our registered VFS*/
-    rc = sqlite3_open_v2( "fake",  /* Database filename (UTF-8) */
-            &db,                     /* OUT: SQLite db handle */
-            SQLITE_OPEN_MAIN_DB|SQLITE_OPEN_READONLY,    /* Flags */
-            FS_VFS_NAME        /* Name of VFS module to use */
-    );
-
-    fprintf( stderr, "opened db\n");
-    if( rc ){
-        fprintf( stderr, "error opening database on std input, errtext %s, errcode=%d\n", sqlite3_errmsg(db), rc);
-        sqlite3_close(db);
-        return -1;
-    }
+    /*DB should be previously opened by open_db, 
+      run sql query and handle results and errors*/
     fprintf( stderr, "exec db\n");
     rc = sqlite3_exec(db, query_string, get_dbrecords_callback, NULL, &zErrMsg);
     if ( SQLITE_OK != rc ){
@@ -59,18 +79,41 @@ int exec_query_print_results(const char *query_string){
         sqlite3_free(zErrMsg);
         return -2;
     }
-    fprintf( stderr, "closing db\n");
-    sqlite3_close(db);
-    fprintf( stderr, "closed db\n");
     return 0;
 }
 
-int run_sql_query_buffer(int fd_database, const char *sqldump, size_t dump_size )
+int run_sql_query_buffer(const char* dbpath, const char *sqldump, size_t dump_size )
 {
-    int regerr = register_fs_channel( fd_database );
-    assert( SQLITE_OK == regerr );
-    int rc = exec_query_print_results( sqldump );
-    fprintf(stderr, "sql query complete, err code=%d \n", rc);fflush(0);
+    int rc =0;
+    sqlite3* db = NULL;
+
+    fprintf( stderr, "open db '%s'\n", dbpath);
+    rc = open_db(dbpath, &db); 
+
+    /*if error ocured while opening DB*/
+    if( rc ){
+        fprintf( stderr, 
+		 "error opening database on std input, "
+		 "errtext %s, errcode=%d\n", 
+		 sqlite3_errmsg(db), rc);
+    }
+    /*if no errors related to opening DB, try to run SQL query */
+    else{
+	int rc = exec_query_print_results(db, sqldump );
+	fprintf(stderr, "sql query complete, err code=%d \n", rc);
+    }
+    
+    /*one way to close DB for case with or without errors*/
+    sqlite3_close(db);
+    fprintf( stderr, "closed db\n");
+    fflush(0);
+
+#ifdef READ_ONLY_SQL
+    /*just get fd for already opened file*/
+    int db_fd = open(dbpath, O_RDONLY);
+    close(db_fd);
+#endif
+
     return rc;
 }
 

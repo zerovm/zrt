@@ -411,7 +411,17 @@ static int32_t zrt_lseek(uint32_t *args)
     off_t offset = *((off_t*)args[1]);
     int whence = (int)args[2];
 
-    offset = s_transparent_mount->lseek(handle, offset, whence);
+    zrt_log("offset=%lld\n", offset);
+    log_seek_whence(whence);
+
+    if ( whence == SEEK_SET && offset < 0 ){
+	SET_ERRNO(EINVAL);
+	offset=-1;
+    }
+    else{
+	offset = s_transparent_mount->lseek(handle, offset, whence);
+    }
+
     *(off_t *)args[1] = offset;
     LOG_SYSCALL_FINISH(offset);
     return offset;

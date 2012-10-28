@@ -45,10 +45,6 @@ int main(int argc, char** argv, char** envp)
     zrt_log("DEBUG INFORMATION FOR '%s' NODE", argv[0]);
     zrt_log("user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
     zrt_log("user memory size = %u", setup->heap_size);
-    if ( setup->heap_ptr ){
-        zrt_log("calculated heap end address= 0x%x", (intptr_t)setup->heap_ptr+setup->heap_size);
-    }
-    zrt_log("heap bounds [0x%X-0xFFFFFFFF]", 0xFFFFFFFF-0x1000000);
     ZRT_LOG_DELIMETER;
     zrt_log("sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel));
     zrt_log("channels count = %d", setup->channels_count);

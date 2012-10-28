@@ -49,6 +49,14 @@ s_mmap_flags_texts[] = {"MAP_SHARED", "MAP_PRIVATE", "MAP_32BIT", "MAP_ANON", "M
 		       "MAP_GROWSDOWN", "MAP_LOCKED", "MAP_NONBLOCK", 
 		       "MAP_NORESERVE", "MAP_POPULATE", "MAP_STACK"};
 
+/*these pair of arrays intended to use as seek flags logging*/
+static const int
+s_seek_whence_flags[] = {SEEK_SET, SEEK_CUR, SEEK_END };
+static const char*
+s_seek_whence_texts[] = {"SEEK_SET", "SEEK_CUR", "SEEK_END"};
+
+
+
 
 static void log_flags(char* name, int flags, int array_len, 
 	       const int flags_array[], const char* flags_texts[] )
@@ -121,5 +129,18 @@ void log_mmap_flags( int flags ){
     *  because array passed as parameter can't determine own size correctly.*/
     log_flags( "mmap flags", flags, sizeof(s_mmap_flags)/sizeof(*s_mmap_flags),
 	       s_mmap_flags, s_mmap_flags_texts );
+}
 
+
+/*log to zrt debug seek whence */
+void log_seek_whence( int whence ){
+    /*array size of flags and their textual representation shoul be equal*/
+    assert( sizeof(s_seek_whence_flags)/sizeof(*s_seek_whence_flags) == 
+	    sizeof(s_seek_whence_texts)/sizeof(*s_seek_whence_texts) );
+
+    /* pass array length as dedicated paramenter for statically constructed array
+    *  because array passed as parameter can't determine own size correctly.*/
+    log_flags( "whence flags", whence, 
+	       sizeof(s_seek_whence_flags)/sizeof(*s_seek_whence_flags),
+	       s_seek_whence_flags, s_seek_whence_texts );
 }
