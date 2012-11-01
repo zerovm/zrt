@@ -115,7 +115,7 @@ int zmain(int argc, char **argv){
 	errcode = 
 	    run_sql_query_buffer( 
 				 /*path on tarball FS loaded by manifest*/
-				 "/sqlite/data/zvm_netw.db", 
+				 "/sqite.db", 
 				 buffer+newlinepos, /*pos starting with script data*/
 				 script_buf_size  /*script data size*/
 				  );

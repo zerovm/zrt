@@ -25,11 +25,3 @@ echo ${ZEROVM_ROOT}/zerovm -Mlua/command_line_lua.manifest
 ${ZEROVM_ROOT}/zerovm -Mlua/command_line_lua.manifest
 echo "stderr output >>>>>>>>>>"
 cat log/lua3.stdout
-
-
-
-
-
-
-
-

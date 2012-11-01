@@ -6,7 +6,7 @@ Channel = {SCRIPT_FILE_PATH}, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {OUTPUT_FILE_PATH}, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {LOG_FILE_PATH}, /dev/stderr, 0, 0, 0, 9999999, 9999999
 Channel = {DATA_RW_FILE_PATH}, /dev/input, 0, 999999, 999999, 0, 0
-Channel = {ABS_PATH}/tarfs.tar, /dev/tarimage, 0, 999999, 999999, 0, 0
+Channel = {ABS_PATH}tarfs.tar, /dev/tarimage, 0, 999999, 999999, 0, 0
 Channel = {DEBUG_FILE_PATH}, /dev/debug, 0, 0, 0, 9999999, 9999999
 
 CommandLine = {COMMAND_LINE}
@@ -17,6 +17,5 @@ CommandLine = {COMMAND_LINE}
 =====================================================================
 Version = 09082012
 Nexe = {ABS_PATH}zshell.nexe
-NexeMax = 10000000
 MemMax=134217728
 Timeout=30

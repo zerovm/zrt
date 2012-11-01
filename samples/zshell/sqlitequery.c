@@ -17,6 +17,7 @@
 #define STDIN 0
 #define STDERR 2
 
+//#define SQLITE_TRACE_ENABLE
 
 /* In use case it's should not be directly called, but only as callback for sqlite API;
  *@param argc columns count
@@ -30,9 +31,16 @@ int get_dbrecords_callback(void *not_used, int argc, char **argv, char **az_col_
     return 0;
 }
 
+#ifdef SQLITE_TRACE_ENABLE
+void xTrace(void* param,const char* sql){
+    printf("xTrace %p, %s", param, sql);fflush(0);
+}
+#endif
+
 int open_db(const char* path, sqlite3** db)
 {
     int rc=0;
+
 #ifdef READ_ONLY_SQL
     /*open db filename that will be used by sqlite VFS*/
     int database_fd = open( path, O_RDONLY );
@@ -56,8 +64,8 @@ int open_db(const char* path, sqlite3** db)
 #else
     fprintf( stderr, "open db in read/write mode\n");
     rc = sqlite3_open( path,  /* Database filename (UTF-8) */
-		       db    /* OUT: SQLite db handle */
-		       );
+    		       db    /* OUT: SQLite db handle */
+    		       );
 #endif
     return rc;
 }
@@ -69,6 +77,37 @@ int exec_query_print_results(sqlite3* db, const char *query_string){
     char *zErrMsg = 0;
     int rc = 0;
 
+#ifdef SQLITE_TRACE_ENABLE
+    void* pArg=NULL; 
+    void* trace_func = sqlite3_trace(db, xTrace, pArg);
+    fprintf( stderr, "enable trace, returned prev tracer= %p\n", trace_func);
+    fprintf( stderr, "sqlite prepare\n");
+
+    sqlite3_stmt *statement_handle = NULL;
+    rc=sqlite3_prepare_v2(db, query_string, strlen(query_string), &statement_handle, NULL);
+    if(rc!=SQLITE_OK){
+	fprintf( stderr, "rc=%d, %s\n", rc, sqlite3_errmsg(db));fflush(0);
+	return 1;
+    }
+    printf("\n compile/step/finalize \n");
+
+    int colcount=sqlite3_column_count(statement_handle);
+    while(sqlite3_step(statement_handle)!=SQLITE_DONE){
+	for(int i=0;i<colcount;i++) {
+	    fprintf( stderr, "%s(%s)=%s |", 
+		   sqlite3_column_name(statement_handle,i), 
+		   sqlite3_column_decltype(statement_handle,i), 
+		   sqlite3_column_text(statement_handle,i));
+	}
+	fprintf( stderr, "\n");
+    }
+    rc=sqlite3_finalize(statement_handle);
+    if(rc!=SQLITE_OK)	{
+	fprintf( stderr,  "rc=%d, %s\n", rc, sqlite3_errmsg(db));fflush(0);
+	sqlite3_free(zErrMsg);
+	return 1;
+    }
+#else
     /*DB should be previously opened by open_db, 
       run sql query and handle results and errors*/
     fprintf( stderr, "exec db\n");
@@ -79,6 +118,8 @@ int exec_query_print_results(sqlite3* db, const char *query_string){
         sqlite3_free(zErrMsg);
         return -2;
     }
+
+#endif //SQLITE_TRACE_ENABLE
     return 0;
 }
 
@@ -93,13 +134,17 @@ int run_sql_query_buffer(const char* dbpath, const char *sqldump, size_t dump_si
     /*if error ocured while opening DB*/
     if( rc ){
         fprintf( stderr, 
-		 "error opening database on std input, "
+		 "error opening database, "
 		 "errtext %s, errcode=%d\n", 
 		 sqlite3_errmsg(db), rc);
     }
     /*if no errors related to opening DB, try to run SQL query */
     else{
-	int rc = exec_query_print_results(db, sqldump );
+	/*enable extended sqlite error code*/
+	rc = sqlite3_extended_result_codes(db, 1);
+	fprintf(stderr, "sql extended result code enable, err code=%d \n", rc);
+
+	rc = exec_query_print_results(db, sqldump );
 	fprintf(stderr, "sql query complete, err code=%d \n", rc);
     }
     
@@ -111,7 +156,7 @@ int run_sql_query_buffer(const char* dbpath, const char *sqldump, size_t dump_si
 #ifdef READ_ONLY_SQL
     /*just get fd for already opened file*/
     int db_fd = open(dbpath, O_RDONLY);
-    close(db_fd);
+    close(db_fd); /*release file descriptor for file opened explicitly*/
 #endif
 
     return rc;

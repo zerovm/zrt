@@ -104,3 +104,5 @@ INSERT INTO channels VALUES('test1', 'ipc:///tmp/testb', 'w',  4);
 INSERT INTO channels VALUES('test2', 'ipc:///tmp/testb', 'r',  3);
 INSERT INTO channels VALUES('test2', 'ipc:///tmp/testa', 'w',  4);
 COMMIT;
+
+select * from channels;

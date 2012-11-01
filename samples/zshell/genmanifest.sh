@@ -16,6 +16,8 @@ then
   exit
 fi
 
+JOB_NAME=`basename "$1"`
+
 if [[ "$3" == "/dev/null" ]] || [[ "$3" == "" ]]
 then
     SED_3=s@$VAR_NAME_3@/dev/null@g
@@ -30,7 +32,7 @@ else
     SED_4=s@$VAR_NAME_4@$SCRIPT_PATH/$4@g    
 fi
 
-#Generate from template
+#Generate manifest as output from template
 
 sed s@$VAR_NAME_1@$SCRIPT_PATH/$1@g manifest_template/zshell.manifest.template | \
 sed s@$VAR_NAME_2@$SCRIPT_PATH/$2@g | \
@@ -38,6 +40,6 @@ sed $SED_3 | \
 sed $SED_4 | \
 sed s@$VAR_NAME_5@"$5"@ | \
 sed s@{ABS_PATH}@$SCRIPT_PATH/@ | \
-sed s@{DEBUG_FILE_PATH}@$SCRIPT_PATH/$4.zrt.log@g
+sed s@{DEBUG_FILE_PATH}@$SCRIPT_PATH/$JOB_NAME.zrt.log@g
 
 
