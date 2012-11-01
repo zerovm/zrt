@@ -63,6 +63,9 @@ class MemMount {
   ssize_t Read(ino_t node, off_t offset, void *buf, size_t count);
   ssize_t Write(ino_t node, off_t offset, const void *buf, size_t count);
 
+  /*added by YaroslavLitvinov*/
+  int Fcntl(ino_t slot, int cmd, ...);
+
   // Return the node at path.  If the path is invalid, NULL is returned.
   MemNode *GetMemNode(std::string path);
 

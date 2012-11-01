@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 extern "C" {
 #include "zrtlog.h"
@@ -347,6 +348,24 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 	return -1;
 }
 
+static int mem_fcntl(int fd, int cmd, ...){
+    ino_t node;
+    int ret = s_handle_allocator->get_inode( fd, &node );
+    if ( ret == 0 && !is_dir(node) ){
+	int retcode;
+	va_list args;
+	va_start(args, cmd);
+	retcode = s_mem_mount_cpp->Fcntl(node, cmd, args);
+	va_end(args);
+	return retcode;
+    }
+    else{
+	errno=EBADF;
+	zrt_log_str("errno=EBADF");
+	return -1;
+    }
+}
+
 static int mem_remove(const char* path){
     return -1;
 }
@@ -394,6 +413,7 @@ static struct MountsInterface s_mem_mount_wraper = {
     mem_close,
     mem_lseek,
     mem_open,
+    mem_fcntl,
     mem_remove,
     mem_unlink,
     mem_access,

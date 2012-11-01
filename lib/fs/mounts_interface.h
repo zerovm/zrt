@@ -53,6 +53,9 @@ struct MountsInterface{
     // open() relies on the mount's Creat() if O_CREAT is specified.  open()
     // also relies on the mount's GetNode().
     int (*open)(const char* path, int oflag, uint32_t mode);
+    //performs one of the operations described below on the open file
+    //descriptor fd.  The operation is determined by cmd.
+    int (*fcntl)(int fd, int cmd, ...);
     // remove() uses the mount's GetNode() and Stat() to determine whether or
     // not the path corresponds to a directory or a file.  The mount's Rmdir()
     // or Unlink() is called accordingly.

@@ -14,6 +14,21 @@
 /* ******************************************************************************
  * Syscallbacks debug macros*/
 #ifdef DEBUG
+
+/*tests tests tests tests tests tests tests tests tests tests tests tests */
+#define LOG_VAR(args_123...) {						\
+	va_list ap_123;							\
+	va_start(ap_123);						\
+	int i_123;							\
+	int counter_123=0;						\
+	for (i_123 = 0; i_123 >= 0; i_123 = va_arg(ap_123, int32_t)){ \
+	    zrt_log("arg#%d=%x ", counter_123++, i_123);		\
+	}								\
+	va_end();							\
+    }
+/*tests tests tests tests tests tests tests tests tests tests tests tests */
+
+
 /* Push current NACL syscall into logging stack that printing for every log invocation.
  * Enable logging for NACL syscall, and printing arguments*/
 #define LOG_SYSCALL_START(args_p) {					\

@@ -4,11 +4,15 @@
  * found in the LICENSE file.
  */
 #include <stdio.h>
+#include <stdarg.h>
 #include <limits.h>
+#include <fcntl.h>
 
 extern "C" {
 #include "zrtlog.h"
+#include "zrt_helper_macros.h"
 #include "fs/channels_readdir.h"
+#include "enum_strings.h"
 }
 #include "MemMount.h"
 
@@ -444,4 +448,57 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
         node->set_len(offset);
     }
     return count;
+}
+
+int MemMount::Fcntl(ino_t slot, int cmd, ...){
+    MemNode *node = slots_.At(slot);
+    zrt_log("fnctl cmd=%s", FCNTL_CMD(cmd));
+    int rc=0;
+    if (node == NULL) {
+        SET_ERRNO(ENOENT);
+        rc = -1;
+    }
+    else{
+	if ( cmd == F_DUPFD ){
+	}
+	else if ( cmd == F_GETFD ){
+	    zrt_log_str("get flags=0");
+	}
+	else if ( cmd == F_SETFD ){
+	    va_list args;
+	    va_start(args, cmd);
+	    int new_flags = va_arg(args, int);
+	    va_end(args);
+	    zrt_log("new_flags=%d", new_flags);
+	}
+	else if ( cmd == F_GETFL || cmd == F_SETFL ){
+	}
+	else if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
+	    va_list args;
+	    va_start(args, cmd);
+	    struct flock* lock_data = va_arg(args, struct flock*);
+	    va_end(args);
+	    if ( !lock_data ) {
+		SET_ERRNO(EINVAL);
+		rc = -1;
+	    }
+	    else{
+		zrt_log("lock type=%s", LOCK_TYPE_FLAGS(lock_data->l_type));
+		zrt_log("l_whence=%d", lock_data->l_whence);
+		zrt_log("l_start=%d", lock_data->l_start);
+		zrt_log("l_len=%d", lock_data->l_len);
+	
+		/*get lock*/
+		if ( cmd == F_GETLK ){
+		    /*return current lock flag*/
+		    rc = node->flock();
+		}
+		/*set lock*/
+		else{
+		    node->set_flock(lock_data->l_type);
+		}
+	    }
+	}
+    }
+    return rc;
 }

@@ -104,6 +104,10 @@ class MemNode {
   uint32_t gid()const { return gid_; }
   void set_chown(uint32_t uid, uint32_t gid) { uid_=uid; gid_=gid; }
 
+  /*added by YaroslavLitvinov*/
+  int flock()const { return flock_; }
+  void set_flock(int flock) { flock_=flock; }
+
  private:
   int slot_;
   std::string name_;
@@ -120,6 +124,7 @@ class MemNode {
   mode_t mode_;
   uint32_t uid_;
   uint32_t gid_;
+  int flock_;
 
   DISALLOW_COPY_AND_ASSIGN(MemNode);
 };

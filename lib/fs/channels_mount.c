@@ -710,6 +710,11 @@ static int channels_open(const char* path, int oflag, uint32_t mode){
     return 0;
 }
 
+static int channels_fcntl(int fd, int cmd, ...){
+    SET_ERRNO( ENOSYS );
+    return -1;
+}
+
 static int channels_remove(const char* path){
     SET_ERRNO( ENOSYS );
     return -1;
@@ -776,6 +781,7 @@ static struct MountsInterface s_channels_mount = {
         channels_close,
         channels_lseek,
         channels_open,
+	channels_fcntl,
         channels_remove,
         channels_unlink,
         channels_access,

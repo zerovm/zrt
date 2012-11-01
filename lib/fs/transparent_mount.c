@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -243,6 +244,22 @@ static int transparent_open(const char* path, int oflag, uint32_t mode){
     }
 }
 
+static int transparent_fcntl(int fd, int cmd, ...){
+    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    if ( mount ){
+	va_list args;
+	va_start(args, cmd);
+	int retcode = mount->fcntl( fd, cmd, args );
+	va_end(args);
+	return retcode;
+    }
+    else{
+        errno = ENOENT;
+        return -1;
+    }
+}
+
+
 static int transparent_remove(const char* path){
     struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
     if ( mount_info ){
@@ -334,6 +351,7 @@ static struct MountsInterface s_transparent_mount = {
         transparent_close,
         transparent_lseek,
         transparent_open,
+	transparent_fcntl,
         transparent_remove,
         transparent_unlink,
         transparent_access,

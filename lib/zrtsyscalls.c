@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h> //atoi
 #include <stddef.h> //size_t
+#include <stdarg.h>
 #include <unistd.h> //STDIN_FILENO
 #include <fcntl.h> //file flags, O_ACCMODE
 #include <errno.h>
@@ -305,6 +306,19 @@ int fchmod(int fd, mode_t mode){
     return ret;
 }
 
+/*override system glibc implementation */
+int fcntl(int fd, int cmd, ... /* arg */ ){
+    LOG_SYSCALL_START(NULL);
+    errno=0;
+    zrt_log( "fd=%d, cmd=%u", fd, cmd );
+    va_list args;
+    va_start(args, cmd);
+    int ret = s_transparent_mount->fcntl(fd, cmd, args);
+    va_end(args);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
 /*override system glibc implementation due to bad errno at errors*/
 /* int fseek(FILE *stream, long offset, int whence){ */
 /*     LOG_SYSCALL_START(NULL); */
@@ -314,6 +328,7 @@ int fchmod(int fd, mode_t mode){
 /*     LOG_SYSCALL_FINISH(ret); */
 /*     return ret; */
 /* } */
+
 
 /********************************************************************************
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
@@ -341,8 +356,7 @@ static int32_t zrt_open(uint32_t *args)
 
     zrt_log("path=%s", name);
     VALIDATE_SYSCALL_PTR(name);
-
-    log_file_open_flags(flags);
+    zrt_log("open flags=%s", FILE_OPEN_FLAGS(flags));
     
     char* absolute_path = alloc_absolute_path_from_relative( name );
     mode = apply_umask(mode);
@@ -412,7 +426,7 @@ static int32_t zrt_lseek(uint32_t *args)
     int whence = (int)args[2];
 
     zrt_log("offset=%lld\n", offset);
-    log_seek_whence(whence);
+    zrt_log("whence=%s\n", SEEK_WHENCE(whence));
 
     if ( whence == SEEK_SET && offset < 0 ){
 	SET_ERRNO(EINVAL);
@@ -499,8 +513,8 @@ static int32_t zrt_mmap(uint32_t *args)
     uint32_t fd = args[4];
     off_t offset = (off_t)args[5];
 
-    log_mmap_prot(prot);
-    log_mmap_flags(flags);
+    zrt_log("mmap prot=%s", MMAP_PROT_FLAGS(prot));
+    zrt_log("mmap flags=%s", MMAP_FLAGS(flags));
     retcode = s_memory_interface->mmap(s_memory_interface, addr, length, prot, 
 		  flags, fd, offset);
   
