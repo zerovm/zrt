@@ -3,6 +3,9 @@ CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
 ifndef TESTS_ROOT
 TESTS_ROOT=src
 endif
+ifndef MEMMAX
+MEMMAX=234217728
+endif
 #it should be zerovm release version
 ZEROVM=$(ZEROVM_ROOT)/zerovm.rel
 
@@ -140,6 +143,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
 	 sed s@{GLIBC_FS}@$(CURDIR)/archive/glibc-fs.tar@g | \
 	 sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g | \
+	 sed s@{MEMMAX}@$(MEMMAX)@g | \
 	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).manifest
 #Run test under zerovm and display returned error code
 #$shell should not be used to get test result from file because it unexpectadly

@@ -1,18 +1,16 @@
-PNACL_TOOL=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc
+include $(ZRT_ROOT)/Makefile.env
+CFLAGS+=-O2
 NAME=time
-INCLUDE_FLAGS=-I$(ZRT_ROOT)/lib
 
 all: $(NAME).o
-	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).nexe -s -static -T \
-	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
-	sed s@{ABS_PATH}@${CURDIR}/@g ${ZRT_ROOT}/manifest1.template | sed s@{NAME}@$(NAME)@g > $(NAME).manifest
+	$(CC) -o $(NAME).nexe $(NAME).o $(LDFLAGS)
+#
+	sed s@{ABS_PATH}@${CURDIR}/@g ${ZRT_ROOT}/manifest1.template | \
+	sed s@{NAME}@$(NAME)@g > $(NAME).manifest
+#
 	binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
-	setarch x86_64 -R $(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v2
-
-$(NAME).o:
-	$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).o -Wall \
-	$(INCLUDE_FLAGS) $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 $(NAME).c
+#
+	$(SETARCH) $(ZEROVM_ROOT)/zerovm -M$(NAME).manifest
 
 clean:
 	@rm -f $(NAME).nexe $(NAME).o *.log *.std *.manifest

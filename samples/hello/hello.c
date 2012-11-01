@@ -5,7 +5,9 @@
  * in order to use zrt "api/zrt.h" should be included
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include "zrt.h"
+
 
 int zmain(int argc, char **argv)
 {
@@ -13,7 +15,7 @@ int zmain(int argc, char **argv)
   printf("hello, world\n");
 
   /* write to user log (stderr) */
-  fprintf(stderr, "hello, world\n");
+  printf("hello, world\n");
 
   return 0;
 }

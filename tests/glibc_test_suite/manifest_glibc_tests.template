@@ -19,7 +19,7 @@ Nexe = {OUTFILE}.nexe
 NexeMax = 10000000
 SyscallsMax = 3333
 ==MemMax=134217728
-MemMax=234217728
+MemMax={MEMMAX}
 Timeout=10
 Environment = TimeStamp, 1344719070 {ENVIRONMENT}
 NodeName=glibc-test,1

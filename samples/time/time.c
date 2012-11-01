@@ -6,14 +6,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "zrt.h"
-
-
 int zmain(int argc, char **argv)
 {
   time_t cur_time;
   struct tm *date_time;
-  int64_t i;
 
   /* call zrt_gettimeofday() indirectly */
   fprintf(stdout, "timestamp from manifest = %ld\n"
