@@ -10,21 +10,34 @@
 #ifndef __ENUM_STRINGS_H__
 #define __ENUM_STRINGS_H__
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+#endif //_GNU_SOURCE
 #include <fcntl.h> //file flags
 #include <sys/mman.h>
 
+#define MAX_FLAGS_LEN 1000
 
-/*log to zrt debug flags for opening file in human representation*/
-void log_file_open_flags( int flags );
+enum array_list_t{
+    EFileOpenFlags=0,
+    EMmapProtFlags,
+    EMMapFlags,
+    ESeekWhence,
+    ELockTypeFlags,
+    EFcntlCmd
+};
 
-/*log to zrt debug mmap prot flags*/
-void log_mmap_prot( int prot );
+#define FILE_OPEN_FLAGS(flags) text_from_flag(flags, EFileOpenFlags)
+#define MMAP_PROT_FLAGS(flags) text_from_flag(flags, EMmapProtFlags)
+#define MMAP_FLAGS(flags) text_from_flag(flags, EMMapFlags)
+#define SEEK_WHENCE(flags) text_from_id(flags, ESeekWhence)
+#define LOCK_TYPE_FLAGS(flags) text_from_flag(flags, ELockTypeFlags)
+#define FCNTL_CMD(flags) text_from_id(flags, EFcntlCmd)
 
-/*log to zrt debug mmap flags*/
-void log_mmap_flags( int flags );
+/*Get all list of set flags*/
+const char* text_from_flag( int flags, enum array_list_t enum_id );
+/*Get textual representation of integer id*/
+const char* text_from_id( int id, enum array_list_t enum_id );
 
-/*log to zrt debug seek whence flags*/
-void log_seek_whence( int whence );
 
 #endif //__ENUM_STRINGS_H__
