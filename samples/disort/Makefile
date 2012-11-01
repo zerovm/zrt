@@ -1,12 +1,9 @@
-PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
-
-CC=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-gcc
+include $(ZRT_ROOT)/Makefile.env
 
 #DEBUG=-g
-CFLAGS += -I$(ZRT_ROOT)/lib -I$(ZRT_ROOT)/lib/networking -I.
-CFLAGS += -Wall -std=c99 -Wno-long-long -O2 -msse4.1 -m64 $(DEBUG)
-LDFLAGS += -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl \
--L$(ZRT_ROOT)/lib -lzrt -lnetworking -lfs -lstdc++
+CFLAGS +=-I$(ZRT_ROOT)/lib/networking -I.
+CFLAGS +=-std=c99 -O2 $(DEBUG)
+LDFLAGS+=-lnetworking
 
 GENNODE=generator.uint32_t
 MANNODE=nodeman
@@ -39,13 +36,13 @@ $(DSTNODE).nexe: $(DSTNODE_OBJECTS)
 
 cleanlog:
 	@rm -f log/*.log
-	
+
 prepare: createdirs
 	@chmod u=rwx disort.sh
 	@chmod u=rwx gendata.sh
 	@chmod u=rwx genmanifest.sh
 	@./genmanifest.sh
- 	
+
 createdirs:
 	@mkdir -p log data
 
