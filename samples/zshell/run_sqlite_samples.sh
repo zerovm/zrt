@@ -2,24 +2,40 @@
 
 echo Run sqlite samples
 
-#it's db can be actualy used if zshell compiled with READ_ONLY_SQL define 
-#in another case will used db loaded from tar image
-READ_ONLY_DB=sqlite/data/zvm_netw.db
+#in case if zshell compiled with READ_ONLY_SQL defined it will be used
+#/dev/input channel and then database path should be mounted as input channel
+READ_ONLY_INPUT_CHANNEL=sqlite/data/test_sqlite.db
 
-#select
-./genmanifest.sh sqlite/scripts/select.sql log/sqlite1.stdout ${READ_ONLY_DB} log/sqlite1.stderr.log > sqlite/select_sqlite.manifest 
+#in another case if zshell compiled without READ_ONLY_SQL define then it will 
+#use /dev/tarimage channel and real tar archive will be mounted
+TAR_IMAGE=sqlite/data/tarfs.tar
+
+#read database from input channel
+NAME="select"
+./genmanifest.sh sqlite/scripts/${NAME}.sql log/${NAME}.stdout ${READ_ONLY_INPUT_CHANNEL} log/${NAME}.stderr.log "/dev/input" > sqlite/${NAME}.manifest 
 echo -------------------------------run sqlite #1: select
-rm log/sqlite1.stdout -f
-echo setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/select_sqlite.manifest
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/select_sqlite.manifest
+rm log/${NAME}.stdout -f
+echo setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
 echo "stdout output >>>>>>>>>>"
-cat log/sqlite1.stdout
+cat log/${NAME}.stdout
+
+#read database from input channel
+NAME="select_clone"
+./genmanifest.sh sqlite/scripts/${NAME}.sql log/${NAME}.stdout ${TAR_IMAGE} log/${NAME}.stderr.log "/sqlite.db" > sqlite/${NAME}.manifest 
+echo -------------------------------run sqlite #1: select
+rm log/${NAME}.stdout -f
+echo setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
+echo "stdout output >>>>>>>>>>"
+cat log/${NAME}.stdout
 
 #create new db, insert data and select
-./genmanifest.sh sqlite/scripts/zerovm_config.sql log/sqlite1.stdout ${READ_ONLY_DB} log/sqlite2.stderr.log > sqlite/create_sqlite.manifest 
-echo -------------------------------run sqlite #2: create & insert & select
-rm log/sqlite2.stdout -f
-echo setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/create_sqlite.manifest
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/create_sqlite.manifest
+NAME="create_insert_select"
+./genmanifest.sh sqlite/scripts/${NAME}.sql log/${NAME}.stdout ${TAR_IMAGE} log/${NAME}.stderr.log "/sqlite-new.db" > sqlite/${NAME}.manifest 
+echo -------------------------------run sqlite ${NAME}
+rm log/${NAME}.stdout -f
+echo setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
 echo "stdout output >>>>>>>>>>"
-cat log/sqlite2.stdout
+cat log/${NAME}.stdout

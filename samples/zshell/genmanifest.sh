@@ -40,6 +40,6 @@ sed $SED_3 | \
 sed $SED_4 | \
 sed s@$VAR_NAME_5@"$5"@ | \
 sed s@{ABS_PATH}@$SCRIPT_PATH/@ | \
-sed s@{DEBUG_FILE_PATH}@$SCRIPT_PATH/$JOB_NAME.zrt.log@g
+sed s@{DEBUG_FILE_PATH}@$SCRIPT_PATH/log/$JOB_NAME.zrt.log@g
 
 

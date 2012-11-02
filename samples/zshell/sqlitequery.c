@@ -17,8 +17,6 @@
 #define STDIN 0
 #define STDERR 2
 
-//#define SQLITE_TRACE_ENABLE
-
 /* In use case it's should not be directly called, but only as callback for sqlite API;
  *@param argc columns count
  *@param argv columns values */
@@ -31,44 +29,63 @@ int get_dbrecords_callback(void *not_used, int argc, char **argv, char **az_col_
     return 0;
 }
 
-#ifdef SQLITE_TRACE_ENABLE
-void xTrace(void* param,const char* sql){
-    printf("xTrace %p, %s", param, sql);fflush(0);
+int sqlite_pragma (sqlite3* db, const char* request){
+    // get current database version of schema
+    static sqlite3_stmt *stmt_pragma;
+    int rc=0;
+
+    if( (rc=sqlite3_prepare_v2(db, request, -1, &stmt_pragma, NULL)) == SQLITE_OK) {
+        while(sqlite3_step(stmt_pragma) == SQLITE_ROW);
+    }
+    else{
+	rc = sqlite3_errcode(db);
+    }
+    sqlite3_finalize(stmt_pragma);
+    return rc;
 }
-#endif
 
 int open_db(const char* path, sqlite3** db)
 {
     int rc=0;
 
 #ifdef READ_ONLY_SQL
-    /*open db filename that will be used by sqlite VFS*/
-    int database_fd = open( path, O_RDONLY );
-    assert( database_fd >= 0 );
-
-    /*setup mode that forcing opening DB in special READ-ONLY mode
-      with using VFS feature that natively supported by SQLITE but
-      VFS implementation is part of libsqlite3 provided among ZRT library*/
-    int regerr = register_fs_channel( database_fd );
-    assert( SQLITE_OK == regerr );
-
-    /*Open sqlite db, hosted on our registered VFS, it's used "fake" name
-     that will not be used because sqlite was tuned to use database_fd 
-     descriptor of already opened file*/
-    fprintf( stderr, "open db in read only mode\n");
-    rc = sqlite3_open_v2( "fake",      /* fake DB name will not be used */
-			  db,         /* OUT: SQLite db handle */
-			  SQLITE_OPEN_MAIN_DB|SQLITE_OPEN_READONLY,    /* Flags */
-			  FS_VFS_NAME  /* Name of VFS module to use */
-			  );
-#else
-    fprintf( stderr, "open db in read/write mode\n");
-    rc = sqlite3_open( path,  /* Database filename (UTF-8) */
-    		       db    /* OUT: SQLite db handle */
-    		       );
+    /*What does mean READ_ONLY_SQL define:
+     *specified database path can point to READ_ONLY channel and in this case
+     *database can be opened in READ_ONLY mode and only native read queries are
+     *available;*/
+    /*if path is related to channel described by manifest*/
+    if ( !strncmp("/dev/", path, strlen("/dev/"))){
+	/*open db filename that will be used by sqlite VFS*/
+	int database_fd = open( path, O_RDONLY );
+	assert( database_fd >= 0 );
+	/*setup mode that forcing opening DB in special READ-ONLY mode
+	  with using VFS feature that natively supported by SQLITE but
+	  VFS implementation is part of libsqlite3 provided among ZRT library*/
+	int regerr = register_fs_channel( database_fd );
+	assert( SQLITE_OK == regerr );
+	/*Open sqlite db, hosted on our registered VFS, it's used "fake" name
+	  that will not be used because sqlite was tuned to use database_fd 
+	  descriptor of already opened file*/
+	fprintf( stderr, "open db in read only mode\n");
+	rc = sqlite3_open_v2( "fake",      /* fake DB name will not be used */
+			      db,         /* OUT: SQLite db handle */
+			      SQLITE_OPEN_MAIN_DB|SQLITE_OPEN_READONLY,    /* Flags */
+			      FS_VFS_NAME  /* Name of VFS module to use */
+			      );
+    }
+    else
 #endif
+	/*VFS should not be used by channels neither another files*/
+	{
+	    fprintf( stderr, "open db in read/write mode\n");
+	    rc = sqlite3_open( path,  /* Database filename (UTF-8) */
+			       db    /* OUT: SQLite db handle */
+			       );
+	    rc = sqlite_pragma(*db, "PRAGMA synchronous=OFF;" );
+	}
     return rc;
 }
+
 
 /*Issue db request.
  * @param nodename which records are needed
@@ -77,49 +94,16 @@ int exec_query_print_results(sqlite3* db, const char *query_string){
     char *zErrMsg = 0;
     int rc = 0;
 
-#ifdef SQLITE_TRACE_ENABLE
-    void* pArg=NULL; 
-    void* trace_func = sqlite3_trace(db, xTrace, pArg);
-    fprintf( stderr, "enable trace, returned prev tracer= %p\n", trace_func);
-    fprintf( stderr, "sqlite prepare\n");
-
-    sqlite3_stmt *statement_handle = NULL;
-    rc=sqlite3_prepare_v2(db, query_string, strlen(query_string), &statement_handle, NULL);
-    if(rc!=SQLITE_OK){
-	fprintf( stderr, "rc=%d, %s\n", rc, sqlite3_errmsg(db));fflush(0);
-	return 1;
-    }
-    printf("\n compile/step/finalize \n");
-
-    int colcount=sqlite3_column_count(statement_handle);
-    while(sqlite3_step(statement_handle)!=SQLITE_DONE){
-	for(int i=0;i<colcount;i++) {
-	    fprintf( stderr, "%s(%s)=%s |", 
-		   sqlite3_column_name(statement_handle,i), 
-		   sqlite3_column_decltype(statement_handle,i), 
-		   sqlite3_column_text(statement_handle,i));
-	}
-	fprintf( stderr, "\n");
-    }
-    rc=sqlite3_finalize(statement_handle);
-    if(rc!=SQLITE_OK)	{
-	fprintf( stderr,  "rc=%d, %s\n", rc, sqlite3_errmsg(db));fflush(0);
-	sqlite3_free(zErrMsg);
-	return 1;
-    }
-#else
     /*DB should be previously opened by open_db, 
       run sql query and handle results and errors*/
     fprintf( stderr, "exec db\n");
     rc = sqlite3_exec(db, query_string, get_dbrecords_callback, NULL, &zErrMsg);
     if ( SQLITE_OK != rc ){
         fprintf( stderr, "Sql statement : %s, exec error text=%s, errcode=%d\n",
-                query_string, sqlite3_errmsg(db), rc);
+		 query_string, sqlite3_errmsg(db), rc);
         sqlite3_free(zErrMsg);
         return -2;
     }
-
-#endif //SQLITE_TRACE_ENABLE
     return 0;
 }
 

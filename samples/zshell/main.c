@@ -16,18 +16,10 @@
 #include "zshell.h"
 
 
-#ifndef DEBUGGER
-#include "zrt.h"
+#define STDIN 0
 
 /* Channel contains input data allowed to read */
 #  define DATA_CHANNEL_ALIAS_NAME "/dev/input"
-#else
-#  define WRITE_FMT_LOG(fmt, args...)
-#  define WRITE_LOG(str) printf("%s\n", str)
-#  define DATA_CHANNEL_ALIAS_NAME "/home/yaroslav/git/zrt/samples/zshell/sqlite/data/new.db"
-#endif
-
-
 
 #define LUA_ID            "#lua"
 #define SQLITE_ID         "#sqlite"
@@ -66,17 +58,13 @@ int SearchNewLine( const char *buffer ){
 }
 
 int zmain(int argc, char **argv){
-    /* Read to buffer from stdin which contains text script; first line should
-     * always begin with '#'; First line should be one of these: 
+    int fdscript = STDIN;
+    char *buffer = NULL;
+    /* Read from stdin channel text script; first line in script
+     * should always begin with '#'; and can be one of these: 
      * #lua 
      * #sqlite  */
-    int fdscript = 0; //stdin
-#ifdef DEBUGGER
-    fdscript = open( "/home/yaroslav/git/zrt/samples/zshell/sqlite/scripts/zerovm_config.sql", O_RDONLY );
-    assert( fdscript >= 0 );
-#endif
 
-    char *buffer = NULL;
     /*load script from stdin*/
     int bufsize = LoadFileToBuffer(fdscript, &buffer );
     /*skip first line containing keyword*/
@@ -87,39 +75,46 @@ int zmain(int argc, char **argv){
      and if newlinepos value=0 that is means that no scipt data found */
     int errcode = 0;
     int script_buf_size = bufsize-newlinepos;
+    const char* script_contents = buffer+newlinepos; /*whole script skipping first line*/
+
+    /*Filesystem in memory notes:
+     *Any folder contents can be injected into filesystem in memory restricted by memory
+     *capacity, to do this need to specify /dev/tarimage channel in manifest file and
+     *then all archive contents will be copied into '/' FS in memory at nexe start*
+     */
+    /*Channels notes: 
+     *Channels defined in manifest file should be resided in /dev folder; currently 
+     *lua can use any types of channels supported by zerovm,
+     *- sqlite can use folowing channel types if READ_ONLY_SQL not defined: 
+     *RGetSPut=1 Random get / sequential put - for reading database, 
+     *SGetRPut=2 Sequential get / Random put - for writing database
+     *- sqlite can use only channels with READ ability if READ_ONLY_SQL defined
+     *because it using VFS supported only read only channels*/
+
+    /*If LUA scripting provided*/
     if ( !strncmp( LUA_ID, buffer, strlen(LUA_ID) ) && 
 	 newlinepos >0 ){
-#ifndef DEBUGGER
-	/*if loaded file is lua script, run script skiping first line;*/
+	/*if loaded file is lua script, skip first line and run script;*/
 	errcode = 
-	    run_lua_buffer_script (buffer+newlinepos, 
-				   script_buf_size, 
-				   (const char **)argv);
-#endif
+	    run_lua_buffer_script ( script_contents,   /*buffer with lua script */
+				    script_buf_size,   /*length of script*/
+				    (const char **)argv /*optional cmd line*/ );
     }
+
+    /*For SQLITE we are waiting an argv[1] param and interpret it as DB filename*/
     else if ( !strncmp( SQLITE_ID, buffer, strlen(SQLITE_ID) ) && 
 	      newlinepos > 0 ){
-	/*if loaded file is sqlite query, run query skiping first line*/
-#ifdef READ_ONLY_SQL
-	/*ZSHELL is supported mode working without filesytem available
-	 *in this case Database can be opened in READ_ONLY mode
-	 *and only native read queries are available*/
-
-	errcode = 
-	    run_sql_query_buffer( 
-				 DATA_CHANNEL_ALIAS_NAME, /*read-only zerovm channel*/
-				 buffer+newlinepos, /*pos starting with script data*/
-				 script_buf_size  /*script data size*/
-				  );
-#else
-	errcode = 
-	    run_sql_query_buffer( 
-				 /*path on tarball FS loaded by manifest*/
-				 "/sqite.db", 
-				 buffer+newlinepos, /*pos starting with script data*/
-				 script_buf_size  /*script data size*/
-				  );
-#endif
+	if ( !argv[1] ){
+	    fprintf( stderr, "SQLite required db filename as cmd line argument");
+	}
+	else{
+	    errcode = 
+		run_sql_query_buffer( 
+				     argv[1],         /*db filename*/
+				     script_contents, /*pos starting with script data*/
+				     script_buf_size  /*script data size*/
+				      );
+	}
     }
     else{
 	fprintf( stderr, 
