@@ -367,7 +367,8 @@ static int mem_fcntl(int fd, int cmd, ...){
 }
 
 static int mem_remove(const char* path){
-    return -1;
+    zrt_log("path=%s", path);
+    return s_mem_mount_cpp->Unlink(path);
 }
 
 static int mem_unlink(const char* path){

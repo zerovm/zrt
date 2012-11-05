@@ -21,8 +21,8 @@ SYSCFLAGS=
 SYSLDFLAGS=
 SYSLIBS=
 
-#ZRT API includes path, macroses for main
-MYCFLAGS=-m64
+#ZRT API want use mpkstemp instead tmpnam
+MYCFLAGS=-m64 -DLUA_USE_MKSTEMP
 MYLDFLAGS= 
 MYLIBS=
 MYOBJS=
@@ -189,4 +189,3 @@ lvm.o: lvm.c lua.h luaconf.h ldebug.h lstate.h lobject.h llimits.h ltm.h \
  lzio.h lmem.h ldo.h lfunc.h lgc.h lopcodes.h lstring.h ltable.h lvm.h
 lzio.o: lzio.c lua.h luaconf.h llimits.h lmem.h lstate.h lobject.h ltm.h \
  lzio.h
-

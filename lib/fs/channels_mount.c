@@ -488,7 +488,7 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
         SET_ERRNO( zvm_errno() );
         return -1;
     }
-    ///ZEROVM Obsolete design will removed soon
+
     return readed;
 }
 
@@ -716,12 +716,12 @@ static int channels_fcntl(int fd, int cmd, ...){
 }
 
 static int channels_remove(const char* path){
-    SET_ERRNO( ENOSYS );
+    SET_ERRNO( EPERM );
     return -1;
 }
 
 static int channels_unlink(const char* path){
-    SET_ERRNO( ENOSYS );
+    SET_ERRNO( EPERM );
     return -1;
 
 }

@@ -43,7 +43,6 @@
 /* TODO
  * RESEARCH
  * #include <mcheck.h> research debugging capabilities
- * rename : ENOSYS 38 Function not implemented
  * channels close, reopen, reclose
  * BUGS
  * fdopen failed, ftell fread
@@ -315,6 +314,57 @@ int fcntl(int fd, int cmd, ... /* arg */ ){
     va_start(args, cmd);
     int ret = s_transparent_mount->fcntl(fd, cmd, args);
     va_end(args);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
+/*substitude unsupported glibc implementation */
+int remove(const char *pathname){
+    LOG_SYSCALL_START(NULL);
+    errno=0;
+    zrt_log( "pathname=%s", pathname );
+    int ret = s_transparent_mount->remove(pathname);
+    LOG_SYSCALL_FINISH(ret);
+    return ret;
+}
+
+/*substitude unsupported glibc implementation */
+int rename(const char *oldpath, const char *newpath){
+    LOG_SYSCALL_START(NULL);
+    int ret;
+    errno=0;
+    zrt_log( "oldpath=%s, newpath=%s", oldpath, newpath );
+    struct stat oldstat;
+    ret = stat(oldpath, &oldstat );
+    if ( !ret ){
+	struct stat newstat;
+	ret = stat(newpath, &newstat );
+	if ( ret == ENOENT ){
+	    /*if oldpath exist and new filename does not exist, then
+	     *read old file contents into buffer then create and write new file
+	     *contents, close files, and remove old file from FS
+	     */
+	    char* oldbuf = malloc(oldstat.st_size);
+	    int oldfd = open(oldpath, O_RDONLY);
+	    int bytes = read(oldfd, oldbuf, oldstat.st_size);
+	    close(oldfd);
+	    zrt_log("bytes=%d, st_size=%d", bytes, (int)oldstat.st_size);
+	    assert(bytes==oldstat.st_size);
+	    int newfd = open(newpath, O_CREAT | O_WRONLY);
+	    int bytes_w = write(newfd, oldbuf, oldstat.st_size);
+	    close(newfd);
+	    zrt_log("bytes_w=%d, st_size=%d", bytes, (int)oldstat.st_size);
+	    assert(bytes_w==oldstat.st_size);
+	    remove(oldpath);
+	    free(oldbuf);
+	}
+	else{
+	    /*could not rename file because newpath already exist*/
+	    ret = -1;
+	    SET_ERRNO(EEXIST);
+	}
+    }
+
     LOG_SYSCALL_FINISH(ret);
     return ret;
 }
