@@ -5,6 +5,9 @@
  * Now can be served only readonly sql queries;
  */
 
+#define _GNU_SOURCE
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -16,6 +19,11 @@
 
 #define STDIN 0
 #define STDERR 2
+
+/*if define READ_ONLY_SQL enabled then database mounted on READ_ONLY channel
+ *will opened in READ_ONLY mode and can serve native read queries; 
+*/
+#define READ_ONLY_SQL
 
 /* In use case it's should not be directly called, but only as callback for sqlite API;
  *@param argc columns count
@@ -48,13 +56,16 @@ int open_db(const char* path, sqlite3** db)
 {
     int rc=0;
 
+    /*check provided path*/
+    struct stat st;
+    rc=stat(path, &st);
+
 #ifdef READ_ONLY_SQL
-    /*What does mean READ_ONLY_SQL define:
-     *specified database path can point to READ_ONLY channel and in this case
-     *database can be opened in READ_ONLY mode and only native read queries are
-     *available;*/
-    /*if path is related to channel described by manifest*/
-    if ( !strncmp("/dev/", path, strlen("/dev/"))){
+    /*if READ_ONLY  character device or block device specified
+     *trying to open channel described by manifest*/
+    if ( rc == 0 &&
+	 ((st.st_mode&S_IFMT) == S_IFCHR || (st.st_mode&S_IFMT) == S_IFBLK) &&
+	 (st.st_mode&S_IRWXU) == S_IRUSR ){
 	/*open db filename that will be used by sqlite VFS*/
 	int database_fd = open( path, O_RDONLY );
 	assert( database_fd >= 0 );
@@ -75,7 +86,6 @@ int open_db(const char* path, sqlite3** db)
     }
     else
 #endif
-	/*VFS should not be used by channels neither another files*/
 	{
 	    fprintf( stderr, "open db in read/write mode\n");
 	    rc = sqlite3_open( path,  /* Database filename (UTF-8) */

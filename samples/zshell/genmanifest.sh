@@ -5,7 +5,7 @@ SCRIPT_PATH=`dirname "$SCRIPT"`
 
 VAR_NAME_1={SCRIPT_FILE_PATH}
 VAR_NAME_2={OUTPUT_FILE_PATH}
-VAR_NAME_3={DATA_RW_FILE_PATH}
+VAR_NAME_3={DATA_FILE_PATH}
 VAR_NAME_4={LOG_FILE_PATH}
 VAR_NAME_5={COMMAND_LINE}
 
@@ -34,7 +34,7 @@ fi
 
 #Generate manifest as output from template
 
-sed s@$VAR_NAME_1@$SCRIPT_PATH/$1@g manifest_template/zshell.manifest.template | \
+sed s@$VAR_NAME_1@$SCRIPT_PATH/$1@g $MANIFEST | \
 sed s@$VAR_NAME_2@$SCRIPT_PATH/$2@g | \
 sed $SED_3 | \
 sed $SED_4 | \

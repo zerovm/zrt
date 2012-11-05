@@ -104,8 +104,8 @@ int zmain(int argc, char **argv){
     /*For SQLITE we are waiting an argv[1] param and interpret it as DB filename*/
     else if ( !strncmp( SQLITE_ID, buffer, strlen(SQLITE_ID) ) && 
 	      newlinepos > 0 ){
-	if ( !argv[1] ){
-	    fprintf( stderr, "SQLite required db filename as cmd line argument");
+	if ( argc < 2 ){
+	    fprintf( stderr, "Error:SQLite required cmd line argument as db filename\n");
 	}
 	else{
 	    errcode = 

@@ -4,11 +4,6 @@ CFLAGS+=-I$(ZRT_ROOT)/lib/lua-5.2.1/src -I$(ZRT_ROOT)/lib/sqlite3
 
 LDFLAGS+=-llua -lm -lsqlite3
 
-#ZSHELL is supported mode working without available filesytem 
-#in this case Database can be readed via READ_ONLY sequential 
-#channel and only native read queries are available
-CFLAGS+=-DREAD_ONLY_SQL
-
 all: createdirs clean zshell.nexe
 
 zshell.nexe: obj/luaexec.o obj/main.o obj/sqlitequery.o

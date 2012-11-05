@@ -6,8 +6,7 @@ cdrfs/
   TODO: Add filesystem tests.
 
 zshell/
-  run easily lua scripts and sql queries; 
-  now lua does not support file system; sqlite can do queries in READ-ONLY mode; 
+  run lua scripts and sql queries via single zerovm executable and various manifest files; 
   
 wordcount/
   distributed application that uses mapreduce, networking library that part of zrt. 
