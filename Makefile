@@ -76,6 +76,7 @@ clean: ${LIBS_CLEAN} #clean_samples
 ${LIBS_CLEAN}:
 	@make -C$(dir $@) clean 
 	@rm -f $(LIBZRT_OBJECTS)
+	@rm -f $(LIBS)
 	@rm -f lib/*.a
 
 ################ "make clean_samples" Cleaning samples 
