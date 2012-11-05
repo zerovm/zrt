@@ -24,16 +24,7 @@ assert(not a and type(b) == "string" and type(c) == "number")
 a,b,c = io.open('/a/b/c/d', 'w')
 assert(not a and type(b) == "string" and type(c) == "number")
 
-
--- YaroslavLitvinov
--- Rest of files testing will skipped, it's notyet supported by ZRT library
--- but would be implemented soon
-print ("Most of tests in files.lua was skipped!")
-if 1==0 then 
--- //
-
 local file = os.tmpname()
-local file = "/tmp/tmpfile"
 local f, msg = io.open(file, "w")
 if not f then
   (Message or print)("'os.tmpname' file cannot be open; skipping file tests")
@@ -44,8 +35,6 @@ f:close()
 print('testing i/o')
 
 local otherfile = os.tmpname()
-print('tempfile test skipped.')
-local otherfile = "/tmp/tmpfile2"
 
 assert(not pcall(io.open, file, "rw"))     -- invalid mode
 assert(not pcall(io.open, file, "rb+"))    -- invalid mode
@@ -64,7 +53,6 @@ io.input(io.stdin); io.output(io.stdout);
 os.remove(file)
 assert(loadfile(file) == nil)
 assert(io.open(file) == nil)
-
 io.output(file)
 assert(io.output() ~= io.stdout)
 
@@ -106,11 +94,8 @@ io.close()
 
 -- test line generators
 assert(not pcall(io.lines, "non-existent-file"))
-
 assert(os.rename(otherfile, file))
-
 io.output(otherfile)
-
 local f = io.lines(file)
 while f() do end;
 assert(not pcall(f))  -- read lines after EOF
@@ -118,7 +103,6 @@ assert(not pcall(f))  -- read lines after EOF
 -- copy from file to otherfile
 for l in io.lines(file) do io.write(l, "\n") end
 io.close()
-
 -- copy from otherfile back to file
 local f = assert(io.open(otherfile))
 assert(io.type(f) == "file")
@@ -618,7 +602,4 @@ io.write(string.format('test done on %2.2d/%2.2d/%d', d, m, a))
 io.write(string.format(', at %2.2d:%2.2d:%2.2d\n', h, min, s))
 io.write(string.format('%s\n', _VERSION))
 
--- YaroslavLitvinov
-end
---//
 

@@ -131,7 +131,7 @@ dofile = function (n)
   return f()
 end
 
-dofile('/dev/lua/main.lua')
+dofile('/lua-5.2.1-tests/main.lua')
 
 do
   local eph = setmetatable({}, {__mode = "k"})   -- create an ephemeron table
@@ -152,48 +152,48 @@ do
 end
 
 report"gc.lua"
-local f = assert(loadfile('/dev/lua/gc.lua'))
+local f = assert(loadfile('/lua-5.2.1-tests/gc.lua'))
 f()
 
 collectgarbage("generational")
-dofile('/dev/lua/db.lua')
-assert(dofile('/dev/lua/calls.lua') == deep and deep)
-olddofile('/dev/lua/strings.lua')
-olddofile('/dev/lua/literals.lua')
-assert(dofile('/dev/lua/attrib.lua') == 27)
+dofile('/lua-5.2.1-tests/db.lua')
+assert(dofile('/lua-5.2.1-tests/calls.lua') == deep and deep)
+olddofile('/lua-5.2.1-tests/strings.lua')
+olddofile('/lua-5.2.1-tests/literals.lua')
+assert(dofile('/lua-5.2.1-tests/attrib.lua') == 27)
 
 collectgarbage("incremental")   -- redo some tests in incremental mode
-olddofile('/dev/lua/strings.lua')
-olddofile('/dev/lua/literals.lua')
-dofile('/dev/lua/constructs.lua')
-dofile('/dev/lua/api.lua')
+olddofile('/lua-5.2.1-tests/strings.lua')
+olddofile('/lua-5.2.1-tests/literals.lua')
+dofile('/lua-5.2.1-tests/constructs.lua')
+dofile('/lua-5.2.1-tests/api.lua')
 
 collectgarbage("generational")   -- back to generational mode
 collectgarbage("setpause", 200)
 collectgarbage("setmajorinc", 500)
-assert(dofile('/dev/lua/locals.lua') == 5)
-dofile('/dev/lua/constructs.lua')
-dofile('/dev/lua/code.lua')
+assert(dofile('/lua-5.2.1-tests/locals.lua') == 5)
+dofile('/lua-5.2.1-tests/constructs.lua')
+dofile('/lua-5.2.1-tests/code.lua')
 if not _G._soft then
-  report('/dev/lua/big.lua')
-  local f = coroutine.wrap(assert(loadfile('/dev/lua/big.lua')))
+  report('/lua-5.2.1-tests/big.lua')
+  local f = coroutine.wrap(assert(loadfile('/lua-5.2.1-tests/big.lua')))
   assert(f() == 'b')
   assert(f() == 'a')
 end
-dofile('/dev/lua/nextvar.lua')
-dofile('/dev/lua/pm.lua')
-dofile('/dev/lua/api.lua')
-assert(dofile('/dev/lua/events.lua') == 12)
-dofile('/dev/lua/vararg.lua')
-dofile('/dev/lua/closure.lua')
-dofile('/dev/lua/coroutine.lua')
-dofile('/dev/lua/goto.lua')
-dofile('/dev/lua/errors.lua')
-dofile('/dev/lua/math.lua')
-dofile('/dev/lua/sort.lua')
-dofile('/dev/lua/bitwise.lua')
-assert(dofile('/dev/lua/verybig.lua') == 10); collectgarbage()
-dofile('/dev/lua/files.lua')
+dofile('/lua-5.2.1-tests/nextvar.lua')
+dofile('/lua-5.2.1-tests/pm.lua')
+dofile('/lua-5.2.1-tests/api.lua')
+assert(dofile('/lua-5.2.1-tests/events.lua') == 12)
+dofile('/lua-5.2.1-tests/vararg.lua')
+dofile('/lua-5.2.1-tests/closure.lua')
+dofile('/lua-5.2.1-tests/coroutine.lua')
+dofile('/lua-5.2.1-tests/goto.lua')
+dofile('/lua-5.2.1-tests/errors.lua')
+dofile('/lua-5.2.1-tests/math.lua')
+dofile('/lua-5.2.1-tests/sort.lua')
+dofile('/lua-5.2.1-tests/bitwise.lua')
+assert(dofile('/lua-5.2.1-tests/verybig.lua') == 10); collectgarbage()
+dofile('/lua-5.2.1-tests/files.lua')
 
 if #msgs > 0 then
   print("\ntests not performed:")
