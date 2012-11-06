@@ -42,22 +42,22 @@ int main(int argc, char** argv, char** envp)
     zrt_setup( setup );
 
     /* debug print */
-    zrt_log("DEBUG INFORMATION FOR '%s' NODE", argv[0]);
-    zrt_log("user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
-    zrt_log("user memory size = %u", setup->heap_size);
+    ZRT_LOG(L_SHORT, "DEBUG INFORMATION FOR '%s' NODE", argv[0]);
+    ZRT_LOG(L_SHORT, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
+    ZRT_LOG(L_SHORT, "user memory size = %u", setup->heap_size);
     ZRT_LOG_DELIMETER;
-    zrt_log("sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel));
-    zrt_log("channels count = %d", setup->channels_count);
+    ZRT_LOG(L_SHORT, "sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel));
+    ZRT_LOG(L_SHORT, "channels count = %d", setup->channels_count);
     ZRT_LOG_DELIMETER;
     for(i = 0; i < setup->channels_count; ++i)
     {
-        zrt_log("channel[%d].name = '%s'", i, setup->channels[i].name);
-        zrt_log("channel[%d].type = %d", i, setup->channels[i].type);
-        zrt_log("channel[%d].size = %lld", i, setup->channels[i].size);
-        zrt_log("channel[%d].limits[GetsLimit] = %lld", i, setup->channels[i].limits[GetsLimit]);
-        zrt_log("channel[%d].limits[GetSizeLimit] = %lld", i, setup->channels[i].limits[GetSizeLimit]);
-        zrt_log("channel[%d].limits[PutsLimit] = %lld", i, setup->channels[i].limits[PutsLimit]);
-        zrt_log("channel[%d].limits[PutSizeLimit] = %lld", i, setup->channels[i].limits[PutSizeLimit]);
+        ZRT_LOG(L_SHORT, "channel[%d].name = '%s'", i, setup->channels[i].name);
+        ZRT_LOG(L_SHORT, "channel[%d].type = %d", i, setup->channels[i].type);
+        ZRT_LOG(L_SHORT, "channel[%d].size = %lld", i, setup->channels[i].size);
+        ZRT_LOG(L_SHORT, "channel[%d].limits[GetsLimit] = %lld", i, setup->channels[i].limits[GetsLimit]);
+        ZRT_LOG(L_SHORT, "channel[%d].limits[GetSizeLimit] = %lld", i, setup->channels[i].limits[GetSizeLimit]);
+        ZRT_LOG(L_SHORT, "channel[%d].limits[PutsLimit] = %lld", i, setup->channels[i].limits[PutsLimit]);
+        ZRT_LOG(L_SHORT, "channel[%d].limits[PutSizeLimit] = %lld", i, setup->channels[i].limits[PutSizeLimit]);
     }
     ZRT_LOG_DELIMETER;
 

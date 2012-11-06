@@ -31,7 +31,7 @@ int MemNode::stat(struct stat *buf) {
     buf->st_ino = (ino_t)slot_;
     if (is_dir()) {
         //buf->st_mode = S_IFDIR | 0777;
-        /*YaroslavLitvinov*/
+        /*YaroslavLitvinov added various modes support*/
         buf->st_mode = S_IFDIR | mode_;
     } else {
         buf->st_mode = S_IFREG | mode_;
@@ -49,8 +49,8 @@ int MemNode::stat(struct stat *buf) {
     buf->st_mtime = tv.tv_sec;      /* time of the last modification */
     buf->st_ctime = tv.tv_sec;      /* time of the last status change */
 
-    zrt_log("stat st_atime=%lld", buf->st_atime);
-    zrt_log("stat ino=%d", slot_);
+    ZRT_LOG(L_EXTRA, "stat st_atime=%lld", buf->st_atime);
+    ZRT_LOG(L_EXTRA, "stat ino=%d", slot_);
     return 0;
 }
 

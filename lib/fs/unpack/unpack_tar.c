@@ -44,7 +44,7 @@ typedef struct {
 
 
 static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path ){
-    zrt_log_str("unpack start");
+    ZRT_LOG(L_INFO, "%s", mount_path);
     char block[512];
     char filename[256];
     char dst_filename[MAXPATHLEN];
@@ -58,8 +58,8 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
         len =  unpack_if->stream_reader->read( unpack_if->stream_reader, block, sizeof(block));
         if (!len) break;
         if (len != sizeof(block)) {
-            /*every file size should is aligned to 512bytes in generic case*/
-            zrt_log_str("EUnpackStateNotImplemented");
+            /*every file size should be aligned to 512bytes in generic case*/
+            ZRT_LOG(L_ERROR, "ret=%s", "EUnpackStateNotImplemented");
             return EUnpackStateNotImplemented;
         }
 
@@ -75,7 +75,7 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
         /* Check that mount_path + "/" + filename + '\0' fits in MAXPATHLEN. */
         int pathlen=0;
         if ((pathlen=strlen(mount_path) + strlen(filename) + 2) > MAXPATHLEN) {
-            zrt_log("to big path readed from archive. len=%d", pathlen);
+            ZRT_LOG(L_ERROR, "to big path readed from archive. len=%d", pathlen);
             return EUnpackToBigPath;
         }
 
@@ -85,15 +85,8 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
         }
         strcat(dst_filename, filename);
 
-//        if (dst_filename[strlen(dst_filename) - 1] == '/') {
-//            zrt_log( "create dir =%s", dst_filename );
-//            int ret = fs->mkdir(dst_filename, 0777);
-//            zrt_log( "dir ret=%d", ret );
-//            continue;
-//        }
-
         if (sscanf(header->size, "%o", &file_len) != 1) {
-            zrt_log_str( "unknown" );
+	    ZRT_LOG(L_ERROR, "ret=%s", "unknown");
             return -1;
         }
 
@@ -104,7 +97,7 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
         unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len );
         ++count;
     }
-    zrt_log( "created %d files", count );
+    ZRT_LOG( L_SHORT, "created %d files", count );
     return count;
 
 }

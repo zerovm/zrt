@@ -187,7 +187,7 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
         const char *d_name, int namelength ){
     #define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
     struct nacl_abi_dirent *dirent = (struct nacl_abi_dirent *) buf;
-    zrt_log( "dirent offset: ino_off=%u, off_off=%u, reclen_off=%u, name_off=%u",
+    ZRT_LOG(L_EXTRA, "dirent offset: ino_off=%u, off_off=%u, reclen_off=%u, name_off=%u",
             offsetof(struct nacl_abi_dirent, d_ino ),
             offsetof(struct nacl_abi_dirent, d_off ),
             offsetof(struct nacl_abi_dirent, d_reclen ),
@@ -212,7 +212,7 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
         memcpy( dirent->d_name, d_name, namelength );
         ((char*)dirent->d_name)[namelength] = '\0';
 
-        zrt_log("dirent: name=%s, ino=%u, d_off=%u, d_reclen=%d, namel=%d",
+        ZRT_LOG(L_EXTRA, "dirent: name=%s, ino=%u, d_off=%u, d_reclen=%d, namel=%d",
                 d_name, 
 		(unsigned int)d_ino, 
 		(unsigned int)d_off, 
@@ -222,7 +222,9 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
     }
     /*buffer is not enough to save current dirent structure*/
     else{
-        zrt_log("no enough buffer, data_size=%d, buf_size=%d", adjusted_size, buf_size);
+        ZRT_LOG(L_EXTRA, "no enough buffer, "
+		"data_size=%d, buf_size=%d", 
+		adjusted_size, buf_size);
         return -1; /*no enough buffer size*/
     }
 }
@@ -233,8 +235,9 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
 int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTemp *readdir_temp,
         const struct ZVMChannel *channels, int channels_count, struct manifest_loaded_directories_t *dirs){
     assert( readdir_temp ); /*should always exist*/
-    zrt_log("temp handle=%d, dir_last_index=%d, channel_last_index=%d",
-            readdir_temp->dir_data.handle, readdir_temp->dir_last_readed_index, readdir_temp->channel_last_readed_index);
+    ZRT_LOG(L_EXTRA, "temp handle=%d, dir_last_index=%d, channel_last_index=%d",
+            readdir_temp->dir_data.handle, readdir_temp->dir_last_readed_index, 
+	    readdir_temp->channel_last_readed_index);
 
     int retval = 0;
     int foo;
@@ -245,7 +248,7 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
         readdir_temp->dir_data = *d;
         readdir_temp->dir_last_readed_index = 0;
         readdir_temp->channel_last_readed_index = 0;
-        zrt_log("new readdir call: handle=%d, path= %s", 
+        ZRT_LOG(L_EXTRA, "new readdir call: handle=%d, path= %s", 
 		readdir_temp->dir_data.handle, readdir_temp->dir_data.path );
     }
     /*if it's not continue of previous getdents then just reset temporary data */
@@ -263,11 +266,11 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
 	 readdir_temp->dir_last_readed_index >= 0 ){
         /*add sub dirs*/
         do{
-            zrt_log( "dir_index=%d", readdir_temp->dir_last_readed_index );
+            ZRT_LOG( L_EXTRA, "dir_index=%d", readdir_temp->dir_last_readed_index );
             readdir_temp->dir_last_readed_index =
                     get_sub_dir_index( dirs, readdir_temp->dir_data.path,
                             readdir_temp->dir_last_readed_index );
-            zrt_log( "dir_index=%d", readdir_temp->dir_last_readed_index );
+            ZRT_LOG( L_EXTRA, "dir_index=%d", readdir_temp->dir_last_readed_index );
 
             if ( readdir_temp->dir_last_readed_index != -1 ){
                 /*fetch name from full path*/
@@ -285,7 +288,7 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
                 if ( w == -1 ) return retval;
                 retval += w;
                 readdir_temp->dir_last_readed_index++;
-                zrt_log( "retval =%d", retval );
+                ZRT_LOG(L_EXTRA, "retval =%d", retval );
             }
         }while( readdir_temp->dir_last_readed_index >= 0 );
         readdir_temp->dir_last_readed_index =-1;
@@ -295,11 +298,11 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
 	readdir_temp->channel_last_readed_index >= 0 ){
         /*add directory files*/
         do{
-            zrt_log( "channel_index=%d", readdir_temp->channel_last_readed_index );
+            ZRT_LOG(L_EXTRA, "channel_index=%d", readdir_temp->channel_last_readed_index );
             readdir_temp->channel_last_readed_index =
                     get_dir_content_channel_index(channels, channels_count,
                             readdir_temp->dir_data.path, readdir_temp->channel_last_readed_index);
-            zrt_log( "channel_index=%d", readdir_temp->channel_last_readed_index );
+            ZRT_LOG(L_EXTRA, "channel_index=%d", readdir_temp->channel_last_readed_index );
 
             if ( readdir_temp->channel_last_readed_index != -1 ){
                 /*fetch name from full path*/
@@ -314,7 +317,7 @@ int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTem
                 if ( w == -1 ) return retval;
                 retval += w;
                 readdir_temp->channel_last_readed_index++;
-                zrt_log( "retval =%d", retval );
+                ZRT_LOG(L_EXTRA, "retval =%d", retval );
             }
         }while( readdir_temp->channel_last_readed_index >= 0 );
         readdir_temp->channel_last_readed_index = -1;

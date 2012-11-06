@@ -13,10 +13,15 @@
 #include "zrtlog.h"
 #include "handle_allocator.h"
 
-#define CHECK_HANDLE(handle)						\
-    {									\
-	zrt_log( "handle=%d", handle );					\
-	if ( handle < 0 || handle >= MAX_HANDLES_COUNT ) return -1;	\
+#define CHECK_HANDLE(handle){						\
+	if ( handle < 0 ){						\
+	    /*bad handle*/						\
+	    return -1;							\
+	}								\
+	else if ( handle >= MAX_HANDLES_COUNT ){			\
+	    ZRT_LOG(L_ERROR, "MAX_HANDLES_COUNT exceed %d", handle);	\
+	    return -1;							\
+	}								\
     }
 
 
@@ -34,9 +39,11 @@ static struct HandleItem s_handle_slots[MAX_HANDLES_COUNT];
 
 int seek_unused_slot( int starting_from ){
     int i;
-    for ( i=starting_from<0?0:starting_from; i < MAX_HANDLES_COUNT; i++ ){
+    starting_from = starting_from<0 ?0 :starting_from;
+    for ( i=starting_from; i < MAX_HANDLES_COUNT; i++ ){
         if ( s_handle_slots[i].used == EHandleAvailable ){
-            zrt_log( "i=%d, used=%d", i, s_handle_slots[i].used );
+	    /*found closest unusable slot*/
+            ZRT_LOG( L_INFO, "slot index=%d, EHandleAvailable", i );
             s_first_unused_slot = i;
             return s_first_unused_slot;
         }
@@ -51,7 +58,7 @@ static struct MountsInterface* mount_interface(int handle){
 
 static int get_inode(int handle, ino_t* inode ){
     CHECK_HANDLE(handle);
-    zrt_log( "handle=%d, inode=%d, inode pointer=%p",
+    ZRT_LOG( L_EXTRA, "handle=%d, inode=%d, inode pointer=%p",
 	     handle, (int)s_handle_slots[handle].inode, &(s_handle_slots[handle]).inode );
     *inode = s_handle_slots[handle].inode;
     return 0;
@@ -59,7 +66,7 @@ static int get_inode(int handle, ino_t* inode ){
 
 static int set_inode(int handle, ino_t inode ){
     CHECK_HANDLE(handle);
-    zrt_log( "inode=%d", (int)inode );
+    ZRT_LOG( L_EXTRA, "inode=%d", (int)inode );
     s_handle_slots[handle].inode = inode;
     return 0;
 }
@@ -72,7 +79,7 @@ static int get_offset(int handle, off_t* offset ){
 
 static int set_offset(int handle, off_t offset ){
     CHECK_HANDLE(handle);
-    zrt_log( "offset=%lld", (int64_t)offset );
+    ZRT_LOG( L_SHORT, "offset=%lld", (int64_t)offset );
     s_handle_slots[handle].offset = offset;
     return 0;
 }
@@ -81,7 +88,6 @@ static int allocate_handle(struct MountsInterface* mount_fs){
     s_first_unused_slot = seek_unused_slot( s_first_unused_slot );
     s_handle_slots[s_first_unused_slot].used = EHandleUsed;
     s_handle_slots[s_first_unused_slot].mount_fs = mount_fs;
-    zrt_log("handle=%d", s_first_unused_slot);
     return s_first_unused_slot;
 }
 

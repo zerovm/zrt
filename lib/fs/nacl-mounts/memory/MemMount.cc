@@ -16,8 +16,6 @@ extern "C" {
 }
 #include "MemMount.h"
 
-#define LOG_INTERMEDIATE_ERROR
-
 MemMount::MemMount() {
     // Don't use the zero slot
     slots_.Alloc();
@@ -36,34 +34,30 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf) {
     // Get the directory its in.
     int parent_slot = GetParentSlot(path);
     if (parent_slot == -1) {
-        zrt_log_str("return -1, errno = ENOTDIR; parent_slot == -1");
-        errno = ENOTDIR;
+	SET_ERRNO(ENOTDIR);
         return -1;
     }
     parent = slots_.At(parent_slot);
-    zrt_log("parent slot=%d", parent_slot);
+    ZRT_LOG(L_EXTRA, "parent slot=%d", parent_slot);
     if (!parent) {
-        zrt_log_str("return -1, errno = EINVAL; parent == NULL");
-        errno = EINVAL;
+	SET_ERRNO(EINVAL);
         return -1;
     }
     // It must be a directory.
     if (!(parent->is_dir())) {
-        zrt_log_str("return -1, errno = ENOTDIR; parent not dir");
-        errno = ENOTDIR;
+	SET_ERRNO(ENOTDIR);
         return -1;
     }
     // See if file exists.
     child = GetMemNode(path);
     if (child) {
-        zrt_log_str("return -1, errno = EEXIST; child exist");
-        errno = EEXIST;
+	SET_ERRNO(EEXIST);
         return -1;
     }
 
     // Create it.
     int slot = slots_.Alloc();
-    zrt_log("created slot=%d", slot);
+    ZRT_LOG(L_EXTRA, "created slot=%d", slot);
     child = slots_.At(slot);
     child->set_slot(slot);
     child->set_is_dir(false);
@@ -82,40 +76,36 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf) {
 }
 
 int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
-    zrt_log( "path=%s", path.c_str() );
+    ZRT_LOG( L_EXTRA, "path=%s", path.c_str() );
     MemNode *parent;
     MemNode *child;
 
     // Make sure it doesn't already exist.
     child = GetMemNode(path);
     if (child) {
-        zrt_log_str("errno=EEXIST");
-        errno = EEXIST;
-        return -1;
+	SET_ERRNO(EEXIST);
+	return -1;
     }
     // Get the parent node.
     int parent_slot = GetParentSlot(path);
     if (parent_slot == -1) {
-        zrt_log_str("errno=ENOENT, parent slot error");
-        errno = ENOENT;
+	SET_ERRNO(ENOENT);
         return -1;
     }
     parent = slots_.At(parent_slot);
     if (!parent->is_dir()) {
-        zrt_log_str("errno=ENOTDIR");
-        errno = ENOTDIR;
+	SET_ERRNO(ENOTDIR);
         return -1;
     }
 
     /*retrieve directory name, and compare name length with max available*/
     Path path_name(path);
     if ( path_name.Last().length() > NAME_MAX ){
-        zrt_log("dirnamelen=%d, NAME_MAX=%d, errno=ENAMETOOLONG", path_name.Last().length(), NAME_MAX );
-        errno=ENAMETOOLONG;
+        ZRT_LOG(L_ERROR, "dirnamelen=%d, NAME_MAX=%d", path_name.Last().length(), NAME_MAX );
+	SET_ERRNO(ENAMETOOLONG);
         return -1;
     }
 
-    zrt_log_str("create node");
     // Create a new node
     int slot = slots_.Alloc();
     child = slots_.At(slot);
@@ -128,7 +118,6 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
     child->set_parent(parent_slot);
     parent->AddChild(slot);
     if (!buf) {
-        zrt_log_str("created");
         return 0;
     }
 
@@ -136,26 +125,25 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
 }
 
 int MemMount::GetNode(const std::string& path, struct stat *buf) {
-    zrt_log("path=%s", path.c_str());
+    ZRT_LOG(L_EXTRA, "path=%s", path.c_str());
     Path path_name(path);
     path_name.Last();
     /*if name too long*/
     if ( path_name.Last().length() > NAME_MAX ){
-        zrt_log("namelen=%d, NAME_MAX=%d, errno=ENAMETOOLONG", path_name.Last().length(), NAME_MAX );
-        errno=ENAMETOOLONG;
+        ZRT_LOG(L_ERROR, "namelen=%d, NAME_MAX=%d", path_name.Last().length(), NAME_MAX );
+	SET_ERRNO(ENAMETOOLONG);
         return -1;
     }
     /*if path too long*/
     if  ( path.length() > PATH_MAX ){
-        zrt_log("path.length()=%d, PATH_MAX=%d, errno=ENAMETOOLONG", path.length(), PATH_MAX );
-        errno=ENAMETOOLONG;
+        ZRT_LOG(L_ERROR, "path.length()=%d, PATH_MAX=%d", path.length(), PATH_MAX );
+	SET_ERRNO(ENAMETOOLONG);
         return -1;
     }
     // Get the directory its in.
     int parent_slot = GetParentSlot(path);
     if (parent_slot == -1) {
-        zrt_log_str("return -1, errno = ENOTDIR; parent_slot == -1");
-        errno = ENOTDIR;
+	SET_ERRNO(ENOTDIR);
         return -1;
     }
     errno=0; /*getslot can raise specific errno, so reset errno*/
@@ -188,9 +176,7 @@ int MemMount::GetSlot(std::string path) {
 
     // Get in canonical form.
     if (path.length() == 0) {
-#ifdef LOG_INTERMEDIATE_ERROR
-        zrt_log_str("return -1, path.length() ==0");
-#endif
+        ZRT_LOG(L_ERROR, "path.length() %d", path.length());
         return -1;
     }
     // Check if it is an absolute path
@@ -205,10 +191,7 @@ int MemMount::GetSlot(std::string path) {
             path_it != path_components.end(); ++path_it) {
         // check if we are at a non-directory
         if (!(slots_.At(slot)->is_dir())) {
-#ifdef LOG_INTERMEDIATE_ERROR
-            zrt_log_str("return -1, errno = ENOTDIR");
-#endif
-            errno = ENOTDIR;
+            SET_ERRNO(ENOTDIR);
             return -1;
         }
         // loop through children
@@ -220,10 +203,7 @@ int MemMount::GetSlot(std::string path) {
         }
         // check for failure
         if (it == children->end()) {
-#ifdef LOG_INTERMEDIATE_ERROR
-            zrt_log_str("return -1, errno = ENOENT");
-#endif
-            errno = ENOENT;
+	    errno=ENOENT;
             return -1;
         } else {
             slot = *it;
@@ -231,9 +211,7 @@ int MemMount::GetSlot(std::string path) {
     }
     // We should now have completed the walk.
     if (slot == 0 && path_components.size() > 1) {
-#ifdef LOG_INTERMEDIATE_ERROR
-        zrt_log_str("return -1, path_components.size() > 1");
-#endif
+        ZRT_LOG(L_ERROR, "path_components.size() %d", path_components.size());
         return -1;
     }
     return slot;
@@ -250,8 +228,7 @@ int MemMount::GetParentSlot(std::string path) {
 int MemMount::Chown(ino_t slot, uid_t owner, gid_t group){
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
-        zrt_log_str("errno = ENOENT");
-        errno = ENOENT;
+	SET_ERRNO(ENOENT);
         return -1;
     }
     else{
@@ -275,8 +252,7 @@ int MemMount::Chmod(ino_t slot, mode_t mode) {
 int MemMount::Stat(ino_t slot, struct stat *buf) {
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
-        zrt_log_str("errno=ENOENT");
-        errno = ENOENT;
+	SET_ERRNO(ENOENT);
         return -1;
     }
 
@@ -286,21 +262,18 @@ int MemMount::Stat(ino_t slot, struct stat *buf) {
 int MemMount::Unlink(const std::string& path) {
     MemNode *node = GetMemNode(path);
     if (node == NULL) {
-        zrt_log_str("errno=ENOENT");
-        errno = ENOENT;
+	SET_ERRNO(ENOENT);
         return -1;
     }
     MemNode *parent = GetParentMemNode(path);
     if (parent == NULL) {
         // Can't delete root
-        zrt_log_str("errno=EBUSY");
-        errno = EBUSY;
+	SET_ERRNO(EBUSY);
         return -1;
     }
     // Check that it's a file.
     if (node->is_dir()) {
-        zrt_log_str("errno=EISDIR");
-        errno = EISDIR;
+	SET_ERRNO(EISDIR);
         return -1;
     }
     parent->RemoveChild(node->slot());
@@ -311,19 +284,20 @@ int MemMount::Unlink(const std::string& path) {
 int MemMount::Rmdir(ino_t slot) {
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
-        return ENOENT;
+	SET_ERRNO(ENOENT);
+        return -1;
     }
     // Check if it's a directory.
     if (!node->is_dir()) {
-        errno = ENOTDIR;
+	SET_ERRNO(ENOTDIR);
         return -1;
     }
     // Check if it's empty.
     if (node->children()->size() > 0) {
-        errno = ENOTEMPTY;
+	SET_ERRNO(ENOTEMPTY);
         return -1;
     }
-    zrt_log( "node->name()=%s", node->name().c_str() );
+    ZRT_LOG(L_INFO, "node->name()=%s", node->name().c_str() );
 
     // if this isn't the root node, remove from parent's
     // children list
@@ -403,14 +377,15 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
         errno = ENOENT;
         return -1;
     }
-    zrt_log("node->len()=%d, offset=%lld, count=%d", node->len(), offset, count);
+    ZRT_LOG(L_INFO,"node->len()=%d, offset=%lld, count=%d", 
+	    node->len(), offset, count);
     // Limit to the end of the file.
     ssize_t len = count;
     if (len > node->len() - offset) {
         len = node->len() - offset;
 	if ( len < 0 )
 	    len =0;
-	zrt_log("limited len=%d", len);
+	ZRT_LOG(L_SHORT,"limited len=%d", len);
     }
 
     // Do the read.
@@ -452,7 +427,7 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
 
 int MemMount::Fcntl(ino_t slot, int cmd, ...){
     MemNode *node = slots_.At(slot);
-    zrt_log("fnctl cmd=%s", FCNTL_CMD(cmd));
+    ZRT_LOG(L_EXTRA, "fnctl cmd=%s", FCNTL_CMD(cmd));
     int rc=0;
     if (node == NULL) {
         SET_ERRNO(ENOENT);
@@ -462,14 +437,13 @@ int MemMount::Fcntl(ino_t slot, int cmd, ...){
 	if ( cmd == F_DUPFD ){
 	}
 	else if ( cmd == F_GETFD ){
-	    zrt_log_str("get flags=0");
 	}
 	else if ( cmd == F_SETFD ){
 	    va_list args;
 	    va_start(args, cmd);
 	    int new_flags = va_arg(args, int);
 	    va_end(args);
-	    zrt_log("new_flags=%d", new_flags);
+	    ZRT_LOG(L_SHORT, "new_flags=%d", new_flags);
 	}
 	else if ( cmd == F_GETFL || cmd == F_SETFL ){
 	}
@@ -483,10 +457,11 @@ int MemMount::Fcntl(ino_t slot, int cmd, ...){
 		rc = -1;
 	    }
 	    else{
-		zrt_log("lock type=%s", LOCK_TYPE_FLAGS(lock_data->l_type));
-		zrt_log("l_whence=%d", lock_data->l_whence);
-		zrt_log("l_start=%d", lock_data->l_start);
-		zrt_log("l_len=%d", lock_data->l_len);
+		ZRT_LOG(L_INFO, "lock type=%s, l_whence=%d, l_start=%d, l_len=%d", 
+			LOCK_TYPE_FLAGS(lock_data->l_type),
+			lock_data->l_whence,
+			lock_data->l_start,
+			lock_data->l_len);
 	
 		/*get lock*/
 		if ( cmd == F_GETLK ){

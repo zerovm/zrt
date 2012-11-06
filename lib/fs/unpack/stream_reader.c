@@ -27,7 +27,7 @@ struct StreamReader* alloc_stream_reader( struct MountsInterface* mounts_interfa
     assert( mounts_interface );
     int fd = mounts_interface->open( channel_name, O_RDONLY, 0 );
     if ( fd < 0 ){
-        zrt_log( "filed to open image channel %s", channel_name );
+        ZRT_LOG( L_ERROR, "failed to open image channel %s", channel_name );
         return NULL;
     }
 
@@ -40,7 +40,7 @@ struct StreamReader* alloc_stream_reader( struct MountsInterface* mounts_interfa
 
 void free_stream_reader( struct StreamReader* stream_reader ){
     assert( stream_reader );
-    zrt_log( "close channel fd=%d", stream_reader->fd );
+    ZRT_LOG( L_SHORT, "close channel fd=%d", stream_reader->fd );
     stream_reader->mounts_interface->close( stream_reader->fd );
     free(stream_reader);
 }

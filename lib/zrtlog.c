@@ -16,6 +16,7 @@
 #ifdef DEBUG
 #define MAX_NESTED_SYSCALLS_LOG 5
 #define MAX_NESTED_SYSCALL_LEN 50
+static int s_verbosity_level = 1;
 static int s_donotlog=0;
 static int s_zrt_log_fd = -1;
 static char s_logbuf[LOG_BUFFER_SIZE];
@@ -30,11 +31,22 @@ void disable_logging_current_syscall(){
     s_donotlog = 1; //switch off logging
 }
 
-void set_zrtlog_fd(int fd){
-    s_zrt_log_fd = fd;
+int verbosity(){
+    return s_verbosity_level;
 }
 
-int zrt_log_fd(){
+void set_zrtlog_fd(int fd){
+    s_zrt_log_fd = fd;
+    /*get verbosity level via environment*/
+    const char* verbosity_str = getenv(VERBOSITY_ENV);
+    if ( verbosity_str ){
+	int verbosity = atoi(verbosity_str);
+	if ( verbosity > 1)
+	    s_verbosity_level = verbosity;
+    }
+}
+
+int zrtlog_fd(){
     return s_zrt_log_fd;
 }
 

@@ -108,15 +108,11 @@ void set_nacl_stat( const struct stat* stat, struct nacl_abi_stat* nacl_stat ){
 }
 
 static void debug_mes_stat(struct stat *stat){
-    zrt_log("st_dev=%lld", stat->st_dev);
-    zrt_log("st_ino=%lld", stat->st_ino);
-    zrt_log("nlink=%d", stat->st_nlink);
-    zrt_log("st_mode=%o(octal)", stat->st_mode);
-    zrt_log("st_blksize=%d", (int)stat->st_blksize);
-    zrt_log("st_size=%lld", stat->st_size);
-    zrt_log("st_blocks=%d", (int)stat->st_blocks);
-    zrt_log("st_atime=%lld", stat->st_atime );
-    zrt_log("st_mtime=%lld", stat->st_mtime );
+    ZRT_LOG(L_INFO, 
+	    "st_dev=%lld, st_ino=%lld, nlink=%d, st_mode=%o(octal), st_blksize=%d" 
+	    "st_size=%lld, st_blocks=%d, st_atime=%lld, st_mtime=%lld", 
+	    stat->st_dev, stat->st_ino, stat->st_nlink, stat->st_mode, (int)stat->st_blksize,
+	    stat->st_size, (int)stat->st_blocks, stat->st_atime, stat->st_mtime );
 }
 
 
@@ -162,7 +158,7 @@ static mode_t get_umask(){
 
 static mode_t apply_umask(mode_t mode){
     mode_t umasked_mode = ~get_umask() & mode; /*reset umask bits for specified mode*/
-    zrt_log( "mode=%o, umasked mode=%o", mode, umasked_mode );
+    ZRT_LOG( L_SHORT, "mode=%o, umasked mode=%o", mode, umasked_mode );
     return umasked_mode;
 }
 
@@ -175,8 +171,7 @@ static mode_t apply_umask(mode_t mode){
 int mkdir(const char* pathname, mode_t mode){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log("pathname=%p, mode=%o(octal), (pathname==0)=%d, (pathname==NULL)=%d, %X", pathname,
-            (uint32_t)mode, (pathname==0), (pathname==NULL), (uintptr_t)pathname);
+    ZRT_LOG(L_SHORT, "pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
     mode = apply_umask(mode);
@@ -199,7 +194,7 @@ int mkdir(const char* pathname, mode_t mode){
 int rmdir(const char *pathname){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log("pathname=%s", pathname);
+    ZRT_LOG(L_SHORT, "pathname=%s", pathname);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
     int ret = s_transparent_mount->rmdir( absolute_path );
@@ -211,7 +206,7 @@ int rmdir(const char *pathname){
 int lstat(const char *path, struct stat *buf){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log("path=%s, buf=%p", path, buf);
+    ZRT_LOG(L_SHORT, "path=%s, buf=%p", path, buf);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     char* absolute_path = alloc_absolute_path_from_relative( path );
     int ret = s_transparent_mount->stat(absolute_path, buf);
@@ -232,7 +227,7 @@ mode_t umask(mode_t mask){
     char umask_str[11];
     sprintf( umask_str, "%o", mask );
     setenv( UMASK_ENV, umask_str, 1 );
-    zrt_log("%s", umask_str);
+    ZRT_LOG(L_SHORT, "%s", umask_str);
     LOG_SYSCALL_FINISH(0);
     return prev_umask;
 }
@@ -240,7 +235,7 @@ mode_t umask(mode_t mask){
 int chown(const char *path, uid_t owner, gid_t group){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log( "path=%s, owner=%u, group=%u", path, owner, group );
+    ZRT_LOG(L_SHORT, "path=%s, owner=%u, group=%u", path, owner, group );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     char* absolute_path = alloc_absolute_path_from_relative(path);
     int ret = s_transparent_mount->chown(absolute_path, owner, group);
@@ -252,7 +247,7 @@ int chown(const char *path, uid_t owner, gid_t group){
 int fchown(int fd, uid_t owner, gid_t group){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log( "fd=%d, owner=%u, group=%u", fd, owner, group );
+    ZRT_LOG(L_SHORT, "fd=%d, owner=%u, group=%u", fd, owner, group );
     int ret = s_transparent_mount->fchown(fd, owner, group);
     LOG_SYSCALL_FINISH(ret);
     return ret;
@@ -260,7 +255,7 @@ int fchown(int fd, uid_t owner, gid_t group){
 
 int lchown(const char *path, uid_t owner, gid_t group){
     LOG_SYSCALL_START(NULL);
-    zrt_log( "path=%s, owner=%u, group=%u", path, owner, group );
+    ZRT_LOG(L_SHORT, "path=%s, owner=%u, group=%u", path, owner, group );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     /*do not do transformaton path, it's called in nested chown*/
     int ret =chown(path, owner, group);
@@ -271,7 +266,7 @@ int lchown(const char *path, uid_t owner, gid_t group){
 int unlink(const char *pathname){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log( "pathname=%s", pathname );
+    ZRT_LOG(L_SHORT, "pathname=%s", pathname );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     char* absolute_path = alloc_absolute_path_from_relative(pathname);
     int ret = s_transparent_mount->unlink(absolute_path);
@@ -285,7 +280,7 @@ int unlink(const char *pathname){
 int chmod(const char *path, mode_t mode){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log( "path=%s, mode=%u", path, mode );
+    ZRT_LOG(L_SHORT, "path=%s, mode=%u", path, mode );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     mode = apply_umask(mode);
     char* absolute_path = alloc_absolute_path_from_relative(path);
@@ -298,7 +293,7 @@ int chmod(const char *path, mode_t mode){
 int fchmod(int fd, mode_t mode){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log( "fd=%d, mode=%u", fd, mode );
+    ZRT_LOG(L_SHORT, "fd=%d, mode=%u", fd, mode );
     mode = apply_umask(mode);
     int ret = s_transparent_mount->fchmod(fd, mode);
     LOG_SYSCALL_FINISH(ret);
@@ -309,7 +304,7 @@ int fchmod(int fd, mode_t mode){
 int fcntl(int fd, int cmd, ... /* arg */ ){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log( "fd=%d, cmd=%u", fd, cmd );
+    ZRT_LOG(L_SHORT, "fd=%d, cmd=%u", fd, cmd );
     va_list args;
     va_start(args, cmd);
     int ret = s_transparent_mount->fcntl(fd, cmd, args);
@@ -322,7 +317,7 @@ int fcntl(int fd, int cmd, ... /* arg */ ){
 int remove(const char *pathname){
     LOG_SYSCALL_START(NULL);
     errno=0;
-    zrt_log( "pathname=%s", pathname );
+    ZRT_LOG(L_SHORT, "pathname=%s", pathname );
     int ret = s_transparent_mount->remove(pathname);
     LOG_SYSCALL_FINISH(ret);
     return ret;
@@ -333,13 +328,17 @@ int rename(const char *oldpath, const char *newpath){
     LOG_SYSCALL_START(NULL);
     int ret;
     errno=0;
-    zrt_log( "oldpath=%s, newpath=%s", oldpath, newpath );
+    ZRT_LOG(L_SHORT, "oldpath=%s, newpath=%s", oldpath, newpath );
     struct stat oldstat;
     ret = stat(oldpath, &oldstat );
     if ( !ret ){
+	ZRT_LOG(L_SHORT, "oldpath ok %d",1);
 	struct stat newstat;
-	ret = stat(newpath, &newstat );
-	if ( ret == ENOENT ){
+	char* absolute_path = alloc_absolute_path_from_relative(newpath);
+	ret = s_transparent_mount->stat(absolute_path, &newstat);
+	free(absolute_path);
+	if ( ret == 0 || (ret != 0 && errno == ENOENT) ){
+	    ZRT_LOG(L_SHORT, "newpath ok %d",1);
 	    /*if oldpath exist and new filename does not exist, then
 	     *read old file contents into buffer then create and write new file
 	     *contents, close files, and remove old file from FS
@@ -348,20 +347,23 @@ int rename(const char *oldpath, const char *newpath){
 	    int oldfd = open(oldpath, O_RDONLY);
 	    int bytes = read(oldfd, oldbuf, oldstat.st_size);
 	    close(oldfd);
-	    zrt_log("bytes=%d, st_size=%d", bytes, (int)oldstat.st_size);
+	    ZRT_LOG(L_EXTRA, "bytes=%d, st_size=%d", bytes, (int)oldstat.st_size);
 	    assert(bytes==oldstat.st_size);
+	    /*if new file path exist then remove it*/
+	    if ( ret == 0 ){
+		remove(newpath);
+	    }
+	    /*create new file*/
 	    int newfd = open(newpath, O_CREAT | O_WRONLY);
-	    int bytes_w = write(newfd, oldbuf, oldstat.st_size);
-	    close(newfd);
-	    zrt_log("bytes_w=%d, st_size=%d", bytes, (int)oldstat.st_size);
-	    assert(bytes_w==oldstat.st_size);
-	    remove(oldpath);
+	    if ( newfd >=0 ){
+		int bytes_w = write(newfd, oldbuf, oldstat.st_size);
+		close(newfd);
+		ZRT_LOG(L_EXTRA, "bytes_w=%d, st_size=%d", bytes, (int)oldstat.st_size);
+		assert(bytes_w==oldstat.st_size);
+		remove(oldpath);
+		ret=0; /*rename success*/
+	    }
 	    free(oldbuf);
-	}
-	else{
-	    /*could not rename file because newpath already exist*/
-	    ret = -1;
-	    SET_ERRNO(EEXIST);
 	}
     }
 
@@ -404,9 +406,9 @@ static int32_t zrt_open(uint32_t *args)
     int flags = (int)args[1];
     uint32_t mode = (int)args[2];
 
-    zrt_log("path=%s", name);
+    ZRT_LOG(L_SHORT, "path=%s", name);
     VALIDATE_SYSCALL_PTR(name);
-    zrt_log("open flags=%s", FILE_OPEN_FLAGS(flags));
+    ZRT_LOG(L_SHORT, "open flags=%s", FILE_OPEN_FLAGS(flags));
     
     char* absolute_path = alloc_absolute_path_from_relative( name );
     mode = apply_umask(mode);
@@ -449,7 +451,6 @@ static int32_t zrt_read(uint32_t *args)
 static int32_t zrt_write(uint32_t *args)
 {
     LOG_SYSCALL_START(args);
-    zrt_log("errno=%d", errno);
     int handle = (int)args[0];
     void *buf = (void*)args[1];
     VALIDATE_SYSCALL_PTR(buf);
@@ -457,7 +458,7 @@ static int32_t zrt_write(uint32_t *args)
 
 #ifdef DEBUG
     /*disable logging write calls related to debug, stdout and stderr channel */
-    if ( handle <= 2 || handle == zrt_log_fd() ){
+    if ( handle <= 2 || handle == zrtlog_fd() ){
         disable_logging_current_syscall();
     }
 #endif
@@ -475,8 +476,9 @@ static int32_t zrt_lseek(uint32_t *args)
     off_t offset = *((off_t*)args[1]);
     int whence = (int)args[2];
 
-    zrt_log("offset=%lld\n", offset);
-    zrt_log("whence=%s\n", SEEK_WHENCE(whence));
+    ZRT_LOG(L_SHORT, 
+	    "offset=%lld, whence=%s", 
+	    offset,       SEEK_WHENCE(whence));
 
     if ( whence == SEEK_SET && offset < 0 ){
 	SET_ERRNO(EINVAL);
@@ -563,8 +565,8 @@ static int32_t zrt_mmap(uint32_t *args)
     uint32_t fd = args[4];
     off_t offset = (off_t)args[5];
 
-    zrt_log("mmap prot=%s", MMAP_PROT_FLAGS(prot));
-    zrt_log("mmap flags=%s", MMAP_FLAGS(flags));
+    ZRT_LOG(L_INFO, "mmap prot=%s, mmap flags=%s", 
+	    MMAP_PROT_FLAGS(prot), MMAP_FLAGS(flags));
     retcode = s_memory_interface->mmap(s_memory_interface, addr, length, prot, 
 		  flags, fd, offset);
   
@@ -618,7 +620,7 @@ SYSCALL_MOCK(sysconf, 0)
 #define TIMESTAMP_STR "TimeStamp"
 static int32_t zrt_gettimeofday(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    //LOG_SYSCALL_START(args);
     struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)args[0];
     int ret=0;
     errno=0;
@@ -631,13 +633,15 @@ static int32_t zrt_gettimeofday(uint32_t *args)
         /*retrieve and get cached time value*/
         tv->nacl_abi_tv_usec = s_cached_timeval.tv_usec;
         tv->nacl_abi_tv_sec = s_cached_timeval.tv_sec;
-        zrt_log("tv->nacl_abi_tv_sec=%lld, tv->nacl_abi_tv_usec=%d", tv->nacl_abi_tv_sec, tv->nacl_abi_tv_usec );
+        ZRT_LOG(L_INFO,
+		"tv->nacl_abi_tv_sec=%lld, tv->nacl_abi_tv_usec=%d", 
+		tv->nacl_abi_tv_sec, tv->nacl_abi_tv_usec );
 
         /* update time value*/
         update_cached_time();
     }
 
-    LOG_SYSCALL_FINISH(ret);
+    //LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
@@ -906,12 +910,10 @@ void zrt_setup( struct UserManifest* manifest ){
     s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
 
     /* using direct call to channels_mount and create debuging log channel*/
-    int zrt_log_fd = s_channels_mount->open( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
-    set_zrtlog_fd( zrt_log_fd );
+    int ZRT_LOG_fd = s_channels_mount->open( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
+    set_zrtlog_fd( ZRT_LOG_fd );
 
-    zrt_log_str( "started" );
     s_memory_interface = memory_interface( manifest->heap_ptr, manifest->heap_size );
-    zrt_log_str( "memory interface created" );	
 }
 
 void zrt_setup_finally(){
@@ -925,7 +927,9 @@ void zrt_setup_finally(){
     if ( stamp && *stamp ){
         s_cached_timeval.tv_usec = 0; /* msec not supported by nacl */
         s_cached_timeval.tv_sec = atoi(stamp); /* manifest always contain decimal values */
-        zrt_log("s_cached_timeval.nacl_abi_tv_sec=%lld", s_cached_timeval.tv_sec );
+        ZRT_LOG(L_SHORT, 
+		"s_cached_timeval.nacl_abi_tv_sec=%lld", 
+		s_cached_timeval.tv_sec );
     }
 
     /*create mem mount*/
@@ -958,7 +962,7 @@ void zrt_setup_finally(){
 
         /*read archive from linked channel and add all contents into Filesystem*/
         int count_files = image_loader->deploy_image( "/", tar_unpacker );
-        zrt_log( "Added %d files to MemFS", count_files );
+        ZRT_LOG( L_SHORT, "Added %d files to MemFS", count_files );
 
         free_unpacker_tar( tar_unpacker );
         free_image_loader( image_loader );

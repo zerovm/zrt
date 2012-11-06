@@ -65,7 +65,7 @@ int parse_path( struct ParsePathObserver* observer, const char *path ){
         return count;
     }
     else{
-        zrt_log("found in cache path=%s", path);
+        ZRT_LOG(L_INFO, "found in cache path=%s", path);
         return 0; /*path is found in cache it should not be processed*/
     }
 }

@@ -22,7 +22,7 @@
 	int i_123;							\
 	int counter_123=0;						\
 	for (i_123 = 0; i_123 >= 0; i_123 = va_arg(ap_123, int32_t)){ \
-	    zrt_log("arg#%d=%x ", counter_123++, i_123);		\
+	    ZRT_LOG(L_SHORT, "arg#%d=%x ", counter_123++, i_123);	\
 	}								\
 	va_end();							\
     }
@@ -36,10 +36,10 @@
 	log_push_name(__func__);					\
 	enable_logging_current_syscall();				\
 	if ( args_p == NULL ) {						\
-	    zrt_log("%s", __func__);					\
+	    ZRT_LOG(L_SHORT, "%s", __func__);				\
 	}								\
 	else {								\
-	    zrt_log("syscall"						\
+	    ZRT_LOG(L_SHORT, "syscall"					\
 		    " arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x,"           \
 		    " arg[3]=0x%x, arg[4]=0x%x, arg[6]=0x%x",		\
 		    args_123[0], args_123[1], args_123[2], args_123[3], \
@@ -48,14 +48,14 @@
     }
 /* Pop from logging stack current syscall function.
  * Prints retcode and errno*/
-#define LOG_SYSCALL_FINISH(ret){				\
-        if ( ret == -1 ){					\
-	    zrt_log("ret=0x%x, errno=%d", (int)ret, errno);	\
-	}							\
-        else{							\
-	    zrt_log("ret=0x%x", (int)ret);			\
-	}							\
-        log_pop_name(__func__);					\
+#define LOG_SYSCALL_FINISH(ret){					\
+        if ( ret == -1 ){						\
+	    ZRT_LOG(L_SHORT, "ret=0x%x, errno=%d", (int)ret, errno);	\
+	}								\
+        else{								\
+	    ZRT_LOG(L_SHORT, "ret=0x%x", (int)ret);			\
+	}								\
+        log_pop_name(__func__);						\
     }
 
 #else
@@ -105,7 +105,7 @@
 /*Validate syscall input parameter*/
 #define VALIDATE_SYSCALL_PTR(arg_pointer)				\
     if ( arg_pointer == NULL ) {					\
-	zrt_log("Bad pointer %s=%p", #arg_pointer, arg_pointer);	\
+	ZRT_LOG(L_SHORT, "Bad pointer %s=%p", #arg_pointer, arg_pointer); \
 	errno=EFAULT;							\
 	LOG_SYSCALL_FINISH(-1);						\
 	return -1;							\

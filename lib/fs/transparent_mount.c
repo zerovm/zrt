@@ -14,6 +14,7 @@
 #include <assert.h>
 
 #include "zrtlog.h"
+#include "zrt_helper_macros.h"
 #include "transparent_mount.h"
 #include "mounts_manager.h"
 #include "mounts_interface.h"
@@ -78,8 +79,7 @@ static int transparent_mkdir(const char* path, uint32_t mode){
         }
     }
     else{
-        zrt_log("errno = ENOENT, path=%s", path);
-        errno = ENOENT;
+	SET_ERRNO(ENOENT);
         return -1;
     }
 }
@@ -223,8 +223,7 @@ static off_t transparent_lseek(int fd, off_t offset, int whence){
         return mount->lseek(fd, offset, whence);
     }
     else{
-        errno=EBADF;
-        zrt_log_str("errno=EBADF");
+	SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -316,20 +315,17 @@ static int transparent_isatty(int fd){
 }
 
 static int transparent_dup(int oldfd){
-    errno = ENOSYS;
-    zrt_log_str("errno=ENOSYS");
+    SET_ERRNO(ENOSYS);
     return -1;
 }
 
 static int transparent_dup2(int oldfd, int newfd){
-    errno = ENOSYS;
-    zrt_log_str("errno=ENOSYS");
+    SET_ERRNO(ENOSYS);
     return -1;
 }
 
 static int transparent_link(const char* path1, const char* path2){
-    errno = ENOSYS;
-    zrt_log_str("errno=ENOSYS");
+    SET_ERRNO(ENOSYS);
     return -1;
 }
 

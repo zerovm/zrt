@@ -52,22 +52,25 @@ int mm_mount_remove( const char* path ){
 
 
 struct MountInfo* mm_mountinfo_bypath( const char* path ){
-    zrt_log("path=%s", path);
+    ZRT_LOG(L_INFO, "path=%s", path);
     int most_long_mount=-1;
     int i;
     for( i=0; i < s_mount_items_count; i++ ){
         /*if matched path and mount path*/
         const char* mount_path = s_mount_items[i].mount_path;
-        zrt_log("mount_path=%s", mount_path);
         if ( !strncmp( mount_path, path, strlen(mount_path) ) ){
-            if ( most_long_mount == -1 || strlen(mount_path) > strlen(s_mount_items[most_long_mount].mount_path) ){
+            if ( most_long_mount == -1 || 
+		 strlen(mount_path) > strlen(s_mount_items[most_long_mount].mount_path) ){
                 most_long_mount=i;
             }
         }
     }
 
-    if ( most_long_mount != -1 )
+    if ( most_long_mount != -1 ){
+	ZRT_LOG(L_INFO, "mounted_on_path=%s", 
+		s_mount_items[most_long_mount].mount_path);
         return &s_mount_items[most_long_mount];
+    }
     else
         return NULL;
 }

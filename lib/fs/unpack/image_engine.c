@@ -6,8 +6,6 @@
  */
 
 #include <sys/types.h>
-
-
 #include <sys/stat.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,12 +29,12 @@ static int callback_parse(struct ParsePathObserver* this_p, const char *path, in
     if ( length < 2 ) return 0;
     /*received callback, path is a directory path, it is guaranteed that nesting level is increasing
      * for every next callback, so we can just ceate directories*/
-    zrt_log( "path=%s", path );
+    ZRT_LOG( L_INFO, "path=%s", path );
     char* dir_path = calloc(1, length+1); /*alloc string, should be freed after use*/
     strncpy( dir_path, path, length );
     struct MountsInterface* mounts = (struct MountsInterface*)this_p->anyobj;
     int ret = mounts->mkdir( dir_path, S_IRWXU );
-    zrt_log( "mkdir ret=%d, errno=%d", ret, errno );
+    ZRT_LOG( L_INFO, "mkdir ret=%d, errno=%d", ret, errno );
     free(dir_path); /*free string buffer*/
     return ret;
 }
@@ -46,7 +44,7 @@ static int callback_parse(struct ParsePathObserver* this_p, const char *path, in
 /*unpack observer 1st parameter : main unpack interface that gives access to observer, stream and mounted fs*/
 static int extract_entry( struct UnpackInterface* unpacker, TypeFlag type, const char* name, int entry_size ){
     /*parse path and create directories recursively*/
-    zrt_log( "type=%d, name=%s, entry_size=%d", type, name, entry_size );
+    ZRT_LOG( L_INFO, "type=%d, name=%s, entry_size=%d", type, name, entry_size );
 
     /*setup path parser observer
      *observers callback will be called for every paursed subdir extracted from full path*/
@@ -56,18 +54,18 @@ static int extract_entry( struct UnpackInterface* unpacker, TypeFlag type, const
 
     /*run path parser*/
     int parsed_dir_count = parse_path( &path_observer, name );
-    zrt_log( "parsed_dir_count=%d", parsed_dir_count );
+    ZRT_LOG(L_INFO, "parsed_dir_count=%d", parsed_dir_count );
 
     int out_fd = unpacker->observer->mounts->open(name, O_WRONLY | O_CREAT, S_IRWXU);
     if (out_fd < 0) {
-        zrt_log( "create new file error, name=%s", name );
+        ZRT_LOG( L_ERROR, "create new file error, name=%s", name );
         return -1;
     }
 
     if ( type == ETypeDir ){
         int ret = unpacker->observer->mounts->mkdir( name, 0777 );
-        zrt_log( "ret=%d, errno=%d", ret, errno );
         if ( ret == -1 && errno != EEXIST ){
+	    ZRT_LOG( L_ERROR, "dir create error, errno=%d", errno );
             return -1; /*dir create error*/
         }
     }
@@ -98,7 +96,7 @@ static struct UnpackObserver s_unpack_observer = {
 
 static int deploy_image( const char* mount_path, struct UnpackInterface* unpacker ){
     assert(unpacker);
-    zrt_log( "mount_path=%s", mount_path );
+    ZRT_LOG(L_SHORT, "mount_path=%s", mount_path );
     return unpacker->unpack( unpacker, mount_path );
 }
 

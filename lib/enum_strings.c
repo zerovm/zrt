@@ -122,7 +122,9 @@ const char* text_from_flag( int flags, enum array_list_t enum_id ){
 	    output_space += snprintf( s_buffer+output_space, MAX_FLAGS_LEN-output_space, 
 				      "%c%s", delim_char, array[i].text );
 	    if ( output_space > MAX_FLAGS_LEN ){
-		zrt_log_str("Flags output truncated, insufficient buffer size.");
+		ZRT_LOG(L_ERROR, 
+			"Flags output truncated, insufficient buffer size, required%d.", 
+			output_space);
 		break;
 	    }
         }
