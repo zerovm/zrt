@@ -37,7 +37,8 @@ TEST_SAMPLES=bigfile command_line environment file_stat seek
 CFLAGS = -Wall -Wno-long-long -O2 -m64
 CFLAGS += -Werror-implicit-function-declaration
 CFLAGS += -I. -Ilib -Ilib/memory -Ilib/fs -Ilib/fs/unpack -Ilib/fs/utils -I${ZEROVM_ROOT}/api
-CFLAGS += -DUSER_SIDE -DDEBUG
+CFLAGS += -DDEBUG
+CFLAGS += -DUSER_SIDE
 
 CXXFLAGS = -I. -Ilib -Ilib/fs
 
@@ -54,6 +55,7 @@ ${LIBZRT} : $(LIBZRT_OBJECTS)
 ############## Build libs, invoke nested Makefiles
 ${LIBS}:  
 	@make -C$(dir $@)
+	@echo move $@ library to final folder
 	@mv -f $@ lib	
 
 ############## "make zrt_tests" Build test samples 
