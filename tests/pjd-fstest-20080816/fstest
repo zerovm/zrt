@@ -25,20 +25,6 @@ function file_characters_count {
 NAME=fstest
 COMMAND_LINE="$@"
 
-
-#############################################
-# if searched running fstest copy
-# then write command line parameters into input channel
-#############################################
-file_characters_count $STDERR
-FERRCOUNT=$COUNT
-file_characters_count $STDOUT
-FOUTCOUNT=$COUNT
-
-#echo foutcount $FOUTCOUNT
-#echo ferrcount $FERRCOUNT
-echo fstest "${COMMAND_LINE}" >> ${STDIN}
-
 #############################################
 # if no running copy then launch new instance at background
 #############################################
@@ -52,6 +38,22 @@ then
 fi
 
 #############################################
+# if fstest copy already running then write 
+# command line parameters into input channel
+#############################################
+#it is a way send to zerovm stdin any required data
+PROC_STDIN=/proc/$p/fd/0
+file_characters_count $STDERR
+FERRCOUNT=$COUNT
+file_characters_count $STDOUT
+FOUTCOUNT=$COUNT
+
+#echo foutcount $FOUTCOUNT
+#echo ferrcount $FERRCOUNT
+echo fstest "${COMMAND_LINE}" >> $STDIN
+echo fstest "${COMMAND_LINE}" > $PROC_STDIN &
+
+#############################################
 # wait while zerovm write new data into stdout or stderr
 # and print tails of these files
 #############################################
@@ -60,8 +62,8 @@ FERR_UPDATED=$FERRCOUNT
 FOUT_UPDATED=$FOUTCOUNT
 #echo ferrsize $FERRSIZE
 #echo foutsize $FERRSIZE
-#should be used -le operator but not -ne because sometimes file size calculates wrong and get 0
-#file size can only grow
+#should be used -le operator but not -ne because sometimes file size calculates 
+#wrong and returning 0 size, examining file size can only grow
 while [ $FERR_UPDATED -le $FERRCOUNT ] && [ $FOUT_UPDATED -le $FOUTCOUNT ]
 do
     file_characters_count $STDERR

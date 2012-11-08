@@ -41,9 +41,6 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "zrt.h"
-#include "zrtlog.h"
-
 /*if that data reading from stding application should exit*/
 #define CONTROL_DATA "test12345complete"
 #define PARAM_STRING_MAXSIZE 10240
@@ -573,7 +570,9 @@ read_stdin_parameters( char* argv[] ){
     do{
         prev=c;
         ssize_t bytes = read(stdin, &c, 1);
+	//if nothing readed break
         if ( bytes <= 0 ){
+	    fprintf(stderr, "bytes readed=%d\n", bytes);
             continue;
         }
 
@@ -718,7 +717,7 @@ int run_syscall(int argc, char *argv[]){
 }
 
 int
-main(int argc, char *argv[])
+zmain(int argc, char *argv[])
 {
     /*alloc array of strings it will be used for sequential run of syscalls*/
     const int array_len=10;

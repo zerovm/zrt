@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#close input file holder, instead of cahracter device
+pkill input_file
+
 #Close background fstest.nexe process or kill it if did not respond
 
 if [ "`pgrep -f fstest.manifest`" != "" ]
