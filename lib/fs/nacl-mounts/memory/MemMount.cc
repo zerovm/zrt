@@ -372,24 +372,38 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
 }
 
 ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
+    ZRT_LOG_PARAM(L_INFO, P_INT, slot);
+    ZRT_LOG_PARAM(L_INFO, P_PTR, buf);
+    ZRT_LOG_PARAM(L_INFO, P_LONGINT, offset);
+    ZRT_LOG_PARAM(L_INFO, P_INT, count);
+
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
         errno = ENOENT;
         return -1;
     }
-    ZRT_LOG(L_INFO,"node->len()=%d, offset=%lld, count=%d", 
-	    node->len(), offset, count);
+    ZRT_LOG_PARAM(L_INFO, P_INT, node->len());
+
     // Limit to the end of the file.
     ssize_t len = count;
     if (len > node->len() - offset) {
         len = node->len() - offset;
-	if ( len < 0 )
+	if ( len < 0 ){
 	    len =0;
-	ZRT_LOG(L_SHORT,"limited len=%d", len);
+	}
+	ZRT_LOG(L_SHORT,"To expensive count=%d limited to len=%d", 
+		count, len);
     }
 
     // Do the read.
     memcpy(buf, node->data() + offset, len);
+    /*debugging*/
+    if ( len < 100 ){
+	char temp[100+1];
+	memcpy(temp, buf, len);
+	temp[len] = '\0';
+	ZRT_LOG(L_EXTRA, "%s", temp);
+    }
     return len;
 }
 
@@ -422,6 +436,15 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     if (offset > static_cast<off_t>(node->len())) {
         node->set_len(offset);
     }
+
+    /*debugging*/
+    if ( count < 100 ){
+	char temp[100+1];
+	memcpy(temp, buf, count);
+	temp[count] = '\0';
+	ZRT_LOG(L_EXTRA, "%s", temp);
+    }
+
     return count;
 }
 

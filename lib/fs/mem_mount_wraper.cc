@@ -304,17 +304,40 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 	}
     }
 
+    /* get node from memory FS for specified type, if no errors occured 
+     * then file allocated in memory FS and require file desc - fd*/
     int ret = s_mem_mount_cpp->GetNode( path, &st);
     if ( ret == 0 ){
+	/*ask for file descriptor in handle allocator*/
 	int fd = s_handle_allocator->allocate_handle( s_this );
 	if ( fd < 0 ){
 	    SET_ERRNO(ENFILE);
 	    return -1;
 	}
-
+	
+	/* As inode and fd are depend each form other, we need update 
+	 * inode in handle allocator and stay them linked*/
 	ret = s_handle_allocator->set_inode( fd, st.st_ino );
-	ZRT_LOG(L_SHORT, "ret=%d", ret );
+	ZRT_LOG(L_EXTRA, "errcode ret=%d", ret );
 	assert( ret == 0 );
+
+	/*append feature support is simple*/
+	if ( oflag & O_APPEND ){
+	    ZRT_LOG(L_INFO, "handle flag: %s", "O_APPEND");
+	    mem_lseek(fd, 0, SEEK_END);
+	}
+
+	/*file truncate support, only for writable files, reset size*/
+	int accmode = mode & O_ACCMODE; /*reset permission flags for accmode*/
+	if ( oflag&O_TRUNC && (accmode == O_RDWR || accmode == O_WRONLY) ){
+	    /*reset file size*/
+	    MemNode* mnode = s_mem_mount_cpp->ToMemNode(st.st_ino);
+	    if (mnode){ 
+		ZRT_LOG(L_INFO, "handle flag: %s", "O_TRUNC");
+		mnode->set_len(0);
+	    }
+	}
+
 	return fd;
     }
     else

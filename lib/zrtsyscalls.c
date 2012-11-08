@@ -169,7 +169,7 @@ static mode_t apply_umask(mode_t mode){
  **************************************************************************/
 
 int mkdir(const char* pathname, mode_t mode){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
@@ -192,7 +192,7 @@ int mkdir(const char* pathname, mode_t mode){
 
 /*glibc substitution. it should be linked instead standard rmdir */
 int rmdir(const char *pathname){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "pathname=%s", pathname);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
@@ -204,7 +204,7 @@ int rmdir(const char *pathname){
 }
 
 int lstat(const char *path, struct stat *buf){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "path=%s, buf=%p", path, buf);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
@@ -221,7 +221,7 @@ int lstat(const char *path, struct stat *buf){
 
 /*sets umask ang et previous value*/
 mode_t umask(mode_t mask){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     /*save new umask and return prev*/
     mode_t prev_umask = get_umask();
     char umask_str[11];
@@ -233,7 +233,7 @@ mode_t umask(mode_t mask){
 }
 
 int chown(const char *path, uid_t owner, gid_t group){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "path=%s, owner=%u, group=%u", path, owner, group );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
@@ -245,7 +245,7 @@ int chown(const char *path, uid_t owner, gid_t group){
 }
 
 int fchown(int fd, uid_t owner, gid_t group){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "fd=%d, owner=%u, group=%u", fd, owner, group );
     int ret = s_transparent_mount->fchown(fd, owner, group);
@@ -254,7 +254,7 @@ int fchown(int fd, uid_t owner, gid_t group){
 }
 
 int lchown(const char *path, uid_t owner, gid_t group){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     ZRT_LOG(L_SHORT, "path=%s, owner=%u, group=%u", path, owner, group );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     /*do not do transformaton path, it's called in nested chown*/
@@ -264,7 +264,7 @@ int lchown(const char *path, uid_t owner, gid_t group){
 }
 
 int unlink(const char *pathname){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "pathname=%s", pathname );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
@@ -278,7 +278,7 @@ int unlink(const char *pathname){
 /*todo: check if syscall chmod is supported by NACL then use it
 *instead of this glibc substitution*/
 int chmod(const char *path, mode_t mode){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "path=%s, mode=%u", path, mode );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
@@ -291,7 +291,7 @@ int chmod(const char *path, mode_t mode){
 }
 
 int fchmod(int fd, mode_t mode){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "fd=%d, mode=%u", fd, mode );
     mode = apply_umask(mode);
@@ -302,7 +302,7 @@ int fchmod(int fd, mode_t mode){
 
 /*override system glibc implementation */
 int fcntl(int fd, int cmd, ... /* arg */ ){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "fd=%d, cmd=%u", fd, cmd );
     va_list args;
@@ -315,7 +315,7 @@ int fcntl(int fd, int cmd, ... /* arg */ ){
 
 /*substitude unsupported glibc implementation */
 int remove(const char *pathname){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     errno=0;
     ZRT_LOG(L_SHORT, "pathname=%s", pathname );
     int ret = s_transparent_mount->remove(pathname);
@@ -325,10 +325,11 @@ int remove(const char *pathname){
 
 /*substitude unsupported glibc implementation */
 int rename(const char *oldpath, const char *newpath){
-    LOG_SYSCALL_START(NULL);
+    LOG_SYSCALL_START(NULL,0);
     int ret;
     errno=0;
-    ZRT_LOG(L_SHORT, "oldpath=%s, newpath=%s", oldpath, newpath );
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, oldpath);
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, newpath);
     struct stat oldstat;
     ret = stat(oldpath, &oldstat );
     if ( !ret ){
@@ -400,15 +401,15 @@ SYSCALL_MOCK(dup2, -EPERM) /* duplicate the given file handle. n/a in the simple
  */
 static int32_t zrt_open(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,3);
     errno=0;
     char* name = (char*)args[0];
     int flags = (int)args[1];
     uint32_t mode = (int)args[2];
-
-    ZRT_LOG(L_SHORT, "path=%s", name);
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, name);
     VALIDATE_SYSCALL_PTR(name);
-    ZRT_LOG(L_SHORT, "open flags=%s", FILE_OPEN_FLAGS(flags));
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_FLAGS(flags));
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_MODE(mode));
     
     char* absolute_path = alloc_absolute_path_from_relative( name );
     mode = apply_umask(mode);
@@ -422,9 +423,10 @@ static int32_t zrt_open(uint32_t *args)
 /* do nothing but checks given handle */
 static int32_t zrt_close(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,1);
     errno = 0;
     int handle = (int)args[0];
+    ZRT_LOG_PARAM(L_SHORT, P_INT, handle);
 
     int ret = s_transparent_mount->close(handle);
     LOG_SYSCALL_FINISH(ret);
@@ -435,7 +437,7 @@ static int32_t zrt_close(uint32_t *args)
 /* read the file with the given handle number */
 static int32_t zrt_read(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,3);
     errno = 0;
     int handle = (int)args[0];
     void *buf = (void*)args[1];
@@ -450,7 +452,7 @@ static int32_t zrt_read(uint32_t *args)
 /* example how to implement zrt syscall */
 static int32_t zrt_write(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,3);
     int handle = (int)args[0];
     void *buf = (void*)args[1];
     VALIDATE_SYSCALL_PTR(buf);
@@ -470,15 +472,15 @@ static int32_t zrt_write(uint32_t *args)
 
 static int32_t zrt_lseek(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,2);
     errno = 0;
     int32_t handle = (int32_t)args[0];
     off_t offset = *((off_t*)args[1]);
     int whence = (int)args[2];
 
-    ZRT_LOG(L_SHORT, 
-	    "offset=%lld, whence=%s", 
-	    offset,       SEEK_WHENCE(whence));
+    ZRT_LOG_PARAM(L_SHORT, P_LONGINT, offset);
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, SEEK_WHENCE(whence));
+
 
     if ( whence == SEEK_SET && offset < 0 ){
 	SET_ERRNO(EINVAL);
@@ -499,7 +501,7 @@ SYSCALL_MOCK(ioctl, -EINVAL) /* not implemented in the simple version of zrtlib 
 
 static int32_t zrt_stat(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,2);
     errno = 0;
     const char *file = (const char*)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
@@ -520,7 +522,7 @@ static int32_t zrt_stat(uint32_t *args)
 
 static int32_t zrt_fstat(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,2);
     errno = 0;
     int handle = (int)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
@@ -547,7 +549,7 @@ SYSCALL_MOCK(chmod, -EPERM) /* NACL does not support chmod*/
 /* change space allocation. ZRT nothing do here just call sysbrk NACL syscall.*/
 static int32_t zrt_sysbrk(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,1);
     int32_t retaddr = s_memory_interface->sysbrk(s_memory_interface, (void*)args[0] );
     LOG_SYSCALL_FINISH(retaddr);
     return retaddr;
@@ -556,7 +558,7 @@ static int32_t zrt_sysbrk(uint32_t *args)
 /* map region of memory. ZRT simple implementation;*/
 static int32_t zrt_mmap(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,6);
     int32_t retcode = -1;
     void* addr = (void*)args[0];
     uint32_t length = args[1];
@@ -576,7 +578,7 @@ static int32_t zrt_mmap(uint32_t *args)
 
 static int32_t zrt_munmap(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,2);
     int32_t retcode = s_memory_interface->munmap(s_memory_interface, 
 						 (void*)args[0], args[1]);
     LOG_SYSCALL_FINISH(retcode);
@@ -586,7 +588,7 @@ static int32_t zrt_munmap(uint32_t *args)
 
 static int32_t zrt_getdents(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,3);
     errno=0;
     int handle = (int)args[0];
     char *buf = (char*)args[1];
@@ -606,7 +608,7 @@ static int32_t zrt_getdents(uint32_t *args)
 static int32_t zrt_exit(uint32_t *args)
 {
     /* no need to check args for NULL. it is always set by syscall_manager */
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,1);
     zvm_exit(args[0]);
     LOG_SYSCALL_FINISH(0);
     return 0; /* unreachable */
@@ -620,7 +622,7 @@ SYSCALL_MOCK(sysconf, 0)
 #define TIMESTAMP_STR "TimeStamp"
 static int32_t zrt_gettimeofday(uint32_t *args)
 {
-    //LOG_SYSCALL_START(args);
+    //LOG_SYSCALL_START(args,1);
     struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)args[0];
     int ret=0;
     errno=0;
@@ -681,7 +683,7 @@ SYSCALL_MOCK(thread_nice, 0)
 static int32_t zrt_tls_get(uint32_t *args)
 {
     /* switch off spam
-     * LOG_SYSCALL_START(args);*/
+     * LOG_SYSCALL_START(args,1);*/
     int32_t retcode;
 
     zvm_syscallback(0); /* uninstall syscallback */
@@ -699,7 +701,7 @@ SYSCALL_MOCK(second_tls_set, 0)
  */
 static int32_t zrt_second_tls_get(uint32_t *args)
 {
-    LOG_SYSCALL_START(args);
+    LOG_SYSCALL_START(args,6);
     int32_t ret = zrt_tls_get(NULL);
     LOG_SYSCALL_FINISH(ret);
     return ret;

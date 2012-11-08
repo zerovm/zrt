@@ -15,23 +15,24 @@
  * Syscallbacks debug macros*/
 #ifdef DEBUG
 
-/*tests tests tests tests tests tests tests tests tests tests tests tests */
-#define LOG_VAR(args_123...) {						\
-	va_list ap_123;							\
-	va_start(ap_123);						\
-	int i_123;							\
-	int counter_123=0;						\
-	for (i_123 = 0; i_123 >= 0; i_123 = va_arg(ap_123, int32_t)){ \
-	    ZRT_LOG(L_SHORT, "arg#%d=%x ", counter_123++, i_123);	\
-	}								\
-	va_end();							\
-    }
-/*tests tests tests tests tests tests tests tests tests tests tests tests */
+/* /\*tests tests tests tests tests tests tests tests tests tests tests tests *\/ */
+/* #define LOG_VARP(name) {	 */
+/* 	char *buf__123;							\ */
+/* 	int debug_handle = debug_handle_get_buf(&buf__123);		\ */
+/* 	len = snprintf(buf__123, LOG_BUFFER_SIZE, "%", 0 );	\ */
+/* 	zrtlog_write(debug_handle, buf__123, len, 0);			\ */
+
+/* 	for (i_123 = 0; i_123 >= 0; i_123 = va_arg(ap_123, int32_t)){ \ */
+/* 	    ZRT_LOG(L_SHORT, "arg#%d=%x ", counter_123++, i_123);	\ */
+/* 	}								\ */
+/* 	va_end();							\ */
+/*     } */
+/* /\*tests tests tests tests tests tests tests tests tests tests tests tests *\/ */
 
 
 /* Push current NACL syscall into logging stack that printing for every log invocation.
  * Enable logging for NACL syscall, and printing arguments*/
-#define LOG_SYSCALL_START(args_p) {					\
+#define LOG_SYSCALL_START(args_p, args_c) {					\
 	uint32_t* args_123 = (uint32_t*)args_p;				\
 	log_push_name(__func__);					\
 	enable_logging_current_syscall();				\
@@ -39,13 +40,22 @@
 	    ZRT_LOG(L_SHORT, "%s", __func__);				\
 	}								\
 	else {								\
-	    ZRT_LOG(L_SHORT, "syscall"					\
-		    " arg[0]=0x%x, arg[1]=0x%x, arg[2]=0x%x,"           \
-		    " arg[3]=0x%x, arg[4]=0x%x, arg[6]=0x%x",		\
-		    args_123[0], args_123[1], args_123[2], args_123[3], \
-		    args_123[4], args_123[5]);				\
+	    char *buf__123;						\
+	    int debug_handle = debug_handle_get_buf(&buf__123);		\
+	    int i;							\
+	    int len = snprintf(buf__123, LOG_BUFFER_SIZE,		\
+			       "%s; [%s]; syscall, %d:",		\
+			       __FILE__,syscall_stack_str(),__LINE__ ); \
+	    for ( i=0; i < args_c; i++ ){				\
+		len += snprintf(buf__123+len, LOG_BUFFER_SIZE-len,	\
+				" arg[%d]=0x%X", i, args_123[i] );	\
+	    }								\
+	    len +=snprintf(buf__123+len, LOG_BUFFER_SIZE-len, "\n" );	\
+	    zrtlog_write(debug_handle, buf__123, len, 0);		\
+	    (void)len;							\
 	}								\
-    }
+    }									\
+
 /* Pop from logging stack current syscall function.
  * Prints retcode and errno*/
 #define LOG_SYSCALL_FINISH(ret){					\
@@ -59,7 +69,7 @@
     }
 
 #else
-#define LOG_SYSCALL_START(args_p)
+#define LOG_SYSCALL_START(args_p,args_c)
 #define LOG_SYSCALL_FINISH()
 #endif
 
@@ -73,7 +83,7 @@
 #define SYSCALL_MOCK(name_wo_zrt_prefix, code)			\
     static int32_t ZRT_FUNC(name_wo_zrt_prefix)(uint32_t *args)	\
     {								\
-	LOG_SYSCALL_START(args);				\
+	LOG_SYSCALL_START(args,6);				\
 	LOG_SYSCALL_FINISH(code);				\
 	return code;						\
     }
@@ -93,7 +103,7 @@
  * where 'number' is syscall index*/
 #define SYSCALL_STUB_IMPLEMENTATION(number)				\
     static int32_t JOIN(NON_IMPLEMENTED_PREFIX,number)(uint32_t *args) { \
-	LOG_SYSCALL_START(args);					\
+	LOG_SYSCALL_START(args,6);					\
 	LOG_SYSCALL_FINISH(0);						\
 	return 0;							\
     }

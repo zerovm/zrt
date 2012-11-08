@@ -30,19 +30,38 @@
 
 #ifdef DEBUG
 #define LOG_BUFFER_SIZE 0x1000
-#define ZRT_LOG(v_123, fmt, ...){					\
-	int debug_handle;						\
+#define ZRT_LOG(v_123, fmt_123, ...){					\
+	int debug_handle_123;						\
 	char *buf__123;							\
 	if( verbosity() >= v_123 &&					\
-	    (debug_handle=debug_handle_get_buf(&buf__123)) >= 0 ){	\
-	    int len;							\
-	    len = snprintf(buf__123, LOG_BUFFER_SIZE,			\
-			   "%s; [%s]; %s, %d: " fmt "\n",		\
-			   __FILE__, syscall_stack_str(),		\
+	    (debug_handle_123=debug_handle_get_buf(&buf__123)) >= 0 ){	\
+	    int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,		\
+				   "%s; [%s]; %s, %d: " fmt_123 "\n",	\
+				   __FILE__, syscall_stack_str(),	\
 			   __func__, __LINE__, __VA_ARGS__);		\
-	    zrtlog_write(debug_handle, buf__123, len, 0);		\
+	    zrtlog_write(debug_handle_123, buf__123, len_123, 0);	\
 	}								\
     }
+
+
+#define P_TEXT "%s"
+#define P_PTR  "%p"
+#define P_HEX  "0x%X"
+#define P_INT  "%d"
+#define P_UINT  "%u"
+#define P_LONGINT  "%lld"
+#define ZRT_LOG_PARAM(v_123, fmttype_123, param_123){			\
+	int debug_handle_123;						\
+	char *buf__123;							\
+	if( verbosity() >= v_123 &&					\
+	    (debug_handle_123=debug_handle_get_buf(&buf__123)) >= 0 ){	\
+	    int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,		\
+				   "%s param: " #param_123 "=" fmttype_123 "\n", \
+				   __func__, param_123);		\
+	    zrtlog_write(debug_handle_123, buf__123, len_123, 0);		\
+	}								\
+    }
+
 
 #define ZRT_LOG_ERRNO( errcode ) \
     ZRT_LOG( L_SHORT, "errno=%d, %s", errcode, strerror(errcode) );

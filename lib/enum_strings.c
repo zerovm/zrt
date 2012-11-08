@@ -69,6 +69,10 @@ static struct enum_data_t s_fcntl_cmd_array5[] = {
     EITEM(F_SETFL), EITEM(F_GETLK), EITEM(F_SETLK), EITEM(F_SETLKW)
 };
 
+static struct enum_data_t s_fileopen_mode_array6[] = {
+    EITEM(O_RDONLY), EITEM(O_WRONLY), EITEM(O_RDWR)
+};
+
 
 /*add here new arrays*/
 static struct enum_data_t* array_by_enum(int index, int* size){
@@ -92,6 +96,9 @@ static struct enum_data_t* array_by_enum(int index, int* size){
     case EFcntlCmd:
 	*size = GET_SIZE_ARRAY(s_fcntl_cmd_array5);
 	return s_fcntl_cmd_array5;
+    case EFileOpenMode:
+	*size = GET_SIZE_ARRAY(s_fileopen_mode_array6);
+	return s_fileopen_mode_array6;
     default:
 	assert(0);
 	break;
