@@ -11,7 +11,7 @@
 #include <assert.h>
 #include "zrt.h"
 
-int main(int argc, char **argv)
+int zmain(int argc, char **argv)
 {
     const char* fname1 = "/seeker.data";
     const char* fname2 = "/seeker2.data";

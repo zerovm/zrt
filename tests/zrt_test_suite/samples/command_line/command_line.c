@@ -3,7 +3,7 @@
 #include <assert.h>
 #include "zrt.h"
 
-int main(int argc, char **argv)
+int zmain(int argc, char **argv)
 {
     int i;
     int res;

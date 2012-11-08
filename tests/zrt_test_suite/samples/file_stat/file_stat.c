@@ -57,7 +57,7 @@ int print_fstat( int fd, struct stat*s ){
 	return errcode;
 }
 
-int main(int argc, char **argv)
+int zmain(int argc, char **argv)
 {
     const char *fname = NULL;
 	struct stat s;
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
         fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
-        assert( S_ISREG(s.st_mode) != 0 ); /*it shoud be file*/
+        assert( S_ISBLK(s.st_mode) != 0 ); /*it shoud be block device*/
         assert( (s.st_mode & S_IRUSR) == S_IRUSR ); /*it should allow read only access*/
     }
 
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
         fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
-        assert( S_ISREG(s.st_mode) != 0 );
+        assert( S_ISBLK(s.st_mode) != 0 );
         assert( (s.st_mode & S_IWUSR) == S_IWUSR ); /*it should allow write only access*/
     }
 
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
         fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
-        assert( S_ISREG(s.st_mode) != 0 ); /*it shoud be file*/
+        assert( S_ISBLK(s.st_mode) != 0 ); /*it shoud be file*/
         assert( (s.st_mode & S_IWUSR) == S_IWUSR ); /*it should allow read only access*/
     }
 
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
         fprintf(LOGFD, "TEST %d: %s file stat\n", testid, fname); fflush(0);
         print_stat_data( &s);
         assert( s.st_nlink == 1 );
-        assert( S_ISREG(s.st_mode) != 0 ); /*it should be file*/
+        assert( S_ISBLK(s.st_mode) != 0 ); /*it should be blk device*/
         assert( (s.st_mode & S_IRUSR) == S_IRUSR ); /*it should allow read access*/
         assert( s.st_size != 0 ); /*mapped file should have size as read only channel*/
     }

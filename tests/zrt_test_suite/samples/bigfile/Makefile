@@ -22,4 +22,3 @@ run:
 
 clean:
 	@rm -f $(NAME).nexe $(NAME).o *.log *.data *.manifest
-	

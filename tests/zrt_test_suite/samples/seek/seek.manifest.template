@@ -14,6 +14,7 @@ Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
 =====================================================================
 Version = 09082012
 Nexe = {ABS_PATH}seek.nexe
-NexeMax = 10000000
-SyscallsMax = 3333
+MemMax=134217728
+Timeout=20
+NodeName=seek, 1
 
