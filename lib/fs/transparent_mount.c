@@ -231,10 +231,14 @@ static off_t transparent_lseek(int fd, off_t offset, int whence){
 static int transparent_open(const char* path, int oflag, uint32_t mode){
     struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
     if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
+        if ( mount_info->mount->mount_id == EChannelsMountId ) {
+	    /*for channels mount do not use path transformation*/
             return mount_info->mount->open( path, oflag, mode );
+	}
         else{
-            return mount_info->mount->open( s_mounts_manager->get_nested_mount_path( mount_info, path ), oflag, mode );
+            return mount_info->mount
+		->open( s_mounts_manager->get_nested_mount_path( mount_info, path ), 
+			oflag, mode );
         }
     }
     else{

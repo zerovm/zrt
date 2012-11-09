@@ -372,6 +372,15 @@ int rename(const char *oldpath, const char *newpath){
     return ret;
 }
 
+/*substitude unsupported glibc implementation */
+/* FILE *fdopen(int fd, const char *mode){ */
+/*     LOG_SYSCALL_START(NULL,0); */
+/*     ZRT_LOG_PARAM(L_SHORT, P_INT, fd); */
+/*     ZRT_LOG_PARAM(L_SHORT, P_TEXT, mode); */
+/*     LOG_SYSCALL_FINISH(0); */
+/*     return NULL; */
+/* } */
+
 /*override system glibc implementation due to bad errno at errors*/
 /* int fseek(FILE *stream, long offset, int whence){ */
 /*     LOG_SYSCALL_START(NULL); */
@@ -409,10 +418,11 @@ static int32_t zrt_open(uint32_t *args)
     ZRT_LOG_PARAM(L_SHORT, P_TEXT, name);
     VALIDATE_SYSCALL_PTR(name);
     ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_FLAGS(flags));
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_MODE(mode));
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_MODE(mode&O_ACCMODE));
     
     char* absolute_path = alloc_absolute_path_from_relative( name );
     mode = apply_umask(mode);
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_PERMISSIONS(mode));
     int ret = s_transparent_mount->open( absolute_path, flags, mode );
     free(absolute_path);
     LOG_SYSCALL_FINISH(ret);

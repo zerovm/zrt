@@ -685,7 +685,8 @@ static int channels_open(const char* path, int oflag, uint32_t mode){
         return open_channel( path, oflag, mode );
     }
     else { /*trying to open directory*/
-        struct dir_data_t *dir = match_dir_in_directory_list( &s_manifest_dirs, path, strlen(path));
+        struct dir_data_t *dir = 
+	    match_dir_in_directory_list( &s_manifest_dirs, path, strlen(path));
         /*if valid directory path matched */
         if ( dir != NULL ){
             if ( dir->open_mode < 0 ){ /*if not opened*/

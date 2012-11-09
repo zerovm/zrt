@@ -27,6 +27,45 @@ MemMount::MemMount() {
     root_->set_name("/");
 }
 
+int MemMount::Open(const std::string& path, int oflag, uint32_t mode){
+    struct stat st;
+
+    /* handle O_CREAT flag
+     * check if file should be created at open if not exist/*/
+    if (oflag & O_CREAT) {
+	ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_CREAT");
+	/*if creat ok*/
+	if (0 == Creat(path, mode, &st)) {
+	    /*file creat ok*/
+	} 
+	/*raise error if file not exist or should not exist*/
+	else if ((errno != EEXIST) || (oflag & O_EXCL)) {
+	    /* if file/dir create error */
+	    return -1;
+	}
+	/*final errors handling*/
+	else{
+	    errno=0;
+	    /*raise error if file does not exist*/
+	    if (0 != GetNode(path, &st)) {
+		/*if GetNode dont raised specific errno then set generic*/
+		if ( errno == 0  ){ SET_ERRNO(ENOENT); }
+		return -1;
+	    }
+	}
+	ZRT_LOG(L_SHORT, "%s Creat OK", path.c_str());
+    }
+
+    /* save access mode to be able determine possibility of read/write access
+     * during I/O operations*/
+    MemNode* mnode = GetMemNode(path);
+    if ( mnode ){
+	mnode->set_mode(mode);
+	return 0;
+    }
+    else return -1;
+}
+
 int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf) {
     MemNode *child;
     MemNode *parent;
@@ -382,6 +421,14 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
         errno = ENOENT;
         return -1;
     }
+
+    /*check if file was not opened for reading*/
+    int mode= O_ACCMODE & node->mode();
+    if ( mode != O_RDONLY && mode != O_RDWR  ){
+	ZRT_LOG(L_ERROR, "file open_mode=%s not allow read", FILE_OPEN_MODE(mode));
+	SET_ERRNO( EINVAL );
+    }
+
     ZRT_LOG_PARAM(L_INFO, P_INT, node->len());
 
     // Limit to the end of the file.
@@ -413,6 +460,13 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     if (node == NULL) {
         errno = ENOENT;
         return -1;
+    }
+
+    /*check if file was not opened for writing*/
+    int mode= O_ACCMODE & node->mode();
+    if ( mode != O_WRONLY && mode != O_RDWR  ){
+	ZRT_LOG(L_ERROR, "file open_mode=%s not allow write", FILE_OPEN_MODE(mode));
+	SET_ERRNO( EINVAL );
     }
 
     size_t len = node->capacity();

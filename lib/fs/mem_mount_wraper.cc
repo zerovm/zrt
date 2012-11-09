@@ -127,10 +127,13 @@ static ssize_t mem_read(int fd, void *buf, size_t nbyte){
 	ret = s_handle_allocator->get_offset( fd, &offset );
 	assert( ret == 0 );
 	ssize_t readed = s_mem_mount_cpp->Read( node, offset, buf, nbyte );
-	offset += readed;
-	/*update offset*/
-	ret = s_handle_allocator->set_offset( fd, offset );
-	assert( ret == 0 );
+	if ( readed >= 0 ){
+	    offset += readed;
+	    /*update offset*/
+	    ret = s_handle_allocator->set_offset( fd, offset );
+	    assert( ret == 0 );
+	}
+	/*return readed bytes or error*/
 	return readed;
     }
     else{
@@ -282,35 +285,17 @@ static off_t mem_lseek(int fd, off_t offset, int whence){
 }
 
 static int mem_open(const char* path, int oflag, uint32_t mode){
-    struct stat st;
-
-    if (oflag & O_CREAT) {
-	/*file should be created, using O_CREAT flag/*/
-	if (0 == s_mem_mount_cpp->Creat(path, mode, &st)) {
-	    ZRT_LOG(L_SHORT, "%s Creat OK", path);
-	} else if ((errno != EEXIST) || (oflag & O_EXCL)) {
-	    /* file/dir create error */
-	    ZRT_LOG(L_ERROR, "%s Creat error", path);
-	    return -1;
-	}else{
-	    errno=0;
-	    if (0 != s_mem_mount_cpp->GetNode(path, &st)) {
-		/*if GetNode dont raised specifiec errno then set generic*/
-		if ( errno == 0  ){
-		    SET_ERRNO(ENOENT);
-		}
-		return -1;
-	    }
-	}
-    }
+    int ret = s_mem_mount_cpp->Open(path, oflag, mode);
 
     /* get node from memory FS for specified type, if no errors occured 
      * then file allocated in memory FS and require file desc - fd*/
-    int ret = s_mem_mount_cpp->GetNode( path, &st);
-    if ( ret == 0 ){
+    struct stat st;
+    if ( ret == 0 && s_mem_mount_cpp->GetNode( path, &st) == 0 ){
 	/*ask for file descriptor in handle allocator*/
 	int fd = s_handle_allocator->allocate_handle( s_this );
 	if ( fd < 0 ){
+	    /*it's hipotetical but possible case if amount of open files 
+	      are exceeded an maximum value*/
 	    SET_ERRNO(ENFILE);
 	    return -1;
 	}
@@ -323,7 +308,7 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 
 	/*append feature support is simple*/
 	if ( oflag & O_APPEND ){
-	    ZRT_LOG(L_INFO, "handle flag: %s", "O_APPEND");
+	    ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_APPEND");
 	    mem_lseek(fd, 0, SEEK_END);
 	}
 
@@ -333,11 +318,15 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 	    /*reset file size*/
 	    MemNode* mnode = s_mem_mount_cpp->ToMemNode(st.st_ino);
 	    if (mnode){ 
-		ZRT_LOG(L_INFO, "handle flag: %s", "O_TRUNC");
+		ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_TRUNC");
 		mnode->set_len(0);
+		ZRT_LOG(L_SHORT, "%s, %d", mnode->name().c_str(), mnode->len() );
+		/*update stat*/
+		st.st_size = 0;
 	    }
 	}
 
+	/*success*/
 	return fd;
     }
     else

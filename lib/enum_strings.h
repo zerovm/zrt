@@ -25,11 +25,13 @@ enum array_list_t{
     ESeekWhence,
     ELockTypeFlags,
     EFcntlCmd,
-    EFileOpenMode
+    EFileOpenMode,
+    EFileOpenPermissions
 };
 
 #define FILE_OPEN_FLAGS(flags) text_from_flag(flags, EFileOpenFlags)
-#define FILE_OPEN_MODE(mode) text_from_id(mode, EFileOpenMode)
+#define FILE_OPEN_MODE(mode) text_from_id((mode&O_ACCMODE), EFileOpenMode)
+#define FILE_OPEN_PERMISSIONS(mode) text_from_flag(mode, EFileOpenPermissions)
 #define MMAP_PROT_FLAGS(flags) text_from_flag(flags, EMmapProtFlags)
 #define MMAP_FLAGS(flags) text_from_flag(flags, EMMapFlags)
 #define SEEK_WHENCE(flags) text_from_id(flags, ESeekWhence)
