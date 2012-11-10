@@ -5,7 +5,7 @@ sqlite unit tests are pending: TH3 100% unit tetst coverage written in C;
 run all tests for db in memory
 
 zrt test suite 
-Planning move most of samples and wrap it as gtests
+zrt functional tests
 
 pjd-fstest
 Test suite suitable for testing of zerovm in memory filesystem
