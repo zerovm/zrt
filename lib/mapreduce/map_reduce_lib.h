@@ -81,6 +81,16 @@ struct MapNodeEvents{
 };
 
 
+
+/*Init MapReduceUserIf existing pointer object and get it ready to use*/
+#define PREPARE_MAPREDUCE(mr_if, map_f, combine_f, reduce_f, key_t, val_t) \
+    mr_if->Map = map_f;         /*set user Map function*/		\
+    mr_if->Combine = combine_f; /*set user Combine function */		\
+    mr_if->Reduce = reduce_f;   /*set user Reduce function */		\
+    mr_if->data.keytype = key_t;					\
+    mr_if->data.valuetype = val_t;					
+
+
 int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *ch_if );
 int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *ch_if );
 

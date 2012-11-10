@@ -40,7 +40,8 @@ struct enum_data_t{
 #define EITEM(item) {item, #item}
 
 static struct enum_data_t s_file_open_array0[] = {
-    EITEM(O_CREAT), EITEM(O_EXCL), EITEM(O_TRUNC), EITEM(O_DIRECT), 
+    EITEM(O_CREAT), EITEM(O_RDONLY), EITEM(O_WRONLY), EITEM(O_RDWR),
+    EITEM(O_EXCL), EITEM(O_TRUNC), EITEM(O_DIRECT), 
     EITEM(O_DIRECTORY),EITEM(O_NOATIME), EITEM(O_APPEND), EITEM(O_ASYNC), 
     EITEM(O_SYNC), EITEM(O_NONBLOCK), EITEM(O_NDELAY), EITEM(O_NOCTTY)
 };
@@ -70,14 +71,11 @@ static struct enum_data_t s_fcntl_cmd_array5[] = {
 };
 
 static struct enum_data_t s_fileopen_mode_array6[] = {
-    EITEM(O_RDONLY), EITEM(O_WRONLY), EITEM(O_RDWR)
-};
-
-static struct enum_data_t s_fileopen_permission_array7[] = {
     EITEM(S_IXOTH), EITEM(S_IWOTH), EITEM(S_IROTH), EITEM(S_IRWXO),
     EITEM(S_IXGRP), EITEM(S_IWGRP), EITEM(S_IRGRP), EITEM(S_IRWXG), 
     EITEM(S_IXUSR), EITEM(S_IWUSR), EITEM(S_IRUSR), EITEM(S_IRWXU)
 };
+
 
 /*add here new arrays*/
 static struct enum_data_t* array_by_enum(int index, int* size){
@@ -104,9 +102,6 @@ static struct enum_data_t* array_by_enum(int index, int* size){
     case EFileOpenMode:
 	*size = GET_SIZE_ARRAY(s_fileopen_mode_array6);
 	return s_fileopen_mode_array6;
-    case EFileOpenPermissions:
-	*size = GET_SIZE_ARRAY(s_fileopen_permission_array7);
-	return s_fileopen_permission_array7;
     default:
 	assert(0);
 	break;

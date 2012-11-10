@@ -313,8 +313,7 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 	}
 
 	/*file truncate support, only for writable files, reset size*/
-	int accmode = mode & O_ACCMODE; /*reset permission flags for accmode*/
-	if ( oflag&O_TRUNC && (accmode == O_RDWR || accmode == O_WRONLY) ){
+	if ( oflag&O_TRUNC && (oflag&O_RDWR || oflag&O_WRONLY) ){
 	    /*reset file size*/
 	    MemNode* mnode = s_mem_mount_cpp->ToMemNode(st.st_ino);
 	    if (mnode){ 

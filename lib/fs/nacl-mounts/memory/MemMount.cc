@@ -56,6 +56,19 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode){
 	ZRT_LOG(L_SHORT, "%s Creat OK", path.c_str());
     }
 
+    if (oflag&O_RDWR){
+	/*set read-write permissions*/
+	mode |= S_IRUSR | S_IWUSR;
+    }
+    else if(oflag&O_RDONLY){
+	/*set read-only permissions*/
+	mode |= S_IRUSR;
+    }
+    else if(oflag&O_WRONLY){
+	/*set write-only permissions*/
+	mode |= S_IWUSR;
+    }
+
     /* save access mode to be able determine possibility of read/write access
      * during I/O operations*/
     MemNode* mnode = GetMemNode(path);
@@ -423,8 +436,8 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
     }
 
     /*check if file was not opened for reading*/
-    int mode= O_ACCMODE & node->mode();
-    if ( mode != O_RDONLY && mode != O_RDWR  ){
+    int mode= node->mode();
+    if ( !mode&S_IRUSR ){
 	ZRT_LOG(L_ERROR, "file open_mode=%s not allow read", FILE_OPEN_MODE(mode));
 	SET_ERRNO( EINVAL );
     }
@@ -463,8 +476,8 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     }
 
     /*check if file was not opened for writing*/
-    int mode= O_ACCMODE & node->mode();
-    if ( mode != O_WRONLY && mode != O_RDWR  ){
+    int mode= node->mode();
+    if ( !mode&S_IWUSR ){
 	ZRT_LOG(L_ERROR, "file open_mode=%s not allow write", FILE_OPEN_MODE(mode));
 	SET_ERRNO( EINVAL );
     }

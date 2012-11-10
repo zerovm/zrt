@@ -140,12 +140,12 @@ static void debug_mes_zrt_channel_runtime( int handle ){
 }
 
 
-static int open_channel( const char *name, int mode, int flags  )
+static int open_channel( const char *name, int flags, int mode )
 {
     int handle = channel_handle(name);
     ZRT_LOG(L_EXTRA, 
-	    "name=%s, handle=%d, mode=%u, flags=%s", 
-	    name, handle, mode, FILE_OPEN_FLAGS(flags) );
+	    "name=%s, handle=%d, mode=%s, flags=%s", 
+	    name, handle, FILE_OPEN_MODE(mode), FILE_OPEN_FLAGS(flags) );
     const struct ZVMChannel *chan = NULL;
 
     if ( handle != -1 ){
@@ -165,7 +165,7 @@ static int open_channel( const char *name, int mode, int flags  )
     }
 
     /*check access mode for opening channel, limits not checked*/
-    if( check_channel_access_mode( chan, mode ) != 0 ){
+    if( check_channel_access_mode( chan, flags ) != 0 ){
         ZRT_LOG(L_ERROR, "can't open channel, handle=%d ", handle );
         SET_ERRNO( EACCES );
         return -1;

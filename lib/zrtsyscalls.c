@@ -418,11 +418,10 @@ static int32_t zrt_open(uint32_t *args)
     ZRT_LOG_PARAM(L_SHORT, P_TEXT, name);
     VALIDATE_SYSCALL_PTR(name);
     ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_FLAGS(flags));
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_MODE(mode&O_ACCMODE));
     
     char* absolute_path = alloc_absolute_path_from_relative( name );
     mode = apply_umask(mode);
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_PERMISSIONS(mode));
+    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_MODE(mode));
     int ret = s_transparent_mount->open( absolute_path, flags, mode );
     free(absolute_path);
     LOG_SYSCALL_FINISH(ret);
