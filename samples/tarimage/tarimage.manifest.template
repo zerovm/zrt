@@ -13,7 +13,7 @@ Channel = {ABS_PATH}tarimage.tar, /dev/tarimage, 1, 9999999, 9999999, 0, 0
 == for the internal zerovm needs
 =====================================================================
 Version = 09082012
-Nexe = cdrfs.nexe
+Nexe = tarimage.nexe
 NexeMax = 10000000
 MemMax=134217728
 Timeout=10

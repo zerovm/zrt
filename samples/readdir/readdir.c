@@ -84,7 +84,7 @@ int listdir(const char *path) {
         return -1;
     }
 
-    while ( entry = readdir(dp)){
+    while ( (entry = readdir(dp))){
         printf( "d_ino=%u, d_off=%u, d_reclen=%u, d_name=%s, ",
                 (uint32_t)entry->d_ino, (uint32_t)entry->d_off, entry->d_reclen, entry->d_name );
         printf("%-10s ", (entry->d_type == DT_REG) ?  "regular" :

@@ -2,8 +2,8 @@
 
 ${ZRT_ROOT}/ns_start.sh 2
 
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest2.manifest -v10&
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest1.manifest -v10
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest2.manifest &
+setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest1.manifest 
 
 sleep 1
 echo "############### test 1 #################"

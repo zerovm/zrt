@@ -29,10 +29,9 @@ LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
 lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/libsqlite3.a 
 
 ################# samples to build
-UNSTABLE_SAMPLES= net
-SAMPLES=disort hello readdir reqrep sort_paging time wordcount zshell
+UNSTABLE_SAMPLES=bigfile #excluded due to bug: signal 25 from trusted code
+SAMPLES=hello tarimage readdir sort_paging reqrep disort wordcount zshell time
 TEST_SAMPLES=command_line environment file_stat seek
-#TEST_SAMPLES+=bigfile #signal from trusted code
 TEST_SUITES=lua_test_suite
 
 ################# flags set
@@ -62,7 +61,6 @@ ${LIBS}:
 
 ############## "make test" Build & Run all tests
 test: test_suites zrt_tests
-	$(shell cd ./tests/glibc_test_suite; sh ./run_tests.sh)
 
 ############## "make zrt_tests" Build test samples 
 test_suites: ${TEST_SUITES}
@@ -72,7 +70,7 @@ ${TEST_SUITES}:
 ############## "make zrt_tests" Build test samples 
 zrt_tests: ${TEST_SAMPLES}
 ${TEST_SAMPLES}: 	
-	@make -Ctests/zrt_test_suite/samples/$@
+	@make -Ctests/zrt_test_suite/functional/$@
 
 ############## "make all_samples" Build samples 
 all_samples: ${SAMPLES} 
@@ -100,7 +98,7 @@ clean_samples: ${SAMPLES_CLEAN} ${TEST_SAMPLES_CLEAN}
 ${SAMPLES_CLEAN}:
 	@make -Csamples/$(basename $@) clean
 ${TEST_SAMPLES_CLEAN}:
-	@make -Ctests/zrt_test_suite/samples/$(basename $@) clean
+	@make -Ctests/zrt_test_suite/functional/$(basename $@) clean
 
 ################ "make clean_test_suites" Cleaning test suites
 TESTS_CLEAN=$(foreach suite, ${TEST_SUITES}, $(suite).clean)

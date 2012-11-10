@@ -32,6 +32,7 @@ clean:
 	@rm -f log/*.log
 	@rm -f data/*.res
 	@rm -f manifest/*.manifest	
-	@rm -f *.nexe
+	@rm -f *.nex
+	@rm -f nameservice.log
 
 

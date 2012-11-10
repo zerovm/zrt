@@ -20,4 +20,4 @@ run:
 
 clean:
 	@rm -f some.input
-	@rm -f $(NAME).nexe $(NAME).o *.log *.data
+	@rm -f $(NAME).nexe $(NAME).manifest $(NAME).o *.log *.data
