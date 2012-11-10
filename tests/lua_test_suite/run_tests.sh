@@ -13,6 +13,7 @@ sed s@{LUA_TEST_PATH}@$LUA_TEST_PATH/@g > lua.manifest
 
 echo some input text > lua.input
 setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M$SCRIPT_PATH/lua.manifest
+cat lua.output
 
 
 

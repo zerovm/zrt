@@ -1,18 +1,11 @@
+include $(ZRT_ROOT)/Makefile.env
 NAME=bigfile
-PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
-INCLUDE_FLAGS=-I $(ZRT_ROOT)/lib
-MACROS_FLAGS=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
+CFLAGS+=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
 
 all: $(NAME).nexe run
 
 $(NAME).nexe: $(NAME).o
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).nexe -s -static -T \
-	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(DEBUG) $(NAME).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
-
-$(NAME).o:
-	@$(PNACL_TOOL)/bin/x86_64-nacl-gcc -o $(NAME).o -Wall \
-	$(INCLUDE_FLAGS) $(MACROS_FLAGS) $(DEBUG) -c -Wno-long-long -O2 -msse4.1 -m64 $(NAME).c
+	@$(CC) -o $(NAME).nexe $(NAME).o $(LDFLAGS)
 
 run:
 	chmod u+rwx genmanifest.sh

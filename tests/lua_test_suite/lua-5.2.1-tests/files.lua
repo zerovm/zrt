@@ -521,11 +521,13 @@ end
 
 
 -- testing tmpfile
-f = io.tmpfile()
-assert(io.type(f) == "file")
-f:write("alo")
-f:seek("set")
-assert(f:read"*a" == "alo")
+-- YaroslavLitvinov
+-- tmpfile unsupported by nacl
+--f = io.tmpfile()
+--assert(io.type(f) == "file")
+--f:write("alo")
+--f:seek("set")
+--assert(f:read"*a" == "alo")
 
 end --}
 

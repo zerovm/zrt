@@ -16,8 +16,6 @@ CommandLine = {COMMAND_LINE}
 =====================================================================
 Version = 09082012
 Nexe = {OUTFILE}.nexe
-NexeMax = 10000000
-SyscallsMax = 3333
 ==MemMax=134217728
 MemMax={MEMMAX}
 Timeout=10

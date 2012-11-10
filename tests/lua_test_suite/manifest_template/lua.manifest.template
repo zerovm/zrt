@@ -5,14 +5,14 @@
 Channel = {ABS_PATH}lua.input, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}lua.output, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}lua.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
-Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
+==Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
 
 Channel = {ABS_PATH}lua-5.2.1-tests.tar, /dev/tarimage, 0, 9999999, 9999999, 0, 0 
 
 =='@' should be replaced by '=' in user main, currently zerovm does not supported '=' char in command line
 CommandLine = -e_U@true /lua-5.2.1-tests/all.lua
 
-Environment = PATH, foo
+Environment = PATH, foo, VERBOSITY, 1
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some

@@ -15,10 +15,10 @@ $(NAME).o: $(SRC_PATH)/$(NAME).c
 	$(CC) -o $(NAME).o $(CFLAGS) $(SRC_PATH)/${NAME}.c 
 
 run:
-	chmod u+rwx run_tests.sh
-	chmod u+rwx create-tar.sh
+	@chmod u+rwx run_tests.sh
+	@chmod u+rwx create-tar.sh
 	@./run_tests.sh
 
 clean:
-	rm -f $(NAME).nexe *.o *.log *.result
+	@rm -f $(NAME).nexe $(NAME).o $(NAME).log $(NAME).input $(NAME).output $(NAME).manifest *.tar *.log
 
