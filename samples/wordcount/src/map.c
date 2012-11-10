@@ -12,9 +12,6 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#ifdef USER_SIDE
-	#include "zrt.h"
-#endif
 #include "user_implem.h"
 #include "map_reduce_lib.h"
 #include "eachtoother_comm.h"
@@ -32,48 +29,80 @@ int zmain(int argc, char **argv){
     int extracted_name_len=0;
     int res =0;
 
-	WRITE_FMT_LOG("Map node started argv[0]=%s.\n", argv[1] );
+    WRITE_FMT_LOG("Map node started argv[0]=%s.\n", argv[1] );
 
-	/*get node type names via environnment*/
+    /*get node type names via environnment*/
     char *map_node_type_text = getenv(ENV_MAP_NODE_NAME);
     char *red_node_type_text = getenv(ENV_REDUCE_NODE_NAME);
     assert(map_node_type_text);
     assert(red_node_type_text);
 
-	ownnodeid = ExtractNodeNameId( argv[1], &extracted_name_len );
-	/*nodename should be the same we got via environment and extracted from argv[0]*/
-	assert( !strncmp(map_node_type_text, argv[1], extracted_name_len ) );
-	if ( ownnodeid == -1 ) ownnodeid=1; /*node id not specified for single node by default assign nodeid=1*/
+    ownnodeid = ExtractNodeNameId( argv[1], &extracted_name_len );
+    /*nodename should be the same we got via environment and extracted from argv[0]*/
+    assert( !strncmp(map_node_type_text, argv[1], extracted_name_len ) );
+    if ( ownnodeid == -1 ){
+	/*node id is not specified for single node and because assign nodeid=1*/
+	ownnodeid=1; 
+    }
 
     /*setup channels conf, now used static data but should be replaced by data from zrt*/
     struct ChannelsConfigInterface chan_if;
     SetupChannelsConfigInterface( &chan_if, ownnodeid, EMapNode );
 
     /***********************************************************************
-     Add channels configuration into config object */
-    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, IN_DIR, EChannelModeRead, EMapNode, map_node_type_text );
+     * setup network configuration of cluster: */
+
+    /* add manifest channels to read from another map nodes */
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, 
+						  IN_DIR, 
+						  EChannelModeRead, 
+						  EMapNode, 
+						  map_node_type_text );
     assert( res == 0 );
-    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, IN_DIR, EChannelModeRead, EReduceNode, red_node_type_text );
+    /* add manifest channels to read from another reduce nodes */
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, 
+						  IN_DIR, 
+						  EChannelModeRead, 
+						  EReduceNode, 
+						  red_node_type_text );
     assert( res == 0 );
-    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, OUT_DIR, EChannelModeWrite, EMapNode, map_node_type_text );
+    /* add manifest channels to write into another map nodes */
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, 
+						  OUT_DIR, 
+						  EChannelModeWrite, 
+						  EMapNode, 
+						  map_node_type_text );
     assert( res == 0 );
-    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, OUT_DIR, EChannelModeWrite, EReduceNode, red_node_type_text );
+    /* add manifest channels to write into another reduce nodes */
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, 
+						  OUT_DIR, 
+						  EChannelModeWrite, 
+						  EReduceNode, 
+						  red_node_type_text );
     assert( res == 0 );
     /*add input channel into config*/
-    res = chan_if.AddChannel( &chan_if, EInputOutputNode, 1, 0, EChannelModeRead ) != NULL? 0: -1;
-    /*add fake channel into config related to mapnode types, to get right nodes list*/
-    res = chan_if.AddChannel( &chan_if, EMapNode, ownnodeid, -1, EChannelModeRead ) != NULL? 0: -1;
+    res = chan_if.AddChannel( &chan_if, 
+			      EInputOutputNode, 
+			      1, /*nodeid*/
+			      STDIN, /*associated input mode*/
+			      EChannelModeRead ) != NULL? 0: -1;
+
+    /*add fake channel into config, to access map nodes count later via
+      channel interface at runtime; if we are not add this then mapreduce
+      will fail because map nodes count will unavailable*/
+    res = chan_if.AddChannel( &chan_if, 
+			      EMapNode, 
+			      ownnodeid, 
+			      -1, 
+			      EChannelModeRead ) != NULL? 0: -1;
     assert( res == 0 );
-	/*--------------*/
+    /*--------------*/
 
-	struct MapReduceUserIf mr_if;
-	memset( &mr_if, '\0', sizeof(mr_if) );
-	InitInterface( &mr_if );
-	mr_if.data.keytype = EUint32;
-	mr_if.data.valuetype = EUint32;
-	res = MapNodeMain(&mr_if, &chan_if);
+    struct MapReduceUserIf mr_if;
+    InitInterface( &mr_if );
+    res = MapNodeMain(&mr_if, &chan_if); /*start map node*/
 
-	/*map job complete*/
-	CloseChannels(&chan_if);
-	return res;
+    /*mapreduce finished: map job complete*/
+    CloseChannels(&chan_if);
+    return res;
 }

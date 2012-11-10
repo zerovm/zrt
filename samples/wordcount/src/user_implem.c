@@ -126,9 +126,8 @@ int Reduce( const Buffer *keys, const Buffer *values ){
 
 
 void InitInterface( struct MapReduceUserIf* mr_if ){
-	mr_if->Map = Map; /*set user Map function*/
-	mr_if->Combine = Combine; /*set user Combine function */
-	mr_if->Reduce = Reduce;
+    memset( mr_if, '\0', sizeof(struct MapReduceUserIf) );
+    PREPARE_MAPREDUCE(mr_if, Map, Combine, Reduce, EUint32, EUint32);
 }
 
 

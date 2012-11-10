@@ -23,7 +23,6 @@
 #include "defines.h"
 #include "helpers/dyn_array.h"
 
-#define STDOUT 1 //fd
 
 int zmain(int argc, char **argv){
     /* argv[0] is node name
@@ -51,22 +50,32 @@ int zmain(int argc, char **argv){
     SetupChannelsConfigInterface( &chan_if, ownnodeid, EReduceNode );
 
     /***********************************************************************
-     Add channels configuration into config object */
-    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, IN_DIR, EChannelModeRead, EMapNode, map_node_type_text );
+     * setup network configuration of cluster: */
+
+    /* add manifest channels to read from map nodes */
+    res = AddAllChannelsRelatedToNodeTypeFromDir( &chan_if, 
+						  IN_DIR, 
+						  EChannelModeRead, 
+						  EMapNode,
+						  map_node_type_text );
     assert( res == 0 );
-    res = chan_if.AddChannel( &chan_if, EInputOutputNode, EReduceNode, STDOUT, EChannelModeWrite ) != NULL? 0: -1;
+    /*associate stdout with results output of reduce node*/
+    res = chan_if.AddChannel( &chan_if, 
+			      EInputOutputNode, 
+			      EReduceNode, 
+			      STDOUT, 
+			      EChannelModeWrite ) != NULL? 0: -1;
+
     assert( res == 0 );
     /*--------------*/
 
-	struct MapReduceUserIf mr_if;
-	memset( &mr_if, '\0', sizeof(mr_if) );
-	InitInterface( &mr_if );
-	mr_if.data.keytype = EUint32;
-	mr_if.data.valuetype = EUint32;
-	res = ReduceNodeMain(&mr_if, &chan_if);
+    struct MapReduceUserIf mr_if;
+    InitInterface( &mr_if );
+    res = ReduceNodeMain(&mr_if, &chan_if); /*start reduce node*/
+
     WRITE_LOG("complete---------------------");
 
-    /*reduce job complete*/
+    /*mapreduce finished: reduce job complete*/    
     CloseChannels(&chan_if);
-	return res;
+    return res;
 }

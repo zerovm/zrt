@@ -11,7 +11,7 @@
 #ifdef DEBUG
 #  ifndef WRITE_FMT_LOG
 #    define WRITE_FMT_LOG(fmt, args...) fprintf(stderr, fmt, args)
-#    define WRITE_LOG(str) fprintf(stdout, "%s\n", str)
+#    define WRITE_LOG(str) fprintf(stderr, "%s\n", str)
 #  endif
 #else
 #  ifndef WRITE_FMT_LOG
