@@ -186,6 +186,8 @@ zrt/tests/glibc_test_suite/singles/archive/glibc-fs/share
 c) github zrt Issue #21
    https://github.com/zerovm/zrt/issues/21
    zrt_test_suite/gtest_bug_staticlink
+d) glibs tests that Failed are described in :
+   zrt/tests/glibc_test_suite/todo/README
 
 ----------------------------------
 Тестирование 
