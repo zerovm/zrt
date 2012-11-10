@@ -31,7 +31,9 @@ lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/l
 ################# samples to build
 UNSTABLE_SAMPLES= net
 SAMPLES=disort hello readdir reqrep sort_paging time wordcount zshell
-TEST_SAMPLES=bigfile command_line environment file_stat seek
+TEST_SAMPLES=command_line environment file_stat seek
+#TEST_SAMPLES+=bigfile #signal from trusted code
+TEST_SUITES=lua_test_suite
 
 ################# flags set
 CFLAGS = -Wall -Wno-long-long -O2 -m64
@@ -58,6 +60,15 @@ ${LIBS}:
 	@echo move $@ library to final folder
 	@mv -f $@ lib	
 
+############## "make test" Build & Run all tests
+test: test_suites zrt_tests
+	$(shell cd ./tests/glibc_test_suite; sh ./run_tests.sh)
+
+############## "make zrt_tests" Build test samples 
+test_suites: ${TEST_SUITES}
+${TEST_SUITES}: 	
+	@make -Ctests/$@
+
 ############## "make zrt_tests" Build test samples 
 zrt_tests: ${TEST_SAMPLES}
 ${TEST_SAMPLES}: 	
@@ -69,12 +80,12 @@ ${SAMPLES}:
 	@make -Csamples/$@
 
 ################ "make cleanall" Cleaning libs, tests, samples 	
-cleanall: clean clean_samples
+cleanall: clean clean_samples clean_test_suites
 
 ################ "make clean" Cleaning libs 
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 
-clean: ${LIBS_CLEAN} #clean_samples 
+clean: ${LIBS_CLEAN}  
 ${LIBS_CLEAN}:
 	@make -C$(dir $@) clean 
 	@rm -f $(LIBZRT_OBJECTS)
@@ -90,4 +101,11 @@ ${SAMPLES_CLEAN}:
 	@make -Csamples/$(basename $@) clean
 ${TEST_SAMPLES_CLEAN}:
 	@make -Ctests/zrt_test_suite/samples/$(basename $@) clean
+
+################ "make clean_test_suites" Cleaning test suites
+TESTS_CLEAN=$(foreach suite, ${TEST_SUITES}, $(suite).clean)
+
+clean_test_suites: ${TESTS_CLEAN}
+${TESTS_CLEAN}:
+	@make -Ctests/$(basename $@) clean
 
