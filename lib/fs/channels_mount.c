@@ -33,7 +33,6 @@ enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
 
 struct ZrtChannelRt{
     int     handle;
-    int     open_mode;             /*For currently opened file contains mode, otherwise -1*/
     int     flags;                 /*For currently opened file contains flags*/
     int64_t sequential_access_pos; /*sequential read, sequential write*/
     int64_t random_access_pos;     /*random read, random write*/
@@ -133,8 +132,8 @@ static void debug_mes_zrt_channel_runtime( int handle ){
     ZRT_LOG(L_INFO, "handle=%d", handle);
     if (zrt_chan_runtime){
         ZRT_LOG(L_INFO, 
-		"open_mode=%u, flags=%u, sequential_access_pos=%llu, random_access_pos=%llu",
-                zrt_chan_runtime->open_mode, zrt_chan_runtime->flags,
+		"flags=%s, sequential_access_pos=%llu, random_access_pos=%llu",
+                FILE_OPEN_FLAGS(zrt_chan_runtime->flags),
                 zrt_chan_runtime->sequential_access_pos, zrt_chan_runtime->random_access_pos );
     }
 }
@@ -159,7 +158,7 @@ static int open_channel( const char *name, int flags, int mode )
     }
 
     /*return handle if file already opened*/
-    if ( s_zrt_channels[handle] && s_zrt_channels[handle]->open_mode >= 0 ){
+    if ( s_zrt_channels[handle] && s_zrt_channels[handle]->flags >= 0 ){
         ZRT_LOG(L_ERROR, "channel already opened, handle=%d ", handle );
         return handle;
     }
@@ -175,7 +174,6 @@ static int open_channel( const char *name, int flags, int mode )
     if ( !s_zrt_channels[handle] ){
         s_zrt_channels[handle] = calloc( 1, sizeof(struct ZrtChannelRt) );
     }
-    s_zrt_channels[handle]->open_mode = mode;
     s_zrt_channels[handle]->flags = flags;
 
 #ifdef DEBUG
@@ -230,13 +228,13 @@ static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_chann
         int8_t whence, int8_t access, int64_t offset ){
     switch ( access ){
     case EPosSeek:
-        if ( CHECK_FLAG( zrt_channel->open_mode, O_RDONLY )
-                || CHECK_FLAG( zrt_channel->open_mode, O_RDWR ) )
+        if ( CHECK_FLAG( zrt_channel->flags, O_RDONLY )
+                || CHECK_FLAG( zrt_channel->flags, O_RDWR ) )
         {
             if ( EPosGet == whence ) return zrt_channel->random_access_pos;
             SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
         }
-        else if ( CHECK_FLAG( zrt_channel->open_mode, O_WRONLY ) == 1 )
+        else if ( CHECK_FLAG( zrt_channel->flags, O_WRONLY ) == 1 )
         {
             if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
             else{
@@ -264,13 +262,13 @@ static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channe
         int8_t whence, int8_t access, int64_t offset){
     switch ( access ){
     case EPosSeek:
-        if ( CHECK_FLAG( zrt_channel->open_mode, O_WRONLY ) == 1
-                || CHECK_FLAG( zrt_channel->open_mode, O_RDWR ) == 1 )
+        if ( CHECK_FLAG( zrt_channel->flags, O_WRONLY ) == 1
+                || CHECK_FLAG( zrt_channel->flags, O_RDWR ) == 1 )
         {
             if ( EPosGet == whence ) return zrt_channel->random_access_pos;
             SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
         }
-        else if ( CHECK_FLAG( zrt_channel->open_mode, O_RDONLY )  == 1)
+        else if ( CHECK_FLAG( zrt_channel->flags, O_RDONLY )  == 1)
         {
             if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
             else{
@@ -458,7 +456,7 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
     /*case: file not opened, bad descriptor*/
     if ( is_channel_handle(fd) == 0  ||
             !s_zrt_channels[fd] ||
-            s_zrt_channels[fd]->open_mode < 0 )
+            s_zrt_channels[fd]->flags < 0 )
     {
         ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
         SET_ERRNO( EBADF );
@@ -469,10 +467,10 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
     debug_mes_zrt_channel_runtime( fd );
 
     /*check if file was not opened for reading*/
-    int mode= O_ACCMODE & s_zrt_channels[fd]->open_mode;
-    if ( mode != O_RDONLY && mode != O_RDWR  )
+    int flags= s_zrt_channels[fd]->flags;
+    if ( flags != O_RDONLY && flags != O_RDWR  )
     {
-        ZRT_LOG(L_ERROR, "file open_mode=%u not allowed read", mode);
+        ZRT_LOG(L_ERROR, "file open_mode=%s not allowed read", FILE_OPEN_FLAGS(flags));
         SET_ERRNO( EINVAL );
         return -1;
     }
@@ -505,7 +503,7 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
     /*file not opened, bad descriptor*/
     if ( is_channel_handle(fd) == 0 ||
             !s_zrt_channels[fd] ||
-            s_zrt_channels[fd]->open_mode < 0  )
+            s_zrt_channels[fd]->flags < 0  )
     {
         ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
         SET_ERRNO( EBADF );
@@ -517,10 +515,10 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
     debug_mes_zrt_channel_runtime( fd );
 
     /*if file was not opened for writing, set errno and get error*/
-    int mode= O_ACCMODE & s_zrt_channels[fd]->open_mode;
-    if ( mode != O_WRONLY && mode != O_RDWR  )
+    int flags= s_zrt_channels[fd]->flags;
+    if ( flags != O_WRONLY && flags != O_RDWR  )
     {
-        ZRT_LOG(L_ERROR, "file open_mode=%u not allowed write", mode);
+        ZRT_LOG(L_ERROR, "file open_mode=%s not allowed write", FILE_OPEN_FLAGS(flags));
         SET_ERRNO( EINVAL );
         return -1;
     }
@@ -545,7 +543,7 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
       maximum writable position can be used as size*/
     CHANNEL_ASSERT_IF_FAIL(fd);
     int8_t access_type = s_channels_list[fd].type;
-    if ( CHECK_FLAG(s_zrt_channels[fd]->open_mode, O_WRONLY ) &&
+    if ( CHECK_FLAG(s_zrt_channels[fd]->flags, O_WRONLY ) &&
             (access_type == SGetRPut || access_type == RGetRPut) )
     {
         s_zrt_channels[fd]->maxsize = channel_pos(fd, EPosGet, EPosWrite, 0);
@@ -605,11 +603,11 @@ static int channels_close(int fd){
 
     /*if valid fd and file was opened previously then perform file close*/
     if ( is_channel_handle(fd) != 0 &&
-            s_zrt_channels[fd] && s_zrt_channels[fd]->open_mode >=0  )
+            s_zrt_channels[fd] && s_zrt_channels[fd]->flags >=0  )
     {
         s_zrt_channels[fd]->random_access_pos = s_zrt_channels[fd]->sequential_access_pos = 0;
         s_zrt_channels[fd]->maxsize = 0;
-        s_zrt_channels[fd]->open_mode = -1;
+        s_zrt_channels[fd]->flags = -1;
         ZRT_LOG(L_EXTRA, "closed channel=%s", s_channels_list[fd].name );
         //zvm_close(fd);
         return 0;
@@ -619,10 +617,10 @@ static int channels_close(int fd){
         for ( i=0; i < s_manifest_dirs.dircount; i++ ){
             /*if matched fd*/
             if ( s_manifest_dirs.dir_array[i].handle == fd &&
-                    s_manifest_dirs.dir_array[i].open_mode >= 0 )
+                    s_manifest_dirs.dir_array[i].flags >= 0 )
             {
                 /*close opened dir*/
-                s_manifest_dirs.dir_array[i].open_mode = -1;
+                s_manifest_dirs.dir_array[i].flags = -1;
                 return 0;
             }
         }
@@ -689,10 +687,10 @@ static int channels_open(const char* path, int oflag, uint32_t mode){
 	    match_dir_in_directory_list( &s_manifest_dirs, path, strlen(path));
         /*if valid directory path matched */
         if ( dir != NULL ){
-            if ( dir->open_mode < 0 ){ /*if not opened*/
+            if ( dir->flags < 0 ){ /*if not opened*/
                 /*if trying open in read only*/
-                if ( CHECK_FLAG(mode, O_RDONLY) ){  /*it's allowed*/
-                    dir->open_mode = mode;
+                if ( CHECK_FLAG(oflag, O_RDONLY) ){  /*it's allowed*/
+                    dir->flags = oflag;
                     return dir->handle;
                 }
                 else{  /*Not allowed read-write / write access*/

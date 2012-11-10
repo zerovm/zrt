@@ -59,7 +59,7 @@
 /* Pop from logging stack current syscall function.
  * Prints retcode and errno*/
 #define LOG_SYSCALL_FINISH(ret){					\
-        if ( ret == -1 ){						\
+        if ( ret < 0 ){							\
 	    ZRT_LOG(L_SHORT, "ret=0x%x, errno=%d", (int)ret, errno);	\
 	}								\
         else{								\

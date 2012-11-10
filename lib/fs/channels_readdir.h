@@ -21,7 +21,7 @@ struct dir_data_t {
     int handle;
     int nlink;
     char* path;
-    uint32_t open_mode; /*for currently opened dir contains mode flags, always O_RDONLY*/
+    uint32_t flags; /*for currently opened dir contains mode flags, always O_RDONLY*/
 };
 
 struct manifest_loaded_directories_t{

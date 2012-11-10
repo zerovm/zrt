@@ -469,7 +469,7 @@ static int32_t zrt_write(uint32_t *args)
 
 #ifdef DEBUG
     /*disable logging write calls related to debug, stdout and stderr channel */
-    if ( handle <= 2 || handle == zrtlog_fd() ){
+    if ( handle == zrtlog_fd() ){
         disable_logging_current_syscall();
     }
 #endif
