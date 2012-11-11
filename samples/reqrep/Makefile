@@ -22,5 +22,6 @@ clean:
 	@rm -f log/*.log
 	@rm -f *.nexe
 	@rm -f *.manifest
+	@rm -f nameservice.log
 
 

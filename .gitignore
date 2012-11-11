@@ -1,1 +1,5 @@
 .cproject
+*.o
+*.nexe
+*.a
+*.manifest

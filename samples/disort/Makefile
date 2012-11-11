@@ -51,5 +51,6 @@ clean: cleanlog
 	@rm -f $(GENNODE_OBJECTS) $(MANNODE_OBJECTS) $(SRCNODE_OBJECTS) $(DSTNODE_OBJECTS)
 	@rm -f manifest/*.manifest
 	@rm -f data/*.data
+	@rm -f nameservice.log
 
 
