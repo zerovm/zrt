@@ -1,7 +1,6 @@
 include $(ZRT_ROOT)/Makefile.env
 
 #DEBUG=-g
-CFLAGS +=-I$(ZRT_ROOT)/lib/networking -I.
 CFLAGS +=-std=c99 -O2 $(DEBUG)
 LDFLAGS+=-lnetworking
 

@@ -1,6 +1,5 @@
 include $(ZRT_ROOT)/Makefile.env
 CFLAGS+=-std=c99 -g -DDEBUG
-CFLAGS+=-I$(ZRT_ROOT)/lib/lua-5.2.1/src -I$(ZRT_ROOT)/lib/sqlite3
 
 LDFLAGS+=-llua -lm -lsqlite3
 

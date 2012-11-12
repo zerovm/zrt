@@ -1,7 +1,5 @@
 include $(ZRT_ROOT)/Makefile.env
 CFLAGS+=-std=c99 -g -DDEBUG
-CFLAGS+=-I$(ZRT_ROOT)/lib/mapreduce
-CFLAGS+=-I$(ZRT_ROOT)/lib/networking
 
 LDFLAGS+=-lmapreduce -lnetworking
 all: createdirs clean map.nexe reduce.nexe
