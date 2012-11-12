@@ -11,7 +11,7 @@
 #include "map_reduce_lib.h"
 #include "eachtoother_comm.h"
 #include "channels_conf.h"
-#include "defines.h"
+#include "mr_defines.h"
 
 #define MAX_UINT32 4294967295
 #define MAP_NODE_NO_EXCLUDE 0

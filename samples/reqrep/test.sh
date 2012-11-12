@@ -1,9 +1,10 @@
 #!/bin/bash
+source ${ZRT_ROOT}/run.env
 
 ${ZRT_ROOT}/ns_start.sh 2
 
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest2.manifest &
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mtest1.manifest 
+${SETARCH} ${ZEROVM} -Mtest2.manifest &
+${SETARCH} ${ZEROVM} -Mtest1.manifest 
 
 sleep 1
 echo "############### test 1 #################"

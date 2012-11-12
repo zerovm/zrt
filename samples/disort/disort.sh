@@ -1,4 +1,5 @@
 #!/bin/bash
+source ${ZRT_ROOT}/run.env
 
 ./gendata.sh
 
@@ -12,18 +13,18 @@ DST_LAST=10
 
 COUNTER=$SRC_FIRST
 while [  $COUNTER -le $SRC_LAST ]; do
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortsrc"$COUNTER".manifest -e > /dev/null &
+    ${SETARCH} ${ZEROVM} -Mmanifest/sortsrc"$COUNTER".manifest -e > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 COUNTER=$DST_FIRST
 while [  $COUNTER -le $DST_LAST ]; do
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortdst"$COUNTER".manifest -e > /dev/null &
+    ${SETARCH} ${ZEROVM} -Mmanifest/sortdst"$COUNTER".manifest -e > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 date > /tmp/time
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/sortman.manifest -e
+${SETARCH} ${ZEROVM} -Mmanifest/sortman.manifest -e
 date >> /tmp/time
 
 cat log/sortman.stderr.log

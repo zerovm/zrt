@@ -1,4 +1,5 @@
 #!/bin/bash
+source ${ZRT_ROOT}/run.env
 
 rm data/*.res -f
 rm log/* -f
@@ -16,18 +17,18 @@ time
 
 COUNTER=$MAP_FIRST
 while [  $COUNTER -le $MAP_LAST ]; do
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/map$COUNTER.manifest > /dev/null &
+    ${SETARCH} ${ZEROVM} -Mmanifest/map$COUNTER.manifest > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 COUNTER=$REDUCE_FIRST
 #run reduce nodes -1 count
 while [  $COUNTER -lt $REDUCE_LAST ]; do
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/reduce$COUNTER.manifest  > /dev/null &
+    ${SETARCH} ${ZEROVM} -Mmanifest/reduce$COUNTER.manifest  > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 #run last reduce node
-time setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Mmanifest/reduce"$REDUCE_LAST".manifest
+time ${SETARCH} ${ZEROVM} -Mmanifest/reduce"$REDUCE_LAST".manifest
 
 ${ZRT_ROOT}/ns_stop.sh

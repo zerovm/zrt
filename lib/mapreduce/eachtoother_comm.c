@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "eachtoother_comm.h"
-#include "defines.h"
+#include "mr_defines.h"
 
 void StartEachToOtherCommunication( struct EachToOtherPattern* p_this, int nodetype ){
 	assert( p_this );

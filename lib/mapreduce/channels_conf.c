@@ -12,7 +12,7 @@
 #include <assert.h>
 
 #include "helpers/dyn_array.h"
-#include "defines.h"
+#include "mr_defines.h"
 #include "channels_conf.h"
 
 
