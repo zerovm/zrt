@@ -15,7 +15,7 @@ int zmain(int argc, char **argv)
   printf("hello, world\n");
 
   /* write to user log (stderr) */
-  fprintf("hello, world\n");
+  fprintf(stderr, "hello, world\n");
 
   return 0;
 }
