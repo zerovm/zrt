@@ -4,31 +4,41 @@ ZRT acts as an operating system for user executable and is implemented as libzrt
 NEXE is a user executable that was produced by nacl_gcc or nacl_g++ (part of Native Client SDK)
 
 INSTALL & RUN
-1. Install ZeroVM, Consult https://github.com/Dazo-org/zerovm/blob/master/README
+1. Install ZeroVM, Consult http://github.com/zerovm/zerovm/blob/master/README
 2. Install NaCl SDK. Consult https://developers.google.com/native-client/sdk/download for exact procedure. 
 Below should work okay in most cases.
+
 cd ~
 wget http://commondatastorage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip 
 unzip nacl_sdk.zip 
 cd nacl_sdk 
 ./naclsdk list
-./naclsdk update
-cd ..
+./naclsdk update --force pepper_21
+
 3. Install zrt
-wget https://github.com/Dazo-org/zrt/zipball/master
-unzip master
-mv Dazo-org-zrt* zrt
-cd zrt
+
+git clone https://github.com/zerovm/zrt.git
+
 4.Set environmant variables on ~/.bashrc
+
 NACL_SDK_ROOT NaCl pepper path
 ZEROVM_ROOT root of ZeroVM 
 ZRT_ROOT root of ZRT
+
 For example:
+
 export NACL_SDK_ROOT=${HOME}/nacl_sdk/pepper_21
-export ZEROVM_ROOT=${HOME}/git/retry-zerovm
-export ZRT_ROOT=${HOME}/git/zrt
-5. run
-cd zrt
+export ZEROVM_ROOT=${HOME}/zerovm
+export ZRT_ROOT=${HOME}/zrt
+
+5. Fix the validator config and binpatch
+
+ln -s ${NACL_SDK_ROOT}/tools/ncval_x86_64 /usr/local/bin/ncval
+sed -i 's#BINPATCH=binpatch#BINPATCH=/bin/true#' ${ZRT_ROOT}/Makefile.env
+
+6. run
+
+cd ${ZRT_ROOT}
 make
 make all_samples
 make zrt_tests
