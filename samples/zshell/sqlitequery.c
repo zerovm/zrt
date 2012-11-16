@@ -14,8 +14,8 @@
 #include <fcntl.h> //O_RDONLY
 #include <assert.h>
 
-#include "sqlite3.h"
-#include "vfs_channel.h" //sqlite virtual file system
+#include "sqlite3/sqlite3.h"
+#include "sqlite3/vfs_channel.h" //sqlite virtual file system
 
 #define STDIN 0
 #define STDERR 2

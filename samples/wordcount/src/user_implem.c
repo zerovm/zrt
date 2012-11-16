@@ -12,7 +12,7 @@
 #include <assert.h>
 
 #include "user_implem.h"
-#include "map_reduce_lib.h"
+#include "mapreduce/map_reduce_lib.h"
 #include "defines.h"
 
 /*******************************************************************************

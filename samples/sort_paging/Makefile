@@ -10,9 +10,9 @@ all: $(NAME_1).o $(NAME_2).o $(NAME_3).o cpuid.o
 	$(CC) -o $(NAME_2).nexe $(NAME_2).o cpuid.o $(LDFLAGS)
 	$(CC) -o $(NAME_3).nexe $(NAME_3).o cpuid.o $(LDFLAGS)
 #
-	binpatch $(NAME_1).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
-	binpatch $(NAME_2).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
-	binpatch $(NAME_3).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	$(BINPATCH) $(NAME_1).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	$(BINPATCH) $(NAME_2).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	$(BINPATCH) $(NAME_3).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 #
 	chmod u+rwx run_test.sh genmanifest.sh
 	./run_test.sh

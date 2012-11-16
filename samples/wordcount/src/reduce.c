@@ -16,10 +16,10 @@
     #include "zrt.h"
 #endif
 #include "user_implem.h"
-#include "map_reduce_lib.h"
-#include "eachtoother_comm.h"
-#include "channels_conf.h"
-#include "channels_conf_reader.h"
+#include "mapreduce/map_reduce_lib.h"
+#include "networking/eachtoother_comm.h"
+#include "networking/channels_conf.h"
+#include "networking/channels_conf_reader.h"
 #include "defines.h"
 #include "helpers/dyn_array.h"
 

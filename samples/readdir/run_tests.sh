@@ -5,7 +5,7 @@ SCRIPT_PATH=`dirname "$SCRIPT"`
 source ${ZRT_ROOT}/run.env
 
 #Generate from template
-sed s@{ABS_PATH}@$SCRIPT_PATH/@g manifest_template/readdir.manifest.template  > readdir.manifest
+sed s@{ABS_PATH}@$SCRIPT_PATH/@g readdir.manifest.template  > readdir.manifest
 
 echo some input text > some.input
 

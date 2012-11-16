@@ -20,8 +20,8 @@
 #include "defines.h"
 #include "cpuid.h"
 #include "comm_src.h"
-#include "channels_conf_reader.h"
-#include "channels_conf.h"
+#include "networking/channels_conf_reader.h"
+#include "networking/channels_conf.h"
 #include "bitonic_sort.h"
 
 

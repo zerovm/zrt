@@ -7,7 +7,7 @@ all: createdirs clean zshell.nexe
 
 zshell.nexe: obj/luaexec.o obj/main.o obj/sqlitequery.o
 	$(CC) -o zshell.nexe obj/luaexec.o obj/main.o obj/sqlitequery.o $(LDFLAGS)  
-	binpatch zshell.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	$(BINPATCH) zshell.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 obj/main.o: main.c
 	$(CC) -c -o obj/main.o ${CFLAGS} main.c -D_GNU_SOURCE

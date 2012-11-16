@@ -17,7 +17,7 @@
 #include "defines.h"
 #include "comm.h"
 #include "comm_dst.h"
-#include "channels_conf.h"
+#include "networking/channels_conf.h"
 
 /*reading data
  * 1x struct packet_data_t (packet type, size of array)

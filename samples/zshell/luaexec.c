@@ -7,9 +7,9 @@
 
 
 #include "zrt.h"
-#include <lua.h>                                /* Always include this when calling Lua */
-#include <lauxlib.h>                            /* Always include this when calling Lua */
-#include <lualib.h>                             /* Always include this when calling Lua */
+#include "lua/lua.h"                               /* Always include this when calling Lua */
+#include "lua/lauxlib.h"                            /* Always include this when calling Lua */
+#include "lua/lualib.h"                             /* Always include this when calling Lua */
 
 #include <stdlib.h>                             /* For function exit() */
 #include <stdio.h>                              /* For input/output */

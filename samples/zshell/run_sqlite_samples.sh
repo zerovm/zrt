@@ -1,4 +1,5 @@
 #!/bin/bash
+source ${ZRT_ROOT}/run.env
 
 echo Run sqlite samples
 
@@ -13,8 +14,8 @@ NAME="select"
 MANIFEST=manifest_template/zshell.manifest.template ./genmanifest.sh sqlite/scripts/${NAME}.sql log/${NAME}.stdout ${READ_ONLY_INPUT_CHANNEL} log/${NAME}.stderr.log "/dev/input" > sqlite/${NAME}.manifest 
 echo -------------------------------run sqlite ${NAME}
 rm log/${NAME}.stdout -f
-echo setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
+echo ${SETARCH} ${ZEROVM} -Msqlite/${NAME}.manifest
+${SETARCH} ${ZEROVM} -Msqlite/${NAME}.manifest
 echo "stdout output >>>>>>>>>>"
 cat log/${NAME}.stdout
 
@@ -23,8 +24,8 @@ NAME="select_clone"
 MANIFEST=manifest_template/zshell.manifest.template ./genmanifest.sh sqlite/scripts/${NAME}.sql log/${NAME}.stdout ${TAR_IMAGE} log/${NAME}.stderr.log "/sqlite.db" > sqlite/${NAME}.manifest 
 echo -------------------------------run sqlite ${NAME}
 rm log/${NAME}.stdout -f
-echo setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
+echo ${SETARCH} ${ZEROVM} -Msqlite/${NAME}.manifest
+${SETARCH} ${ZEROVM} -Msqlite/${NAME}.manifest
 echo "stdout output >>>>>>>>>>"
 cat log/${NAME}.stdout
 
@@ -33,8 +34,8 @@ NAME="create_insert_select"
 MANIFEST=manifest_template/zshell.manifest.template ./genmanifest.sh sqlite/scripts/${NAME}.sql log/${NAME}.stdout ${TAR_IMAGE} log/${NAME}.stderr.log "/sqlite-new.db" > sqlite/${NAME}.manifest 
 echo -------------------------------run sqlite ${NAME}
 rm log/${NAME}.stdout -f
-echo setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -Msqlite/${NAME}.manifest
+echo ${SETARCH} ${ZEROVM} -Msqlite/${NAME}.manifest
+${SETARCH} ${ZEROVM} -Msqlite/${NAME}.manifest
 echo "stdout output >>>>>>>>>>"
 cat log/${NAME}.stdout
 

@@ -18,8 +18,8 @@
 #include "defines.h"
 #include "dsort.h"
 #include "comm_dst.h"
-#include "channels_conf_reader.h"
-#include "channels_conf.h"
+#include "networking/channels_conf_reader.h"
+#include "networking/channels_conf.h"
 
 #define STDOUT 1
 

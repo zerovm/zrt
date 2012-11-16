@@ -16,7 +16,7 @@
 #include "distr_common.h"
 #include "defines.h"
 #include "comm.h"
-#include "channels_conf.h"
+#include "networking/channels_conf.h"
 
 /*reading crc from every source node
  *READ 1x uint32_t, crc*/

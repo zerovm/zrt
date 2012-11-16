@@ -14,7 +14,7 @@
 #include "histanlz.h"
 #include "defines.h"
 #include "comm_man.h"
-#include "channels_conf.h"
+#include "networking/channels_conf.h"
 
 
 void

@@ -10,7 +10,7 @@ reqrep.nexe: reqrep.o
 
 run:
 	chmod u+rwx genmanifest.sh test.sh test-type2.sh
-	binpatch reqrep.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
+	$(BINPATCH) reqrep.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 	./genmanifest.sh
 	./test.sh	
 	./test-type2.sh
@@ -19,6 +19,7 @@ createdirs:
 	@mkdir -p log
 
 clean: 
+	@rm -f $(NAME).o
 	@rm -f log/*.log
 	@rm -f *.nexe
 	@rm -f *.manifest

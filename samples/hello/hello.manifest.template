@@ -3,7 +3,7 @@
 == following channels: stdin, stdout, stderr used
 =====================================================================
 Channel = {ABS_PATH}debug.log, /dev/debug, 0, 0, 0, 99999999, 99999999
-Channel = /dev/stdin, /dev/stdin, 0, 999999, 999999, 0, 0
+Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}stderr.data, /dev/stderr, 0, 0, 0, 9999999, 9999999
 
