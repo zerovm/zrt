@@ -11,6 +11,8 @@ lib/zrt.c \
 lib/zrtsyscalls.c \
 lib/enum_strings.c \
 lib/memory/memory.c \
+lib/fs/fstab_loader.c \
+lib/fs/fstab_observer.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
 lib/fs/channels_mount.c \
@@ -52,6 +54,7 @@ prepare:
 
 ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
+	@echo $@ updated
 
 ############## Build libs, invoke nested Makefiles
 ${LIBS}:  
