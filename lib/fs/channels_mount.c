@@ -39,12 +39,6 @@ struct ZrtChannelRt{
     int64_t maxsize;               /*synthethic size. maximum position of channel for all I/O requests*/
 };
 
-//////////////// helper macros
-#define MAX(a,b) \
-        ({ __typeof__ (a) _a = (a); \
-        __typeof__ (b) _b = (b); \
-        _a > _b ? _a : _b; })
-
 /*0 if check OK*/
 #define CHECK_NEW_POS(offset) ((offset) < 0 ? -1: 0)
 #define SET_SAFE_OFFSET( whence, pos_p, offset ) \
@@ -66,9 +60,7 @@ struct ZrtChannelRt{
 
 
 //////////////// data
-/*getdents temp data for subsequent syscalls*/
-static struct ReadDirTemp s_readdir_temp = {{-1,0,0,0},-1,-1};
-/*directories list based on channels list; for getdents syscall/readdir*/
+struct HandleAllocator* s_handle_allocator;
 struct manifest_loaded_directories_t s_manifest_dirs;
 /*runtime information related to channels*/
 static struct ZrtChannelRt**  s_zrt_channels;
@@ -394,6 +386,76 @@ static void set_stat(struct stat *stat, int fd)
 }
 
 
+/*@return 0 if matched, or -1 if not*/
+int iterate_dir_contents( int dir_handle, int index, 
+			  int* iter_fd, const char** iter_name, int* iter_is_dir ){
+    int i=0;
+
+    /*get directory data by handle*/
+    struct dir_data_t* dir_pattern =
+	match_handle_in_directory_list(&s_manifest_dirs, dir_handle);
+
+    /*nested dirs & files count*/
+    int subdir_index = 0;
+    int file_index = 0;
+
+    /*match subdirs*/
+    struct dir_data_t* loop_d = NULL; /*loop dir used as loop variable*/
+    int namelen =  strlen(dir_pattern->path);
+    for( i=0; i < s_manifest_dirs.dircount; i++ ){
+	/*iterate every directory to compare it with pattern*/
+        loop_d = &s_manifest_dirs.dir_array[i];
+        /*match all subsets, exclude the same dir path*/
+        if ( ! strncmp(dir_pattern->path, loop_d->path, namelen) && 
+	       strlen(loop_d->path) > namelen+1 ){
+            /*if can't locate trailing '/' then matched subdir*/
+            char *backslash_matched = strchr( &loop_d->path[namelen+1], '/');
+            if ( !backslash_matched ){
+		/*if matched index of directory contents*/
+		if ( index == subdir_index ){
+		    /*fetch name from full path*/
+		    int shortname_len;
+		    const char *short_name = 
+			name_from_path_get_path_len(loop_d->path, &shortname_len );
+		    *iter_fd = loop_d->handle; /*get directory handle*/
+		    *iter_name = short_name; /*get name of item*/
+		    *iter_is_dir = 1; /*get info that item is directory*/
+		    return 0;
+		}
+		++subdir_index;
+            }
+        }
+    }
+
+    /*match files*/
+    int dirlen =  strlen(dir_pattern->path);
+    for( i=0; i < s_channels_count; i++ ){
+        /*match all subsets for dir path*/
+        if ( ! strncmp(dir_pattern->path, s_channels_list[i].name, dirlen) && 
+	       strlen(s_channels_list[i].name) > dirlen+1 ){
+            /*if can't locate trailing '/' then matched directory file*/
+            char *backslash_matched = strchr( &s_channels_list[i].name[dirlen+1], '/');
+            if ( !backslash_matched ){
+		/*if matched index of directory contents*/
+		if ( index == file_index ){
+		    /*fetch name from full path*/
+		    int shortname_len;
+		    const char *short_name = 
+			name_from_path_get_path_len(s_channels_list[i].name, &shortname_len );
+		    *iter_fd = i; /*channel handle is the same as channel index*/
+		    *iter_name = short_name; /*get name of item*/
+		    *iter_is_dir = 0; /*get info that item is not directory*/
+		    return 0;
+		}
+		++file_index;
+	    }
+        }
+    }
+    return -1;/*specified index not matched, probabbly it's out of bounds*/
+}
+
+
+
 //////////// interface implementation
 
 static int channels_chmod(const char* path, uint32_t mode){
@@ -577,19 +639,47 @@ static int channels_fstat(int fd, struct stat *buf){
     return 0;
 }
 
-static int channels_getdents(int fd, void *buf, unsigned int count){
+static int channels_getdents(int fd, void *buf, unsigned int buf_size){
     errno=0;
-    ZRT_LOG( L_INFO, "fd=%d, count=%d", fd, count );
+    ZRT_LOG( L_INFO, "fd=%d, buf_size=%d", fd, buf_size );
 
     /* check null and  make sure the buffer is aligned */
     if ( !buf || 0 != ((sizeof(unsigned long) - 1) & (uintptr_t) buf)) {
         SET_ERRNO(EINVAL);
         return -1;
     }
+    int bytes_read=0;
 
-    int retval = readdir_to_buffer( fd, buf, count, &s_readdir_temp,
-            s_channels_list, s_channels_count, &s_manifest_dirs );
-    return retval;
+    /*get offset, and use it as cursor that using to iterate directory contents*/
+    off_t offset;
+    s_handle_allocator->get_offset(fd, &offset );
+
+    /*through via list all directory contents*/
+    int index=offset;
+    int iter_fd=0;
+    const char* iter_item_name = NULL;
+    int iter_is_dir=0;
+    int res=0;
+    while( !(res=iterate_dir_contents( fd, index, &iter_fd, &iter_item_name, &iter_is_dir )) ){
+	/*format in buf dirent structure, of variable size, and save current file data;
+	  original MemMount implementation was used dirent as having constant size */
+	int ret = 
+	    put_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
+				 INODE_FROM_HANDLE(iter_fd), 0,
+				 iter_item_name, strlen(iter_item_name) );
+	/*if put into dirent was success*/
+	if ( ret > 0 ){
+	    bytes_read += ret;
+	    ++index;
+	}
+	else{
+	    break; /*interrupt - insufficient buffer space*/
+	}
+    }
+    /*update offset index of handled directory item*/
+    offset = index;
+    s_handle_allocator->set_offset(fd, offset );
+    return bytes_read;
 }
 
 static int channels_fsync(int fd){
@@ -796,6 +886,7 @@ static struct MountsInterface s_channels_mount = {
 
 struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_allocator,
         const struct ZVMChannel* channels, int channels_count ){
+    s_handle_allocator = handle_allocator;
     s_channels_list = channels;
     s_channels_count = channels_count;
     /* array of channels runtime data. For opened channels suitable data is:

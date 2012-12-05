@@ -142,8 +142,9 @@ void process_channels_create_dir_list( const struct ZVMChannel *channels, int ch
 }
 
 
-/* To search many subdirs user would call it with index parameter returned by previous function call;
- * search subdir starting from index in manifest_dirs, if matched return matched subdir index
+/* To search many subdirs user would call it with index parameter returned by previous
+ * function call; search subdir starting from index in manifest_dirs, if matched return 
+ * subdir index related to manifest_dirs;
  * @return subdir index if found, -1 if not*/
 int get_sub_dir_index( struct manifest_loaded_directories_t *manifest_dirs, const char *dirpath, int index )
 {
@@ -163,24 +164,6 @@ int get_sub_dir_index( struct manifest_loaded_directories_t *manifest_dirs, cons
     }
     return -1;
 }
-
-int get_dir_content_channel_index( const struct ZVMChannel *channels, int channels_count,
-        const char *dirpath, int index )
-{
-    int i;
-    int dirlen =  strlen(dirpath);
-    for( i=index; i < channels_count; i++ ){
-        /*match all subsets for dir path*/
-        if ( ! strncmp(dirpath, channels[i].name, dirlen) && strlen(channels[i].name) > dirlen+1 ){
-            /*if can't locate trailing '/' then matched directory file*/
-            char *backslash_matched = strchr( &channels[i].name[dirlen+1], '/');
-            if ( !backslash_matched )
-                return i;
-        }
-    }
-    return -1;
-}
-
 
 
 size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsigned long d_off,
@@ -212,7 +195,7 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
         memcpy( dirent->d_name, d_name, namelength );
         ((char*)dirent->d_name)[namelength] = '\0';
 
-        ZRT_LOG(L_EXTRA, "dirent: name=%s, ino=%u, d_off=%u, d_reclen=%d, namel=%d",
+        ZRT_LOG(L_SHORT, "dirent: name=%s, ino=%u, d_off=%u, d_reclen=%d, namel=%d",
                 d_name, 
 		(unsigned int)d_ino, 
 		(unsigned int)d_off, 
@@ -228,101 +211,3 @@ size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsign
         return -1; /*no enough buffer size*/
     }
 }
-
-
-/*
- *@return readed bytes count*/
-int readdir_to_buffer( int dir_handle, char *buf, int bufsize, struct ReadDirTemp *readdir_temp,
-        const struct ZVMChannel *channels, int channels_count, struct manifest_loaded_directories_t *dirs){
-    assert( readdir_temp ); /*should always exist*/
-    ZRT_LOG(L_EXTRA, "temp handle=%d, dir_last_index=%d, channel_last_index=%d",
-            readdir_temp->dir_data.handle, readdir_temp->dir_last_readed_index, 
-	    readdir_temp->channel_last_readed_index);
-
-    int retval = 0;
-    int foo;
-    /*if launched getdents for new directory*/
-    if ( readdir_temp->dir_data.handle != dir_handle ){
-        struct dir_data_t *d = match_handle_in_directory_list(dirs, dir_handle);
-        assert(d); /*bad handle should be handed on upper level*/
-        readdir_temp->dir_data = *d;
-        readdir_temp->dir_last_readed_index = 0;
-        readdir_temp->channel_last_readed_index = 0;
-        ZRT_LOG(L_EXTRA, "new readdir call: handle=%d, path= %s", 
-		readdir_temp->dir_data.handle, readdir_temp->dir_data.path );
-    }
-    /*if it's not continue of previous getdents then just reset temporary data */
-    else if ( readdir_temp->dir_last_readed_index == -1 && 
-	      readdir_temp->channel_last_readed_index == -1 ){
-        /*come last of subsequent calls, now reset handle*/
-        readdir_temp->dir_data.handle = -1;
-        return 0;
-    }
-
-    /*if currently is in reading state of specified handle and also
-     *dir/channel _last_related_index > 0 then start/continue readdir, 
-     else if < 0 then reading complete*/
-    if ( readdir_temp->dir_data.handle == dir_handle && 
-	 readdir_temp->dir_last_readed_index >= 0 ){
-        /*add sub dirs*/
-        do{
-            ZRT_LOG( L_EXTRA, "dir_index=%d", readdir_temp->dir_last_readed_index );
-            readdir_temp->dir_last_readed_index =
-                    get_sub_dir_index( dirs, readdir_temp->dir_data.path,
-                            readdir_temp->dir_last_readed_index );
-            ZRT_LOG( L_EXTRA, "dir_index=%d", readdir_temp->dir_last_readed_index );
-
-            if ( readdir_temp->dir_last_readed_index != -1 ){
-                /*fetch name from full path*/
-                const char *adding_name = name_from_path_get_path_len(
-                        dirs->dir_array[readdir_temp->dir_last_readed_index].path, &foo );
-
-		/*format dirent structure and write by offset buf+retval of existing buffer;
-		 w used as result of operation, if no data saved into buffer then 
-		 w hold negative value, at success it contains wrote bytes count; */
-                int w = put_dirent_into_buf(
-                        buf+retval, bufsize-retval,
-                        INODE_FROM_HANDLE(dirs->dir_array[readdir_temp->dir_last_readed_index].handle),
-                        0, /*d_off*/
-                        adding_name, strlen( adding_name ) );
-                if ( w == -1 ) return retval;
-                retval += w;
-                readdir_temp->dir_last_readed_index++;
-                ZRT_LOG(L_EXTRA, "retval =%d", retval );
-            }
-        }while( readdir_temp->dir_last_readed_index >= 0 );
-        readdir_temp->dir_last_readed_index =-1;
-    }
-
-    if( readdir_temp->dir_data.handle == dir_handle && 
-	readdir_temp->channel_last_readed_index >= 0 ){
-        /*add directory files*/
-        do{
-            ZRT_LOG(L_EXTRA, "channel_index=%d", readdir_temp->channel_last_readed_index );
-            readdir_temp->channel_last_readed_index =
-                    get_dir_content_channel_index(channels, channels_count,
-                            readdir_temp->dir_data.path, readdir_temp->channel_last_readed_index);
-            ZRT_LOG(L_EXTRA, "channel_index=%d", readdir_temp->channel_last_readed_index );
-
-            if ( readdir_temp->channel_last_readed_index != -1 ){
-                /*fetch name from full path*/
-                const char *adding_name = name_from_path_get_path_len(
-                        ( const char*)channels[readdir_temp->channel_last_readed_index].name, &foo );
-
-                int w = put_dirent_into_buf(
-                        buf+retval, bufsize-retval,
-                        INODE_FROM_HANDLE(readdir_temp->channel_last_readed_index),
-                        0, /*d_off*/
-                        adding_name, strlen( adding_name ) );
-                if ( w == -1 ) return retval;
-                retval += w;
-                readdir_temp->channel_last_readed_index++;
-                ZRT_LOG(L_EXTRA, "retval =%d", retval );
-            }
-        }while( readdir_temp->channel_last_readed_index >= 0 );
-        readdir_temp->channel_last_readed_index = -1;
-    }
-
-    return retval;
-}
-
