@@ -11,11 +11,11 @@
 
 #include "zvm.h"
 
+/*reserved channels list*/
 #define DEV_STDIN  "/dev/stdin"
 #define DEV_STDOUT "/dev/stdout"
 #define DEV_STDERR "/dev/stderr"
-#define DEV_IMAGE  "/dev/tarimage"
-//#define DEV_RETCODE_FILE  "/dev/retcode"
+#define DEV_FSTAB  "/dev/fstab"
 
 #define UMASK_ENV "UMASK"
 

@@ -416,7 +416,7 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
 	  original MemMount implementation was used dirent as having constant size */
 	bytes_read += 
 	    put_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
-				 slot, 0,
+				 node->slot(), 0,
 				 node->name().c_str(), node->name().length() );
         ++pos;
     }

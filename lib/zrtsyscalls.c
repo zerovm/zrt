@@ -31,7 +31,8 @@
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
 #include "stream_reader.h"
-#include "unpack_tar.h" //tar unpacker
+#include "fstab_observer.h"
+#include "fstab_loader.h"
 #include "mounts_manager.h"
 #include "mem_mount_wraper.h"
 #include "nacl_struct.h"
@@ -48,8 +49,8 @@
  * fdopen failed, ftell fread
  * */
 
-/*If it's enabled then zrt will try to load tarball from /dev/tarball channel*/
-#define TARBALLFS
+/*/dev/fstab support enable*/
+#define FSTAB_CONF_ENABLE
 
 #ifdef DEBUG
 #define ZRT_LOG_NAME "/dev/debug"
@@ -66,18 +67,6 @@ static struct MountsManager* s_mounts_manager;
 static struct MountsInterface* s_transparent_mount;
 static struct MemoryInterface* s_memory_interface;
 /****************** */
-
-/*return 0 if not valid, 1 if valid*/
-/* static int validate_pointer_range(const void* ptr){ */
-/*     if ( s_manifest && ptr ){ */
-/*         if ( ptr < s_manifest->heap_ptr ){ */
-/*             return 0; */
-/*         } */
-/*         else */
-/*             return 1; */
-/*     }else */
-/*         return 0; */
-/* } */
 
 static inline void update_cached_time()
 {
@@ -951,35 +940,21 @@ void zrt_setup_finally(){
     s_mounts_manager->mount_add( "/", s_mem_mount );
 
     /*explicitly create /dev directory in memmount, it's required for consistent
-      FS structure, readdir now can list /dev dir recursively from root
-     */
+      FS structure, readdir from now can list /dev dir recursively from root */
     s_mem_mount->mkdir( "/dev", 0777 );
 
-#ifdef TARBALLFS
-    /*
-     * *load filesystem from cdr channel. Content of ilesystem is reading from cdr channel that points
-     * to supported archive, read every file and add it contents into MemMount filesystem
-     * */
-    /*create stream reader linked to tar archive that contains filesystem image*/
-    struct StreamReader* stream_reader = alloc_stream_reader( s_channels_mount, DEV_IMAGE );
-
-    if ( stream_reader ){
-        /*create image loader, passed 1st param: image alias, 2nd param: Root filesystem;
-         * Root filesystem passed instead MemMount to reject adding of files into /dev folder;
-         * For example if archive contains non empty /dev folder, that contents will be ignored*/
-        struct ImageInterface* image_loader = alloc_image_loader( s_transparent_mount );
-        /*create archive unpacker, channels_mount is useing to read channel stream*/
-        struct UnpackInterface* tar_unpacker = alloc_unpacker_tar( stream_reader, image_loader->observer_implementation );
-
-        /*read archive from linked channel and add all contents into Filesystem*/
-        int count_files = image_loader->deploy_image( "/", tar_unpacker );
-        ZRT_LOG( L_SHORT, "Added %d files to MemFS", count_files );
-
-        free_unpacker_tar( tar_unpacker );
-        free_image_loader( image_loader );
-        free_stream_reader( stream_reader );
+#ifdef FSTAB_CONF_ENABLE
+    /*Get static fstab observer object, it's memory should not be freed*/
+    struct MFstabObserver* fstab_observer = get_fstab_observer();
+    /*read fstab configuration*/
+    struct FstabLoader* fstab = alloc_fstab_loader( s_channels_mount, s_transparent_mount );
+    /*if readed not null bytes and result not negative then doing parsing*/
+    if ( fstab->read(fstab, DEV_FSTAB) > 0 ){
+        fstab->parse(fstab, fstab_observer);
     }
-    ZRT_LOG_DELIMETER;
+
+    free_fstab_loader(fstab);
 #endif
 }
+
 

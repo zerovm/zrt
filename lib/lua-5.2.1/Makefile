@@ -18,6 +18,7 @@ INSTALL_MAN= $(INSTALL_TOP)/man/man1
 INSTALL_LMOD= $(INSTALL_TOP)/share/lua/$V
 INSTALL_CMOD= $(INSTALL_TOP)/lib/lua/$V
 
+
 # How to install. If your install program does not support "-p", then
 # you may have to run ranlib on the installed liblua.a.
 INSTALL= install -p

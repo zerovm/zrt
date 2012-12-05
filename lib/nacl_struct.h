@@ -10,19 +10,10 @@
 
 #include <sys/stat.h>
 
-#define USE_PADDING
 struct nacl_abi_dirent {
 
     unsigned long long   d_ino;     /*offsets NaCl 0 */
-//#ifdef USE_PADDING
-//    unsigned long padding1;
-//#endif
-
     unsigned long long  d_off;     /*offsets NaCl 8 */
-//#ifdef USE_PADDING
-//    unsigned long padding2;
-//#endif
-
     uint16_t  d_reclen;  /*offsets NaCl 16 */
     char     d_name[];  /*offsets NaCl 18 */
 };

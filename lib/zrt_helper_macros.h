@@ -8,6 +8,9 @@
 #ifndef ZRT_HELPER_MACROS_H_
 #define ZRT_HELPER_MACROS_H_
 
+#define MIN(a,b) (a < b ? a : b )
+#define MAX(a,b) (a < b ? b : a )
+
 #define CHECK_FLAG(flags, flag) ( (flags & (flag)) == (flag)? 1 : 0)
 #define SET_ERRNO(err) {errno=err;ZRT_LOG_ERRNO(errno);}
 

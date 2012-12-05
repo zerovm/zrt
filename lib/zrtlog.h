@@ -30,6 +30,8 @@
 
 #ifdef DEBUG
 #define LOG_BUFFER_SIZE 0x1000
+/*ZRT_LOG
+ v_123 verbosity param, fmt_123 format string, ... arguments*/
 #define ZRT_LOG(v_123, fmt_123, ...){					\
 	int debug_handle_123;						\
 	char *buf__123;							\
