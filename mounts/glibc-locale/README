@@ -1,0 +1,6 @@
+localization data contains two tar images, to get locale working with glibc both tar images should be mounted using /dev/fstab channel.
+
+locale-lib.tar mount point /lib
+locale-share.tar mount point /share
+
+For example of usage see samples/fstab.

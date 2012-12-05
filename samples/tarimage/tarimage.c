@@ -55,21 +55,22 @@ int recursive_listdir( const char *path) {
         return -1;
     }
 
+    int i=0;
     while ( (entry = readdir(dp)) ){
 	int compound_path_len = strlen(path) + strlen(entry->d_name) + 2;
 	char* compound_path = malloc( compound_path_len );
 	int len = strlen(path);
 	/*construct full filename for current processing file returned by readdir*/
 	if ( len > 0 && path[len-1] == '/' ){
-	    /*path already contains trailing slahs*/
+	    /*path already contains trailing slash*/
 	    snprintf( compound_path, compound_path_len,  "%s%s", path, entry->d_name ); 
 	}
 	else{
-	    /*add slahs because subdirs has no that*/
+	    /*add slash because subdirs has no that*/
 	    snprintf( compound_path, compound_path_len, "%s/%s", path, entry->d_name ); 
 	}
 
-	/*retrieve stat for file type and size and assert on error
+	/*retrieve stat for to get file type and size, assert on error
 	 stat should not get fail for now*/
 	int err = stat( compound_path, &s_temp_stat );
 	assert( err == 0 ); 
@@ -104,6 +105,7 @@ int recursive_listdir( const char *path) {
 	if ( S_ISDIR(s_temp_stat.st_mode) && strcmp(path, compound_path) != 0 ){
 	    files_count+=recursive_listdir(compound_path);
 	}
+	//printf("ok count=%d %s\n", ++i, compound_path);
 	free(compound_path);
     }
 
