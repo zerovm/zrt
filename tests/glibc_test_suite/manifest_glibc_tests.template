@@ -6,9 +6,16 @@ Channel = {OUTFILE}.stdout.std, /dev/stdout, 0, 0, 0, 999999, 999999
 ==Channel = /dev/stdout, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {OUTFILE}.stderr.std, /dev/stderr, 0, 0, 0, 999999, 999999
 Channel = {OUTFILE}.zrtdebug.log, /dev/debug, 0, 0, 0, 50999999, 50999999
-Channel = {GLIBC_FS}, /dev/tarimage, 0, 9999999, 9999999, 0, 0
 
 CommandLine = {COMMAND_LINE}
+
+=====================================================================
+== inject tar archives contents into ZRT filesystem using fstab.conf
+=====================================================================
+Channel = {ABS_PATH}fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
+Channel = {ABS_PATH}mounts/tmp_dir.tar, /dev/mount/tmp, 0, 999999, 999999, 0, 0
+Channel = {MOUNTS_PATH}glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999, 999999, 0, 0
+Channel = {MOUNTS_PATH}glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999, 999999, 0, 0
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some

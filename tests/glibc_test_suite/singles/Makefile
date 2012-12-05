@@ -141,12 +141,13 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	@binpatch $@ 4c01fc0f3148c1e2 4c01fc909048c1e2 > /dev/null
 #prepare manifest
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
-	 sed s@{GLIBC_FS}@$(CURDIR)/archive/glibc-fs.tar@g | \
+	 sed s@{ABS_PATH}@$(CURDIR)/@g | \
+	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
 	 sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g | \
 	 sed s@{MEMMAX}@$(MEMMAX)@g | \
 	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).manifest
 #Run test under zerovm and display returned error code
-#$shell should not be used to get test result from file because it unexpectadly
+#$shell should could not be used to get test result from file because it unexpectadly
 #using contents of previosly saved test output, and it is the main reason why using awk;
 #parsing correct output retrieved via pipe
 	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest \

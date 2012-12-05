@@ -28,8 +28,11 @@ lua-5.2.1-tests/math.lua"
 
 #it's will added into tar, to use it as /tmp dir inside nexe
 mkdir tmp
+rm -f mounts/lua-5.2.1-tests.tar
 
 #echo tar -cf lua-5.2.1-tests.tar ${TEST_LIST}
 tar -cf lua-5.2.1-tests.tar $TEST_LIST tmp
 
 rmdir tmp
+mkdir -p mounts
+mv lua-5.2.1-tests.tar mounts/lua-5.2.1-tests.tar
