@@ -25,4 +25,4 @@ NexeMax = 10000000
 MemMax=134217728
 Timeout=10
 NodeName = cdrfs, 1
-==Environment=VERBOSITY, 3
+Environment=VERBOSITY, 3
