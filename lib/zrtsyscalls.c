@@ -950,10 +950,12 @@ void zrt_setup_finally(){
     struct FstabLoader* fstab = alloc_fstab_loader( s_channels_mount, s_transparent_mount );
     /*if readed not null bytes and result not negative then doing parsing*/
     if ( fstab->read(fstab, DEV_FSTAB) > 0 ){
-        fstab->parse(fstab, fstab_observer);
+        int res = fstab->parse(fstab, fstab_observer);
+	ZRT_LOG(L_SHORT, "fstab parse res=%d", res);
     }
 
     free_fstab_loader(fstab);
+    ZRT_LOG_DELIMETER;
 #endif
 }
 

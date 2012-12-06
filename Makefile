@@ -10,6 +10,7 @@ lib/zrtlog.c \
 lib/zrt.c \
 lib/zrtsyscalls.c \
 lib/enum_strings.c \
+lib/helpers/conf_parser.c \
 lib/memory/memory.c \
 lib/fs/fstab_loader.c \
 lib/fs/fstab_observer.c \
@@ -39,7 +40,15 @@ TEST_SUITES=lua_test_suite
 ################# flags set
 CFLAGS = -Wall -Wno-long-long -O2 -m64
 CFLAGS += -Werror-implicit-function-declaration
-CFLAGS += -I. -Ilib -Ilib/memory -Ilib/fs -Ilib/fs/unpack -Ilib/fs/utils -I${ZEROVM_ROOT}/api
+#include paths
+CFLAGS += -I. \
+	-Ilib \
+	-Ilib/memory \
+	-Ilib/helpers \
+	-Ilib/fs \
+	-Ilib/fs/unpack \
+	-Ilib/fs/utils \
+	-I${ZEROVM_ROOT}/api
 CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 

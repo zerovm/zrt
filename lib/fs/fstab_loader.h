@@ -24,6 +24,9 @@
 #endif
 
 #define RECORD_PARAMS_COUNT 2
+#define PARAM_CHANNEL_KEY "channel"
+#define PARAM_MOUNTPOINT_KEY "mountpoint"
+
 
 struct FstabLoader{
     /*read fstab file*/
