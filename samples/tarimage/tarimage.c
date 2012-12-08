@@ -55,7 +55,6 @@ int recursive_listdir( const char *path) {
         return -1;
     }
 
-    int i=0;
     while ( (entry = readdir(dp)) ){
 	int compound_path_len = strlen(path) + strlen(entry->d_name) + 2;
 	char* compound_path = malloc( compound_path_len );
