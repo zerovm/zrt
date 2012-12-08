@@ -935,7 +935,7 @@ void zrt_setup_finally(){
     /*create mem mount*/
     s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
 
-    /*Mount channels filesystem as root*/
+    /*Mount filesystems*/
     s_mounts_manager->mount_add( "/dev", s_channels_mount );
     s_mounts_manager->mount_add( "/", s_mem_mount );
 

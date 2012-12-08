@@ -22,13 +22,14 @@
 
 
 int fstab_read(struct FstabLoader* fstab, const char* fstab_file_name){
+    ssize_t read_bytes=0;
     /*open fstab file and read a whole content in a single read operation*/
     int fd = open(fstab_file_name, O_RDONLY);
-    ssize_t read_bytes = read( fd, fstab->fstab_contents, FSTAB_MAX_FILE_SIZE);
-    close(fd);
-    if ( read_bytes > 0 ){
-        fstab->fstab_size = read_bytes;
+    if ( fd>0 ){
+	read_bytes = read( fd, fstab->fstab_contents, FSTAB_MAX_FILE_SIZE);
+	close(fd);
     }
+    fstab->fstab_size = read_bytes;
     return read_bytes;
 }
 

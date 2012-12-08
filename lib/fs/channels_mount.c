@@ -41,19 +41,19 @@ struct ZrtChannelRt{
 
 /*0 if check OK*/
 #define CHECK_NEW_POS(offset) ((offset) < 0 ? -1: 0)
-#define SET_SAFE_OFFSET( whence, pos_p, offset ) \
-        if ( EPosSetRelative == whence ){ \
-            if ( CHECK_NEW_POS( *pos_p+offset ) == -1 ) \
-            { SET_ERRNO( EOVERFLOW ); return -1; } \
-            else return *pos_p +=offset; } \
-            else{ \
-                if ( CHECK_NEW_POS( offset ) == -1 ) \
-                { SET_ERRNO( EOVERFLOW ); return -1; } \
-                else return *pos_p  =offset; }
+#define SET_SAFE_OFFSET( whence, pos_p, offset )	\
+    if ( EPosSetRelative == whence ){			\
+	if ( CHECK_NEW_POS( *pos_p+offset ) == -1 )	\
+            { SET_ERRNO( EOVERFLOW ); return -1; }	\
+	else return *pos_p +=offset; }			\
+    else{						\
+	if ( CHECK_NEW_POS( offset ) == -1 )		\
+	    { SET_ERRNO( EOVERFLOW ); return -1; }	\
+	else return *pos_p  =offset; }
 
 
 
-#define CHANNEL_SIZE(handle) s_zrt_channels[handle] ? \
+#define CHANNEL_SIZE(handle) s_zrt_channels[handle] ?			\
     MAX( s_zrt_channels[handle]->maxsize, s_channels_list[handle].size ) : s_channels_list[handle].size;
 
 #define CHANNEL_ASSERT_IF_FAIL( handle )  assert( handle >=0 && handle < s_channels_count )
@@ -184,11 +184,11 @@ static uint32_t channel_permissions(const struct ZVMChannel *channel){
     if ( channel->limits[PutsLimit] != 0 && channel->limits[PutSizeLimit] )
         perm |= S_IWUSR;
     if ( (channel->type == SGetSPut && ( (perm&S_IRWXU)==S_IRUSR || (perm&S_IRWXU)==S_IWUSR )) ||
-            (channel->type == RGetSPut && (perm&S_IRWXU)==S_IWUSR ) ||
-            (channel->type == SGetRPut && (perm&S_IRWXU)==S_IRUSR ) )
-    {
-        perm |= S_IFCHR;
-    }
+	 (channel->type == RGetSPut && (perm&S_IRWXU)==S_IWUSR ) ||
+	 (channel->type == SGetRPut && (perm&S_IRWXU)==S_IRUSR ) )
+	{
+	    perm |= S_IFCHR;
+	}
     else{
         perm |= S_IFBLK;
     }
@@ -197,7 +197,7 @@ static uint32_t channel_permissions(const struct ZVMChannel *channel){
 
 
 static int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_channel,
-        int8_t whence, int8_t access, int64_t offset ){
+						  int8_t whence, int8_t access, int64_t offset ){
     /*seek get supported by channel for any modes*/
     if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
     switch ( access ){
@@ -217,24 +217,24 @@ static int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_chann
 
 
 static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_channel,
-        int8_t whence, int8_t access, int64_t offset ){
+						  int8_t whence, int8_t access, int64_t offset ){
     switch ( access ){
     case EPosSeek:
         if ( CHECK_FLAG( zrt_channel->flags, O_RDONLY )
-                || CHECK_FLAG( zrt_channel->flags, O_RDWR ) )
-        {
-            if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-            SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
-        }
+	     || CHECK_FLAG( zrt_channel->flags, O_RDWR ) )
+	    {
+		if ( EPosGet == whence ) return zrt_channel->random_access_pos;
+		SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+	    }
         else if ( CHECK_FLAG( zrt_channel->flags, O_WRONLY ) == 1 )
-        {
-            if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-            else{
-                /*it's does not supported for seeking sequential write*/
-                SET_ERRNO( ESPIPE );
-                return -1;
-            }
-        }
+	    {
+		if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
+		else{
+		    /*it's does not supported for seeking sequential write*/
+		    SET_ERRNO( ESPIPE );
+		    return -1;
+		}
+	    }
         break;
     case EPosRead:
         if ( EPosGet == whence ) return zrt_channel->random_access_pos;
@@ -251,24 +251,24 @@ static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_chann
 }
 
 static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channel,
-        int8_t whence, int8_t access, int64_t offset){
+						 int8_t whence, int8_t access, int64_t offset){
     switch ( access ){
     case EPosSeek:
         if ( CHECK_FLAG( zrt_channel->flags, O_WRONLY ) == 1
-                || CHECK_FLAG( zrt_channel->flags, O_RDWR ) == 1 )
-        {
-            if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-            SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
-        }
+	     || CHECK_FLAG( zrt_channel->flags, O_RDWR ) == 1 )
+	    {
+		if ( EPosGet == whence ) return zrt_channel->random_access_pos;
+		SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+	    }
         else if ( CHECK_FLAG( zrt_channel->flags, O_RDONLY )  == 1)
-        {
-            if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-            else{
-                /*it's does not supported for seeking sequential read*/
-                SET_ERRNO( ESPIPE );
-                return -1;
-            }
-        }
+	    {
+		if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
+		else{
+		    /*it's does not supported for seeking sequential read*/
+		    SET_ERRNO( ESPIPE );
+		    return -1;
+		}
+	    }
         break;
     case EPosRead:
         if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
@@ -285,7 +285,7 @@ static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channe
 }
 
 static int64_t channel_pos_random_get_random_put(struct ZrtChannelRt *zrt_channel,
-        int8_t whence, int8_t access, int64_t offset){
+						 int8_t whence, int8_t access, int64_t offset){
     if ( EPosGet == whence ) return zrt_channel->random_access_pos;
     switch ( access ){
     case EPosSeek:
@@ -380,7 +380,7 @@ static void set_stat(struct stat *stat, int fd)
     stat->st_blksize = blksize;        /* block size for file system I/O */
     stat->st_size = size;
     stat->st_blocks =               /* number of 512B blocks allocated */
-            ((stat->st_size + stat->st_blksize - 1) / stat->st_blksize) * stat->st_blksize / 512;
+	((stat->st_size + stat->st_blksize - 1) / stat->st_blksize) * stat->st_blksize / 512;
 
     set_stat_timestamp( stat );
 }
@@ -407,7 +407,7 @@ int iterate_dir_contents( int dir_handle, int index,
         loop_d = &s_manifest_dirs.dir_array[i];
         /*match all subsets, exclude the same dir path*/
         if ( ! strncmp(dir_pattern->path, loop_d->path, namelen) && 
-	       strlen(loop_d->path) > namelen+1 ){
+	     strlen(loop_d->path) > namelen+1 ){
             /*if can't locate trailing '/' then matched subdir*/
             char *backslash_matched = strchr( &loop_d->path[namelen+1], '/');
             if ( !backslash_matched ){
@@ -432,7 +432,7 @@ int iterate_dir_contents( int dir_handle, int index,
     for( i=0; i < s_channels_count; i++ ){
         /*match all subsets for dir path*/
         if ( ! strncmp(dir_pattern->path, s_channels_list[i].name, dirlen) && 
-	       strlen(s_channels_list[i].name) > dirlen+1 ){
+	     strlen(s_channels_list[i].name) > dirlen+1 ){
             /*if can't locate trailing '/' then matched directory file*/
             char *backslash_matched = strchr( &s_channels_list[i].name[dirlen+1], '/');
             if ( !backslash_matched ){
@@ -517,13 +517,13 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
 
     /*case: file not opened, bad descriptor*/
     if ( is_channel_handle(fd) == 0  ||
-            !s_zrt_channels[fd] ||
-            s_zrt_channels[fd]->flags < 0 )
-    {
-        ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
-        SET_ERRNO( EBADF );
-        return -1;
-    }
+	 !s_zrt_channels[fd] ||
+	 s_zrt_channels[fd]->flags < 0 )
+	{
+	    ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
+	    SET_ERRNO( EBADF );
+	    return -1;
+	}
     CHANNEL_ASSERT_IF_FAIL(fd);
     ZRT_LOG(L_INFO, "channel name=%s", s_channels_list[fd].name );
     debug_mes_zrt_channel_runtime( fd );
@@ -531,11 +531,11 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
     /*check if file was not opened for reading*/
     int flags= s_zrt_channels[fd]->flags;
     if ( flags != O_RDONLY && flags != O_RDWR  )
-    {
-        ZRT_LOG(L_ERROR, "file open_mode=%s not allowed read", FILE_OPEN_FLAGS(flags));
-        SET_ERRNO( EINVAL );
-        return -1;
-    }
+	{
+	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed read", FILE_OPEN_FLAGS(flags));
+	    SET_ERRNO( EINVAL );
+	    return -1;
+	}
 
     int64_t pos = channel_pos(fd, EPosGet, EPosRead, 0);
     if ( CHECK_NEW_POS( pos+nbyte ) != 0 ){
@@ -564,13 +564,13 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
 
     /*file not opened, bad descriptor*/
     if ( is_channel_handle(fd) == 0 ||
-            !s_zrt_channels[fd] ||
-            s_zrt_channels[fd]->flags < 0  )
-    {
-        ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
-        SET_ERRNO( EBADF );
-        return -1;
-    }
+	 !s_zrt_channels[fd] ||
+	 s_zrt_channels[fd]->flags < 0  )
+	{
+	    ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
+	    SET_ERRNO( EBADF );
+	    return -1;
+	}
 
     CHANNEL_ASSERT_IF_FAIL(fd);
     ZRT_LOG( L_EXTRA, "channel name=%s", s_channels_list[fd].name );
@@ -579,11 +579,11 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
     /*if file was not opened for writing, set errno and get error*/
     int flags= s_zrt_channels[fd]->flags;
     if ( flags != O_WRONLY && flags != O_RDWR  )
-    {
-        ZRT_LOG(L_ERROR, "file open_mode=%s not allowed write", FILE_OPEN_FLAGS(flags));
-        SET_ERRNO( EINVAL );
-        return -1;
-    }
+	{
+	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed write", FILE_OPEN_FLAGS(flags));
+	    SET_ERRNO( EINVAL );
+	    return -1;
+	}
 
     int64_t pos = channel_pos(fd, EPosGet, EPosWrite, 0);
     if ( CHECK_NEW_POS( pos+nbyte ) != 0 ){
@@ -606,11 +606,11 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
     CHANNEL_ASSERT_IF_FAIL(fd);
     int8_t access_type = s_channels_list[fd].type;
     if ( CHECK_FLAG(s_zrt_channels[fd]->flags, O_WRONLY ) &&
-            (access_type == SGetRPut || access_type == RGetRPut) )
-    {
-        s_zrt_channels[fd]->maxsize = channel_pos(fd, EPosGet, EPosWrite, 0);
-        ZRT_LOG(L_EXTRA, "Set channel size=%lld", s_zrt_channels[fd]->maxsize );
-    }
+	 (access_type == SGetRPut || access_type == RGetRPut) )
+	{
+	    s_zrt_channels[fd]->maxsize = channel_pos(fd, EPosGet, EPosWrite, 0);
+	    ZRT_LOG(L_EXTRA, "Set channel size=%lld", s_zrt_channels[fd]->maxsize );
+	}
 
     return wrote;
 }
@@ -693,26 +693,30 @@ static int channels_close(int fd){
 
     /*if valid fd and file was opened previously then perform file close*/
     if ( is_channel_handle(fd) != 0 &&
-            s_zrt_channels[fd] && s_zrt_channels[fd]->flags >=0  )
-    {
-        s_zrt_channels[fd]->random_access_pos = s_zrt_channels[fd]->sequential_access_pos = 0;
-        s_zrt_channels[fd]->maxsize = 0;
-        s_zrt_channels[fd]->flags = -1;
-        ZRT_LOG(L_EXTRA, "closed channel=%s", s_channels_list[fd].name );
-        //zvm_close(fd);
-        return 0;
-    }
+	 s_zrt_channels[fd] && s_zrt_channels[fd]->flags >=0  )
+	{
+	    s_zrt_channels[fd]->random_access_pos 
+		= s_zrt_channels[fd]->sequential_access_pos = 0;
+	    s_zrt_channels[fd]->maxsize = 0;
+	    s_zrt_channels[fd]->flags = -1;
+	    ZRT_LOG(L_EXTRA, "closed channel=%s", s_channels_list[fd].name );
+	    //zvm_close(fd);
+	    return 0;
+	}
     else{ /*search fd in directories list*/
         int i;
         for ( i=0; i < s_manifest_dirs.dircount; i++ ){
             /*if matched fd*/
             if ( s_manifest_dirs.dir_array[i].handle == fd &&
-                    s_manifest_dirs.dir_array[i].flags >= 0 )
-            {
-                /*close opened dir*/
-                s_manifest_dirs.dir_array[i].flags = -1;
-                return 0;
-            }
+		 s_manifest_dirs.dir_array[i].flags >= 0 )
+		{
+		    /*close opened dir*/
+		    s_manifest_dirs.dir_array[i].flags = -1;
+		    /*reset offset of last directory i/o operations*/
+		    off_t offset = 0;
+		    s_handle_allocator->set_offset(fd, offset );
+		    return 0;
+		}
         }
         /*no matched open dir fd*/
         SET_ERRNO( EBADF );
@@ -737,26 +741,26 @@ static off_t channels_lseek(int fd, off_t offset, int whence){
 	    s_channels_list[fd].name, SEEK_WHENCE(whence) );
 
     switch(whence)
-    {
-    case SEEK_SET:
-        offset = channel_pos(fd, EPosSetAbsolute, EPosSeek, offset );
-        break;
-    case SEEK_CUR:
-        if ( !offset )
-            offset = channel_pos(fd, EPosGet, EPosSeek, offset );
-        else
-            offset = channel_pos(fd, EPosSetRelative, EPosSeek, offset );
-        break;
-    case SEEK_END:{
-        off_t size = CHANNEL_SIZE(fd);
-        /*use runtime size instead static size in zvm channel*/
-        offset = channel_pos(fd, EPosSetAbsolute, EPosSeek, size + offset );
-        break;
-    }
-    default:
-        SET_ERRNO( EPERM ); /* in advanced version should be set to conventional value */
-        return -1;
-    }
+	{
+	case SEEK_SET:
+	    offset = channel_pos(fd, EPosSetAbsolute, EPosSeek, offset );
+	    break;
+	case SEEK_CUR:
+	    if ( !offset )
+		offset = channel_pos(fd, EPosGet, EPosSeek, offset );
+	    else
+		offset = channel_pos(fd, EPosSetRelative, EPosSeek, offset );
+	    break;
+	case SEEK_END:{
+	    off_t size = CHANNEL_SIZE(fd);
+	    /*use runtime size instead static size in zvm channel*/
+	    offset = channel_pos(fd, EPosSetAbsolute, EPosSeek, size + offset );
+	    break;
+	}
+	default:
+	    SET_ERRNO( EPERM ); /* in advanced version should be set to conventional value */
+	    return -1;
+	}
 
     /*
      * return current position in a special way since 64 bits
@@ -855,37 +859,37 @@ static int channels_fchown(int f, uid_t u, gid_t g){
 
 /*filesystem interface initialisation*/
 static struct MountsInterface s_channels_mount = {
-        channels_chown,
-        channels_chmod,
-        channels_stat,
-        channels_mkdir,
-        channels_rmdir,
-        channels_umount,
-        channels_mount,
-        channels_read,
-        channels_write,
-        channels_fchown,
-        channels_fchmod,
-        channels_fstat,
-        channels_getdents,
-        channels_fsync,
-        channels_close,
-        channels_lseek,
-        channels_open,
-	channels_fcntl,
-        channels_remove,
-        channels_unlink,
-        channels_access,
-        channels_isatty,
-        channels_dup,
-        channels_dup2,
-        channels_link,
-        EChannelsMountId
+    channels_chown,
+    channels_chmod,
+    channels_stat,
+    channels_mkdir,
+    channels_rmdir,
+    channels_umount,
+    channels_mount,
+    channels_read,
+    channels_write,
+    channels_fchown,
+    channels_fchmod,
+    channels_fstat,
+    channels_getdents,
+    channels_fsync,
+    channels_close,
+    channels_lseek,
+    channels_open,
+    channels_fcntl,
+    channels_remove,
+    channels_unlink,
+    channels_access,
+    channels_isatty,
+    channels_dup,
+    channels_dup2,
+    channels_link,
+    EChannelsMountId
 };
 
 
 struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_allocator,
-        const struct ZVMChannel* channels, int channels_count ){
+					      const struct ZVMChannel* channels, int channels_count ){
     s_handle_allocator = handle_allocator;
     s_channels_list = channels;
     s_channels_count = channels_count;
@@ -918,9 +922,9 @@ struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_all
     int i;
     for ( i=0; i < s_manifest_dirs.dircount; i++ ){
         ZRT_LOG( L_EXTRA, "dir[%d].handle=%d; .path=%s; .nlink=%d", i,
-                s_manifest_dirs.dir_array[i].handle,
-                s_manifest_dirs.dir_array[i].path,
-                s_manifest_dirs.dir_array[i].nlink);
+		 s_manifest_dirs.dir_array[i].handle,
+		 s_manifest_dirs.dir_array[i].path,
+		 s_manifest_dirs.dir_array[i].nlink);
     }
 #endif
 

@@ -17,6 +17,7 @@
 #include <dirent.h>
 #include <assert.h>
 
+#include "zrtlog.h"
 #include "helpers/dyn_array.h"
 #include "channels_conf_reader.h"
 #include "channels_conf.h"
@@ -61,21 +62,30 @@ int AddAllChannelsRelatedToNodeTypeFromDir( struct ChannelsConfigInterface *chan
     int fd=-1;
     /***********************************************************************
      open in channel, readed from /dev/in dir */
+    ZRT_LOG(L_SHORT, "Add directory=%s content items matched by pattern=%s", 
+	    dirpath, nodename_text);
     DIR *dp = opendir( dirpath );
     while ( (readdir_get_name=listdir(dp)) && !res ){
         /*fetch node type name and node identifier*/
         extracted_nodeid = ExtractNodeNameId( readdir_get_name, &extracted_len );
-        /*if nodenames are equal*/
-        if ( extracted_len == strlen(nodename_text) && !strncmp(nodename_text, readdir_get_name, extracted_len ) )
+        /*if iterated directory item matched with nodename pattern
+	 *then extract handle of that directory item by opening of it's file
+	 *and add it to channels config*/
+	ZRT_LOG(L_EXTRA, "directory item=%s, len=%d", readdir_get_name, extracted_len );
+        if ( extracted_len == strlen(nodename_text) 
+	     && 
+	     !strncmp(nodename_text, readdir_get_name, extracted_len ) )
         {
             snprintf( s_temp_path, MAX_PATH_LENGTH, "%s/%s", dirpath, readdir_get_name );
             if ( channel_mode == EChannelModeWrite )
                 fd = open( s_temp_path, O_WRONLY); /*open channel fetched from manifest configuration*/
             else
                 fd = open( s_temp_path, O_RDONLY); /*open channel fetched from manifest configuration*/
+	    ZRT_LOG(L_SHORT, "matched item=%s by pattern=%s", readdir_get_name, nodename_text);
             assert(fd>=0);
             if ( extracted_nodeid == -1 ) extracted_nodeid = 1; /*for single node without id*/
-            if( chan_if->AddChannel( chan_if, nodetype, extracted_nodeid, fd, channel_mode ) == NULL ){
+            if( chan_if->AddChannel( chan_if, nodetype, extracted_nodeid, fd, channel_mode ) 
+		== NULL ){
                 res=-1;
                 break;
             }
@@ -83,6 +93,7 @@ int AddAllChannelsRelatedToNodeTypeFromDir( struct ChannelsConfigInterface *chan
     }
 
     closedir(dp);
+    ZRT_LOG(L_SHORT, "channels added to config, res=%d by pattern=%s", res, nodename_text);
     return res;
 }
 

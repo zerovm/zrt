@@ -74,8 +74,8 @@ const char* strip_all(const char* str, int len, uint16_t* striped_len ){
         if ( str[begin] != ' ' && str[begin] != '\t' && str[begin] != '\n' ) break;
     }
     /*strip from end*/
-    for( end=len-1; len >= 0; len-- ){
-        if ( str[end] != ' ' && str[end] != '\t' && str[begin] != '\n' ) break;
+    for( end=len-1; len > 0; end-- ){
+        if ( str[end] != ' ' && str[end] != '\t' && str[end] != '\n' ) break;
     }
     *striped_len = end-begin+1;
     return MAX(0, str+begin);
@@ -211,6 +211,12 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
         case EStToken:{
 	    ZRT_LOG(L_INFO, "swicth EStToken: lex_cursor=%d, lex_length=%d, pointer=%p", 
 		    lex_cursor, lex_length, &text[lex_cursor]);
+	    /*log non-striped lexema*/
+	    char* non_striped_lexem_text = calloc(lex_length+1, 1);
+	    memcpy(non_striped_lexem_text, &text[lex_cursor], lex_length);
+	    ZRT_LOG(L_SHORT, "lex= '%s'", non_striped_lexem_text);
+	    free(non_striped_lexem_text);
+
 	    uint16_t striped_token_len=0;
 	    const char* striped_token = 
 		strip_all(&text[lex_cursor], lex_length, &striped_token_len );
@@ -218,7 +224,7 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 		    striped_token_len, striped_token);
 	    /*If token has data, try to extract key and value*/
 	    if ( striped_token_len > 0 ){
-		/*log token*/
+		/*log striped token*/
 		char* token_text = calloc(striped_token_len+1, 1);
 		memcpy(token_text, striped_token, striped_token_len);
 		ZRT_LOG(L_SHORT, "token= '%s'", token_text);

@@ -11,13 +11,14 @@
 #include <stddef.h>
 #include <assert.h>
 
+#include "zrtlog.h"
 #include "helpers/dyn_array.h"
 #include "channels_conf.h"
 
 void DebugPrint( struct UserChannel *channel, FILE* out ){
     fprintf( out, "channel nodetype=%d, nodeid=%d, fd=%d, mode=%s\n",
-        channel->nodetype, channel->nodeid, channel->fd,
-        channel->mode == EChannelModeRead ? "EChannelModeRead" : "EChannelModeWrite" );
+	     channel->nodetype, channel->nodeid, channel->fd,
+	     channel->mode == EChannelModeRead ? "EChannelModeRead" : "EChannelModeWrite" );
 }
 
 static int
@@ -26,10 +27,10 @@ cmp_by_node_type_and_id(const void *p1, const void *p2)
     struct UserChannel** c1 = (struct UserChannel**)p1;
     struct UserChannel** c2 = (struct UserChannel**)p2;
 
-    if       ( (*c1)->nodetype < (*c2)->nodetype ) return -1;
+    if      ( (*c1)->nodetype < (*c2)->nodetype ) return -1;
     else if ( (*c1)->nodetype > (*c2)->nodetype ) return  1;
-   else{
-        if       ( (*c1)->nodeid < (*c2)->nodeid ) return -1;
+    else{
+        if      ( (*c1)->nodeid < (*c2)->nodeid ) return -1;
         else if ( (*c1)->nodeid > (*c2)->nodeid ) return  1;
         else return 0;
     }
@@ -48,7 +49,7 @@ void Free(struct ChannelsConfigInterface *ch_if){
 }
 
 struct UserChannel *AddChannel(struct ChannelsConfigInterface *ch_if,
-        int nodetype, int nodeid, int channelfd, ChannelMode mode )
+			       int nodetype, int nodeid, int channelfd, ChannelMode mode )
 {
     struct UserChannel *channel = NULL;
     int res=0;
@@ -70,12 +71,14 @@ struct UserChannel *AddChannel(struct ChannelsConfigInterface *ch_if,
     return channel;
 }
 
-int GetNodesListByType( const struct ChannelsConfigInterface *ch_if, int nodetype, int **nodes_array ){
+int GetNodesListByType( const struct ChannelsConfigInterface *ch_if, 
+			int nodetype, 
+			int **nodes_array ){
     int count_rchan = 0;
     int count_wchan = 0;
     int i=0;
 
-    /*calculate nodes count for two groups of nodes and select maximum */
+    /*calculate nodes count for two groups (read,write) of nodes and select maximum */
     for ( i=0; i < ch_if->channels->num_entries; i++  ){
         struct UserChannel *channel = DynArrayGet(ch_if->channels, i );
         if ( channel->nodetype == nodetype && channel->mode == EChannelModeRead )
@@ -95,7 +98,9 @@ int GetNodesListByType( const struct ChannelsConfigInterface *ch_if, int nodetyp
     }
 
     /*sort to get ascending nodeid array*/
-    qsort( ch_if->channels->ptr_array, ch_if->channels->num_entries,sizeof(struct UserChannel*), cmp_by_node_type_and_id );
+    qsort( ch_if->channels->ptr_array, 
+	   ch_if->channels->num_entries,sizeof(struct UserChannel*), 
+	   cmp_by_node_type_and_id );
 
     count_rchan = 0;
     for ( i=0; i < ch_if->channels->num_entries; i++  ){
@@ -104,12 +109,12 @@ int GetNodesListByType( const struct ChannelsConfigInterface *ch_if, int nodetyp
             (*nodes_array)[count_rchan++] = channel->nodeid;
         }
     }
-	return count_rchan;
+    return count_rchan;
 }
 
 
 struct UserChannel *Channel(struct ChannelsConfigInterface *ch_if, int nodetype, int nodeid, int8_t channelmode){
-	struct UserChannel *ch = NULL;
+    struct UserChannel *ch = NULL;
     for ( int i=0; i < ch_if->channels->num_entries; i++ ){
         ch = DynArrayGet(ch_if->channels, i);
         if( ch && ch->nodetype == nodetype && ch->nodeid == nodeid && ch->mode == channelmode ){
@@ -117,17 +122,17 @@ struct UserChannel *Channel(struct ChannelsConfigInterface *ch_if, int nodetype,
             return ch;
         }
     }
-	return NULL;
+    return NULL;
 }
 
 
 void SetupChannelsConfigInterface( struct ChannelsConfigInterface *ch_if, int ownnodeid, int ownnodetype  ){
-	memset( ch_if, '\0', sizeof(*ch_if) );
-	ch_if->AddChannel = AddChannel;
-	ch_if->Channel = Channel;
-	ch_if->GetNodesListByType = GetNodesListByType;
-	ch_if->Free = Free;
-	ch_if->ownnodeid = ownnodeid;
-	ch_if->ownnodetype = ownnodetype;
+    memset( ch_if, '\0', sizeof(*ch_if) );
+    ch_if->AddChannel = AddChannel;
+    ch_if->Channel = Channel;
+    ch_if->GetNodesListByType = GetNodesListByType;
+    ch_if->Free = Free;
+    ch_if->ownnodeid = ownnodeid;
+    ch_if->ownnodetype = ownnodetype;
 }
 

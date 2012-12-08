@@ -1,5 +1,5 @@
 include $(ZRT_ROOT)/Makefile.env
-CFLAGS+=-std=c99
+CFLAGS+=-std=c99 -DDEBUG
 
 all: libmapreduce.a
 

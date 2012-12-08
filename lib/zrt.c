@@ -29,7 +29,6 @@
  * initialize zerovm api, get the user manifest, install syscallback
  * and invoke user code
  */
-//__attribute__((externally_visible))
 int main(int argc, char** argv, char** envp)
 {
     int i;
@@ -49,6 +48,14 @@ int main(int argc, char** argv, char** envp)
     ZRT_LOG(L_SHORT, "sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel));
     ZRT_LOG(L_SHORT, "channels count = %d", setup->channels_count);
     ZRT_LOG_DELIMETER;
+    /*print environment variables*/
+    i=0;
+    while( envp[i] ){
+        ZRT_LOG(L_SHORT, "envp[%d] = '%s'", i, envp[i]);
+	++i;
+    }
+    ZRT_LOG_DELIMETER;
+    /*print channels list*/
     for(i = 0; i < setup->channels_count; ++i)
     {
         ZRT_LOG(L_SHORT, "channel[%d].name = '%s'", i, setup->channels[i].name);
