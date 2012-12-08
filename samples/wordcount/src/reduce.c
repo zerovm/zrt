@@ -43,7 +43,8 @@ int zmain(int argc, char **argv){
     ownnodeid = ExtractNodeNameId( argv[1], &extracted_name_len );
     /*nodename should be the same we got via environment and extracted from argv[0]*/
     assert( !strncmp(red_node_type_text, argv[1], extracted_name_len ) );
-    if ( ownnodeid == -1 ) ownnodeid=1; /*node id not specified for single node by default assign nodeid=1*/
+    /*node id not specified for single node by default assign nodeid=1*/
+    if ( ownnodeid == -1 ) ownnodeid=1; 
 
     /*setup channels conf, now used static data but should be replaced by data from zrt*/
     struct ChannelsConfigInterface chan_if;
