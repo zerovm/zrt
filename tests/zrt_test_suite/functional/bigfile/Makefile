@@ -10,7 +10,8 @@ $(NAME).nexe: $(NAME).o
 run:
 	chmod u+rwx genmanifest.sh
 	./genmanifest.sh
-	@$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -v4
+#note that zerovm option -l6 is used because working with big file
+	@$(ZEROVM_ROOT)/zerovm -M$(NAME).manifest -l6 -v4
 	cat stdout.data
 
 clean:

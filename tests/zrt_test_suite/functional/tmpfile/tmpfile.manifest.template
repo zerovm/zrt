@@ -1,0 +1,24 @@
+=====================================================================
+== "tmpfile" example. 
+=====================================================================
+Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
+Channel = /dev/null, /dev/stdout, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
+
+=====================================================================
+== mounts
+=====================================================================
+Channel = {ABS_PATH}mounts/fstab.conf, /dev/fstab, 0 , 9999, 9999, 0,0
+Channel = {ZRT_MOUNTS_PATH}empty/empty.tar, /dev/mount/empty, 0 , 9999, 9999, 0,0
+
+=====================================================================
+== switches for zerovm. some of them used to control nexe, some
+== for the internal zerovm needs
+=====================================================================
+Version = 09082012
+Nexe = {ABS_PATH}tmpfile.nexe
+MemMax=134217728
+Timeout=20
+NodeName=seek, 1
+
