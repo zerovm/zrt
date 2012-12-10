@@ -1,7 +1,9 @@
 include $(ZRT_ROOT)/Makefile.env
 CFLAGS+=-std=c99 -g -DDEBUG
 
-LDFLAGS+=-llua -lm -lsqlite3
+#it's significant to add zrt library just after lua library,
+#it's needed to correctly link glibc substitute functions
+LDFLAGS+=-llua -lzrt -lm -lsqlite3
 
 all: createdirs clean zshell.nexe
 

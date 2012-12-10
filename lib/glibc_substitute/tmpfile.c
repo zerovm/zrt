@@ -58,8 +58,6 @@ tmpfile (void)
 
 	/* Create an unnamed file in the temporary directory.  */
 	f = fopen(tempfilename, "w+b");
-	if (!f)
-	    return NULL;
     }
     return f;
 }

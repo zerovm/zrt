@@ -12,6 +12,7 @@ lib/zrtsyscalls.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
 lib/memory/memory.c \
+lib/glibc_substitute/tmpfile.c \
 lib/fs/fstab_loader.c \
 lib/fs/fstab_observer.c \
 lib/fs/mounts_manager.c \

@@ -3,7 +3,9 @@ include $(ZRT_ROOT)/Makefile.env
 NAME=lua
 SRC_PATH=$(ZRT_ROOT)/lib/lua-5.2.1/src/not_for_lib
 CFLAGS+=-O2 -I$(ZRT_ROOT)/lib/lua-5.2.1/src 
-LDFLAGS+=-llua -lm
+#it's significant to add zrt library just after lua library,
+#it's needed to correctly link glibc substitute functions
+LDFLAGS+=-llua -lzrt -lm
 
 all: $(NAME).nexe run
 
