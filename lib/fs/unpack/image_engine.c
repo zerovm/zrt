@@ -97,6 +97,7 @@ static struct UnpackObserver s_unpack_observer = {
 static int deploy_image( const char* mount_path, struct UnpackInterface* unpacker ){
     assert(unpacker);
     ZRT_LOG(L_SHORT, "mount_path=%s", mount_path );
+    mkdir(mount_path, 0700);
     return unpacker->unpack( unpacker, mount_path );
 }
 

@@ -505,6 +505,7 @@ static int32_t zrt_stat(uint32_t *args)
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
     VALIDATE_SYSCALL_PTR(file);
     VALIDATE_SYSCALL_PTR(sbuf);
+    ZRT_LOG(L_SHORT, "file=%s", file);
     struct stat st;
     char* absolute_path = alloc_absolute_path_from_relative(file);
     int ret = s_transparent_mount->stat(absolute_path, &st);
