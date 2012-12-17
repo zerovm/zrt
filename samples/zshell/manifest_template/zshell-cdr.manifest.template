@@ -4,7 +4,7 @@
 Channel = {SCRIPT_FILE_PATH}, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {OUTPUT_FILE_PATH}, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {LOG_FILE_PATH}, /dev/stderr, 0, 0, 0, 9999999, 9999999
-Channel = {DATA_FILE_PATH}, /dev/input, 0, 999999, 999999, 0, 0
+Channel = {DATA_FILE_PATH}, /dev/cdr, 1, 999999, 999999, 9999999, 999999
 Channel = {DEBUG_FILE_PATH}, /dev/debug, 0, 0, 0, 9999999, 9999999
 
 =====================================================================

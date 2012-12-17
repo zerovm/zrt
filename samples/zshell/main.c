@@ -104,16 +104,29 @@ int zmain(int argc, char **argv){
     /*For SQLITE we are waiting an argv[1] param and interpret it as DB filename*/
     else if ( !strncmp( SQLITE_ID, buffer, strlen(SQLITE_ID) ) && 
 	      newlinepos > 0 ){
-	if ( argc < 2 ){
-	    fprintf( stderr, "Error:SQLite required cmd line argument as db filename\n");
+	if ( argc < 3 ){
+	    fprintf( stderr, "Error:SQLite required cmd line "
+		     "1st argument as db filename "
+		     "2nd arg string: "
+		     "'ro' -readonly DB or "
+		     "'rw'- writable DB, without quotes.\n");
 	}
 	else{
-	    errcode = 
-		run_sql_query_buffer( 
-				     argv[1],         /*db filename*/
-				     script_contents, /*pos starting with script data*/
-				     script_buf_size  /*script data size*/
-				      );
+	    int open_mode = EDbWrong;
+	    if ( !strcasecmp("ro", argv[2]) )
+		open_mode = EDbReadOnly;
+	    else if ( !strcasecmp("rw", argv[2]) )
+		open_mode = EDbReWritable;
+	    else{
+		fprintf( stderr, 
+			 "error: 2nd argument has wrong name '%s'.\n", argv[2] );
+	    }
+	    run_sql_query_buffer( 
+				 argv[1],         /*db filename*/
+				 open_mode,       /*db open mode readonly/writable*/
+				 script_contents, /*pos starting with script data*/
+				 script_buf_size  /*script data size*/
+				  );
 	}
     }
     else{

@@ -16,6 +16,7 @@
 
 #include "sqlite3/sqlite3.h"
 #include "sqlite3/vfs_channel.h" //sqlite virtual file system
+#include "zshell.h"
 
 #define STDIN 0
 #define STDERR 2
@@ -52,7 +53,7 @@ int sqlite_pragma (sqlite3* db, const char* request){
     return rc;
 }
 
-int open_db(const char* path, sqlite3** db)
+int open_db(const char* path, int open_mode, sqlite3** db)
 {
     int rc=0;
 
@@ -64,6 +65,7 @@ int open_db(const char* path, sqlite3** db)
     /*if READ_ONLY  character device or block device specified
      *trying to open channel described by manifest*/
     if ( rc == 0 &&
+	 open_mode == EDbReadOnly &&
 	 ((st.st_mode&S_IFMT) == S_IFCHR || (st.st_mode&S_IFMT) == S_IFBLK) &&
 	 (st.st_mode&S_IRWXU) == S_IRUSR ){
 	/*open db filename that will be used by sqlite VFS*/
@@ -91,6 +93,7 @@ int open_db(const char* path, sqlite3** db)
 	    rc = sqlite3_open( path,  /* Database filename (UTF-8) */
 			       db    /* OUT: SQLite db handle */
 			       );
+	    /*disable using of synchronisation, because it's not supported by ZRT FS*/
 	    rc = sqlite_pragma(*db, "PRAGMA synchronous=OFF;" );
 	}
     return rc;
@@ -117,13 +120,15 @@ int exec_query_print_results(sqlite3* db, const char *query_string){
     return 0;
 }
 
-int run_sql_query_buffer(const char* dbpath, const char *sqldump, size_t dump_size )
+int run_sql_query_buffer(const char* dbpath, 
+			 int open_mode, 
+			 const char *sqldump, size_t dump_size )
 {
     int rc =0;
     sqlite3* db = NULL;
 
     fprintf( stderr, "open db '%s'\n", dbpath);
-    rc = open_db(dbpath, &db); 
+    rc = open_db(dbpath, open_mode, &db); 
 
     /*if error ocured while opening DB*/
     if( rc ){
