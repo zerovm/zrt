@@ -716,7 +716,7 @@ SYSCALL_MOCK(dyncode_delete, 0)
 SYSCALL_MOCK(test_infoleak, 0)
 
 /* Every SYSCALL_NOT_IMPLEMENTED should have appropriate SYSCALL_STUB_IMPLEMENTATION 
- * to be correctly referenced inside of zrt_syscalls list*/
+ * to be correctly referenced inside of zrt_syscalls list and for logging purposes*/
 SYSCALL_STUB_IMPLEMENTATION(0)
 SYSCALL_STUB_IMPLEMENTATION(3)
 SYSCALL_STUB_IMPLEMENTATION(4)

@@ -530,7 +530,8 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
 
     /*check if file was not opened for reading*/
     int flags= s_zrt_channels[fd]->flags;
-    if ( flags != O_RDONLY && flags != O_RDWR  )
+    if ( !CHECK_FLAG(flags, O_RDONLY) && 
+	 !CHECK_FLAG(flags, O_RDWR)  )
 	{
 	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed read", FILE_OPEN_FLAGS(flags));
 	    SET_ERRNO( EINVAL );
@@ -578,7 +579,8 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
 
     /*if file was not opened for writing, set errno and get error*/
     int flags= s_zrt_channels[fd]->flags;
-    if ( flags != O_WRONLY && flags != O_RDWR  )
+    if ( !CHECK_FLAG(flags, O_WRONLY) && 
+	 !CHECK_FLAG(flags, O_RDWR)  )
 	{
 	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed write", FILE_OPEN_FLAGS(flags));
 	    SET_ERRNO( EINVAL );
