@@ -7,8 +7,10 @@
 
 #define _GNU_SOURCE
 
+#include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>  //SEEK_SET .. SEEK_END
+#include <stdarg.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -20,13 +22,15 @@
 #include <assert.h>
 
 #include "zvm.h"
-#include "channels_readdir.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "nacl_struct.h"
+#include "mount_specific_implem.h"
 #include "handle_allocator.h"
-#include "channels_mount.h"
+#include "fcntl_implem.h"
 #include "enum_strings.h"
+#include "channels_readdir.h"
+#include "channels_mount.h"
 
 enum PosAccess{ EPosSeek=0, EPosRead, EPosWrite };
 enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
@@ -36,7 +40,10 @@ struct ZrtChannelRt{
     int     flags;                 /*For currently opened file contains flags*/
     int64_t sequential_access_pos; /*sequential read, sequential write*/
     int64_t random_access_pos;     /*random read, random write*/
-    int64_t maxsize;               /*synthethic size. maximum position of channel for all I/O requests*/
+    int64_t maxsize;               /*synthethic size. based on maximum position of cursor pos 
+				     channel for all I/O requests*/
+    struct flock fcntl_flock;      /*lock flag for support fcntl locking function*/
+    int     fcntl_flags;           /*F_GETFD, F_SETFD support for fcntl*/
 };
 
 /*0 if check OK*/
@@ -68,11 +75,46 @@ static const struct ZVMChannel* s_channels_list;
 static int s_channels_count;
 
 
-//////////// helpers
+/* Channels specific implementation functions intended to initialize
+ * mount_specific_implem struct pointers;
+ * */
 
-static int is_channel_handle(int handle){
+/*return 0 if handle not valid, or 1 if handle is correct*/
+static int check_handle(int handle){
     return (handle>=0 && handle < s_channels_count) ? 1 : 0;
 }
+
+/*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
+static const struct flock* flock_data( int fd ){
+    const struct flock* data = NULL;
+    if ( check_handle(fd) ){
+	/*get runtime information related to channel*/
+	struct ZrtChannelRt *zrt_channel = s_zrt_channels[fd];
+	data = &zrt_channel->fcntl_flock;
+    }
+    return data;
+}
+
+/*return 0 if success, -1 if fd didn't found*/
+static int set_flock_data( int fd, struct flock* flock_data ){
+    int rc = 1; /*error by default*/
+    if ( check_handle(fd) ){
+	/*get runtime information related to channel*/
+	struct ZrtChannelRt *zrt_channel = s_zrt_channels[fd];
+	memcpy(&zrt_channel->fcntl_flock, flock_data, sizeof(struct flock));
+	rc = 0; /*ok*/
+    }
+    return rc;
+}
+
+static struct mount_specific_implem s_mount_specific_implem = {
+    check_handle,
+    flock_data,
+    set_flock_data
+};
+
+
+//////////// helpers
 
 static int channel_handle(const char* path){
     const struct ZVMChannel* chan = NULL;
@@ -302,7 +344,7 @@ static int64_t channel_pos_random_get_random_put(struct ZrtChannelRt *zrt_channe
 /*@param pos_whence If EPosGet offset unused, otherwise check and set offset
  *@return -1 if bad offset, else offset result*/
 static int64_t channel_pos( int handle, int8_t whence, int8_t access, int64_t offset ){
-    if ( is_channel_handle(handle) != 0 && s_zrt_channels[handle] ){
+    if ( check_handle(handle) != 0 && s_zrt_channels[handle] ){
         struct ZrtChannelRt *zrt_channel = s_zrt_channels[handle];
         assert( zrt_channel );
         CHANNEL_ASSERT_IF_FAIL( handle );
@@ -351,7 +393,7 @@ static void set_stat(struct stat *stat, int fd)
     uint64_t ino;
 
     /*choose handle type: channel handle or dir handle */
-    if ( is_channel_handle(fd) ){
+    if ( check_handle(fd) ){
         /*channel handle*/
         CHANNEL_ASSERT_IF_FAIL( fd );
         permissions = channel_permissions( &s_channels_list[fd] );
@@ -516,7 +558,7 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
     int32_t readed = 0;
 
     /*case: file not opened, bad descriptor*/
-    if ( is_channel_handle(fd) == 0  ||
+    if ( check_handle(fd) == 0  ||
 	 !s_zrt_channels[fd] ||
 	 s_zrt_channels[fd]->flags < 0 )
 	{
@@ -564,7 +606,7 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
     //if ( fd < 3 ) disable_logging_current_syscall();
 
     /*file not opened, bad descriptor*/
-    if ( is_channel_handle(fd) == 0 ||
+    if ( check_handle(fd) == 0 ||
 	 !s_zrt_channels[fd] ||
 	 s_zrt_channels[fd]->flags < 0  )
 	{
@@ -627,7 +669,7 @@ static int channels_fstat(int fd, struct stat *buf){
     ZRT_LOG(L_EXTRA, "fd=%d", fd);
 
     /* check if user request contain the proper file fd */
-    if( is_channel_handle(fd) != 0 ){
+    if( check_handle(fd) != 0 ){
         set_stat( buf, fd); /*channel fd*/
     }
     else if ( match_handle_in_directory_list(&s_manifest_dirs, fd) ){
@@ -694,7 +736,7 @@ static int channels_close(int fd){
     ZRT_LOG(L_EXTRA, "fd=%d", fd);
 
     /*if valid fd and file was opened previously then perform file close*/
-    if ( is_channel_handle(fd) != 0 &&
+    if ( check_handle(fd) != 0 &&
 	 s_zrt_channels[fd] && s_zrt_channels[fd]->flags >=0  )
 	{
 	    s_zrt_channels[fd]->random_access_pos 
@@ -734,7 +776,7 @@ static off_t channels_lseek(int fd, off_t offset, int whence){
     debug_mes_zrt_channel_runtime( fd );
 
     /* check fd */
-    if( is_channel_handle(fd) == 0 ){
+    if( check_handle(fd) == 0 ){
         SET_ERRNO( EBADF );
         return -1;
     }
@@ -808,8 +850,14 @@ static int channels_open(const char* path, int oflag, uint32_t mode){
 }
 
 static int channels_fcntl(int fd, int cmd, ...){
-    SET_ERRNO( ENOSYS );
-    return -1;
+    ZRT_LOG(L_INFO, "fcntl cmd=%s", FCNTL_CMD(cmd));
+
+    va_list args;
+    va_start(args, cmd);
+    int ret = fcntl_implem(&s_mount_specific_implem, fd, cmd, args);
+    va_end(args);
+
+    return ret;
 }
 
 static int channels_remove(const char* path){
