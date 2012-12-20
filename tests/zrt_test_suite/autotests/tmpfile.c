@@ -1,5 +1,8 @@
 /*
  * tmpfile using
+ * linking issue: 
+ * libzrt.a should be added added twice into list of linking options that describes 
+ * order of libraries: before and after of object file that using tmpfile function.
  */
 
 #include <sys/types.h>
