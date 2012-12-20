@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <limits.h>
-#include <fcntl.h>
 
 extern "C" {
 #include "zrtlog.h"
@@ -15,6 +14,9 @@ extern "C" {
 #include "enum_strings.h"
 }
 #include "MemMount.h"
+
+
+/*MemMount implementation*/
 
 MemMount::MemMount() {
     // Don't use the zero slot
@@ -515,55 +517,3 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     return count;
 }
 
-int MemMount::Fcntl(ino_t slot, int cmd, ...){
-    MemNode *node = slots_.At(slot);
-    ZRT_LOG(L_EXTRA, "fnctl cmd=%s", FCNTL_CMD(cmd));
-    int rc=0;
-    if (node == NULL) {
-        SET_ERRNO(ENOENT);
-        rc = -1;
-    }
-    else{
-	if ( cmd == F_DUPFD ){
-	}
-	else if ( cmd == F_GETFD ){
-	}
-	else if ( cmd == F_SETFD ){
-	    va_list args;
-	    va_start(args, cmd);
-	    int new_flags = va_arg(args, int);
-	    va_end(args);
-	    ZRT_LOG(L_SHORT, "new_flags=%d", new_flags);
-	}
-	else if ( cmd == F_GETFL || cmd == F_SETFL ){
-	}
-	else if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
-	    va_list args;
-	    va_start(args, cmd);
-	    struct flock* lock_data = va_arg(args, struct flock*);
-	    va_end(args);
-	    if ( !lock_data ) {
-		SET_ERRNO(EINVAL);
-		rc = -1;
-	    }
-	    else{
-		ZRT_LOG(L_INFO, "lock type=%s, l_whence=%d, l_start=%d, l_len=%d", 
-			LOCK_TYPE_FLAGS(lock_data->l_type),
-			lock_data->l_whence,
-			lock_data->l_start,
-			lock_data->l_len);
-	
-		/*get lock*/
-		if ( cmd == F_GETLK ){
-		    /*return current lock flag*/
-		    rc = node->flock();
-		}
-		/*set lock*/
-		else{
-		    node->set_flock(lock_data->l_type);
-		}
-	    }
-	}
-    }
-    return rc;
-}

@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -248,18 +250,27 @@ static int transparent_open(const char* path, int oflag, uint32_t mode){
 }
 
 static int transparent_fcntl(int fd, int cmd, ...){
+    int ret=0;
     struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount ){
 	va_list args;
 	va_start(args, cmd);
-	int retcode = mount->fcntl( fd, cmd, args );
+	if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
+	    struct flock* input_lock = va_arg(args, struct flock*);
+	    ZRT_LOG(L_SHORT, "flock=%p", input_lock );
+	    ret = mount->fcntl( fd, cmd, input_lock );
+	}
+	else{
+	    ret=-1;
+	    errno = ENOSYS;
+	}
 	va_end(args);
-	return retcode;
     }
     else{
         errno = ENOENT;
-        return -1;
+        ret = -1;
     }
+    return ret;
 }
 
 

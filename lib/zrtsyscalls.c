@@ -293,10 +293,15 @@ int fchmod(int fd, mode_t mode){
 int fcntl(int fd, int cmd, ... /* arg */ ){
     LOG_SYSCALL_START(NULL,0);
     errno=0;
-    ZRT_LOG(L_SHORT, "fd=%d, cmd=%u", fd, cmd );
+    int ret=0;
+    ZRT_LOG(L_SHORT, "fd=%d, cmd=%s", fd, FCNTL_CMD(cmd) );
     va_list args;
     va_start(args, cmd);
-    int ret = s_transparent_mount->fcntl(fd, cmd, args);
+    if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
+	struct flock* input_lock = va_arg(args, struct flock*);
+	ZRT_LOG(L_SHORT, "fd=%d, cmd=%s, flock=%p", fd, FCNTL_CMD(cmd), input_lock );
+	ret = s_transparent_mount->fcntl(fd, cmd, input_lock);
+    }
     va_end(args);
     LOG_SYSCALL_FINISH(ret);
     return ret;

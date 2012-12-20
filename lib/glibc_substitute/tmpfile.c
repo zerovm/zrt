@@ -16,6 +16,8 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "zrtlog.h"
+
 #define TMPDIR = "/tmp"
 #define MAX_PATH 256
 
@@ -26,6 +28,7 @@
 FILE *
 tmpfile (void)
 {
+    ZRT_LOG(L_SHORT, P_TEXT, "glibc substitude call");
     char* temp;
     char tempfilename[MAX_PATH];
     int err;
@@ -46,6 +49,7 @@ tmpfile (void)
 	strcpy(tempfilename, P_tmpdir);
     }
 
+    mkdir(tempfilename, 0777);
     assert(temp);
     strcpy(tempfilename+strlen(tempfilename), "/tmp_XXXXXX");
 

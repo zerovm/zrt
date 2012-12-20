@@ -83,3 +83,7 @@ std::list<int> *MemNode::children() {
         return NULL;
     }
 }
+
+void MemNode::set_flock(const struct flock* flock) { 
+    memcpy( &flock_, flock, sizeof(struct flock) );
+}

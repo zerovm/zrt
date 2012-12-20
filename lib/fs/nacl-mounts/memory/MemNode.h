@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <list>
 #include <string>
 
@@ -105,8 +106,8 @@ class MemNode {
   void set_chown(uint32_t uid, uint32_t gid) { uid_=uid; gid_=gid; }
 
   /*added by YaroslavLitvinov*/
-  int flock()const { return flock_; }
-  void set_flock(int flock) { flock_=flock; }
+  const struct flock* flock()const { return &flock_; }
+  void set_flock(const struct flock* flock);
 
  private:
   int slot_;
@@ -124,7 +125,7 @@ class MemNode {
   mode_t mode_;
   uint32_t uid_;
   uint32_t gid_;
-  int flock_;
+  struct flock flock_;
 
   DISALLOW_COPY_AND_ASSIGN(MemNode);
 };

@@ -1,9 +1,10 @@
 /*
  * fcntl_implem.h
- * Implementation of fcntl call for any mount type.
- * It is used interface to get access to mount specific implementtions;
+ * Stub implementation for fcntl call that intended to use by any zrt mount type.
+ * Only single process can operate with a lock, as not supported multiprocess environment.
+ * It is used interface to get access to mount specific implementations;
  *  Created on: 17.12.2012
- *      Author: yaroslav
+ *      Author: YaroslavLitvinov
  */
 
 #ifndef __FCNTL_IMPLEM_H__

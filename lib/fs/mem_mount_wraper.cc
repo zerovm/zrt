@@ -14,16 +14,22 @@
 extern "C" {
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
-#include "channels_mount.h"
 }
-#include "mem_mount_wraper.h"
 #include "nacl-mounts/memory/MemMount.h"
 #include "nacl-mounts/util/Path.h"
+#include "mount_specific_implem.h"
+#include "mem_mount_wraper.h"
+extern "C" {
 #include "handle_allocator.h"
+#include "fcntl_implem.h"
+#include "channels_mount.h"
+
+}
 
 static MemMount* s_mem_mount_cpp = NULL;
 static struct HandleAllocator* s_handle_allocator = NULL;
 static struct MountsInterface* s_this=NULL;
+
 
 static const char* name_from_path( std::string path ){
     /*retrieve directory name, and compare name length with max available*/
@@ -53,6 +59,59 @@ static ssize_t get_file_len(ino_t node) {
     }
     return (ssize_t) st.st_size;
 }
+
+/*mount specific implementation*/
+
+/* MemMount specific implementation functions intended to initialize
+ * mount_specific_implem struct pointers;
+ * */
+
+/*return 0 if handle not valid, or 1 if handle is correct*/
+static int check_handle(int handle){
+    ino_t node;
+    int ret = s_handle_allocator->get_inode( handle, &node );
+    if ( ret == 0 && !is_dir(node) )
+	return 1;
+    else return 0;
+}
+
+/*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
+static const struct flock* flock_data( int fd ){
+    const struct flock* data = NULL;
+    if ( check_handle(fd) ){
+	/*get runtime information related to channel*/
+	ino_t node;
+	int ret = s_handle_allocator->get_inode( fd, &node );
+    	MemNode* mnode = s_mem_mount_cpp->ToMemNode(node);
+	assert(mnode);
+	data = mnode->flock();
+    }
+    return data;
+}
+
+/*return 0 if success, -1 if fd didn't found*/
+static int set_flock_data( int fd, const struct flock* flock_data ){
+    int rc = 1; /*error by default*/
+    if ( check_handle(fd) ){
+	/*get runtime information related to channel*/
+	ino_t node;
+	int ret = s_handle_allocator->get_inode( fd, &node );
+    	MemNode* mnode = s_mem_mount_cpp->ToMemNode(node);
+	assert(mnode);
+	mnode->set_flock(flock_data);
+	rc = 0; /*ok*/
+    }
+    return rc;
+}
+
+static struct mount_specific_implem s_mount_specific_implem = {
+    check_handle,
+    flock_data,
+    set_flock_data
+};
+
+
+/*wraper implementation*/
 
 static int mem_chown(const char* path, uid_t owner, gid_t group){
     struct stat st;
@@ -336,12 +395,15 @@ static int mem_fcntl(int fd, int cmd, ...){
     ino_t node;
     int ret = s_handle_allocator->get_inode( fd, &node );
     if ( ret == 0 && !is_dir(node) ){
-	int retcode;
 	va_list args;
 	va_start(args, cmd);
-	retcode = s_mem_mount_cpp->Fcntl(node, cmd, args);
+	if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
+	    struct flock* input_lock = va_arg(args, struct flock*);
+	    ZRT_LOG(L_SHORT, "flock=%p", input_lock );
+	    ret = fcntl_implem(&s_mount_specific_implem, fd, cmd, input_lock);
+	}
 	va_end(args);
-	return retcode;
+	return ret;
     }
     else{
 	SET_ERRNO(EBADF);

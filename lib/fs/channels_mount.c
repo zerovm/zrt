@@ -96,7 +96,7 @@ static const struct flock* flock_data( int fd ){
 }
 
 /*return 0 if success, -1 if fd didn't found*/
-static int set_flock_data( int fd, struct flock* flock_data ){
+static int set_flock_data( int fd, const struct flock* flock_data ){
     int rc = 1; /*error by default*/
     if ( check_handle(fd) ){
 	/*get runtime information related to channel*/
@@ -852,9 +852,13 @@ static int channels_open(const char* path, int oflag, uint32_t mode){
 static int channels_fcntl(int fd, int cmd, ...){
     ZRT_LOG(L_INFO, "fcntl cmd=%s", FCNTL_CMD(cmd));
 
+    int ret=0;
     va_list args;
     va_start(args, cmd);
-    int ret = fcntl_implem(&s_mount_specific_implem, fd, cmd, args);
+    if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
+	struct flock* input_lock = va_arg(args, struct flock*);
+	ret = fcntl_implem(&s_mount_specific_implem, fd, cmd, input_lock);
+    }
     va_end(args);
 
     return ret;

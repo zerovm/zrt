@@ -16,7 +16,7 @@
 struct mount_specific_implem{
     int  (*check_handle)(int handle);
     const struct flock* (*flock_data)( int fd );
-    int (*set_flock_data)( int fd, struct flock* flock_data );
+    int (*set_flock_data)( int fd, const struct flock* flock_data );
 };
 
 #endif //__MOUNT_SPECIFIC_IMPLEM_H__

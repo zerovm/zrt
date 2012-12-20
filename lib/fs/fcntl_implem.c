@@ -1,9 +1,10 @@
 /*
  * fcntl_implem.c
- * Implementation of fcntl call for any mount type.
- * It is used interface to get access to mount specific implementtions;
+ * Stub implementation for fcntl call that intended to use by any zrt mount type.
+ * Only single process can operate with a lock, as not supported multiprocess environment.
+ * It is used interface to get access to mount specific implementations;
  *  Created on: 17.12.2012
- *      Author: yaroslav
+ *      Author: YaroslavLitvinov
  */
 
 #include <unistd.h>
@@ -51,48 +52,38 @@ int fcntl_implem(struct mount_specific_implem* implem, int fd, int cmd, ...){
     case F_SETLK:
     case F_SETLKW:
     case F_GETLK:{
+	/* implementation issues:
+	 * it's not real implementation, lock is always can be set by current process
+	 * it's always get F_UNLCK lock type;
+	 * it's always allow to set lock type, and return l_type F_UNLCK.*/
+
+	/*get input argument flock structure*/
 	va_list args;
 	va_start(args, cmd);
-	struct flock* lock_data = va_arg(args, struct flock*);
+	struct flock* input_lock = va_arg(args, struct flock*);
 	va_end(args);
-	if ( !lock_data ) {
+	if ( !input_lock ) {
 	    ZRT_LOG(L_ERROR, P_TEXT, "flock structure pointer is NULL");
 	    SET_ERRNO(EINVAL);
 	    rc = -1;
 	}
 	else{
-	    /*flock struct data, log another fields*/
-	    ZRT_LOG(L_INFO, "argument flock l_type=%s, l_whence=%d, l_start=%lld, l_len=%lld", 
-		    LOCK_TYPE_FLAGS(lock_data->l_type),
-		    lock_data->l_whence,
-		    lock_data->l_start,
-		    lock_data->l_len);
+	    /*flock struct data acquired, log struct fields*/
+	    ZRT_LOG(L_SHORT, "argument flock l_type=%s, p=%p", 
+		    LOCK_TYPE_FLAGS(input_lock->l_type), input_lock);
+	    ZRT_LOG(L_INFO, "argument flock l_whence=%d, l_start=%lld, l_len=%lld", 
+		    input_lock->l_whence,
+		    input_lock->l_start,
+		    input_lock->l_len);
 
-	    /*get lock*/
-	    if ( cmd == F_GETLK ){
-		const struct flock* data = implem->flock_data(fd);
-		/*get current lock flag via flock struct*/
-		if ( data ){
-		    memcpy(lock_data, data, sizeof(struct flock));
-		}
-		/*get lock type from runtime channel info*/
-		ZRT_LOG(L_INFO, "get lock type=%s", LOCK_TYPE_FLAGS(data->l_type));
-	    }
-	    /*set lock*/
-	    else if ( cmd == F_SETLK || cmd == F_SETLKW ){
-		/*save lock type in runtime channel info*/
-		ZRT_LOG(L_INFO, "set lock type=%s", LOCK_TYPE_FLAGS(lock_data->l_type));
-		implem->set_flock_data(fd, lock_data);
-	    }
-	    else{
-		assert(0);
-	    }
+	    input_lock->l_type = F_UNLCK;                   /*always allow set lock/unlock */
+	    ZRT_LOG(L_SHORT, "get lock type=%s", LOCK_TYPE_FLAGS(input_lock->l_type));	
 	}
 	break;
-	default:
-	    SET_ERRNO(ENOSYS);
-	    break;
     }
+    default:
+	SET_ERRNO(ENOSYS);
+	break;
     }
 
     

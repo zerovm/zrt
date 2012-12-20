@@ -34,9 +34,9 @@ LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
 lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/libsqlite3.a 
 
 ################# samples to build
-UNSTABLE_SAMPLES=bigfile #excluded due to bug: signal 25 from trusted code
+UNSTABLE_SAMPLES=
 SAMPLES=hello tarimage readdir sort_paging reqrep disort wordcount zshell time
-TEST_SAMPLES=command_line environment file_stat seek
+TEST_SAMPLES=file_stat bigfile
 TEST_SUITES=lua_test_suite
 
 ################# flags set
@@ -57,7 +57,7 @@ CFLAGS += -DUSER_SIDE
 CXXFLAGS = -I. -Ilib -Ilib/fs
 
 ################# "make all" Build libs 
-all: prepare ${LIBS} ${LIBZRT} 
+all: prepare ${LIBS} ${LIBZRT} autotests
 
 prepare:
 	@chmod u+rwx ns_start.sh
@@ -75,6 +75,11 @@ ${LIBS}:
 
 ############## "make test" Build & Run all tests
 test: test_suites zrt_tests
+
+############## "make autotests" run zrt autotests
+autotests:
+	@echo ------------- RUN zrt $@ ------------
+	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite
 
 ############## "make zrt_tests" Build test samples 
 test_suites: ${TEST_SUITES}
@@ -100,6 +105,7 @@ LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 clean: ${LIBS_CLEAN}  
 ${LIBS_CLEAN}:
 	@make -C$(dir $@) clean 
+	@TESTS_ROOT=autotests make -Ctests/zrt_test_suite clean
 	@rm -f $(LIBZRT_OBJECTS)
 	@rm -f $(LIBS)
 	@rm -f lib/*.a
