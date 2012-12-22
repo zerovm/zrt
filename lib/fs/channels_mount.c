@@ -865,14 +865,27 @@ static int channels_fcntl(int fd, int cmd, ...){
 }
 
 static int channels_remove(const char* path){
-    SET_ERRNO( EPERM );
+    int handle = channel_handle(path);
+    if ( handle == -1 ){
+	SET_ERRNO(ENOENT);
+    }
+    else{
+	SET_ERRNO( EPERM );
+    }
+
     return -1;
 }
 
 static int channels_unlink(const char* path){
-    SET_ERRNO( EPERM );
-    return -1;
+    int handle = channel_handle(path);
+    if ( handle == -1 ){
+	SET_ERRNO(ENOENT);
+    }
+    else{
+	SET_ERRNO( EPERM );
+    }
 
+    return -1;
 }
 // access() uses the Mount's Stat().
 static int channels_access(const char* path, int amode){
