@@ -93,8 +93,26 @@ int open_db(const char* path, int open_mode, sqlite3** db)
 	    rc = sqlite3_open( path,  /* Database filename (UTF-8) */
 			       db    /* OUT: SQLite db handle */
 			       );
+	    
+	    /*enable extended sqlite error code*/
+	    rc = sqlite3_extended_result_codes(*db, 1);
+	    fprintf(stderr, "sql extended result code enable, err code=%d \n", rc);
+
+	    /*disable journaling*/
+	    if (!rc){
+	    	rc = sqlite_pragma(*db, "PRAGMA journal_mode=MEMORY;" );
+	    	fprintf( stderr, "set journal_mode pragma errcode=%d\n", rc);
+	    }
 	    /*disable using of synchronisation, because it's not supported by ZRT FS*/
-	    rc = sqlite_pragma(*db, "PRAGMA synchronous=OFF;" );
+	    if (!rc){
+	    	rc = sqlite_pragma(*db, "PRAGMA synchronous=OFF;" );
+	    	fprintf( stderr, "set syncronous pragma errcode=%d\n", rc);
+	    }
+	    /*exclusive access to DB by single process*/
+	    if (!rc){
+	    	rc = sqlite_pragma(*db, "PRAGMA locking_mode=EXCLUSIVE;" );
+	    	fprintf( stderr, "set locking_mode pragma errcode=%d\n", rc);
+	    }
 	}
     return rc;
 }
