@@ -1,0 +1,9 @@
+3a4,7
+> #ifdef __NACL__
+> #include "zrt.h"
+> #endif
+> 
+17c21
+< int main(int argc, char *argv[])
+---
+> int main(int argc, char **argv)
