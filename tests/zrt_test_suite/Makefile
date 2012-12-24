@@ -5,7 +5,7 @@ CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
 #TESTS_ROOT variable may be defined externally containing related path to tests folder
 #if it's not defined then would be used TESTS_ROOT defined below in Makefile
 ifndef TESTS_ROOT
-TESTS_ROOT=src
+TESTS_ROOT=autotests
 endif
 ifndef MEMMAX
 MEMMAX=234217728
