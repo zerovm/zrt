@@ -31,6 +31,7 @@
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
 #include "stream_reader.h"
+#include "path_utils.h"             /*alloc_absolute_path_from_relative*/
 #include "fstab_observer.h"
 #include "fstab_loader.h"
 #include "mounts_manager.h"
@@ -102,38 +103,6 @@ static void debug_mes_stat(struct stat *stat){
 	    "st_size=%lld, st_blocks=%d, st_atime=%lld, st_mtime=%lld", 
 	    stat->st_dev, stat->st_ino, stat->st_nlink, stat->st_mode, (int)stat->st_blksize,
 	    stat->st_size, (int)stat->st_blocks, stat->st_atime, stat->st_mtime );
-}
-
-
-/*
- * alloc absolute path, for relative path just insert into beginning '/' char, 
- * for absolute path just alloc and return. user application can provide relative path, 
- * currently any of zrt filesystems does not supported relative path, so making absolute 
- * path is required.
- */
-static char* alloc_absolute_path_from_relative( const char* path )
-{
-    /* some applications providing relative path, currently any of zrt filesystems 
-     * does not support relative path, so make absolute path just insert '/' into
-     * begin of relative path */
-    char* absolute_path = malloc( strlen(path) + 2 );
-    /*transform . path into root /  */
-    if ( strlen(path) == 1 && path[0] == '.' ){
-        strcpy( absolute_path, "/\0" );
-    }
-    /*transform ./ path into root / */
-    else if ( strlen(path) == 2 && path[0] == '.' && path[1] == '/' ){
-        strcpy( absolute_path, "/\0" );
-    }
-    /*if relative path is detected then transform it to absolute*/
-    else if ( strlen(path) > 1 && path[0] != '/' ){
-        strcpy( absolute_path, "/\0" );
-        strcat(absolute_path, path);
-    }
-    else{
-        strcpy(absolute_path, path);
-    }
-    return absolute_path;
 }
 
 static mode_t get_umask(){
