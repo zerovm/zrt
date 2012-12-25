@@ -1,5 +1,5 @@
 /*
- * fstab_loader.c
+ * tmpfile.c
  * tmpfile implementation that substitude glibc stub implementation
  *
  *  Created on: 01.12.2012
@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
@@ -19,7 +20,6 @@
 #include "zrtlog.h"
 
 #define TMPDIR = "/tmp"
-#define MAX_PATH 256
 
 /* This returns a new stream opened on a temporary file (generated
    by tmpnam).  The file is opened with mode "w+b" (binary read/write).
@@ -30,11 +30,11 @@ tmpfile (void)
 {
     ZRT_LOG(L_SHORT, P_TEXT, "glibc substitude call");
     char* temp;
-    char tempfilename[MAX_PATH];
+    char tempfilename[PATH_MAX];
     int err;
     FILE *f = NULL;
 
-    memset(tempfilename, '\0', MAX_PATH );
+    memset(tempfilename, '\0', PATH_MAX );
 
     /* get TMPDIR from environment
      * In case the environment variable TMPDIR exists and contains the name

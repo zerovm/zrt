@@ -11,8 +11,8 @@ lib/zrt.c \
 lib/zrtsyscalls.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
+lib/helpers/path_utils.c \
 lib/memory/memory.c \
-lib/glibc_substitute/tmpfile.c \
 lib/fs/fcntl_implem.c \
 lib/fs/fstab_loader.c \
 lib/fs/fstab_observer.c \
@@ -28,6 +28,16 @@ lib/fs/unpack/image_engine.c \
 lib/fs/utils/parse_path.c
 
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
+
+############### zlibc.a source files to build
+LIBZGLIBC=lib/libzglibc.a
+
+LIBZGLIBC_SOURCES= lib/glibc_substitute/tmpfile.c \
+lib/glibc_substitute/realpath.c \
+lib/glibc_substitute/getcwd.c
+
+LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
+
 
 ############## ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
@@ -57,7 +67,7 @@ CFLAGS += -DUSER_SIDE
 CXXFLAGS = -I. -Ilib -Ilib/fs
 
 ################# "make all" Build libs 
-all: prepare ${LIBS} ${LIBZRT} autotests
+all: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
 
 prepare:
 	@chmod u+rwx ns_start.sh
@@ -65,6 +75,10 @@ prepare:
 
 ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
+	@echo $@ updated
+
+${LIBZGLIBC} : $(LIBZGLIBC_OBJECTS)
+	$(AR) rcs $@ $(LIBZGLIBC_OBJECTS)
 	@echo $@ updated
 
 ############## Build libs, invoke nested Makefiles
