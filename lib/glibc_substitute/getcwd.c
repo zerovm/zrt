@@ -35,7 +35,9 @@ char *getcwd(char *buf, size_t size)
     /*buf size is enough to set path "/"  */
     else{
 	/*copy into buffer exactly dir of the specified size*/
-	strncpy(buf, DEFAULT_WORKING_DIRPATH, strlen(DEFAULT_WORKING_DIRPATH));
+	strcpy(buf, DEFAULT_WORKING_DIRPATH);
     }
+
+    ZRT_LOG(L_SHORT, "return buf=%s, len=%d", buf, strlen(DEFAULT_WORKING_DIRPATH) );
     return buf;
 }
