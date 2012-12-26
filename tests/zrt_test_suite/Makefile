@@ -69,7 +69,7 @@ LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
 LDFLAGS+= -m64 -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl
 #in order to correectly link glibs substituted functions libzrt should be linked twice
 #before object file and after
-LDFLAGS+= -lfs -lzrt -lstdc++ 
+LDFLAGS+= -lfs -lzrt -lzglibc -lstdc++ 
 #For rt tests
 LDFLAGS+= -lrt
 #For dlopen
