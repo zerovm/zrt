@@ -17,6 +17,7 @@
 
 int zmain(int argc, char **argv)
 {
+    int rc=0;
     FILE* tmp = tmpfile();
     if ( tmp ){
 	fprintf(stderr, "tmpfile created\n");
@@ -24,9 +25,9 @@ int zmain(int argc, char **argv)
     }
     else{
 	fprintf(stderr, "tmpfile does not created\n");
+	rc =1;
     }
-    assert(tmp);
-    return 0;
+    return rc;
 }
 
 
