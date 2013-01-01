@@ -71,6 +71,7 @@ struct MountsInterface{
     int (*link)(const char* path1, const char* path2);
 
     const MountId mount_id;
+    struct mount_specific_implem* (*implem)();
 };
 
 #endif /* MOUNTS_INTERFACE_H_ */

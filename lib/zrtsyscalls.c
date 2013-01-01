@@ -61,12 +61,11 @@
 
 /****************** static data*/
 struct timeval s_cached_timeval;
-const struct UserManifest* s_manifest=NULL;
 struct MountsInterface* s_channels_mount=NULL;
 struct MountsInterface* s_mem_mount=NULL;
-static struct MountsManager* s_mounts_manager;
-static struct MountsInterface* s_transparent_mount;
-static struct MemoryInterface* s_memory_interface;
+static struct MountsManager* s_mounts_manager = NULL;
+static struct MountsInterface* s_transparent_mount = NULL;
+static struct MemoryInterface* s_memory_interface = NULL;
 /****************** */
 
 static inline void update_cached_time()
@@ -335,14 +334,6 @@ int rename(const char *oldpath, const char *newpath){
     return ret;
 }
 
-/*substitude unsupported glibc implementation */
-/* FILE *fdopen(int fd, const char *mode){ */
-/*     LOG_SYSCALL_START(NULL,0); */
-/*     ZRT_LOG_PARAM(L_SHORT, P_INT, fd); */
-/*     ZRT_LOG_PARAM(L_SHORT, P_TEXT, mode); */
-/*     LOG_SYSCALL_FINISH(0); */
-/*     return NULL; */
-/* } */
 
 /*override system glibc implementation due to bad errno at errors*/
 /* int fseek(FILE *stream, long offset, int whence){ */
@@ -874,8 +865,6 @@ int32_t (*zrt_syscalls[])(uint32_t*) = {
 
 
 void zrt_setup( struct UserManifest* manifest ){
-    /*save UserManifest data for ZRT purposes to avoid request it via ZVM api repeatedly*/
-    s_manifest = manifest;
     /*manage mounted filesystems*/
     s_mounts_manager = alloc_mounts_manager();
     /*alloc filesystem based on channels*/

@@ -36,7 +36,8 @@ LIBZGLIBC_SOURCES= lib/glibc_substitute/tmpfile.c \
 lib/glibc_substitute/realpath.c \
 lib/glibc_substitute/getcwd.c \
 lib/glibc_substitute/getuid.c \
-lib/glibc_substitute/getpwuid.c
+lib/glibc_substitute/getpwuid.c \
+lib/glibc_substitute/fdopen.c
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
 

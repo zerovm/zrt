@@ -84,6 +84,17 @@ static int check_handle(int handle){
     return (handle>=0 && handle < s_channels_count) ? 1 : 0;
 }
 
+static const char* handle_path(int handle){
+    /*get runtime information related to channel*/
+    if( check_handle(handle) ){
+	return s_channels_list[handle].name;
+    }
+    else{
+	return NULL;
+    }
+}
+
+
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data( int fd ){
     const struct flock* data = NULL;
@@ -109,6 +120,7 @@ static int set_flock_data( int fd, const struct flock* flock_data ){
 
 static struct mount_specific_implem s_mount_specific_implem = {
     check_handle,
+    handle_path,
     flock_data,
     set_flock_data
 };
@@ -924,6 +936,11 @@ static int channels_fchown(int f, uid_t u, gid_t g){
     return -1;
 }
 
+struct mount_specific_implem* channels_implem(){
+    return &s_mount_specific_implem;
+}
+
+
 /*filesystem interface initialisation*/
 static struct MountsInterface s_channels_mount = {
     channels_chown,
@@ -951,7 +968,8 @@ static struct MountsInterface s_channels_mount = {
     channels_dup,
     channels_dup2,
     channels_link,
-    EChannelsMountId
+    EChannelsMountId,
+    channels_implem  /*mount_specific_implem interface*/
 };
 
 

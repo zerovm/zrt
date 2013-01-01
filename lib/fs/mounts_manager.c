@@ -99,6 +99,9 @@ const char* mm_get_nested_mount_path(struct MountInfo* mount_info, const char* f
     }
 }
 
+struct MountsManager* mounts_manager(){
+    return &s_mounts_manager;    
+}
 
 struct MountsManager* alloc_mounts_manager(){
     s_mounts_manager.handle_allocator = alloc_handle_allocator();

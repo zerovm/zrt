@@ -344,6 +344,7 @@ static int transparent_link(const char* path1, const char* path2){
     return -1;
 }
 
+
 static struct MountsInterface s_transparent_mount = {
         transparent_chown,
         transparent_chmod,

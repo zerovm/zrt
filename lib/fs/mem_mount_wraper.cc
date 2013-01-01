@@ -75,6 +75,25 @@ static int check_handle(int handle){
     else return 0;
 }
 
+static const char* path_handle(int handle){
+    if ( check_handle(handle) ){
+	/*get runtime information related to channel*/
+	ino_t node;
+	int ret = s_handle_allocator->get_inode( handle, &node );
+    	MemNode* mnode = s_mem_mount_cpp->ToMemNode(node);
+	if ( mnode ){
+	    return mnode->name().c_str();
+	}
+	else
+	    return NULL;
+    }
+    else{
+	return NULL;
+    }
+}
+
+
+
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data( int fd ){
     const struct flock* data = NULL;
@@ -106,6 +125,7 @@ static int set_flock_data( int fd, const struct flock* flock_data ){
 
 static struct mount_specific_implem s_mount_specific_implem = {
     check_handle,
+    path_handle,
     flock_data,
     set_flock_data
 };
@@ -365,7 +385,7 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 	ZRT_LOG(L_EXTRA, "errcode ret=%d", ret );
 	assert( ret == 0 );
 
-	/*append feature support is simple*/
+	/*append feature support, is simple*/
 	if ( oflag & O_APPEND ){
 	    ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_APPEND");
 	    mem_lseek(fd, 0, SEEK_END);
@@ -439,6 +459,10 @@ static int mem_link(const char* path1, const char* path2){
     return -1;
 }
 
+struct mount_specific_implem* mem_implem(){
+    return &s_mount_specific_implem;
+}
+
 static struct MountsInterface s_mem_mount_wraper = {
     mem_chown,
     mem_chmod,
@@ -465,7 +489,8 @@ static struct MountsInterface s_mem_mount_wraper = {
     mem_dup,
     mem_dup2,
     mem_link,
-    EMemMountId
+    EMemMountId,
+    mem_implem  /*mount_specific_implem interface*/
 };
 
 struct MountsInterface* alloc_mem_mount( struct HandleAllocator* handle_allocator ){

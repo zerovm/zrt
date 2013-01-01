@@ -33,5 +33,7 @@ struct MountsManager{
 
 
 struct MountsManager* alloc_mounts_manager();
+struct MountsManager* mounts_manager(); /*accessor*/
+
 
 #endif /* MOUNTS_MANAGER_H_ */

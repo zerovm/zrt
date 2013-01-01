@@ -24,7 +24,6 @@ void zrt_setup( struct UserManifest* manifest );
 
 void zrt_setup_finally();
 
-
 /*
  * FULL NACL SYSCALL LIST
  */

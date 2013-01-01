@@ -52,6 +52,7 @@ int seek_unused_slot( int starting_from ){
 }
 
 static struct MountsInterface* mount_interface(int handle){
+    /*if handle invalid or can't be a valid*/
     if ( handle < 0 || handle >= MAX_HANDLES_COUNT ) return NULL;
     return s_handle_slots[handle].mount_fs;
 }
