@@ -1,4 +1,7 @@
-#
-s = "sample"
-c = abs(-5)
-print(c,s)
+from locale import *
+
+
+
+
+
+

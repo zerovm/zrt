@@ -2,10 +2,10 @@
 == "hello world" example with zrt library usage. the new channels design
 == following channels: stdin, stdout, stderr used
 =====================================================================
-Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
+Channel = {ABS_PATH}sample.py, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
-==Channel = {ABS_PATH}zrtdebug.data, /dev/debug, 0, 0, 0, 99999999, 99999999
+Channel = {ABS_PATH}zrtdebug.data, /dev/debug, 0, 0, 0, 99999999, 99999999
 
 =====================================================================
 == inject tar archives contents into ZRT filesystem using fstab.conf
@@ -14,6 +14,8 @@ Channel = {ABS_PATH}mounts/fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}mounts/python-install.tar, /dev/mount/python-install, 1, 50472960, 50472960, 0, 0
 Channel = {MOUNTS_PATH}glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999, 999999, 0, 0
 Channel = {MOUNTS_PATH}glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999, 999999, 0, 0
+
+CommandLine = -v -d /dev/stdin
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
