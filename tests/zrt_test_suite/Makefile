@@ -1,5 +1,4 @@
-PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
-CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
+include $(ZRT_ROOT)/Makefile.env
 
 #Note1: SPECIFY TESTS FOLDER
 #TESTS_ROOT variable may be defined externally containing related path to tests folder
@@ -66,10 +65,8 @@ CFLAGS+=-I$(ZRT_ROOT)/lib
 #if test was not properly ported to zerovm and didn't have zmain function
 LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
 
-LDFLAGS+= -m64 -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl
 #in order to correectly link glibs substituted functions libzrt should be linked twice
 #before object file and after
-LDFLAGS+= -lfs -lzrt -lzglibc -lstdc++ 
 #For rt tests
 LDFLAGS+= -lrt
 #For dlopen
