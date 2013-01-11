@@ -15,7 +15,8 @@ Channel = {ABS_PATH}mounts/python-install.tar, /dev/mount/python-install, 1, 504
 Channel = {MOUNTS_PATH}glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999, 999999, 0, 0
 Channel = {MOUNTS_PATH}glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999, 999999, 0, 0
 
-CommandLine = -v -d /dev/stdin
+CommandLine = -v -d /dev/stdin param1 param2
+==CommandLine =/dev/stdin param1 param2
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
