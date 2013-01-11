@@ -60,7 +60,7 @@ CFLAGS+=-I$(ZRT_ROOT)/lib
 LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
 
 LDFLAGS+= -m64 -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl
-LDFLAGS+= -lfs -lstdc++ 
+LDFLAGS+= -lfs -lzrt -lstdc++ 
 #For rt tests
 LDFLAGS+= -lrt
 #For dlopen
