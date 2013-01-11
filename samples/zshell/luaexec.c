@@ -5,14 +5,13 @@
  *      Author: yaroslav
  */
 
+#include <stdlib.h>                             /* For function exit() */
+#include <stdio.h>                              /* For input/output */
 
-#include "zrt.h"
+#include "zshell.h"
 #include "lua/lua.h"                               /* Always include this when calling Lua */
 #include "lua/lauxlib.h"                            /* Always include this when calling Lua */
 #include "lua/lualib.h"                             /* Always include this when calling Lua */
-
-#include <stdlib.h>                             /* For function exit() */
-#include <stdio.h>                              /* For input/output */
 
 static void l_message (const char *pname, const char *msg) {
 	if (pname) luai_writestringerror("%s: ", pname);
@@ -54,7 +53,7 @@ int run_lua_script (const char *filename)
 
 	fprintf( stderr, "In C, calling Lua\n");
 
-	int err = do_lua_script (L, filename);                          /* executes script file */
+	int err = do_lua_script (L, filename);      /* executes script file */
 
 	fprintf( stderr, "Back in C again\n");
 
