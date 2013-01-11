@@ -1,6 +1,4 @@
-CC=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-gcc
-CXX=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-g++
-AR=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc/bin/x86_64-nacl-ar
+include Makefile.env
 
 ############### libzrt.a source files to build
 LIBZRT=lib/libzrt.a
@@ -70,6 +68,12 @@ CFLAGS += -DUSER_SIDE
 CXXFLAGS = -I. -Ilib -Ilib/fs
 
 ################# "make all" Build libs 
+
+#debug: LDFLAGS+=-lgcov -fprofile-arcs
+#debug: CFLAGS+=-Wdisabled-optimization -fprofile-arcs -ftest-coverage -fdump-rtl-all -fdump-ipa-all 
+#debug: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
+
+all:
 all: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
 
 prepare:

@@ -24,12 +24,14 @@ git clone https://github.com/zerovm/zrt.git
 NACL_SDK_ROOT NaCl pepper path
 ZEROVM_ROOT root of ZeroVM 
 ZRT_ROOT root of ZRT
+ZPYTHON_ROOT root of cpython ported to ZRT
 
 For example:
 
 export NACL_SDK_ROOT=${HOME}/nacl_sdk/pepper_21
 export ZEROVM_ROOT=${HOME}/zerovm
 export ZRT_ROOT=${HOME}/zrt
+export ZPYTHON_ROOT=${HOME}/zpython
 
 5. Fix the validator config and binpatch
 
