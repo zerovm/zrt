@@ -12,8 +12,8 @@ Channel = {DEBUG_FILE_PATH}, /dev/debug, 0, 0, 0, 99999999, 99999999
 =====================================================================
 Channel = {ABS_PATH}../cpython/mounts/fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}../cpython/mounts/python-install.tar, /dev/mount/python-install, 1, 50472960, 50472960, 0, 0
-Channel = /home/yaroslav/git/zrt/mounts/glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999, 999999, 0, 0
-Channel = /home/yaroslav/git/zrt/mounts/glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999, 999999, 0, 0
+Channel = {ABS_PATH}../../mounts/glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999, 999999, 0, 0
+Channel = {ABS_PATH}../../mounts/glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999, 999999, 0, 0
 
 CommandLine = {COMMAND_LINE}
 
