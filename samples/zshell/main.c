@@ -32,6 +32,10 @@
 #define FIRSTLINE_SQLITE_ID         "#sqlite"
 #define FIRSTLINE_PYTHON_ID         "#python"
 
+#define LEN_LUA_ID                  strlen(FIRSTLINE_LUA_ID)
+#define LEN_SQLITE_ID               strlen(FIRSTLINE_SQLITE_ID)
+#define LEN_PYTHON_ID               strlen(FIRSTLINE_PYTHON_ID)
+
 typedef enum { 
     EWrongScriptType = 0,
     ELuaScriptType,
@@ -54,25 +58,22 @@ ZshellScriptType DetectScriptType(FILE* f){
 	    break;
 	}
 	first_line[len++] = ch;
-    }
 
-    /* Detect script type */
-    if ( !strncmp( FIRSTLINE_LUA_ID, first_line, strlen(FIRSTLINE_LUA_ID) ) 
-	 && len >0 ){
-	return ELuaScriptType;
-    }
-    /*If PYTHON script passed as input*/
-    else if ( !strncmp( FIRSTLINE_PYTHON_ID, first_line, strlen(FIRSTLINE_PYTHON_ID) ) 
-	      && len >0 ){
-	return EPythonScriptType;
-    }
-    /*For SQLITE we are waiting an argv[1] param and interpret it as DB filename*/
-    else if ( !strncmp( FIRSTLINE_SQLITE_ID, first_line, strlen(FIRSTLINE_SQLITE_ID) ) 
-	      && len > 0 ){
-	return ESqliteScriptType;
-    }
-    else{
-	return EWrongScriptType;
+	/* Detect script type */
+	if ( len >= LEN_LUA_ID && 
+	     !strncmp( FIRSTLINE_LUA_ID, first_line, LEN_LUA_ID ) ){
+	    return ELuaScriptType;
+	}
+	/*If PYTHON script passed as input*/
+	else if ( len >= LEN_PYTHON_ID && 
+		  !strncmp( FIRSTLINE_PYTHON_ID, first_line, LEN_PYTHON_ID ) ){
+	    return EPythonScriptType;
+	}
+	/*For SQLITE we are waiting an argv[1] param and interpret it as DB filename*/
+	else if ( len >= LEN_SQLITE_ID &&
+		  !strncmp( FIRSTLINE_SQLITE_ID, first_line, LEN_SQLITE_ID ) ){
+	    return ESqliteScriptType;
+	}
     }
     return EWrongScriptType;
 }
