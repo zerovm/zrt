@@ -4,7 +4,7 @@
 Channel = {ABS_PATH}data/{NAME}.stdin.data, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}data/{NAME}.stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}data/{NAME}.stderr.data, /dev/stderr, 0, 0, 0, 999999, 999999
-Channel = {ABS_PATH}data/{NAME}.zrtdebug.log, /dev/debug, 0, 0, 0, 99999999, 99999999
+==Channel = {ABS_PATH}data/{NAME}.zrtdebug.log, /dev/debug, 0, 0, 0, 99999999, 99999999
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -18,7 +18,7 @@ NexeMax = 10000000
 ==4GB-16MB
 MemMax=4278190080
 SyscallsMax = 3333
-Timeout=60
+Timeout=1800
 Environment = TimeStamp, 1344719070
 NodeName={NAME},1
 

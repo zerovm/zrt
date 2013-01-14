@@ -572,7 +572,9 @@ read_stdin_parameters( char* argv[] ){
         ssize_t bytes = read(stdin, &c, 1);
 	//if nothing readed break
         if ( bytes <= 0 ){
+#ifdef PARSING_DEBUG
 	    fprintf(stderr, "bytes readed=%d\n", bytes);
+#endif
             continue;
         }
 
