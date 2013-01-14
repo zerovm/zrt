@@ -44,8 +44,8 @@
 /*if that data reading from stding application should exit*/
 #define CONTROL_DATA "test12345complete"
 #define PARAM_STRING_MAXSIZE 10240
-#define DEBUG
-#define PARSING_DEBUG
+//#define DEBUG
+//#define PARSING_DEBUG
 
 #ifndef HAS_TRUNCATE64
 #define	truncate64	truncate
