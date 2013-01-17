@@ -60,9 +60,10 @@
 
 
 /****************** static data*/
-struct timeval s_cached_timeval;
-struct MountsInterface* s_channels_mount=NULL;
-struct MountsInterface* s_mem_mount=NULL;
+static int                     s_tls_cache=-1;
+struct timeval                 s_cached_timeval;
+struct MountsInterface*        s_channels_mount=NULL;
+struct MountsInterface*        s_mem_mount=NULL;
 static struct MountsManager* s_mounts_manager = NULL;
 static struct MountsInterface* s_transparent_mount = NULL;
 static struct MemoryInterface* s_memory_interface = NULL;
@@ -646,15 +647,16 @@ SYSCALL_MOCK(thread_nice, 0)
  */
 static int32_t zrt_tls_get(uint32_t *args)
 {
-    /* switch off spam
-     * LOG_SYSCALL_START(args,1);*/
-    int32_t retcode;
-
-    zvm_syscallback(0); /* uninstall syscallback */
-    retcode = NaCl_tls_get(); /* invoke syscall directly */
-    zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
-
-    return retcode;
+    /* tls_get return value would be cached because it remains unchanged 
+     * after setup by tls_init call*/
+    if ( s_tls_cache < 0 ){
+	/*cahched tls_get value is negative and required to be refreshed*/
+	zvm_syscallback(0); /* uninstall syscallback */
+	/* invoke syscall directly only once, to get tls value and cache it*/
+	s_tls_cache = NaCl_tls_get(); 
+	zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
+    }
+    return s_tls_cache; /*valid tls*/
 }
 
 SYSCALL_MOCK(second_tls_set, 0)
