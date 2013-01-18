@@ -38,7 +38,7 @@ run_python_interpreter(int argc, char **argv)
     setlocale(LC_ALL, "");
     for (i = 0; i < argc; i++) {
         argv_copy[i] = _Py_char2wchar(argv[i], NULL);
-	printf("i=%d, argv[%d]=%s, argc=%d\n", i, i, argv[i], argc);
+	//printf("i=%d, argv[%d]=%s, argc=%d\n", i, i, argv[i], argc);
         if (!argv_copy[i])
             return 1;
         argv_copy2[i] = argv_copy[i];
