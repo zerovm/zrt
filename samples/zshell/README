@@ -1,2 +1,6 @@
 zshell
-run LUA, SQLITE scripts
+run LUA, SQLITE, PYTHON scripts
+
+python scripts required:
+1. ZPYTHON_ROOT environment variable pointing to root folder of zpython;
+2. compiled zpython;

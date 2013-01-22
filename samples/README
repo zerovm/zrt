@@ -1,12 +1,13 @@
 Just samples demonstrates samples using ZRT and running on ZeroVM.
 
-cdrfs/
+tarimage/
   User application specifies tarball archive that accessible through zerovm channel in read-only mode;
   loaded filesystem contents can be used in read/write modes but all changes made will be lost at exit. 
   TODO: Add filesystem tests.
 
 zshell/
-  run lua scripts and sql queries via single zerovm executable and various manifest files; 
+  run lua scripts and sql queries via single zerovm executable and various manifest files.
+  also available python scripting; 
   
 wordcount/
   distributed application that uses mapreduce, networking library that part of zrt. 

@@ -18,15 +18,15 @@ zshell.nexe: pythonexec.o luaexec.o main.o sqlitequery.o
 	$(CC) -o zshell.nexe pythonexec.o luaexec.o main.o sqlitequery.o $(LDFLAGS)  
 
 createdirs:
-	chmod u+rwx genmanifest.sh run_lua_samples.sh run_sqlite_samples.sh \
+	chmod u+rwx genmanifest.sh run_lua_samples.sh run_sqlite_samples.sh run_python_samples.sh python.sh \
 run_python_samples.sh
 	@mkdir -p log
 
 clean: 
 	@rm -f *.o
-	@rm -f log/*.log log/*.stdout
-	@rm -f sqlite/*.manifest
-	@rm -f lua/*.manifest
+	@find -name "*.stdout" | xargs rm -f
+	@find -name "*.log" | xargs rm -f
+	@find -name "*.manifest" | xargs rm -f
 	@rm -f zshell.nexe
 
 

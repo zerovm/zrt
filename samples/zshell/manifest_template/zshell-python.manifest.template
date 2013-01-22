@@ -1,7 +1,8 @@
 =====================================================================
 == channels
 =====================================================================
-Channel = {SCRIPT_FILE_PATH}, /dev/stdin, 0, 999999, 999999, 0, 0
+== it's required to pass python script as seekable channel
+Channel = {SCRIPT_FILE_PATH}, /dev/stdin, 1, 999999, 999999, 0, 0
 Channel = {OUTPUT_FILE_PATH}, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {LOG_FILE_PATH}, /dev/stderr, 0, 0, 0, 9999999, 9999999
 Channel = {DATA_FILE_PATH}, /dev/input, 0, 999999, 999999, 0, 0
@@ -10,8 +11,8 @@ Channel = {DEBUG_FILE_PATH}, /dev/debug, 0, 0, 0, 99999999, 99999999
 =====================================================================
 == inject tar archives contents into ZRT filesystem using fstab.conf
 =====================================================================
-Channel = {ABS_PATH}../cpython/mounts/fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
-Channel = {ABS_PATH}../cpython/mounts/python-install.tar, /dev/mount/python-install, 1, 50472960, 50472960, 0, 0
+Channel = {ABS_PATH}/mounts/python/fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
+Channel = {ABS_PATH}../../mounts/pythonfiles/python-install.tar, /dev/mount/python-install, 1, 99999999, 99999999, 0, 0
 Channel = {ABS_PATH}../../mounts/glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}../../mounts/glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999, 999999, 0, 0
 
@@ -26,4 +27,4 @@ Nexe = {ABS_PATH}zshell.nexe
 MemMax=134217728
 Timeout=30
 NodeName = zshell, 1
-Environment=VERBOSITY,3
+Environment=PYTHONPATH,/lib/python3.2, VERBOSITY,3,
