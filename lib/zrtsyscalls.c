@@ -642,8 +642,8 @@ SYSCALL_MOCK(tls_init, 0)
 SYSCALL_MOCK(thread_nice, 0)
 
 /*
- * get tls from zerovm. can be replaced with untrusted version
- * after "blob library" loader will be ready
+ * get tls through NaCl_tls_get at first call and next save returned 
+ * value as cache. For rest calls it returns cached value.
  */
 static int32_t zrt_tls_get(uint32_t *args)
 {
