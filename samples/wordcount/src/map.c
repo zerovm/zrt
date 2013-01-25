@@ -29,7 +29,7 @@ int zmain(int argc, char **argv){
     int extracted_name_len=0;
     int res =0;
 
-    WRITE_FMT_LOG("Map node started argv[0]=%s.\n", argv[1] );
+    WRITE_FMT_LOG("Map node started argv[0]=%s.\n", argv[0] );
 
     /*get node type names via environnment*/
     char *map_node_type_text = getenv(ENV_MAP_NODE_NAME);
@@ -37,9 +37,9 @@ int zmain(int argc, char **argv){
     assert(map_node_type_text);
     assert(red_node_type_text);
 
-    ownnodeid = ExtractNodeNameId( argv[1], &extracted_name_len );
+    ownnodeid = ExtractNodeNameId( argv[0], &extracted_name_len );
     /*nodename should be the same we got via environment and extracted from argv[0]*/
-    assert( !strncmp(map_node_type_text, argv[1], extracted_name_len ) );
+    assert( !strncmp(map_node_type_text, argv[0], extracted_name_len ) );
     if ( ownnodeid == -1 ){
 	/*node id is not specified for single node and because assign nodeid=1*/
 	ownnodeid=1; 

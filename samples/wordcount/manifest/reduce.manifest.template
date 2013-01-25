@@ -12,7 +12,7 @@ Channel = tcp:3:, r_red{NODEID}-map-3, 0, 99999999, 99999999, 0, 0
 Channel = tcp:4:, r_red{NODEID}-map-4, 0, 99999999, 99999999, 0, 0
 
 Environment =MAP_NAME,map,REDUCE_NAME,red
-CommandLine = red-{NODEID}
+==CommandLine = red-{NODEID}
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -23,4 +23,4 @@ Nexe = {ABS_PATH}reduce.nexe
 MemMax = 134217728
 NameServer = udp:127.0.0.1:54321
 Timeout=60
-NodeName=red,{SEQUENTIAL_ID}
+NodeName=red-{NODEID},{SEQUENTIAL_ID}

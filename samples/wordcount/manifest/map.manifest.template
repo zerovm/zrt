@@ -21,7 +21,7 @@ Channel = tcp:3:, r_map{NODEID}-map-3, 0, 99999999, 99999999, 0, 0
 Channel = tcp:4:, r_map{NODEID}-map-4, 0, 99999999, 99999999, 0, 0
 
 Environment =MAP_NAME,map, REDUCE_NAME,red
-CommandLine = map-{NODEID}
+==CommandLine = map-{NODEID}
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -32,4 +32,4 @@ Nexe = {ABS_PATH}map.nexe
 MemMax = 134217728
 NameServer = udp:127.0.0.1:54321
 Timeout=60
-NodeName=map,{SEQUENTIAL_ID}
+NodeName=map-{NODEID},{SEQUENTIAL_ID}
