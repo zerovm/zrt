@@ -15,20 +15,22 @@
 #include <assert.h>
 
 #include "zrtlog.h"
-#include "stream_reader.h"
 #include "unpack_interface.h"
+#include "stream_reader.h"
 #include "parse_path.h"
 #include "mounts_interface.h"
 #include "image_engine.h"
+#include "enum_strings.h"
 
 static char block[512];
 
 //////////////////////////// parse path callback implementation //////////////////////////////
 
 static int callback_parse(struct ParsePathObserver* this_p, const char *path, int length){
+    /*do not handle short paths*/
     if ( length < 2 ) return 0;
-    /*received callback, path is a directory path, it is guaranteed that nesting level is increasing
-     * for every next callback, so we can just ceate directories*/
+    /*received callback, path is a directory path, it is guaranteed that nesting
+     *level is increasing for every next callback, so we can just ceate directories*/
     ZRT_LOG( L_INFO, "path=%s", path );
     char* dir_path = calloc(1, length+1); /*alloc string, should be freed after use*/
     strncpy( dir_path, path, length );
@@ -44,7 +46,8 @@ static int callback_parse(struct ParsePathObserver* this_p, const char *path, in
 /*unpack observer 1st parameter : main unpack interface that gives access to observer, stream and mounted fs*/
 static int extract_entry( struct UnpackInterface* unpacker, TypeFlag type, const char* name, int entry_size ){
     /*parse path and create directories recursively*/
-    ZRT_LOG( L_INFO, "type=%d, name=%s, entry_size=%d", type, name, entry_size );
+    ZRT_LOG( L_INFO, "type=%s, name=%s, entry_size=%d", 
+	     ARCH_ENTRY_TYPE(type), name, entry_size );
 
     /*setup path parser observer
      *observers callback will be called for every paursed subdir extracted from full path*/

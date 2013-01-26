@@ -71,6 +71,7 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
      int flags, int fd, off_t offset){
     void* alloc_addr = NULL;
     int errcode = 0;
+    off_t wanted_mem_block_size = length;
     /* check for allowed case, if prot supplied with PROT_READ and fd param
      * passed seems to be correct then try to map file into memory*/
     if ( CHECK_FLAG(prot, PROT_READ) && fd > 0 ){
@@ -79,13 +80,23 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 	struct stat st;
 	/*fstat is checking fd passed and get file size*/
 	if ( !fstat(fd, &st) ){
+	    ZRT_LOG(L_ERROR, "alloc_addr=%p, file size=%lld", alloc_addr, st.st_size );
+	    if ( st.st_size == 0 ){
+		/* Due to ENOSYS error that raised by posix_memalign then trying to allocate
+		 * empty address space, allocate small mem size to get it working*/
+		wanted_mem_block_size = 100;
+	    }
 	    errcode = posix_memalign(&alloc_addr, 
-					 roundup_pow2(st.st_size), st.st_size);
+				     roundup_pow2(wanted_mem_block_size), 
+				     	wanted_mem_block_size );
+	    ZRT_LOG(L_ERROR, "err=%d posix_memalign(%p, %u, %lld)", errcode, 
+		    alloc_addr, roundup_pow2(wanted_mem_block_size), wanted_mem_block_size );
 	    if ( errcode == 0 ){
 		ssize_t copied_bytes = read( fd, alloc_addr, st.st_size );
 		/*file size returned by fstat should be the same as readed bytes count*/
 		assert( copied_bytes == st.st_size );
 	    }
+	    
 	}
 	/*fstat fail with passed fd value*/
 	else{
@@ -96,7 +107,10 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
     /*if anonymous mapping requested then do it*/
     else if ( CHECK_FLAG(prot, PROT_READ|PROT_WRITE) &&
 	      CHECK_FLAG(flags, MAP_ANONYMOUS) && length >0 ){
-	errcode = posix_memalign(&alloc_addr, roundup_pow2(length), length);
+	errcode = posix_memalign(&alloc_addr, 
+				 roundup_pow2(wanted_mem_block_size), 
+				 wanted_mem_block_size);
+	ZRT_LOG(L_ERROR, "posix_memalign err=%d", errcode );
     } 
     /*if was supplied unsupported prot or flags params return -1; */
     else{
@@ -114,6 +128,8 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 
 static int
 memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
+    void* begin = this->heap_ptr;
+    void* end   = this->heap_ptr+this->heap_size;
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
     if ( addr >= this->heap_ptr && addr <= this->heap_ptr+this->heap_size ){
@@ -122,6 +138,7 @@ memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
 	return 0;
     }
     else{
+	ZRT_LOG(L_ERROR, "addr=%p is not in range [%p-%p]", addr, begin, end );
 	errno=EINVAL;
 	ZRT_LOG_ERRNO(errno);
 	return -1;

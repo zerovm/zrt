@@ -19,10 +19,21 @@
 
 #define UMASK_ENV "UMASK"
 
+struct MountsInterface;
+
 /*Assign own channels pointer to get it filled with channels at the syscallback*/
 void zrt_setup( struct UserManifest* manifest );
 
 void zrt_setup_finally();
+
+/*get static object from zrtsyscalls.c*/
+struct MountsInterface* transparent_mount();
+/*move it from here*/
+mode_t get_umask();
+/*move it from here*/
+mode_t apply_umask(mode_t mode);
+/*move it from here*/
+void debug_mes_stat(struct stat *stat);
 
 /*
  * FULL NACL SYSCALL LIST

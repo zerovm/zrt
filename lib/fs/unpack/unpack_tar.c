@@ -94,6 +94,9 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
         if ( header->typeflag == DIRTYPE ){
             type = ETypeDir;
         }
+	/* Now item name is retrieved from archive, 
+	 * in case if item type is directory we just create it on filesystem,
+	 * in case of file it's ready to retrieve data and create it on filesystem */
         unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len );
         ++count;
     }

@@ -69,6 +69,8 @@ static struct MountsInterface* s_transparent_mount = NULL;
 static struct MemoryInterface* s_memory_interface = NULL;
 /****************** */
 
+struct MountsInterface* transparent_mount() { return s_transparent_mount; }
+
 static inline void update_cached_time()
 {
     /* update time value
@@ -97,7 +99,7 @@ void set_nacl_stat( const struct stat* stat, struct nacl_abi_stat* nacl_stat ){
     nacl_stat->nacl_abi_st_ctimensec = 0;
 }
 
-static void debug_mes_stat(struct stat *stat){
+void debug_mes_stat(struct stat *stat){
     ZRT_LOG(L_INFO, 
 	    "st_dev=%lld, st_ino=%lld, nlink=%d, st_mode=%o(octal), st_blksize=%d" 
 	    "st_size=%lld, st_blocks=%d, st_atime=%lld, st_mtime=%lld", 
@@ -105,7 +107,8 @@ static void debug_mes_stat(struct stat *stat){
 	    stat->st_size, (int)stat->st_blocks, stat->st_atime, stat->st_mtime );
 }
 
-static mode_t get_umask(){
+/*move it from here*/
+mode_t get_umask(){
     mode_t prev_umask=0;
     const char* prev_umask_str = getenv(UMASK_ENV);
     if ( prev_umask_str ){
@@ -114,237 +117,12 @@ static mode_t get_umask(){
     return prev_umask;
 }
 
-static mode_t apply_umask(mode_t mode){
+/*move it from here*/
+mode_t apply_umask(mode_t mode){
     mode_t umasked_mode = ~get_umask() & mode; /*reset umask bits for specified mode*/
     ZRT_LOG( L_SHORT, "mode=%o, umasked mode=%o", mode, umasked_mode );
     return umasked_mode;
 }
-
-
-/*************************************************************************
- * glibc substitution. Implemented functions below should be linked
- * instead of standard syscall that not implemented by NACL glibc
- **************************************************************************/
-
-int mkdir(const char* pathname, mode_t mode){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
-    char* absolute_path = alloc_absolute_path_from_relative( pathname );
-    mode = apply_umask(mode);
-    int ret = s_transparent_mount->mkdir( absolute_path, mode );
-    int errno_mkdir = errno; /*save mkdir errno before stat request*/
-    /*print stat data of newly created directory*/
-    struct stat st;
-    int ret2 = s_transparent_mount->stat(absolute_path, &st);
-    if ( ret2 == 0 ){
-        debug_mes_stat(&st);
-    }
-    /**/
-    free(absolute_path);
-    errno = errno_mkdir;/*restore mkdir errno after stat request completed*/
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-/*glibc substitution. it should be linked instead standard rmdir */
-int rmdir(const char *pathname){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "pathname=%s", pathname);
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
-    char* absolute_path = alloc_absolute_path_from_relative( pathname );
-    int ret = s_transparent_mount->rmdir( absolute_path );
-    free(absolute_path);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-int lstat(const char *path, struct stat *buf){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "path=%s, buf=%p", path, buf);
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
-    char* absolute_path = alloc_absolute_path_from_relative( path );
-    int ret = s_transparent_mount->stat(absolute_path, buf);
-    free(absolute_path);
-    if ( ret == 0 ){
-        debug_mes_stat(buf);
-    }
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-
-/*sets umask ang et previous value*/
-mode_t umask(mode_t mask){
-    LOG_SYSCALL_START(NULL,0);
-    /*save new umask and return prev*/
-    mode_t prev_umask = get_umask();
-    char umask_str[11];
-    sprintf( umask_str, "%o", mask );
-    setenv( UMASK_ENV, umask_str, 1 );
-    ZRT_LOG(L_SHORT, "%s", umask_str);
-    LOG_SYSCALL_FINISH(0);
-    return prev_umask;
-}
-
-int chown(const char *path, uid_t owner, gid_t group){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "path=%s, owner=%u, group=%u", path, owner, group );
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
-    char* absolute_path = alloc_absolute_path_from_relative(path);
-    int ret = s_transparent_mount->chown(absolute_path, owner, group);
-    free(absolute_path);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-int fchown(int fd, uid_t owner, gid_t group){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "fd=%d, owner=%u, group=%u", fd, owner, group );
-    int ret = s_transparent_mount->fchown(fd, owner, group);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-int lchown(const char *path, uid_t owner, gid_t group){
-    LOG_SYSCALL_START(NULL,0);
-    ZRT_LOG(L_SHORT, "path=%s, owner=%u, group=%u", path, owner, group );
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
-    /*do not do transformaton path, it's called in nested chown*/
-    int ret =chown(path, owner, group);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-int unlink(const char *pathname){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "pathname=%s", pathname );
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
-    char* absolute_path = alloc_absolute_path_from_relative(pathname);
-    int ret = s_transparent_mount->unlink(absolute_path);
-    free(absolute_path);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-/*todo: check if syscall chmod is supported by NACL then use it
-*instead of this glibc substitution*/
-int chmod(const char *path, mode_t mode){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "path=%s, mode=%u", path, mode );
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
-    mode = apply_umask(mode);
-    char* absolute_path = alloc_absolute_path_from_relative(path);
-    int ret = s_transparent_mount->chmod(absolute_path, mode);
-    free(absolute_path);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-int fchmod(int fd, mode_t mode){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "fd=%d, mode=%u", fd, mode );
-    mode = apply_umask(mode);
-    int ret = s_transparent_mount->fchmod(fd, mode);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-/*override system glibc implementation */
-int fcntl(int fd, int cmd, ... /* arg */ ){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    int ret=0;
-    ZRT_LOG(L_SHORT, "fd=%d, cmd=%s", fd, FCNTL_CMD(cmd) );
-    va_list args;
-    va_start(args, cmd);
-    if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
-	struct flock* input_lock = va_arg(args, struct flock*);
-	ZRT_LOG(L_SHORT, "fd=%d, cmd=%s, flock=%p", fd, FCNTL_CMD(cmd), input_lock );
-	ret = s_transparent_mount->fcntl(fd, cmd, input_lock);
-    }
-    va_end(args);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-/*substitude unsupported glibc implementation */
-int remove(const char *pathname){
-    LOG_SYSCALL_START(NULL,0);
-    errno=0;
-    ZRT_LOG(L_SHORT, "pathname=%s", pathname );
-    int ret = s_transparent_mount->remove(pathname);
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-/*substitude unsupported glibc implementation */
-int rename(const char *oldpath, const char *newpath){
-    LOG_SYSCALL_START(NULL,0);
-    int ret;
-    errno=0;
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, oldpath);
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, newpath);
-    struct stat oldstat;
-    ret = stat(oldpath, &oldstat );
-    if ( !ret ){
-	ZRT_LOG(L_SHORT, "oldpath ok %d",1);
-	struct stat newstat;
-	char* absolute_path = alloc_absolute_path_from_relative(newpath);
-	ret = s_transparent_mount->stat(absolute_path, &newstat);
-	free(absolute_path);
-	if ( ret == 0 || (ret != 0 && errno == ENOENT) ){
-	    ZRT_LOG(L_SHORT, "newpath ok %d",1);
-	    /*if oldpath exist and new filename does not exist, then
-	     *read old file contents into buffer then create and write new file
-	     *contents, close files, and remove old file from FS
-	     */
-	    char* oldbuf = malloc(oldstat.st_size);
-	    int oldfd = open(oldpath, O_RDONLY);
-	    int bytes = read(oldfd, oldbuf, oldstat.st_size);
-	    close(oldfd);
-	    ZRT_LOG(L_EXTRA, "bytes=%d, st_size=%d", bytes, (int)oldstat.st_size);
-	    assert(bytes==oldstat.st_size);
-	    /*if new file path exist then remove it*/
-	    if ( ret == 0 ){
-		remove(newpath);
-	    }
-	    /*create new file*/
-	    int newfd = open(newpath, O_CREAT | O_WRONLY);
-	    if ( newfd >=0 ){
-		int bytes_w = write(newfd, oldbuf, oldstat.st_size);
-		close(newfd);
-		ZRT_LOG(L_EXTRA, "bytes_w=%d, st_size=%d", bytes, (int)oldstat.st_size);
-		assert(bytes_w==oldstat.st_size);
-		remove(oldpath);
-		ret=0; /*rename success*/
-	    }
-	    free(oldbuf);
-	}
-    }
-
-    LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-
-/*override system glibc implementation due to bad errno at errors*/
-/* int fseek(FILE *stream, long offset, int whence){ */
-/*     LOG_SYSCALL_START(NULL); */
-/*     errno = 0; */
-/*     int handle = fileno(stream); */
-/*     int ret = s_transparent_mount->lseek(handle, offset, whence); */
-/*     LOG_SYSCALL_FINISH(ret); */
-/*     return ret; */
-/* } */
 
 
 /********************************************************************************
