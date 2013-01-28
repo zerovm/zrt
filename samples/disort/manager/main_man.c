@@ -105,7 +105,7 @@ int start_node(struct ChannelsConfigInterface *chan_if){
 
 int zmain(int argc, char **argv){
     int res =0;
-    WRITE_FMT_LOG(LOG_DEBUG, "Manager node started argv[0]=%s.\n", argv[1] );
+    WRITE_FMT_LOG(LOG_DEBUG, "Manager node started argv[0]=%s.\n", argv[0] );
 
     /*get node type names via environnment*/
     char *source_node_type_text = getenv(ENV_SOURCE_NODE_NAME);

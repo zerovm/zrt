@@ -51,13 +51,15 @@ while 1:
                 offset = 0
                 count = struct.unpack_from('!I', reply, offset)[0]
                 offset += 4
+                log = ''
                 for i in range(count):
                     h = struct.unpack_from('!I', reply, offset)[0]
                     port = bind_map[h][src]
-                    struct.pack_into('!4sH', reply, offset + 4, socket.inet_pton(socket.AF_INET, peer_map[src][0]), port)
+                    struct.pack_into('!4sH', reply, offset + 4, socket.inet_pton(socket.AF_INET, peer_map[h][0]), port)
+                    log += str([peer_map[h][0], port])
                     offset += 10
                 s.sendto(reply, (peer_map[src][0], peer_map[src][1]))
-                print ['sending to: ', peer_map[src][0], peer_map[src][1]]
+                print ['sending to: ', peer_map[src][0], peer_map[src][1], log]
     except (KeyboardInterrupt, SystemExit):
         exit(1)
 

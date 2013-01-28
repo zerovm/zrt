@@ -13,18 +13,18 @@ DST_LAST=10
 
 COUNTER=$SRC_FIRST
 while [  $COUNTER -le $SRC_LAST ]; do
-    ${SETARCH} ${ZEROVM} -Mmanifest/sortsrc"$COUNTER".manifest -e > /dev/null &
+    ${SETARCH} ${ZEROVM} -Mmanifest/sortsrc"$COUNTER".manifest > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 COUNTER=$DST_FIRST
 while [  $COUNTER -le $DST_LAST ]; do
-    ${SETARCH} ${ZEROVM} -Mmanifest/sortdst"$COUNTER".manifest -e > /dev/null &
+    ${SETARCH} ${ZEROVM} -Mmanifest/sortdst"$COUNTER".manifest > /dev/null &
     let COUNTER=COUNTER+1 
 done
 
 date > /tmp/time
-${SETARCH} ${ZEROVM} -Mmanifest/sortman.manifest -e
+${SETARCH} ${ZEROVM} -Mmanifest/sortman.manifest
 date >> /tmp/time
 
 cat log/sortman.stderr.log

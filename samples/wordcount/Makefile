@@ -6,11 +6,9 @@ all: createdirs clean map.nexe reduce.nexe
 
 map.nexe: obj/map.o obj/user_implem.o
 	@$(CC) -o map.nexe obj/map.o obj/user_implem.o $(LDFLAGS)
-	$(BINPATCH) map.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 reduce.nexe: obj/reduce.o obj/user_implem.o
 	@$(CC) -o reduce.nexe obj/reduce.o obj/user_implem.o $(LDFLAGS)
-	$(BINPATCH) reduce.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 obj/map.o: src/map.c
 	@$(CC) -c -o obj/map.o ${CFLAGS} src/map.c

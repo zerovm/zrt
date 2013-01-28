@@ -62,7 +62,7 @@ int zmain(int argc, char **argv){
     int ownnodeid= -1;
     int extracted_name_len=0;
     int res =0;
-    WRITE_FMT_LOG(LOG_DEBUG, "Destination node started argv[0]=%s.\n", argv[1] );
+    WRITE_FMT_LOG(LOG_DEBUG, "Destination node started argv[0]=%s.\n", argv[0] );
 
 #ifdef ZEROVM_DEBUG
     exit(0);
@@ -76,9 +76,9 @@ int zmain(int argc, char **argv){
     assert(source_node_type_text);
     assert(man_node_type_text);
 
-    ownnodeid = ExtractNodeNameId( argv[1], &extracted_name_len );
+    ownnodeid = ExtractNodeNameId( argv[0], &extracted_name_len );
     /*nodename should be the same we got via environment and extracted from argv[0]*/
-    assert( strncmp(dest_node_type_text, argv[1], extracted_name_len ) == 0 );
+    assert( strncmp(dest_node_type_text, argv[0], extracted_name_len ) == 0 );
     if ( ownnodeid == -1 ) ownnodeid=1; /*node id not specified for single node by default assign nodeid=1*/
 
     /*setup channels conf, now used static data but should be replaced by data from zrt*/

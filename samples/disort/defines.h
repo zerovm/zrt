@@ -31,7 +31,7 @@ enum { ESourceNode=1, EDestinationNode=2, EManagerNode=3, EInputOutputNode=4 };
 #define ENV_MAN_NODE_NAME    "MAN_NAME"
 
 //9999872
-#define ARRAY_ITEMS_COUNT 5000000
+#define ARRAY_ITEMS_COUNT 200000000
 #define CHUNK_COUNT 1000
 #define BASE_HISTOGRAM_STEP (ARRAY_ITEMS_COUNT/CHUNK_COUNT)
 /*If MERGE_ON_FLY defined then sorted chunks received by destination nodes will only merged when obtained*/
