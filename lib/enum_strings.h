@@ -25,7 +25,8 @@ enum array_list_t{
     ESeekWhence,
     ELockTypeFlags,
     EFcntlCmd,
-    EFileOpenMode
+    EFileOpenMode,
+    EArchEntryType
 };
 
 #define FILE_OPEN_FLAGS(flags) text_from_flag(flags, EFileOpenFlags)
@@ -35,6 +36,7 @@ enum array_list_t{
 #define SEEK_WHENCE(flags) text_from_id(flags, ESeekWhence)
 #define LOCK_TYPE_FLAGS(flags) text_from_flag(flags, ELockTypeFlags)
 #define FCNTL_CMD(flags) text_from_id(flags, EFcntlCmd)
+#define ARCH_ENTRY_TYPE(flags) text_from_id(flags, EArchEntryType)
 
 /*Get all list of set flags*/
 const char* text_from_flag( int flags, enum array_list_t enum_id );

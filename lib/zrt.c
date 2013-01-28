@@ -16,6 +16,7 @@
  *      Author: d'b, YaroslavLitvinov
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -54,6 +55,12 @@ int main(int argc, char** argv, char** envp)
         ZRT_LOG(L_SHORT, "envp[%d] = '%s'", i, envp[i]);
 	++i;
     }
+    /*print environment variables*/
+    i=0;
+    while( argv[i] ){
+        ZRT_LOG(L_SHORT, "argv[%d] = '%s'", i, argv[i]);
+	++i;
+    }
     ZRT_LOG_DELIMETER;
     /*print channels list*/
     for(i = 0; i < setup->channels_count; ++i)
@@ -67,6 +74,7 @@ int main(int argc, char** argv, char** envp)
         ZRT_LOG(L_SHORT, "channel[%d].limits[PutSizeLimit] = %lld", i, setup->channels[i].limits[PutSizeLimit]);
     }
     ZRT_LOG_DELIMETER;
+    ZRT_LOG(L_SHORT, "_SC_PAGE_SIZE=%ld", sysconf(_SC_PAGE_SIZE));
 
     if(zvm_syscallback((intptr_t)syscall_director) == 0)
         return ERR_CODE;

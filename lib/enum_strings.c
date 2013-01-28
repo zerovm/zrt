@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "unpack_interface.h"
 #include "enum_strings.h"
 #include "zrt_helper_macros.h"
 #include "zrtlog.h"
@@ -76,6 +77,10 @@ static struct enum_data_t s_fileopen_mode_array6[] = {
     EITEM(S_IXUSR), EITEM(S_IWUSR), EITEM(S_IRUSR), EITEM(S_IRWXU)
 };
 
+static struct enum_data_t s_archive_entry_type_array7[] = {
+    EITEM(ETypeFile), EITEM(ETypeDir)
+};
+
 
 /*add here new arrays*/
 static struct enum_data_t* array_by_enum(int index, int* size){
@@ -102,6 +107,9 @@ static struct enum_data_t* array_by_enum(int index, int* size){
     case EFileOpenMode:
 	*size = GET_SIZE_ARRAY(s_fileopen_mode_array6);
 	return s_fileopen_mode_array6;
+    case EArchEntryType:
+	*size = GET_SIZE_ARRAY(s_archive_entry_type_array7);
+	return s_archive_entry_type_array7;
     default:
 	assert(0);
 	break;

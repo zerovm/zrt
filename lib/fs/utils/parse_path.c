@@ -46,6 +46,7 @@ static int process_subdirs_via_callback( struct ParsePathObserver* observer, con
             subpathlen = 1;
         }
         process_subdirs_via_callback( observer, path, subpathlen );
+	/*call it after single item parsed. it can be used for post handling*/
         (*observer->callback_parse)(observer, path, subpathlen);
         ++ret;
     }
@@ -59,6 +60,7 @@ int parse_path( struct ParsePathObserver* observer, const char *path ){
 
     if ( is_cache_matched(path) != 0 ){
         int len = strlen(path);
+	/*handle subdir*/
         int count = process_subdirs_via_callback( observer, path, len );
         /*cache path*/
         strncpy( s_cached_full_path, path, len );
