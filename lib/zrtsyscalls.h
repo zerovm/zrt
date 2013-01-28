@@ -11,6 +11,8 @@
 
 #include "zvm.h"
 
+#include <sys/stat.h> //mode_t
+
 /*reserved channels list*/
 #define DEV_STDIN  "/dev/stdin"
 #define DEV_STDOUT "/dev/stdout"
