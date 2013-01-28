@@ -27,10 +27,8 @@ Environment =SOURCE_NAME,src,DEST_NAME,dst,MAN_NAME,man
 =====================================================================
 Version = 09082012
 Nexe = {ABS_PATH}nodedst.nexe
-NexeMax = 10000000
 MemMax=134217728
-Timeout=100
-SyscallsMax = 3333333
-SetupCallsMax = 7777777
+CommandLine = 5000000
 NodeName=dst-{NODEID},{SEQUENTIAL_ID}
 NameServer = udp:127.0.0.1:54321
+Timeout=100

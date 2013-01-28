@@ -21,16 +21,15 @@ Channel = tcp:1:,  /dev/in/man, 0, 99999999, 99999999, 0, 0
 
 Environment =SOURCE_NAME,src,DEST_NAME,dst,MAN_NAME,man
 
+
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
 Version = 09082012
 Nexe = {ABS_PATH}nodesrc.nexe
-NexeMax = 20000000
 MemMax=134217728
-Timeout=100
-SyscallsMax = 3333333
-SetupCallsMax = 99999999
+CommandLine = 5000000
 NodeName=src-{NODEID},{SEQUENTIAL_ID}
 NameServer = udp:127.0.0.1:54321
+Timeout=100
