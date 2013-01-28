@@ -19,7 +19,7 @@
 
 /*items count passed as input parameter as argv[1],
  *-1 is default value that should be replaced to get it's workable*/
-static s_items_count_to_sortjob = -1;
+static int s_items_count_to_sortjob = -1;
 
 void set_items_count_to_sortjob(int items_count_to_sort){
     s_items_count_to_sortjob = items_count_to_sort;

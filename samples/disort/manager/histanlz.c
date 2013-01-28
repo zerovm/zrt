@@ -68,8 +68,10 @@ void
 set_detailed_histogram( struct histogram_worker* worker, struct Histogram* detailed_histogram  ){
 	assert( !worker->detailed_histogram.array ); /*test: should not be previous detailed histograms*/
 	if ( detailed_histogram && detailed_histogram->array_len ){
-		int big_histogram_first_item_index = worker->histogram.array[worker->helper.end_histogram_index].item_index;
-		/*test: 0 item index of 'detailed histogram' should be equal to last item index of histogram*/
+		int big_histogram_first_item_index = 
+		    worker->histogram.array[worker->helper.end_histogram_index].item_index;
+		/*test: 0 item index of 'detailed histogram' should be equal to
+		  last item index of histogram*/
 		WRITE_FMT_LOG(LOG_DEBUG, "received item index=%d, requested item index=%d\n",
 		        detailed_histogram->array[0].item_index, big_histogram_first_item_index);
 		assert( detailed_histogram->array[0].item_index == big_histogram_first_item_index );

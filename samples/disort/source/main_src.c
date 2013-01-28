@@ -125,6 +125,8 @@ int start_node(  struct ChannelsConfigInterface *chan_if, int nodeid ){
     HistogramArrayPtr histogram_array = alloc_histogram_array_get_len(
             sorted_array, 0, ARRAY_ITEMS_COUNT, BASE_HISTOGRAM_STEP, &histogram_len );
 
+    WRITE_LOG(LOG_DEBUG, "histogram prepared, sending...");
+
     struct Histogram single_histogram;
     single_histogram.src_nodeid = nodeid;
     single_histogram.array_len = histogram_len;

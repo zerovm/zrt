@@ -39,7 +39,8 @@ ssize_t read_channel(int fd, char *buf, size_t len){
 	WRITE_FMT_LOG(LOG_DEBUG, "%s fd=%d len=%d\n", __func__, fd, (int)len);
 	ssize_t r = read(fd, buf, len);
 	if ( r!=len ){
-		WRITE_FMT_LOG(LOG_DEBUG, "%s fd=%d read=%d, readed=%d ASSERT\n", __func__, fd, (int)len, (int)r);
+		WRITE_FMT_LOG(LOG_DEBUG, "%s fd=%d read=%d, readed=%d ASSERT\n", 
+			      __func__, fd, (int)len, (int)r);
 		assert( r == len );
 	}
 	WRITE_FMT_LOG(LOG_DEBUG, "%s fd=%d read=%d OK\n", __func__, fd, (int)len);

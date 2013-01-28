@@ -35,7 +35,7 @@ enum { ESourceNode=1, EDestinationNode=2, EManagerNode=3, EInputOutputNode=4 };
  *by set_items_count_to_sortjob*/
 #define ARRAY_ITEMS_COUNT items_count_to_sortjob()
 #define CHUNK_COUNT 1000
-#define BASE_HISTOGRAM_STEP (ARRAY_ITEMS_COUNT/CHUNK_COUNT)
+#define BASE_HISTOGRAM_STEP ((ARRAY_ITEMS_COUNT/CHUNK_COUNT)<1?1:ARRAY_ITEMS_COUNT/CHUNK_COUNT)
 /*If MERGE_ON_FLY defined then sorted chunks received by destination nodes will only merged when obtained*/
 #define MERGE_ON_FLY
 
