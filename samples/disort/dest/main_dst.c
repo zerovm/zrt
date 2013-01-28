@@ -59,14 +59,17 @@ int zmain(int argc, char **argv){
     /* argv[0] is node name
      * expecting in format : "name-%d",
      * format for single node without decimal id: "name" */
+    WRITE_FMT_LOG(LOG_DEBUG, "Destination node started argv[0]=%s.\n", argv[0] );
+
+    if ( argc < 2 ){
+	WRITE_LOG(LOG_ERR, "argv[1] is expected, items count need to be passed.\n" );
+	return -1;
+    }
+    set_items_count_to_sortjob( atoi(argv[1]) );
+
     int ownnodeid= -1;
     int extracted_name_len=0;
     int res =0;
-    WRITE_FMT_LOG(LOG_DEBUG, "Destination node started argv[0]=%s.\n", argv[0] );
-
-#ifdef ZEROVM_DEBUG
-    exit(0);
-#endif //TTTT
 
     /*get node type names via environnment*/
     char *dest_node_type_text = getenv(ENV_DEST_NODE_NAME);

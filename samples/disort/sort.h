@@ -16,6 +16,12 @@
 typedef uint32_t* BigArrayPtr;
 typedef uint32_t  BigArrayItem;
 
+/*items counts passed to zmain as argv[1] should be passed as param*/
+void set_items_count_to_sortjob(int items_count_to_sort);
+
+/*get items count to sort*/
+int items_count_to_sortjob();
+
 int
 quicksort_BigArrayItem_comparator( const void *m1, const void *m2 );
 

@@ -17,6 +17,19 @@
 #include "cpuid.h"
 #include "bitonic_sort.h"
 
+/*items count passed as input parameter as argv[1],
+ *-1 is default value that should be replaced to get it's workable*/
+static s_items_count_to_sortjob = -1;
+
+void set_items_count_to_sortjob(int items_count_to_sort){
+    s_items_count_to_sortjob = items_count_to_sort;
+}
+int items_count_to_sortjob(){
+    /*items count need to be set previously by set_items_count_to_sortjob function*/
+    assert( s_items_count_to_sortjob != -1 );
+    return s_items_count_to_sortjob;
+}
+
 static void
 copy_array( BigArrayPtr dst_array, const BigArrayPtr src_array, int array_len ){
 	for ( int i=0; i < array_len; i++ )
