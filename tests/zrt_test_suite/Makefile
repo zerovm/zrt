@@ -13,7 +13,7 @@ endif
 #Note2: RELEASE VERSION OF ZEROVM
 #Given Makefile - test runner is using release build of zerovm, and it should be
 #accessible at path described just here:
-ZEROVM=$(ZEROVM_ROOT)/zerovm.rel
+ZEROVM=$(ZEROVM_ROOT)/zerovm
 
 OUTPUT_LAST=last_test.output
 OUTPUT_FAIL=fail_tests.output
@@ -75,6 +75,8 @@ LDFLAGS+= -ldl
 LDFLAGS+= -lm
 #crypt
 LDFLAGS+= -lcrypt
+#glibc substitute
+LDFLAGS+= -lzglibc
 
 #####################################################################
 #in this section describe compiler flags by defining makefile variable 
