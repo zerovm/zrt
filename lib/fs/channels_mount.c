@@ -179,7 +179,7 @@ static void debug_mes_zrt_channel_runtime( int handle ){
     if (zrt_chan_runtime){
         ZRT_LOG(L_INFO, 
 		"flags=%s, sequential_access_pos=%llu, random_access_pos=%llu",
-                FILE_OPEN_FLAGS(zrt_chan_runtime->flags),
+                STR_FILE_OPEN_FLAGS(zrt_chan_runtime->flags),
                 zrt_chan_runtime->sequential_access_pos, zrt_chan_runtime->random_access_pos );
     }
 }
@@ -190,7 +190,7 @@ static int open_channel( const char *name, int flags, int mode )
     int handle = channel_handle(name);
     ZRT_LOG(L_EXTRA, 
 	    "name=%s, handle=%d, mode=%s, flags=%s", 
-	    name, handle, FILE_OPEN_MODE(mode), FILE_OPEN_FLAGS(flags) );
+	    name, handle, STR_FILE_OPEN_MODE(mode), STR_FILE_OPEN_FLAGS(flags) );
     const struct ZVMChannel *chan = NULL;
 
     if ( handle != -1 ){
@@ -587,7 +587,7 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
     if ( !CHECK_FLAG(flags, O_RDONLY) && 
 	 !CHECK_FLAG(flags, O_RDWR)  )
 	{
-	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed read", FILE_OPEN_FLAGS(flags));
+	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed read", STR_FILE_OPEN_FLAGS(flags));
 	    SET_ERRNO( EINVAL );
 	    return -1;
 	}
@@ -602,7 +602,7 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
     readed = zvm_pread(fd, buf, nbyte, pos );
     if(readed > 0) channel_pos(fd, EPosSetRelative, EPosRead, readed);
 
-    ZRT_LOG(L_EXTRA, "channel fd=%d, bytes readed=%d", fd, readed);
+    ZRT_LOG(L_EXTRA, "channel fd=%d, bytes readed=%d", fd, readed );
 
     if ( readed < 0 ){
         SET_ERRNO( zvm_errno() );
@@ -636,7 +636,7 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
     if ( !CHECK_FLAG(flags, O_WRONLY) && 
 	 !CHECK_FLAG(flags, O_RDWR)  )
 	{
-	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed write", FILE_OPEN_FLAGS(flags));
+	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed write", STR_FILE_OPEN_FLAGS(flags));
 	    SET_ERRNO( EINVAL );
 	    return -1;
 	}
@@ -794,7 +794,7 @@ static off_t channels_lseek(int fd, off_t offset, int whence){
     }
     CHANNEL_ASSERT_IF_FAIL(fd);
     ZRT_LOG(L_EXTRA, "channel name=%s, whence=%s", 
-	    s_channels_list[fd].name, SEEK_WHENCE(whence) );
+	    s_channels_list[fd].name, STR_SEEK_WHENCE(whence) );
 
     switch(whence)
 	{
@@ -862,7 +862,7 @@ static int channels_open(const char* path, int oflag, uint32_t mode){
 }
 
 static int channels_fcntl(int fd, int cmd, ...){
-    ZRT_LOG(L_INFO, "fcntl cmd=%s", FCNTL_CMD(cmd));
+    ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
 
     int ret=0;
     va_list args;

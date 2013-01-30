@@ -35,7 +35,7 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode){
     /* handle O_CREAT flag
      * check if file should be created at open if not exist/*/
     if (oflag & O_CREAT) {
-	ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_CREAT");
+	ZRT_LOG(L_INFO, P_TEXT, "handle flag: O_CREAT");
 	/*if creat ok*/
 	if (0 == Creat(path, mode, &st)) {
 	    /*file creat ok*/
@@ -55,7 +55,7 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode){
 		return -1;
 	    }
 	}
-	ZRT_LOG(L_SHORT, "%s Creat OK", path.c_str());
+	ZRT_LOG(L_INFO, "%s Creat OK", path.c_str());
     }
 
     if (oflag&O_RDWR){
@@ -130,7 +130,7 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf) {
 }
 
 int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
-    ZRT_LOG( L_EXTRA, "path=%s", path.c_str() );
+    ZRT_LOG( L_INFO, "path=%s", path.c_str() );
     MemNode *parent;
     MemNode *child;
 
@@ -440,7 +440,7 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
     /*check if file was not opened for reading*/
     int mode= node->mode();
     if ( !mode&S_IRUSR ){
-	ZRT_LOG(L_ERROR, "file open_mode=%s not allow read", FILE_OPEN_MODE(mode));
+	ZRT_LOG(L_ERROR, "file open_mode=%s not allow read", STR_FILE_OPEN_MODE(mode));
 	SET_ERRNO( EINVAL );
     }
 
@@ -480,7 +480,7 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     /*check if file was not opened for writing*/
     int mode= node->mode();
     if ( !mode&S_IWUSR ){
-	ZRT_LOG(L_ERROR, "file open_mode=%s not allow write", FILE_OPEN_MODE(mode));
+	ZRT_LOG(L_ERROR, "file open_mode=%s not allow write", STR_FILE_OPEN_MODE(mode));
 	SET_ERRNO( EINVAL );
     }
 

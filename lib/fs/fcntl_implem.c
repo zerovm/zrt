@@ -70,14 +70,14 @@ int fcntl_implem(struct mount_specific_implem* implem, int fd, int cmd, ...){
 	else{
 	    /*flock struct data acquired, log struct fields*/
 	    ZRT_LOG(L_SHORT, "argument flock l_type=%s, p=%p", 
-		    LOCK_TYPE_FLAGS(input_lock->l_type), input_lock);
+		    STR_LOCK_TYPE_FLAGS(input_lock->l_type), input_lock);
 	    ZRT_LOG(L_INFO, "argument flock l_whence=%d, l_start=%lld, l_len=%lld", 
 		    input_lock->l_whence,
 		    input_lock->l_start,
 		    input_lock->l_len);
 
 	    input_lock->l_type = F_UNLCK;                   /*always allow set lock/unlock */
-	    ZRT_LOG(L_SHORT, "get lock type=%s", LOCK_TYPE_FLAGS(input_lock->l_type));	
+	    ZRT_LOG(L_SHORT, "get lock type=%s", STR_LOCK_TYPE_FLAGS(input_lock->l_type));	
 	}
 	break;
     }

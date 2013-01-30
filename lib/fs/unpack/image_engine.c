@@ -24,30 +24,31 @@
 
 static char block[512];
 
+#define WRITE_FILE( wrote_p, err_p, out_fd, data, datasize )		\
+    *wrote_p = unpacker->observer->mounts->write(out_fd, block, datasize ); \
+    if ( *wrote_p < datasize ){						\
+	*err_p=1;							\
+	ZRT_LOG(L_ERROR, "block write error, wrote %d instead %d bytes", \
+		*wrote_p, datasize );					\
+    }
+
+
 //////////////////////////// parse path callback implementation //////////////////////////////
 
 static int callback_parse(struct ParsePathObserver* this_p, const char *path, int length){
     /*do not handle short paths*/
     if ( length < 2 ) return 0;
-    /*received callback, path is a directory path, it is guaranteed that nesting
-     *level is increasing for every next callback, so we can just ceate directories*/
-    ZRT_LOG( L_INFO, "path=%s", path );
-    char* dir_path = calloc(1, length+1); /*alloc string, should be freed after use*/
-    strncpy( dir_path, path, length );
-    struct MountsInterface* mounts = (struct MountsInterface*)this_p->anyobj;
-    int ret = mounts->mkdir( dir_path, S_IRWXU );
-    ZRT_LOG( L_INFO, "mkdir ret=%d, errno=%d", ret, errno );
-    free(dir_path); /*free string buffer*/
-    return ret;
+    return 0;
 }
 
 //////////////////////////// unpack observer implementation //////////////////////////////
 
 /*unpack observer 1st parameter : main unpack interface that gives access to observer, stream and mounted fs*/
-static int extract_entry( struct UnpackInterface* unpacker, TypeFlag type, const char* name, int entry_size ){
+static int extract_entry( struct UnpackInterface* unpacker, 
+			  TypeFlag type, const char* name, int entry_size ){
     /*parse path and create directories recursively*/
     ZRT_LOG( L_INFO, "type=%s, name=%s, entry_size=%d", 
-	     ARCH_ENTRY_TYPE(type), name, entry_size );
+	     STR_ARCH_ENTRY_TYPE(type), name, entry_size );
 
     /*setup path parser observer
      *observers callback will be called for every paursed subdir extracted from full path*/
@@ -59,36 +60,44 @@ static int extract_entry( struct UnpackInterface* unpacker, TypeFlag type, const
     int parsed_dir_count = parse_path( &path_observer, name );
     ZRT_LOG(L_INFO, "parsed_dir_count=%d", parsed_dir_count );
 
-    int out_fd = unpacker->observer->mounts->open(name, O_WRONLY | O_CREAT, S_IRWXU);
-    if (out_fd < 0) {
-        ZRT_LOG( L_ERROR, "create new file error, name=%s", name );
-        return -1;
-    }
-
     if ( type == ETypeDir ){
-        int ret = unpacker->observer->mounts->mkdir( name, 0777 );
+        int ret = unpacker->observer->mounts->mkdir( name, S_IRWXU );
         if ( ret == -1 && errno != EEXIST ){
 	    ZRT_LOG( L_ERROR, "dir create error, errno=%d", errno );
             return -1; /*dir create error*/
-        }
+	}
     }
     else{
+	int out_fd = unpacker->observer->mounts->open(name, O_WRONLY | O_CREAT, S_IRWXU);
+	if (out_fd < 0) {
+	    ZRT_LOG( L_ERROR, "create new file error, name=%s", name );
+	    return -1;
+	}
+
+	int should_write = entry_size;
+	int write_err = 0;
         /*read file by blocks*/
         while (entry_size > 0) {
             int len = (*unpacker->stream_reader->read)( unpacker->stream_reader,
                     block, sizeof(block) );
             if (len != sizeof(block)) {
+		ZRT_LOG(L_ERROR, "read error. current file can't be saved name=%s", name);
                 return -1;
             }
+	    int wrote;
             if (entry_size > sizeof(block)) {
-                unpacker->observer->mounts->write(out_fd, block, sizeof(block) );
+		WRITE_FILE( &wrote, &write_err, out_fd, block, sizeof(block) );
             } else {
-                unpacker->observer->mounts->write(out_fd, block, entry_size );
+		WRITE_FILE( &wrote, &write_err, out_fd, block, entry_size );
             }
+	    if ( write_err ){
+		return -1;
+	    }
             entry_size -= sizeof(block);
         }
+	ZRT_LOG(L_SHORT, "%7d B saved : %s", should_write, name);
+	unpacker->observer->mounts->close(out_fd);
     }
-    unpacker->observer->mounts->close(out_fd);
     return 0;
 }
 
@@ -100,7 +109,7 @@ static struct UnpackObserver s_unpack_observer = {
 static int deploy_image( const char* mount_path, struct UnpackInterface* unpacker ){
     assert(unpacker);
     ZRT_LOG(L_SHORT, "mount_path=%s", mount_path );
-    mkdir(mount_path, 0700);
+    mkdir(mount_path, S_IRWXU);
     return unpacker->unpack( unpacker, mount_path );
 }
 

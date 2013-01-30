@@ -72,26 +72,19 @@ int fstab_parse(struct FstabLoader* fstab, struct MFstabObserver* observer){
 	    observer->handle_fstab_record(fstab, 
 					  channelname, 
 					  mountpath);
-	    ZRT_LOG(L_SHORT, P_TEXT, "1");
 	    /*free memories occupated by parameters*/
 	    free(channelname);
 	    free(mountpath);
-	    ZRT_LOG(L_SHORT, P_TEXT, "2");
 	    /*free handled record memory*/
 	    free(records_array[i].parsed_params_array);
-	    ZRT_LOG(L_SHORT, P_TEXT, "3");
 	}
-	ZRT_LOG(L_SHORT, P_TEXT, "5");
 	/*free records array*/
 	free(records_array);
 	error = 0; /*OK*/
-	ZRT_LOG(L_SHORT, P_TEXT, "6");
     }
 
-    ZRT_LOG(L_SHORT, P_TEXT, "7");
     /*free keys*/
     free_keylist(key_list);
-    ZRT_LOG(L_SHORT, P_TEXT, "8");
     return error; 
 }
 

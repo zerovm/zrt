@@ -58,10 +58,13 @@ static int transparent_stat(const char* path, struct stat *buf){
     struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
     if ( mount_info ){
         int ret;
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
+	/*for channels mount do not use path transformation*/
+        if ( mount_info->mount->mount_id == EChannelsMountId ) {
             ret = mount_info->mount->stat( path, buf);
+	}
         else{
-            ret = mount_info->mount->stat( s_mounts_manager->get_nested_mount_path( mount_info, path ), buf);
+            ret = mount_info->mount->
+		stat( s_mounts_manager->get_nested_mount_path( mount_info, path ), buf);
         }
         return ret;
     }
