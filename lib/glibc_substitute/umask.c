@@ -29,13 +29,13 @@
 
 /*sets umask ang et previous value*/
 mode_t umask(mode_t mask){
-    LOG_SYSCALL_START(NULL,0);
-    /*save new umask and return prev*/
+    LOG_SYSCALL_START("%o(octal)=", mask);
+    /*save new umask as envvar and return prev*/
     mode_t prev_umask = get_umask();
     char umask_str[11];
     sprintf( umask_str, "%o", mask );
     setenv( UMASK_ENV, umask_str, 1 );
     ZRT_LOG(L_SHORT, "%s", umask_str);
-    LOG_SYSCALL_FINISH(0);
+    LOG_SYSCALL_FINISH(0, "%o(octal)=", mask);
     return prev_umask;
 }

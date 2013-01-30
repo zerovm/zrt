@@ -27,7 +27,7 @@ struct passwd s_passwd_data_1 = {
     1,               /* group ID */
     "userinfo",      /* user information */
     "/",             /* home directory */
-    "zshell.nexe"    /* shell program */
+    "name.nexe"    /* shell program */
 };
 
 

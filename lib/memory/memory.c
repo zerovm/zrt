@@ -96,7 +96,9 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 		/*file size returned by fstat should be the same as readed bytes count*/
 		assert( copied_bytes == st.st_size );
 	    }
-	    
+	    else{
+		SET_ERRNO(errcode);
+	    }
 	}
 	/*fstat fail with passed fd value*/
 	else{
@@ -111,6 +113,9 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 				 roundup_pow2(wanted_mem_block_size), 
 				 wanted_mem_block_size);
 	ZRT_LOG(L_ERROR, "posix_memalign err=%d", errcode );
+	if (errcode != 0){
+	    SET_ERRNO(errcode);
+	}
     } 
     /*if was supplied unsupported prot or flags params return -1; */
     else{

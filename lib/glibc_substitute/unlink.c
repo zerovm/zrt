@@ -33,7 +33,7 @@
 
 
 int unlink(const char *pathname){
-    LOG_SYSCALL_START(NULL,0);
+    LOG_SYSCALL_START("pathname=%s", pathname);
 
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
@@ -44,6 +44,6 @@ int unlink(const char *pathname){
     char* absolute_path = alloc_absolute_path_from_relative(pathname);
     int ret = transpar_mount->unlink(absolute_path);
     free(absolute_path);
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "pathname=%s", pathname);
     return ret;
 }

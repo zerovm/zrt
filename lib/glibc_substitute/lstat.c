@@ -32,7 +32,7 @@
  **************************************************************************/
 
 int lstat(const char *path, struct stat *buf){
-    LOG_SYSCALL_START(NULL,0);
+    LOG_SYSCALL_START("path=%s buf=%p", path, buf);
 
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
@@ -46,6 +46,6 @@ int lstat(const char *path, struct stat *buf){
     if ( ret == 0 ){
         debug_mes_stat(buf);
     }
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "path=%s", path);
     return ret;
 }

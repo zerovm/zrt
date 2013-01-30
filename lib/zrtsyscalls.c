@@ -120,7 +120,7 @@ mode_t get_umask(){
 /*move it from here*/
 mode_t apply_umask(mode_t mode){
     mode_t umasked_mode = ~get_umask() & mode; /*reset umask bits for specified mode*/
-    ZRT_LOG( L_SHORT, "mode=%o, umasked mode=%o", mode, umasked_mode );
+    ZRT_LOG( L_INFO, "mode=%o, umasked mode=%o", mode, umasked_mode );
     return umasked_mode;
 }
 
@@ -143,21 +143,20 @@ SYSCALL_MOCK(dup2, -EPERM) /* duplicate the given file handle. n/a in the simple
  */
 static int32_t zrt_open(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,3);
-    errno=0;
     char* name = (char*)args[0];
     int flags = (int)args[1];
     uint32_t mode = (int)args[2];
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, name);
+    LOG_SYSCALL_START("name=%s flags=%d mode=%u", name, flags, mode );
+    errno=0;
     VALIDATE_SYSCALL_PTR(name);
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_FLAGS(flags));
     
     char* absolute_path = alloc_absolute_path_from_relative( name );
     mode = apply_umask(mode);
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, FILE_OPEN_MODE(mode));
     int ret = s_transparent_mount->open( absolute_path, flags, mode );
     free(absolute_path);
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, 
+		       "name=%s, flags=%s", 
+		       name, STR_FILE_OPEN_FLAGS(flags));
     return ret;
 }
 
@@ -165,13 +164,12 @@ static int32_t zrt_open(uint32_t *args)
 /* do nothing but checks given handle */
 static int32_t zrt_close(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,1);
-    errno = 0;
     int handle = (int)args[0];
-    ZRT_LOG_PARAM(L_SHORT, P_INT, handle);
+    LOG_SYSCALL_START("handle=%d", handle);
+    errno = 0;
 
     int ret = s_transparent_mount->close(handle);
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "handle=%d", handle);
     return ret;
 }
 
@@ -179,26 +177,26 @@ static int32_t zrt_close(uint32_t *args)
 /* read the file with the given handle number */
 static int32_t zrt_read(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,3);
-    errno = 0;
     int handle = (int)args[0];
     void *buf = (void*)args[1];
-    VALIDATE_SYSCALL_PTR(buf);
     int64_t length = (int64_t)args[2];
+    LOG_SYSCALL_START("handle=%d buf=%p length=%lld", handle, buf, length);
+    errno = 0;
+    VALIDATE_SYSCALL_PTR(buf);
 
     int32_t ret = s_transparent_mount->read(handle, buf, length);
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "handle=%d", handle);
     return ret;
 }
 
 /* example how to implement zrt syscall */
 static int32_t zrt_write(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,3);
     int handle = (int)args[0];
     void *buf = (void*)args[1];
-    VALIDATE_SYSCALL_PTR(buf);
     int64_t length = (int64_t)args[2];
+    LOG_SYSCALL_START("handle=%d buf=%p length=%lld", handle, buf, length);
+    VALIDATE_SYSCALL_PTR(buf);
 
 #ifdef DEBUG
     /*disable logging write calls related to debug, stdout and stderr channel */
@@ -208,21 +206,17 @@ static int32_t zrt_write(uint32_t *args)
 #endif
 
     int32_t ret = s_transparent_mount->write(handle, buf, length);
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "handle=%d length=%lld", handle, length);
     return ret;
 }
 
 static int32_t zrt_lseek(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,2);
-    errno = 0;
     int32_t handle = (int32_t)args[0];
     off_t offset = *((off_t*)args[1]);
     int whence = (int)args[2];
-
-    ZRT_LOG_PARAM(L_SHORT, P_LONGINT, offset);
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, SEEK_WHENCE(whence));
-
+    LOG_SYSCALL_START("handle=%d offset=%lld whence=%d", handle, offset, whence);
+    errno = 0;
 
     if ( whence == SEEK_SET && offset < 0 ){
 	SET_ERRNO(EINVAL);
@@ -233,7 +227,9 @@ static int32_t zrt_lseek(uint32_t *args)
     }
 
     *(off_t *)args[1] = offset;
-    LOG_SYSCALL_FINISH(offset);
+    LOG_SYSCALL_FINISH(offset, 
+		       "handle=%d whence=%s", 
+		       handle, STR_SEEK_WHENCE(whence));
     return offset;
 }
 
@@ -243,13 +239,13 @@ SYSCALL_MOCK(ioctl, -EINVAL) /* not implemented in the simple version of zrtlib 
 
 static int32_t zrt_stat(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,2);
-    errno = 0;
     const char *file = (const char*)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
+
+    LOG_SYSCALL_START("file=%s sbuf=%p", file, sbuf);
+    errno = 0;
     VALIDATE_SYSCALL_PTR(file);
     VALIDATE_SYSCALL_PTR(sbuf);
-    ZRT_LOG(L_SHORT, "file=%s", file);
     struct stat st;
     char* absolute_path = alloc_absolute_path_from_relative(file);
     int ret = s_transparent_mount->stat(absolute_path, &st);
@@ -258,25 +254,26 @@ static int32_t zrt_stat(uint32_t *args)
         debug_mes_stat(&st);
         set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
     }
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "file=%s", file);
     return ret;
 }
 
 
 static int32_t zrt_fstat(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,2);
-    errno = 0;
     int handle = (int)args[0];
     struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
+    LOG_SYSCALL_START("handle=%d sbuf=%p", handle, sbuf);
+    errno = 0;
     VALIDATE_SYSCALL_PTR(sbuf);
+
     struct stat st;
     int ret = s_transparent_mount->fstat( handle, &st);
     if ( ret == 0 ){
         debug_mes_stat(&st);
         set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
     }
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "handle=%d", handle);
     return ret;
 }
 
@@ -292,16 +289,15 @@ SYSCALL_MOCK(chmod, -EPERM) /* NACL does not support chmod*/
 /* change space allocation. ZRT nothing do here just call sysbrk NACL syscall.*/
 static int32_t zrt_sysbrk(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,1);
+    LOG_SYSCALL_START("addr=%p", (void*)args[0]);
     int32_t retaddr = s_memory_interface->sysbrk(s_memory_interface, (void*)args[0] );
-    LOG_SYSCALL_FINISH(retaddr);
+    LOG_SYSCALL_FINISH(retaddr, "param=%p", (void*)args[0]);
     return retaddr;
 }
 
 /* map region of memory. ZRT simple implementation;*/
 static int32_t zrt_mmap(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,6);
     int32_t retcode = -1;
     void* addr = (void*)args[0];
     uint32_t length = args[1];
@@ -309,37 +305,41 @@ static int32_t zrt_mmap(uint32_t *args)
     uint32_t flags = args[3];
     uint32_t fd = args[4];
     off_t offset = (off_t)args[5];
+    LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u offset=%lld",
+		      addr, length, prot, flags, fd, offset);
 
-    ZRT_LOG(L_INFO, "mmap prot=%s, mmap flags=%s", 
-	    MMAP_PROT_FLAGS(prot), MMAP_FLAGS(flags));
     retcode = s_memory_interface->mmap(s_memory_interface, addr, length, prot, 
 		  flags, fd, offset);
   
-    LOG_SYSCALL_FINISH(retcode);
+    LOG_SYSCALL_FINISH(retcode, 
+		       "addr=%p length=%u prot=%s flags=%s fd=%u offset=%lld",
+		       addr, length, STR_MMAP_PROT_FLAGS(prot), STR_MMAP_FLAGS(flags), 
+		       fd, offset);
     return retcode;
 }
 
 static int32_t zrt_munmap(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,2);
-    int32_t retcode = s_memory_interface->munmap(s_memory_interface, 
-						 (void*)args[0], args[1]);
-    LOG_SYSCALL_FINISH(retcode);
+    void *addr=(void*)args[0];
+    uint32_t param2 = args[1];
+    LOG_SYSCALL_START("addr=%p, param2=%u", addr, param2);
+    int32_t retcode = s_memory_interface->munmap(s_memory_interface, addr, param2);
+    LOG_SYSCALL_FINISH(retcode, "addr=%p, param2=%u", addr, param2);
     return retcode;
 }
 
 
 static int32_t zrt_getdents(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,3);
-    errno=0;
     int handle = (int)args[0];
     char *buf = (char*)args[1];
-    VALIDATE_SYSCALL_PTR(buf);
     uint32_t count = args[2];
+    LOG_SYSCALL_START("handle=%d buf=%p count=%u", handle, buf, count);
+    errno=0;
+    VALIDATE_SYSCALL_PTR(buf);
 
     int32_t bytes_readed = s_transparent_mount->getdents(handle, buf, count);
-    LOG_SYSCALL_FINISH(bytes_readed);
+    LOG_SYSCALL_FINISH(bytes_readed, "handle=%d count=%u", handle, count);
     return bytes_readed;
 }
 
@@ -351,10 +351,12 @@ static int32_t zrt_getdents(uint32_t *args)
 static int32_t zrt_exit(uint32_t *args)
 {
     /* no need to check args for NULL. it is always set by syscall_manager */
-    LOG_SYSCALL_START(args,1);
-    zvm_exit(args[0]);
-    LOG_SYSCALL_FINISH(0);
-    return 0; /* unreachable */
+    LOG_SYSCALL_START(P_HEX, args[0]);
+    ZRT_LOG(L_SHORT, P_TEXT, "exiting...");
+    zvm_exit(args[0]); /*get controls into zerovm*/
+    /* unreachable code*/
+    LOG_SYSCALL_FINISH(0, P_HEX, args[0]);
+    return 0; 
 }
 
 SYSCALL_MOCK(getpid, 0)
@@ -445,9 +447,7 @@ SYSCALL_MOCK(second_tls_set, 0)
  */
 static int32_t zrt_second_tls_get(uint32_t *args)
 {
-    LOG_SYSCALL_START(args,6);
     int32_t ret = zrt_tls_get(NULL);
-    LOG_SYSCALL_FINISH(ret);
     return ret;
 }
 
@@ -662,9 +662,11 @@ void zrt_setup( struct UserManifest* manifest ){
 
 void zrt_setup_finally(){
     /* using of channels_mount directly to preallocate standard channels sdtin, stdout, stderr */
+    /* logPushFilter(name,canberead,canbewrite,handle); */
     s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
     s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
     s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
+    /* logPopFilter(); */
 
     /* get time stamp from the environment, and cache it */
     char *stamp = getenv( TIMESTAMP_STR );

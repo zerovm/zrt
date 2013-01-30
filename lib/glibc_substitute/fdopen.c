@@ -28,9 +28,7 @@
 /*get pointer to file structure
  *substitude glibc implementation */
 FILE *fdopen(int fd, const char *mode){
-    LOG_SYSCALL_START(NULL,0);
-    ZRT_LOG_PARAM(L_SHORT, P_INT, fd);
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, mode);
+    LOG_SYSCALL_START("fd=%d mode=%s", fd, mode);
     FILE* f = NULL;
 
     struct MountsManager* mm = mounts_manager();        /*get access to main mounts object*/
@@ -53,7 +51,7 @@ FILE *fdopen(int fd, const char *mode){
 	SET_ERRNO(EBADF);
     }
 
-    LOG_SYSCALL_FINISH( (f==NULL) );
+    LOG_SYSCALL_FINISH( (f==NULL), "fd=%d mode=%s", fd, mode );
     return f;
 }
 

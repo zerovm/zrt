@@ -31,15 +31,13 @@
  **************************************************************************/
 
 int mkdir(const char* pathname, mode_t mode){
-    LOG_SYSCALL_START(NULL,0);
-    ZRT_LOG(L_SHORT, "pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
+    LOG_SYSCALL_START("pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
     FILE* f = NULL;
     
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     errno=0;
-    ZRT_LOG(L_SHORT, "pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     char* absolute_path = alloc_absolute_path_from_relative( pathname );
     mode = apply_umask(mode);
@@ -55,6 +53,6 @@ int mkdir(const char* pathname, mode_t mode){
     free(absolute_path);
     errno = errno_mkdir;/*restore mkdir errno after stat request completed*/
 
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
     return ret;
 }

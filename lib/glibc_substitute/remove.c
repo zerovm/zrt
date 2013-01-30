@@ -33,15 +33,13 @@
 
 /*substitude unsupported glibc implementation */
 int remove(const char *pathname){
-    LOG_SYSCALL_START(NULL,0);
+    LOG_SYSCALL_START("pathname=%s", pathname);
+    errno=0;
 
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
-
-    errno=0;
-    ZRT_LOG(L_SHORT, "pathname=%s", pathname );
     int ret = transpar_mount->remove(pathname);
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "pathname=%s", pathname );
     return ret;
 }
 

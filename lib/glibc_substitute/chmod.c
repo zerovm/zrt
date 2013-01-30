@@ -34,7 +34,7 @@
 /*todo: check if syscall chmod is supported by NACL then use it
 *instead of this glibc substitution*/
 int chmod(const char *path, mode_t mode){
-    LOG_SYSCALL_START(NULL,0);
+    LOG_SYSCALL_START("path=%s mode=%o(octal)", path, mode);
 
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
@@ -46,20 +46,19 @@ int chmod(const char *path, mode_t mode){
     char* absolute_path = alloc_absolute_path_from_relative(path);
     int ret = transpar_mount->chmod(absolute_path, mode);
     free(absolute_path);
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "path=%s mode=%o(octal)", path, mode);
     return ret;
 }
 
 int fchmod(int fd, mode_t mode){
-    LOG_SYSCALL_START(NULL,0);
+    LOG_SYSCALL_START("fd=%d mode=%o(octal)", fd, mode);
+    errno=0;
 
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
-
-    errno=0;
-    ZRT_LOG(L_SHORT, "fd=%d, mode=%u", fd, mode );
+    /*update mode according to the mask and propogate it to fchmod implementation*/
     mode = apply_umask(mode);
     int ret = transpar_mount->fchmod(fd, mode);
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "fd=%d mode=%o(octal)", fd, mode);
     return ret;
 }

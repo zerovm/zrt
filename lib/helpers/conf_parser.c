@@ -214,7 +214,7 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 	    /*log non-striped lexema*/
 	    char* non_striped_lexem_text = calloc(lex_length+1, 1);
 	    memcpy(non_striped_lexem_text, &text[lex_cursor], lex_length);
-	    ZRT_LOG(L_SHORT, "lex= '%s'", non_striped_lexem_text);
+	    ZRT_LOG(L_EXTRA, "lex= '%s'", non_striped_lexem_text);
 	    free(non_striped_lexem_text);
 
 	    uint16_t striped_token_len=0;
@@ -227,7 +227,7 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 		/*log striped token*/
 		char* token_text = calloc(striped_token_len+1, 1);
 		memcpy(token_text, striped_token, striped_token_len);
-		ZRT_LOG(L_SHORT, "token= '%s'", token_text);
+		ZRT_LOG(L_INFO, "token= '%s'", token_text);
 		free(token_text);
 		/*parse pair 'key=value', strip spaces */
 		if ( !extract_key_value( striped_token, striped_token_len,

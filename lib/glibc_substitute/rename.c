@@ -32,25 +32,23 @@
  **************************************************************************/
 
 int rename(const char *oldpath, const char *newpath){
-    LOG_SYSCALL_START(NULL,0);
+    int ret;
+    LOG_SYSCALL_START("oldpath=%s newpath=%s", oldpath, newpath);
 
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
-
-    int ret;
     errno=0;
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, oldpath);
-    ZRT_LOG_PARAM(L_SHORT, P_TEXT, newpath);
+
     struct stat oldstat;
     ret = stat(oldpath, &oldstat );
     if ( !ret ){
-	ZRT_LOG(L_SHORT, "oldpath ok %d",1);
+	ZRT_LOG(L_SHORT, "oldpath exist %d",1);
 	struct stat newstat;
 	char* absolute_path = alloc_absolute_path_from_relative(newpath);
 	ret = transpar_mount->stat(absolute_path, &newstat);
 	free(absolute_path);
 	if ( ret == 0 || (ret != 0 && errno == ENOENT) ){
-	    ZRT_LOG(L_SHORT, "newpath ok %d",1);
+	    ZRT_LOG(L_SHORT, "newpath doesn't exist ok %d",1);
 	    /*if oldpath exist and new filename does not exist, then
 	     *read old file contents into buffer then create and write new file
 	     *contents, close files, and remove old file from FS
@@ -79,6 +77,6 @@ int rename(const char *oldpath, const char *newpath){
 	}
     }
 
-    LOG_SYSCALL_FINISH(ret);
+    LOG_SYSCALL_FINISH(ret, "oldpath=%s newpath=%s", oldpath, newpath);
     return ret;
 }

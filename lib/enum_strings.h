@@ -29,14 +29,14 @@ enum array_list_t{
     EArchEntryType
 };
 
-#define FILE_OPEN_FLAGS(flags) text_from_flag(flags, EFileOpenFlags)
-#define FILE_OPEN_MODE(mode) text_from_id((mode), EFileOpenMode)
-#define MMAP_PROT_FLAGS(flags) text_from_flag(flags, EMmapProtFlags)
-#define MMAP_FLAGS(flags) text_from_flag(flags, EMMapFlags)
-#define SEEK_WHENCE(flags) text_from_id(flags, ESeekWhence)
-#define LOCK_TYPE_FLAGS(flags) text_from_flag(flags, ELockTypeFlags)
-#define FCNTL_CMD(flags) text_from_id(flags, EFcntlCmd)
-#define ARCH_ENTRY_TYPE(flags) text_from_id(flags, EArchEntryType)
+#define STR_FILE_OPEN_FLAGS(flags) text_from_flag(flags, EFileOpenFlags)
+#define STR_FILE_OPEN_MODE(mode) text_from_id((mode), EFileOpenMode)
+#define STR_MMAP_PROT_FLAGS(flags) text_from_flag(flags, EMmapProtFlags)
+#define STR_MMAP_FLAGS(flags) text_from_flag(flags, EMMapFlags)
+#define STR_SEEK_WHENCE(flags) text_from_id(flags, ESeekWhence)
+#define STR_LOCK_TYPE_FLAGS(flags) text_from_flag(flags, ELockTypeFlags)
+#define STR_FCNTL_CMD(flags) text_from_id(flags, EFcntlCmd)
+#define STR_ARCH_ENTRY_TYPE(flags) text_from_id(flags, EArchEntryType)
 
 /*Get all list of set flags*/
 const char* text_from_flag( int flags, enum array_list_t enum_id );
