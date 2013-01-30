@@ -10,9 +10,6 @@ all: $(NAME).o
 	's@{NAME}@$(NAME)@g;'\
 	's@\(Environment = .*\)TimeStamp,[^,]*\(.*\)@\1TimeStamp, ${TIMESTAMP}\2@;'\
 	  ../sample_manifest.template > $(NAME).manifest
-#
-	@$(BINPATCH) $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
-#
 	$(SETARCH) $(ZEROVM) -M$(NAME).manifest
 	@cat time.stdout.std
 

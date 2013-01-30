@@ -10,7 +10,6 @@ reqrep.nexe: reqrep.o
 
 run:
 	chmod u+rwx genmanifest.sh test.sh test-type2.sh
-	$(BINPATCH) reqrep.nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 	./genmanifest.sh
 	./test.sh	
 	./test-type2.sh
