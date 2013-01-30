@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <regex.h>
 
+#undef _POSIX_CPUTIME
 
 #if defined _POSIX_CPUTIME && _POSIX_CPUTIME >= 0
 static clockid_t cl;

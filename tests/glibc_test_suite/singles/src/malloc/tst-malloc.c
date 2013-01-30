@@ -44,8 +44,10 @@ zmain (void)
   if (p != NULL)
     merror ("malloc (-1) succeeded.");
 
-  if (p == NULL && save != ENOMEM)
+  if (p == NULL && save != ENOMEM){
+    printf("errno=%d", save);
     merror ("errno is not set correctly");
+  }
 
   p = malloc (10);
   if (p == NULL)

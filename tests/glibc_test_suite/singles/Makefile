@@ -7,7 +7,7 @@ ifndef MEMMAX
 MEMMAX=234217728
 endif
 #it should be zerovm release version
-ZEROVM=$(ZEROVM_ROOT)/zerovm.rel
+ZEROVM=$(ZEROVM_ROOT)/zerovm
 
 OUTPUT_LAST=last_test.output
 OUTPUT_FAIL=fail_tests.output
@@ -69,6 +69,8 @@ LDFLAGS+= -ldl
 LDFLAGS+= -lm
 #crypt
 LDFLAGS+= -lcrypt
+#glibc substitute
+LDFLAGS+= -lzglibc
 
 ################ strings CFLAGS
 CFLAGS-inl-tester.c = -fno-builtin
@@ -93,17 +95,34 @@ CLAGS-test-idouble.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
 			 -DTEST_FAST_MATH -fno-builtin
 CLAGS-test-ildoubl.c= -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
 			  -DTEST_FAST_MATH -fno-builtin
-################ posix CFLAGS
+################ time CFLAGS
+CFLAGS-getdate.c = -fexceptions
+
+# it' needed to be adopted to our test suite
+# It's copied as is:
+# The following is a hack since we must compile scanf1{5,7}.c without any
+# GNU extension.  The latter are needed, though, when internal headers
+# are used.  So made sure we see the installed headers first.
+CFLAGS-scanf15.c = -I../libio -I../stdlib -I../wcsmbs -I../time -I../string \
+		   -I../wctype
+CFLAGS-scanf17.c = -I../libio -I../stdlib -I../wcsmbs -I../time -I../string \
+		   -I../wctype
 
 ################ posix CommandLine
 CMDLINE-tst-pcre.c=/tmp/PCRE.tests
 CMDLINE-tst-boost.c=/tmp/BOOST.tests
+CMDLINE-bug-getdate1.c=/tmp/bug-getdate1-fmt
+CMDLINE-tst-rxspencer.c=--utf8 /tmp/rxspencer/tests
+CMDLINE-bug-glob1.c=/tmp
 
 ################ libio Environment 
 #LOCPATH is set to /lib/locale only for demonstration of setting env var
 #by glibc test suite, in anyway envvar was set into default path for localedata 
 #that uses glibc, so another localisation tests will work withouth LOCPATH env
 ENV-tst-swscanf.c=, LOCPATH, /lib/locale
+
+############### time Environment
+ENV-tst-getdate.c=, DATEMSK, datemsk, TZDIR, /tmp/getdate-data
 
 all: clean $(ZEROVM) $(TEST_NEXES) report
 

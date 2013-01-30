@@ -23,6 +23,7 @@ test (const char *locale)
       printf ("cannot set locale \"%s\"\n", locale);
       return 1;
     }
+
   bufsize = strxfrm (NULL, string, 0) + 1;
   buf = malloc (bufsize);
   if (buf == NULL)
@@ -38,10 +39,8 @@ test (const char *locale)
 	       locale, r, l);
        result = 1;
     }
-
   loc = newlocale (1 << LC_ALL, locale, NULL);
-
-  r = strxfrm_l (buf, string, bufsize, loc);
+  r = strxfrm_l (buf, string, bufsize, loc); //<--Signal 11 from untrusted code
   l = strlen (buf);
   if (r != l)
     {
@@ -49,7 +48,6 @@ test (const char *locale)
 	       locale, r, l);
        result = 1;
     }
-
   freelocale (loc);
 
   free (buf);

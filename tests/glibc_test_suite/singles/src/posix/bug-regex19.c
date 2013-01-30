@@ -404,6 +404,7 @@ zmain (void)
 	  puts ("setlocale de_DE.ISO-8859-1 failed");
 	  ret = 1;
 	}
+      break;
       ret |= do_one_test (&tests[i], "");
       if (setlocale (LC_ALL, "de_DE.UTF-8") == NULL)
 	{

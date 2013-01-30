@@ -14,8 +14,9 @@ CommandLine = {COMMAND_LINE}
 =====================================================================
 Channel = {ABS_PATH}fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}mounts/tmp_dir.tar, /dev/mount/tmp, 0, 999999, 999999, 0, 0
-Channel = {MOUNTS_PATH}glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999, 999999, 0, 0
-Channel = {MOUNTS_PATH}glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999, 999999, 0, 0
+Channel = {MOUNTS_PATH}glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999999, 999999999, 0, 0
+Channel = {MOUNTS_PATH}glibc-locale/locale-lib2.tar, /dev/mount/lib2, 0, 999999999, 999999999, 0, 0
+==Channel = {MOUNTS_PATH}glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999999, 999999999, 0, 0
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -26,6 +27,6 @@ Nexe = {OUTFILE}.nexe
 ==MemMax=134217728
 MemMax={MEMMAX}
 Timeout=10
-Environment = TimeStamp, 1344719070 {ENVIRONMENT}
+Environment = VERBOSITY, 2, TimeStamp, 1344719070 {ENVIRONMENT}
 NodeName=glibc-test,1
 

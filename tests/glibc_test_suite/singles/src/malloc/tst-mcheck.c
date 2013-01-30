@@ -41,8 +41,10 @@ zmain (void)
 
   if (p != NULL)
     merror ("malloc (-1) succeeded.");
-  else if (errno != ENOMEM)
-    merror ("errno is not set correctly.");
+  else if (errno != ENOMEM){
+    printf("errno=%d", errno);
+    merror ("errno is not set correctly1.");
+  }
 
   p = malloc (10);
   if (p == NULL)
@@ -70,8 +72,10 @@ zmain (void)
 
   if (realloc (p, -256) != NULL)
     merror ("realloc (p, -256) succeeded.");
-  else if (errno != ENOMEM)
-    merror ("errno is not set correctly.");
+  else if (errno != ENOMEM){
+    printf("errno=%d", errno);
+    merror ("errno is not set correctly2.");
+  }
 
   free (p);
 
@@ -81,8 +85,10 @@ zmain (void)
 
   if (realloc (p, -1) != NULL)
     merror ("realloc (p, -1) succeeded.");
-  else if (errno != ENOMEM)
-    merror ("errno is not set correctly.");
+  else if (errno != ENOMEM){
+    printf("errno=%d", errno);
+    merror ("errno is not set correctly3.");
+  }
 
   free (p);
   free (q);
