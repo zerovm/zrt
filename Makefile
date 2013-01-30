@@ -27,6 +27,7 @@ lib/fs/utils/parse_path.c
 
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 
+
 ############### zlibc.a source files to build
 LIBZGLIBC=lib/libzglibc.a
 
@@ -35,14 +36,24 @@ lib/glibc_substitute/realpath.c \
 lib/glibc_substitute/getcwd.c \
 lib/glibc_substitute/getuid.c \
 lib/glibc_substitute/getpwuid.c \
-lib/glibc_substitute/fdopen.c
+lib/glibc_substitute/fdopen.c \
+lib/glibc_substitute/mkdir.c \
+lib/glibc_substitute/rmdir.c \
+lib/glibc_substitute/lstat.c \
+lib/glibc_substitute/umask.c \
+lib/glibc_substitute/unlink.c \
+lib/glibc_substitute/chmod.c \
+lib/glibc_substitute/fcntl.c \
+lib/glibc_substitute/remove.c \
+lib/glibc_substitute/rename.c \
+lib/glibc_substitute/chown.c
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
 
 
 ############## ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
-lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/libsqlite3.a 
+lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a # lib/sqlite3/libsqlite3.a 
 
 ################# samples to build
 UNSTABLE_SAMPLES=
@@ -128,6 +139,7 @@ ${LIBS_CLEAN}:
 	@make -C$(dir $@) clean 
 	@TESTS_ROOT=autotests make -Ctests/zrt_test_suite clean
 	@rm -f $(LIBZRT_OBJECTS)
+	@rm -f $(LIBZGLIBC_OBJECTS)
 	@rm -f $(LIBS)
 	@rm -f lib/*.a
 
