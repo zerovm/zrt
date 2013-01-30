@@ -27,9 +27,8 @@ ZRT has complete implementation (with error handling) for the folowing syscalls:
 stat(), fstat(), seek(), open(), close(), getdents(). The rest of syscalls have only a stub implementation
 
 1.2 
-ZRT has special group of syscalls that are not implemented by ZRT, but instead they call a syscall on trusted 
-side by using syscallback address (see "syscallback" feature in ZeroVM docs). 
-These are: sysbrk(), mmap(), munmap(), tls_get()
+Syscalls:
+tls_get() syscall implemented by ZRT side is executing directly NACL_tls_get syscall implemted on trusted side at least once. (it's uses "syscallback" feature, see ZeroVM docs). 
 
 ---------------------------------------------------------------
 2. Channels I/O
@@ -52,7 +51,7 @@ Channel type SGetRPut=2, Sequential get / Random put
 RDONLY     Seek pos —     get
 WRONLY     Seek pos — set get
 RDWR       Read pos unavailable; Write Seek pos - set get;
-2.4. RGetRPut type=3 Does not supported
+2.4. 
 Channel type RGetRPut=3, Random get / Random put
 RDONLY     Seek pos — set get
 WRONLY     Seek pos —     get
@@ -61,12 +60,25 @@ RDWR       Seek pos — set get
 ---------------------------------------------------------------
 3. File system
 ---------------------------------------------------------------
-Currently all channels represent device files in /dev pseudo-filesystem,
-for example channel alias "/dev/input" will be transformed into two entities: 
-directory "/dev"
-file      "/dev/input" 
-All added directories can be accessed via stat, and realistic stat structure will be returned by stat syscall
-It was implemented to get readdir working
+Currently ZRT has 2 filesystems:
+
+3.1. Channels mount - it is wrapper around zerovm channels, it's mounted into /dev/ folder.
+It has statically structure based on channels list, it's include channels as devices and
+appropriate folders structure based on channels aliases.
+All channels aliases listed in zerovm manifest file should be started with /dev/ alias, 
+that represents their belonging to /dev/ mount. Channels which aliases not started with /dev/
+will not be accessible by channels filesystem at whole.
+3.1.1. Folders
+internal folders structure accessible by stat functions and also readdir available;
+3.1.2. character and block device files
+Sequential access channels are  represented by stat functions as character devices;
+Random access channels are represented by stat functions as block devices;
+
+3.2. Mem Mount - it's fully virtual filesystem hosted in memory, and mounted into '/' root.
+It's like generic filesystem which alllows read-write access, but it not support uid/gid/chown 
+functions; All changes made in filesystem will lost at nexe exit.
+Files can be injected into FS at nexe startup but before zmain() from tar archive by using
+/dev/fstab.
 
 ---------------------------------------------------------------
 4. ZRT Debugging
@@ -80,8 +92,8 @@ TODO: Add remote debugging, to get debug info if executable was launched on clus
 5. Known issues
 ---------------------------------------------------------------
 1. fseek( file, 0, SEEK_END ) declared as: int fseek (FILE *stream, long int offset, int whence)
-fseek doesn't working properly if called with whence=SEEK_END and offset=0, so seeked file pos will not point
-to end of file, but it will point to start of file, this is because ZRT recevies NACL syscall where whence=SEEK_SET
-instead of SEEK_END.
+fseek doesn't working properly if called with whence=SEEK_END and offset=0, so seeked file pos
+will not point to end of file, but it will point to start of file, this is because ZRT recevies
+NACL syscall where whence=SEEK_SET instead of SEEK_END.
 
  

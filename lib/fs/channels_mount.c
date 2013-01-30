@@ -31,6 +31,7 @@
 #include "enum_strings.h"
 #include "channels_readdir.h"
 #include "channels_mount.h"
+#include "channels_mount_magic_numbers.h"
 
 enum PosAccess{ EPosSeek=0, EPosRead, EPosWrite };
 enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
@@ -399,9 +400,9 @@ static void set_stat(struct stat *stat, int fd)
     ZRT_LOG(L_EXTRA, "fd=%d", fd);
 
     int nlink = 1;
-    uint32_t permissions = 0;
-    int64_t size=4096;
-    uint32_t blksize =1;
+    uint32_t permissions;
+    int64_t size;
+    uint32_t blksize;
     uint64_t ino;
 
     /*choose handle type: channel handle or dir handle */
@@ -409,8 +410,8 @@ static void set_stat(struct stat *stat, int fd)
         /*channel handle*/
         CHANNEL_ASSERT_IF_FAIL( fd );
         permissions = channel_permissions( &s_channels_list[fd] );
-        if ( CHECK_FLAG( permissions, S_IFCHR) ) blksize = 1;
-        else                                     blksize = 4096;
+        if ( CHECK_FLAG( permissions, S_IFCHR) ) blksize = DEV_CHAR_DEVICE_BLK_SIZE;
+        else                                     blksize = DEV_BLOCK_DEVICE_BLK_SIZE;
         ino = INODE_FROM_HANDLE( fd );
         size = CHANNEL_SIZE(fd);
     }
@@ -420,16 +421,18 @@ static void set_stat(struct stat *stat, int fd)
         assert(d);
         nlink = d->nlink;
         ino = INODE_FROM_HANDLE(d->handle);
-        permissions |= S_IRUSR | S_IFDIR;
+        permissions = S_IRUSR | S_IFDIR;
+	blksize = DEV_DIRECTORY_BLK_SIZE;
+	size = DEV_DIRECTORY_SIZE;
     }
 
     /* return stat object */
-    stat->st_dev = 2049;     /* ID of device containing handle */
-    stat->st_ino = ino;     /* inode number */
-    stat->st_nlink = nlink;      /* number of hard links */;
-    stat->st_uid = 1000;     /* user ID of owner */
-    stat->st_gid = 1000;     /* group ID of owner */
-    stat->st_rdev = 0;       /* device ID (if special handle) */
+    stat->st_dev = DEV_DEVICE_ID;     /* ID of device containing handle */
+    stat->st_ino = ino;               /* inode number */
+    stat->st_nlink = nlink;           /* number of hard links */;
+    stat->st_uid = DEV_OWNER_UID;     /* user ID of owner */
+    stat->st_gid = DEV_OWNER_GID;     /* group ID of owner */
+    stat->st_rdev = 0;                /* device ID (if special handle) */
     stat->st_mode = permissions;
     stat->st_blksize = blksize;        /* block size for file system I/O */
     stat->st_size = size;
