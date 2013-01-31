@@ -35,10 +35,12 @@ static char block[512];
 
 //////////////////////////// parse path callback implementation //////////////////////////////
 
+/*directories handler, it's responsible to create existing directories at path*/
 static int callback_parse(struct ParsePathObserver* this_p, const char *path, int length){
     /*do not handle short paths*/
     if ( length < 2 ) return 0;
-    return 0;
+    /*do not create dir if already cached*/
+    return create_dir_and_cache_name(path, length);
 }
 
 //////////////////////////// unpack observer implementation //////////////////////////////
@@ -61,11 +63,7 @@ static int extract_entry( struct UnpackInterface* unpacker,
     ZRT_LOG(L_INFO, "parsed_dir_count=%d", parsed_dir_count );
 
     if ( type == ETypeDir ){
-        int ret = unpacker->observer->mounts->mkdir( name, S_IRWXU );
-        if ( ret == -1 && errno != EEXIST ){
-	    ZRT_LOG( L_ERROR, "dir create error, errno=%d", errno );
-            return -1; /*dir create error*/
-	}
+	create_dir_and_cache_name(name, strlen(name));
     }
     else{
 	int out_fd = unpacker->observer->mounts->open(name, O_WRONLY | O_CREAT, S_IRWXU);
@@ -109,7 +107,7 @@ static struct UnpackObserver s_unpack_observer = {
 static int deploy_image( const char* mount_path, struct UnpackInterface* unpacker ){
     assert(unpacker);
     ZRT_LOG(L_SHORT, "mount_path=%s", mount_path );
-    mkdir(mount_path, S_IRWXU);
+    create_dir_and_cache_name(mount_path, strlen(mount_path));
     return unpacker->unpack( unpacker, mount_path );
 }
 

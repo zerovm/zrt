@@ -14,6 +14,10 @@ struct ParsePathObserver{
     void* anyobj;
 };
 
+/* check if directory related to path already cached. 
+ * @return 1 if dir created and dir name added to cache, 
+ * or return 0 if dir cached and it means that it already created*/
+int create_dir_and_cache_name( const char* path, int len );
 
 /*return parsed count*/
 int parse_path( struct ParsePathObserver* observer, const char *path );

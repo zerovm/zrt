@@ -5,6 +5,8 @@
  *      Author: yaroslav
  */
 
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <string.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -23,24 +25,18 @@ static char s_cached_full_path[4096] = "";
  * @param path to check
  * @return 0 if cached, 1 if not;
  *  */
-static int is_cache_matched( const char* path ){
-    int res;
-    int base_dir_path_len;
-    /*extract full directory name up to last symbol '/' and compare it to cache*/
-    char *c = strrchr(path, '/');
-    base_dir_path_len = (int)(c-path)+1;
-    if ( base_dir_path_len == 1 /*root matched*/ ){
-	/*root always exist and should not be handled*/
-	res = 1; 
+int create_dir_and_cache_name( const char* dirpath, int len ){
+    int res = strncmp( dirpath, s_cached_full_path, len) == 0? 0: 1;
+    if ( res != 0 ){
+        /*reset old cache and save path in cache*/
+	memset(s_cached_full_path, '\0', sizeof(s_cached_full_path));
+        strncpy( s_cached_full_path, dirpath, len );
+	/* create dir*/
+	int ret = mkdir( s_cached_full_path, S_IRWXU );
+	ZRT_LOG(L_EXTRA, "mkdir ret=%d: %s", ret, s_cached_full_path);
     }
-    else
-	res = strncmp( path, s_cached_full_path, base_dir_path_len) == 0? 0: 1;
-
-    if ( res == 0 && base_dir_path_len > 0 && base_dir_path_len < 200 ){
-	char g[200];
-	memset(g, '\0', 200);
-	strncpy(g, path, base_dir_path_len);
-	ZRT_LOG(L_EXTRA, "already created dir: %s", g);
+    else{
+	ZRT_LOG(L_EXTRA, "already created dir: %s(len=%d)", dirpath, len);
     }
     return res;
 }
@@ -66,7 +62,7 @@ static int process_subdirs_via_callback( struct ParsePathObserver* observer, con
             subpathlen = 1;
         }
         process_subdirs_via_callback( observer, path, subpathlen );
-	/*call it after single item parsed. it can be used for post handling*/
+	/*callback_parse should be guarantied that all nested dirs created*/
         (*observer->callback_parse)(observer, path, subpathlen);
         ++ret;
     }
@@ -77,13 +73,19 @@ static int process_subdirs_via_callback( struct ParsePathObserver* observer, con
 int parse_path( struct ParsePathObserver* observer, const char *path ){
     assert(observer); /*observer struct should exist*/
     assert(observer->callback_parse);  /*observer function should exist*/
+    
+    /*extract dirname from filename*/
+    char *c = strrchr(path, '/');
+    int dir_path_len = (int)(c-path)+1;
+    /*to be sure - check len validity and set actual len*/
+    if ( dir_path_len <= 0 )
+	dir_path_len = strlen(path);
 
-    if ( is_cache_matched(path) != 0 ){
+    if ( create_dir_and_cache_name(path, dir_path_len) != 0 ){
+	/*new dir was created*/
         int len = strlen(path);
 	/*handle subdir*/
         int count = process_subdirs_via_callback( observer, path, len );
-        /*cache path*/
-        strncpy( s_cached_full_path, path, len );
         return count;
     }
     else{
