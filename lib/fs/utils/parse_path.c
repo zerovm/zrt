@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <errno.h>
 #include <assert.h>
 
 #include "zrtlog.h"
@@ -33,9 +34,16 @@ int create_dir_and_cache_name( const char* dirpath, int len ){
         strncpy( s_cached_full_path, dirpath, len );
 	/* create dir*/
 	int ret = mkdir( s_cached_full_path, S_IRWXU );
+	if ( ret != 0 && errno != EEXIST ){
+	    /*error while creating dir, new path handled, cache not saved, 
+	     *it is needed to create sub dir previously*/
+	    memset(s_cached_full_path, '\0', sizeof(s_cached_full_path));
+	    res = 1; /*new path handled, cache not saved*/
+	}
 	ZRT_LOG(L_EXTRA, "mkdir ret=%d: %s", ret, s_cached_full_path);
     }
     else{
+	/*path already handled*/
 	ZRT_LOG(L_EXTRA, "already created dir: %s(len=%d)", dirpath, len);
     }
     return res;
@@ -85,7 +93,7 @@ int parse_path( struct ParsePathObserver* observer, const char *path ){
 	/*new dir was created*/
         int len = strlen(path);
 	/*handle subdir*/
-        int count = process_subdirs_via_callback( observer, path, len );
+        int count = process_subdirs_via_callback( observer, path, dir_path_len );
         return count;
     }
     else{
