@@ -10,7 +10,7 @@ lib/zrtsyscalls.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
 lib/helpers/path_utils.c \
-lib/memory/memory.c \
+lib/memory/memory_syscall_handlers.c \
 lib/fs/fcntl_implem.c \
 lib/fs/fstab_loader.c \
 lib/fs/fstab_observer.c \
@@ -46,14 +46,15 @@ lib/glibc_substitute/chmod.c \
 lib/glibc_substitute/fcntl.c \
 lib/glibc_substitute/remove.c \
 lib/glibc_substitute/rename.c \
-lib/glibc_substitute/chown.c
+lib/glibc_substitute/chown.c 
+#lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
 
 
 ############## ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
-lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a # lib/sqlite3/libsqlite3.a 
+lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/libsqlite3.a 
 
 ################# samples to build
 UNSTABLE_SAMPLES=
