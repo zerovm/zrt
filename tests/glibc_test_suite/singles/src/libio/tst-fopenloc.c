@@ -27,7 +27,7 @@
 #include <wchar.h>
 
 
-static const char inputfile[] = "../iconvdata/testdata/ISO-8859-1";
+static const char inputfile[] = "/tmp/iconvdata/testdata/ISO-8859-1";
 
 
 int

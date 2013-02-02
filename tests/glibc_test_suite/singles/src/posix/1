@@ -1,0 +1,15 @@
+legend: 
+ZRT    - zrt is responsible for supporting this
+ZEROVM - zerovm should add support
+
+glibc failed with folowing.
+- (ZRT) 
+  Regular expression tests: 
+  posix/tst-boost.c
+  posix/tst-pcre.c
+- (ZEROVM) 
+  mmap tests:               
+  src/libio/tst-mmap-fflushsync.c
+- (ZRT) 
+  wide character FILE stream tests:
+  src/libio/tst_putwc.c

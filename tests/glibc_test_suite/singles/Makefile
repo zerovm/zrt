@@ -52,7 +52,6 @@ CFLAGS+=-I.. -I. -I../api -Isrc
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
 
-
 #libzrt should be encluded before generic object file of test, because it contains itself main
 #declaration, in case if test source didn't explicitly defined zmain it raises linking error;
 #in case if libzrt linking after test object file, then linker is using wrong entry point
@@ -123,6 +122,8 @@ ENV-tst-swscanf.c=, LOCPATH, /lib/locale
 
 ############### time Environment
 ENV-tst-getdate.c=, DATEMSK, datemsk, TZDIR, /tmp/getdate-data
+ENV-tst-widetext.c=, LOCPATH,$(common-objpfx)localedata, LANGUAGE,C
+ENV-tst-putenv.c=, SOMETHING_NOBODY_USES, 
 
 all: clean $(ZEROVM) $(TEST_NEXES) report
 

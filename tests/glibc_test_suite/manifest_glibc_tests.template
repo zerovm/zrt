@@ -13,10 +13,19 @@ CommandLine = {COMMAND_LINE}
 == inject tar archives contents into ZRT filesystem using fstab.conf
 =====================================================================
 Channel = {ABS_PATH}fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
-Channel = {ABS_PATH}mounts/tmp_dir.tar, /dev/mount/tmp, 0, 999999, 999999, 0, 0
-Channel = {MOUNTS_PATH}glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999999, 999999999, 0, 0
-Channel = {MOUNTS_PATH}glibc-locale/locale-lib2.tar, /dev/mount/lib2, 0, 999999999, 999999999, 0, 0
-==Channel = {MOUNTS_PATH}glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999999, 999999999, 0, 0
+Channel = {ABS_PATH}mounts/tmp_dir.tar, /dev/mount/tmp, 0, 9999999, 9999999, 0, 0
+===== add localisations separatedly 
+Channel = {MOUNTS_PATH}locales/de_DE.UTF-8.tar, /dev/mount/de_DE.UTF-8.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/cs_CZ.UTF-8.tar, /dev/mount/cs_CZ.UTF-8.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/en_US.ISO-8859-1.tar, /dev/mount/en_US.ISO-8859-1.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/de_DE.ISO-8859-1.tar, /dev/mount/de_DE.ISO-8859-1.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/tr_TR.UTF-8.tar, /dev/mount/tr_TR.UTF-8.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/en_US.UTF-8.tar, /dev/mount/en_US.UTF-8.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/fa_IR.UTF-8.tar, /dev/mount/fa_IR.UTF-8.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/ja_JP.EUC-JP.tar, /dev/mount/ja_JP.EUC-JP.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/zh_TW.EUC-TW.tar, /dev/mount/zh_TW.EUC-TW.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/en_US.ANSI_X3.4-1968.tar, /dev/mount/en_US.ANSI_X3.4-1968.tar, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/hr_HR.ISO-8859-2.tar, /dev/mount/hr_HR.ISO-8859-2.tar, 0, 9999999, 9999999, 0, 0
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -27,6 +36,6 @@ Nexe = {OUTFILE}.nexe
 ==MemMax=134217728
 MemMax={MEMMAX}
 Timeout=10
-Environment = VERBOSITY, 2, TimeStamp, 1344719070 {ENVIRONMENT}
+Environment = VERBOSITY, 3, TimeStamp, 1344719070 {ENVIRONMENT}, LOCPATH, /lib/locale
 NodeName=glibc-test,1
 
