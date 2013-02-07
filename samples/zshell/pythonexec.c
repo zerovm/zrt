@@ -14,8 +14,6 @@
 #include "zshell.h"
 #include "Python.h"
 
-#define JOIN(x,y) x##y
-#define LF_(ret,name,args) ret## name##(##args##)
 
 int
 run_python_interpreter(int argc, char **argv)

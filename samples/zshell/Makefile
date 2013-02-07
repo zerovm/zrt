@@ -5,11 +5,11 @@ CFLAGS+=-std=c99 -g -DDEBUG
 #Add python include path
 CFLAGS+=-I$(ZPYTHON_ROOT) -I$(ZPYTHON_ROOT)/Include
 
-#it's significant to add zrt library just after lua library,
-#it's needed to correctly link glibc substitute functions
-LDFLAGS+=-llua -lzrt -lsqlite3 
+LDFLAGS+=-llua -lsqlite3 
 
 #Add python library path and libraries
+#it's significant to link zglibc library just after all libraries
+#it's needed to correctly link glibc substitute functions
 LDFLAGS+=-L$(ZPYTHON_ROOT) -lpython3.2m -lm -ldl -lutil -lzglibc
 
 all: createdirs clean zshell.nexe
