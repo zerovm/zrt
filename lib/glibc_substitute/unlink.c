@@ -44,6 +44,6 @@ int unlink(const char *pathname){
     char* absolute_path = alloc_absolute_path_from_relative(pathname);
     int ret = transpar_mount->unlink(absolute_path);
     free(absolute_path);
-    LOG_SYSCALL_FINISH(ret, "pathname=%s", pathname);
+    LOG_SHORT_SYSCALL_FINISH(ret, "pathname=%s", pathname);
     return ret;
 }

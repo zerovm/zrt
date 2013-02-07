@@ -24,11 +24,11 @@ static char s_logbuf[LOG_BUFFER_SIZE];
 static char s_nested_syscalls_str[MAX_NESTED_SYSCALL_LEN] = "\0";
 
 void enable_logging_current_syscall(){
-    s_donotlog = 0; //switch on logging
+    //    s_donotlog = 0; //switch on logging
 }
 
 void disable_logging_current_syscall(){
-    s_donotlog = 1; //switch off logging
+    //    s_donotlog = 1; //switch off logging
 }
 
 int verbosity(){

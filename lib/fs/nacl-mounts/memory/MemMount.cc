@@ -426,10 +426,7 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
 }
 
 ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
-    ZRT_LOG_PARAM(L_INFO, P_INT, slot);
-    ZRT_LOG_PARAM(L_INFO, P_PTR, buf);
-    ZRT_LOG_PARAM(L_INFO, P_LONGINT, offset);
-    ZRT_LOG_PARAM(L_INFO, P_INT, count);
+    ZRT_LOG(L_EXTRA, "slot=%d, offset=%lld, buf=%p, count=%u ", slot, offset, buf, count );
 
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
@@ -443,8 +440,6 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
 	ZRT_LOG(L_ERROR, "file open_mode=%s not allow read", STR_FILE_OPEN_MODE(mode));
 	SET_ERRNO( EINVAL );
     }
-
-    ZRT_LOG_PARAM(L_INFO, P_INT, node->len());
 
     // Limit to the end of the file.
     ssize_t len = count;

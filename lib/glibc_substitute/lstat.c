@@ -46,6 +46,6 @@ int lstat(const char *path, struct stat *buf){
     if ( ret == 0 ){
         debug_mes_stat(buf);
     }
-    LOG_SYSCALL_FINISH(ret, "path=%s", path);
+    LOG_SHORT_SYSCALL_FINISH( ret, "path=%s", path);
     return ret;
 }

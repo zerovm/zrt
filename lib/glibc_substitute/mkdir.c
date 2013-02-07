@@ -52,6 +52,6 @@ int mkdir(const char* pathname, mode_t mode){
     free(absolute_path);
     errno = errno_mkdir;/*restore mkdir errno after stat request completed*/
 
-    LOG_SYSCALL_FINISH(ret, "pathname=%s, mode=%o(octal)", pathname, (uint32_t)mode);
+    LOG_SHORT_SYSCALL_FINISH(ret, "pathname=%s, mode=%o(octal)", pathname, (uint32_t)mode);
     return ret;
 }

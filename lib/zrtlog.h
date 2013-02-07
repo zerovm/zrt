@@ -56,13 +56,6 @@
     }
 
 
-#define ZRT_LOG_PARAM(v_123, fmttype_123, param_123){	\
-	ZRT_LOG(v_123, fmttype_123, param_123);		\
-    }
-
-#define ZRT_LOG_ERRNO( errcode ) \
-    ZRT_LOG( L_SHORT, "errno=%d, %s", errcode, strerror(errcode) );
-
 #define ZRT_LOG_DELIMETER						\
     do {								\
 	char *buf__123;							\
@@ -84,15 +77,28 @@
 	ZRT_LOG(L_INFO, fmt_123, __VA_ARGS__);				\
     }
 
-/* Pop from logging stack current syscall function.
- * Prints retcode and errno*/
-#define LOG_SYSCALL_FINISH(ret, fmt_123, ...){				\
+#define LOG_SHORT_SYSCALL_FINISH(ret, fmt_123, ...){			\
         if ( ret < 0 ){							\
 	    ZRT_LOG(L_SHORT, "ret=0x%x errno=%d " fmt_123 "",		\
 		    (int)ret, errno, __VA_ARGS__);			\
 	}								\
         else{								\
 	    ZRT_LOG(L_SHORT, "ret=0x%x " fmt_123 "",			\
+		    (int)ret, __VA_ARGS__);				\
+	}								\
+        log_pop_name(__func__);						\
+    }
+
+
+/* Pop from logging stack current syscall function.
+ * Prints retcode and errno*/
+#define LOG_INFO_SYSCALL_FINISH(ret, fmt_123, ...){			\
+        if ( ret < 0 ){							\
+	    ZRT_LOG(L_INFO, "ret=0x%x errno=%d " fmt_123 "",		\
+		    (int)ret, errno, __VA_ARGS__);			\
+	}								\
+        else{								\
+	    ZRT_LOG(L_INFO, "ret=0x%x " fmt_123 "",			\
 		    (int)ret, __VA_ARGS__);				\
 	}								\
         log_pop_name(__func__);						\

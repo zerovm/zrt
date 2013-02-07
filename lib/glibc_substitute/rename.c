@@ -77,6 +77,6 @@ int rename(const char *oldpath, const char *newpath){
 	}
     }
 
-    LOG_SYSCALL_FINISH(ret, "oldpath=%s newpath=%s", oldpath, newpath);
+    LOG_SHORT_SYSCALL_FINISH(ret, "oldpath=%s newpath=%s", oldpath, newpath);
     return ret;
 }

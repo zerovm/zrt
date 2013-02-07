@@ -50,7 +50,7 @@ int fcntl(int fd, int cmd, ... /* arg */ ){
 	ret = transpar_mount->fcntl(fd, cmd, input_lock);
     }
     va_end(args);
-    LOG_SYSCALL_FINISH(ret, "fd=%d, cmd=%s", fd, STR_FCNTL_CMD(cmd));
+    LOG_SHORT_SYSCALL_FINISH( ret, "fd=%d, cmd=%s", fd, STR_FCNTL_CMD(cmd));
     return ret;
 }
 

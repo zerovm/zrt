@@ -573,9 +573,6 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
     errno = 0;
     int32_t readed = 0;
 
-    ZRT_LOG(L_SHORT, "check_handle=%d, s_zrt_channels[fd]->flags=%d", 
-	    check_handle(fd), s_zrt_channels[fd]->flags);
-
     /*case: file not opened, bad descriptor*/
     if ( CHECK_FILE_OPENED(fd) == 0 )
 	{

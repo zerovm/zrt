@@ -12,7 +12,10 @@
 #define MAX(a,b) (a < b ? b : a )
 
 #define CHECK_FLAG(flags, flag) ( (flags & (flag)) == (flag)? 1 : 0)
-#define SET_ERRNO(err) {errno=err;ZRT_LOG_ERRNO(errno);}
+#define SET_ERRNO(err) {						\
+	errno=err;							\
+	ZRT_LOG( L_SHORT, "errno=%d, %s", errno, strerror(err) );	\
+    }
 
 /* ******************************************************************************
  * Syscallback mocks helper macroses*/
@@ -25,7 +28,7 @@
     {								\
 	LOG_SYSCALL_START("arg0=0x%X, arg1=0x%X, arg2=0x%X, arg3=0x%X, arg4=0x%X, arg5=0x%X", \
 			  args[0], args[1], args[2], args[3], args[4], args[5]); \
-	LOG_SYSCALL_FINISH(code,P_TEXT,"");				\
+	LOG_SHORT_SYSCALL_FINISH(code,P_TEXT,"");				\
 	return code;							\
     }
 
@@ -46,7 +49,7 @@
     static int32_t JOIN(NON_IMPLEMENTED_PREFIX,number)(uint32_t *args) { \
 	LOG_SYSCALL_START("arg0=0x%X, arg1=0x%X, arg2=0x%X, arg3=0x%X, arg4=0x%X, arg5=0x%X", \
 			  args[0], args[1], args[2], args[3], args[4], args[5]); \
-	LOG_SYSCALL_FINISH(0,P_TEXT,"");				\
+	LOG_SHORT_SYSCALL_FINISH(0,P_TEXT,"");				\
 	return 0;							\
     }
 
@@ -57,9 +60,9 @@
 /*Validate syscall input parameter*/
 #define VALIDATE_SYSCALL_PTR(arg_pointer)				\
     if ( arg_pointer == NULL ) {					\
-	ZRT_LOG(L_SHORT, "Bad pointer %s=%p", #arg_pointer, arg_pointer); \
 	errno=EFAULT;							\
-	LOG_SYSCALL_FINISH(-1,P_TEXT,"");				\
+	LOG_SHORT_SYSCALL_FINISH(-1,"Bad pointer %s=%p",		\
+			   #arg_pointer, arg_pointer);			\
 	return -1;							\
     }
 /*Validate syscall input parameter of substituted glibc syscall*/
@@ -68,7 +71,7 @@
         sprintf(str, "%p", arg_pointer);			\
         if ( arg_pointer == NULL || !strcmp(str, "(nil)") ) {	\
             errno=EFAULT;					\
-	    LOG_SYSCALL_FINISH(-1,P_TEXT,"");			\
+	    LOG_SHORT_SYSCALL_FINISH(-1,P_TEXT,"");			\
             return -1;						\
         }							\
     }

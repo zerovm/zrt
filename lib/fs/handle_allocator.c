@@ -81,9 +81,9 @@ static int get_offset(int handle, off_t* offset ){
 static int set_offset(int handle, off_t newoffset ){
     CHECK_HANDLE(handle);
     off_t oldoffset = s_handle_slots[handle].offset;
-    ZRT_LOG_PARAM(L_INFO, P_INT, handle);
-    ZRT_LOG_PARAM(L_INFO, P_LONGINT, oldoffset);
-    ZRT_LOG_PARAM(L_INFO, P_LONGINT, newoffset);
+    ZRT_LOG(L_INFO, P_INT, handle);
+    ZRT_LOG(L_INFO, P_LONGINT, oldoffset);
+    ZRT_LOG(L_INFO, P_LONGINT, newoffset);
     s_handle_slots[handle].offset = newoffset;
     return 0;
 }

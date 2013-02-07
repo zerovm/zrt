@@ -36,6 +36,6 @@ mode_t umask(mode_t mask){
     sprintf( umask_str, "%o", mask );
     setenv( UMASK_ENV, umask_str, 1 );
     ZRT_LOG(L_SHORT, "%s", umask_str);
-    LOG_SYSCALL_FINISH(0, "%o(octal)=", mask);
+    LOG_SHORT_SYSCALL_FINISH( 0, "%o(octal)=", mask);
     return prev_umask;
 }

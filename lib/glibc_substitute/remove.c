@@ -39,7 +39,7 @@ int remove(const char *pathname){
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
     int ret = transpar_mount->remove(pathname);
-    LOG_SYSCALL_FINISH(ret, "pathname=%s", pathname );
+    LOG_SHORT_SYSCALL_FINISH( ret, "pathname=%s", pathname );
     return ret;
 }
 

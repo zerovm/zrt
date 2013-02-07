@@ -51,7 +51,7 @@ FILE *fdopen(int fd, const char *mode){
 	SET_ERRNO(EBADF);
     }
 
-    LOG_SYSCALL_FINISH( (f==NULL), "fd=%d mode=%s", fd, mode );
+    LOG_SHORT_SYSCALL_FINISH((f==NULL), "fd=%d mode=%s", fd, mode );
     return f;
 }
 

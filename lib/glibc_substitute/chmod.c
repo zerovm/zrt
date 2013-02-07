@@ -46,7 +46,7 @@ int chmod(const char *path, mode_t mode){
     char* absolute_path = alloc_absolute_path_from_relative(path);
     int ret = transpar_mount->chmod(absolute_path, mode);
     free(absolute_path);
-    LOG_SYSCALL_FINISH(ret, "path=%s mode=%o(octal)", path, mode);
+    LOG_SHORT_SYSCALL_FINISH(ret, "path=%s mode=%o(octal)", path, mode);
     return ret;
 }
 
@@ -59,6 +59,6 @@ int fchmod(int fd, mode_t mode){
     /*update mode according to the mask and propogate it to fchmod implementation*/
     mode = apply_umask(mode);
     int ret = transpar_mount->fchmod(fd, mode);
-    LOG_SYSCALL_FINISH(ret, "fd=%d mode=%o(octal)", fd, mode);
+    LOG_SHORT_SYSCALL_FINISH(ret, "fd=%d mode=%o(octal)", fd, mode);
     return ret;
 }
