@@ -105,33 +105,13 @@ static int transparent_rmdir(const char* path){
 }
 
 static int transparent_umount(const char* path){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->umount( path );
-        else{
-            return mount_info->mount->umount( s_mounts_manager->get_nested_mount_path( mount_info, path ) );
-        }
-    }
-    else{
-        errno = ENOENT;
-        return -1;
-    }
+    SET_ERRNO(ENOSYS);
+    return -1;
 }
 
 static int transparent_mount(const char* path, void *mount_){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->mount( path, mount_ );
-        else{
-            return mount_info->mount->mount( s_mounts_manager->get_nested_mount_path( mount_info, path ), mount_ );
-        }
-    }
-    else{
-        errno = ENOENT;
-        return -1;
-    }
+    SET_ERRNO(ENOSYS);
+    return -1;
 }
 
 static ssize_t transparent_read(int fd, void *buf, size_t nbyte){
@@ -139,7 +119,7 @@ static ssize_t transparent_read(int fd, void *buf, size_t nbyte){
     if ( mount )
         return mount->read(fd, buf, nbyte);
     else{
-        errno = EBADF;
+        SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -149,7 +129,7 @@ static ssize_t transparent_write(int fd, const void *buf, size_t nbyte){
     if ( mount )
         return mount->write(fd, buf, nbyte);
     else{
-        errno = EBADF;
+        SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -159,7 +139,7 @@ static int transparent_fchown(int fd, uid_t owner, gid_t group){
     if ( mount )
         return mount->fchown(fd, owner, group);
     else{
-        errno = EBADF;
+	SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -169,7 +149,7 @@ static int transparent_fchmod(int fd, mode_t mode){
     if ( mount )
         return mount->fchmod(fd, mode);
     else{
-        errno = EBADF;
+	SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -180,7 +160,7 @@ static int transparent_fstat(int fd, struct stat *buf){
         return mount->fstat(fd, buf);
     }
     else{
-        errno = EBADF;
+	SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -190,7 +170,7 @@ static int transparent_getdents(int fd, void *buf, unsigned int count){
     if ( mount )
         return mount->getdents(fd, buf, count);
     else{
-        errno = EBADF;
+	SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -200,7 +180,7 @@ static int transparent_fsync(int fd){
     if ( mount )
         return mount->fsync(fd);
     else{
-        errno = EBADF;
+	SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -210,7 +190,7 @@ static int transparent_close(int fd){
     if ( mount )
         return mount->close(fd);
     else{
-        errno = EBADF;
+	SET_ERRNO(EBADF);
         return -1;
     }
 }
@@ -222,7 +202,7 @@ static off_t transparent_lseek(int fd, off_t offset, int whence){
         int ret = mount->fstat(fd, &st );
         if ( ret != 0 ) return -1; //errno sould be set by mount->fstat
         if ( S_ISDIR(st.st_mode) ){
-            errno=EBADF;
+	    SET_ERRNO(EBADF);
             return -1;
         }
         return mount->lseek(fd, offset, whence);
@@ -247,7 +227,7 @@ static int transparent_open(const char* path, int oflag, uint32_t mode){
         }
     }
     else{
-        errno = ENOENT;
+	SET_ERRNO(ENOENT);
         return -1;
     }
 }
@@ -265,12 +245,12 @@ static int transparent_fcntl(int fd, int cmd, ...){
 	}
 	else{
 	    ret=-1;
-	    errno = ENOSYS;
+	    SET_ERRNO(ENOSYS);
 	}
 	va_end(args);
     }
     else{
-        errno = ENOENT;
+        SET_ERRNO(ENOENT);
         ret = -1;
     }
     return ret;
@@ -287,7 +267,7 @@ static int transparent_remove(const char* path){
         }
     }
     else{
-        errno = ENOENT;
+        SET_ERRNO(ENOENT);
         return -1;
     }
 }
@@ -302,7 +282,7 @@ static int transparent_unlink(const char* path){
         }
     }
     else{
-        errno = ENOENT;
+        SET_ERRNO(ENOENT);
         return -1;
     }
 }
@@ -321,6 +301,27 @@ static int transparent_access(const char* path, int amode){
         return -1;
     }
 }
+
+static int transparent_ftruncate_size(int fd, off_t length){
+    struct MountsInterface* mount_info = s_mounts_manager->mount_byhandle(fd);
+    if ( mount_info )
+	return mount_info->ftruncate_size( fd, length );
+    else{
+	SET_ERRNO( EBADF );
+        return -1;
+    }
+}
+
+static int transparent_truncate_size(const char* path, off_t length){
+    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
+    if ( mount_info )
+	return mount_info->mount->truncate_size( path, length );
+    else{
+	SET_ERRNO( EBADF );
+        return -1;
+    }
+}
+
 
 static int transparent_isatty(int fd){
     struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
@@ -370,6 +371,8 @@ static struct MountsInterface s_transparent_mount = {
         transparent_remove,
         transparent_unlink,
         transparent_access,
+	transparent_ftruncate_size,
+	transparent_truncate_size,
         transparent_isatty,
         transparent_dup,
         transparent_dup2,

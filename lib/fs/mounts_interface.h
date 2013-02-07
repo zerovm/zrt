@@ -64,6 +64,10 @@ struct MountsInterface{
     int (*unlink)(const char* path);
     // access() uses the Mount's Stat().
     int (*access)(const char* path, int amode);
+    //only reduces file size, not padding it; posix
+    int (*ftruncate_size)(int fd, off_t length);
+    //only reduces file size, not padding it; posix
+    int (*truncate_size)(const char* path, off_t length);
 
     int (*isatty)(int fd);
     int (*dup)(int oldfd);

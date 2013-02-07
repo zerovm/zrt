@@ -23,8 +23,50 @@ extern "C" {
 #include "handle_allocator.h"
 #include "fcntl_implem.h"
 #include "channels_mount.h"
-
+#include "enum_strings.h"
 }
+
+#define NODE_OBJECT_BYINODE(inode) s_mem_mount_cpp->ToMemNode(inode);
+
+/*retcode -1 at fail, 0 if OK*/
+#define GET_INODE_BY_HANDLE(handle, inode_p, retcode_p){		\
+	*retcode_p = s_handle_allocator->get_inode( handle, inode_p );	\
+    }
+
+#define GET_INODE_BY_HANDLE_OR_RAISE_ERROR(handle, inode_p){		\
+	int ret;							\
+	GET_INODE_BY_HANDLE(handle, inode_p, &ret);			\
+	if ( ret != 0 ){						\
+	    SET_ERRNO(EBADF);						\
+	    return -1;							\
+	}								\
+    }
+
+#define GET_STAT_BYPATH_OR_RAISE_ERROR(path, stat_p )  \
+    int ret = s_mem_mount_cpp->GetNode( path, stat_p); \
+    if ( ret != 0 ) return ret;
+
+#define TRUNCATE_FILE(inode) {						\
+	MemNode* node = NODE_OBJECT_BYINODE(inode);			\
+	if (node){							\
+	    /*check if file was not opened for writing*/		\
+	    int mode= node->mode();					\
+	    if ( !mode&S_IWUSR ){					\
+		ZRT_LOG(L_ERROR, "file not allowed for write, mode are %s", \
+			STR_FILE_OPEN_MODE(mode));			\
+		SET_ERRNO( EINVAL );					\
+		return -1;						\
+	    }								\
+	    /*set file length on related node and update new length in stat*/ \
+	    node->set_len(length);					\
+	    ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d", \
+		    length, get_file_len(inode));			\
+	    /*file size truncated */							\
+	}								\
+    }
+
+
+
 
 static MemMount* s_mem_mount_cpp = NULL;
 static struct HandleAllocator* s_handle_allocator = NULL;
@@ -68,19 +110,21 @@ static ssize_t get_file_len(ino_t node) {
 
 /*return 0 if handle not valid, or 1 if handle is correct*/
 static int check_handle(int handle){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( handle, &node );
-    if ( ret == 0 && !is_dir(node) )
-	return 1;
+    ino_t inode;
+    int ret;
+    GET_INODE_BY_HANDLE(handle, &inode, &ret);
+    if ( ret == 0 && !is_dir(inode) ) return 1;
     else return 0;
 }
 
 static const char* path_handle(int handle){
-    if ( check_handle(handle) ){
+    ino_t inode;
+    int ret;
+    GET_INODE_BY_HANDLE(handle, &inode, &ret);
+    if ( ret == 0 ){
+	/*path is OK*/
 	/*get runtime information related to channel*/
-	ino_t node;
-	int ret = s_handle_allocator->get_inode( handle, &node );
-    	MemNode* mnode = s_mem_mount_cpp->ToMemNode(node);
+    	MemNode* mnode = NODE_OBJECT_BYINODE(inode);
 	if ( mnode ){
 	    return mnode->name().c_str();
 	}
@@ -92,16 +136,27 @@ static const char* path_handle(int handle){
     }
 }
 
+// static int handle_from_path(const char* path){
+//     struct stat st;
+//     int ret = s_mem_mount_cpp->GetNode( path, &st);
+//     if ( ret == 0 )
+// 	return s_mem_mount_cpp->Chown( st.st_ino, owner, group);
+//     else
+// 	return ret;
+// }
+
 
 
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data( int fd ){
     const struct flock* data = NULL;
-    if ( check_handle(fd) ){
+    ino_t inode;
+    int ret;
+    GET_INODE_BY_HANDLE(fd, &inode, &ret);
+    if ( ret == 0 ){
+	/*handle is OK*/
 	/*get runtime information related to channel*/
-	ino_t node;
-	int ret = s_handle_allocator->get_inode( fd, &node );
-    	MemNode* mnode = s_mem_mount_cpp->ToMemNode(node);
+    	MemNode* mnode = NODE_OBJECT_BYINODE(inode);
 	assert(mnode);
 	data = mnode->flock();
     }
@@ -110,17 +165,17 @@ static const struct flock* flock_data( int fd ){
 
 /*return 0 if success, -1 if fd didn't found*/
 static int set_flock_data( int fd, const struct flock* flock_data ){
-    int rc = 1; /*error by default*/
-    if ( check_handle(fd) ){
-	/*get runtime information related to channel*/
-	ino_t node;
-	int ret = s_handle_allocator->get_inode( fd, &node );
-    	MemNode* mnode = s_mem_mount_cpp->ToMemNode(node);
-	assert(mnode);
-	mnode->set_flock(flock_data);
-	rc = 0; /*ok*/
-    }
-    return rc;
+    ino_t inode;
+    int ret;
+    GET_INODE_BY_HANDLE(fd, &inode, &ret);
+    if ( ret !=0 ) return -1;
+
+    /*handle is OK*/
+    /*get runtime information related to channel*/
+    MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    assert(mnode);
+    mnode->set_flock(flock_data);
+    return 0; /*OK*/
 }
 
 static struct mount_specific_implem s_mount_specific_implem = {
@@ -135,29 +190,20 @@ static struct mount_specific_implem s_mount_specific_implem = {
 
 static int mem_chown(const char* path, uid_t owner, gid_t group){
     struct stat st;
-    int ret = s_mem_mount_cpp->GetNode( path, &st);
-    if ( ret == 0 )
-	return s_mem_mount_cpp->Chown( st.st_ino, owner, group);
-    else
-	return ret;
+    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
+    return s_mem_mount_cpp->Chown( st.st_ino, owner, group);
 }
 
 static int mem_chmod(const char* path, uint32_t mode){
     struct stat st;
-    int ret = s_mem_mount_cpp->GetNode( path, &st);
-    if ( ret == 0 )
-	return s_mem_mount_cpp->Chmod( st.st_ino, mode);
-    else
-	return ret;
+    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
+    return s_mem_mount_cpp->Chmod( st.st_ino, mode);
 }
 
 static int mem_stat(const char* path, struct stat *buf){
     struct stat st;
-    int ret = s_mem_mount_cpp->GetNode( path, &st);
-    if ( ret == 0 )
-	return s_mem_mount_cpp->Stat( st.st_ino, buf);
-    else
-	return ret;
+    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
+    return s_mem_mount_cpp->Stat( st.st_ino, buf);
 }
 
 static int mem_mkdir(const char* path, uint32_t mode){
@@ -172,19 +218,16 @@ static int mem_mkdir(const char* path, uint32_t mode){
 
 static int mem_rmdir(const char* path){
     struct stat st;
-    int ret = s_mem_mount_cpp->GetNode( path, &st);
-    if ( ret == 0 ){
-	const char* name = name_from_path(path);
-	ZRT_LOG( L_EXTRA, "name=%s", name );
-	if ( name && !strcmp(name, ".\0")  ){
-	    /*should be specified real path for rmdir*/
-	    SET_ERRNO(EINVAL);
-	    return -1;
-	}
-	return s_mem_mount_cpp->Rmdir( st.st_ino );
+    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
+
+    const char* name = name_from_path(path);
+    ZRT_LOG( L_EXTRA, "name=%s", name );
+    if ( name && !strcmp(name, ".\0")  ){
+	/*should be specified real path for rmdir*/
+	SET_ERRNO(EINVAL);
+	return -1;
     }
-    else
-	return ret;
+    return s_mem_mount_cpp->Rmdir( st.st_ino );
 }
 
 static int mem_umount(const char* path){
@@ -198,104 +241,70 @@ static int mem_mount(const char* path, void *mount){
 }
 
 static ssize_t mem_read(int fd, void *buf, size_t nbyte){
-    ino_t node;
-    /*search inode by file descriptor*/
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    if ( ret == 0 ){
-	off_t offset;
-	ret = s_handle_allocator->get_offset( fd, &offset );
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+
+    off_t offset;
+    int ret = s_handle_allocator->get_offset( fd, &offset );
+    assert( ret == 0 );
+    ssize_t readed = s_mem_mount_cpp->Read( inode, offset, buf, nbyte );
+    if ( readed >= 0 ){
+	offset += readed;
+	/*update offset*/
+	ret = s_handle_allocator->set_offset( fd, offset );
 	assert( ret == 0 );
-	ssize_t readed = s_mem_mount_cpp->Read( node, offset, buf, nbyte );
-	if ( readed >= 0 ){
-	    offset += readed;
-	    /*update offset*/
-	    ret = s_handle_allocator->set_offset( fd, offset );
-	    assert( ret == 0 );
-	}
-	/*return readed bytes or error*/
-	return readed;
     }
-    else{
-	SET_ERRNO(EBADF);
-	return -1;
-    }
+    /*return readed bytes or error*/
+    return readed;
 }
 
 static ssize_t mem_write(int fd, const void *buf, size_t nbyte){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    if ( ret == 0 ){
-	off_t offset;
-	ret = s_handle_allocator->get_offset( fd, &offset );
-	assert( ret == 0 );
-	ssize_t wrote = s_mem_mount_cpp->Write( node, offset, buf, nbyte );
-	offset += wrote;
-	ret = s_handle_allocator->set_offset( fd, offset );
-	assert( ret == 0 );
-	return wrote;
-    }
-    else{
-	SET_ERRNO(EBADF);
-	return -1;
-    }
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+
+    off_t offset;
+    int ret = s_handle_allocator->get_offset( fd, &offset );
+    assert( ret == 0 );
+    ssize_t wrote = s_mem_mount_cpp->Write( inode, offset, buf, nbyte );
+    offset += wrote;
+    ret = s_handle_allocator->set_offset( fd, offset );
+    assert( ret == 0 );
+    return wrote;
 }
 
 static int mem_fchown(int fd, uid_t owner, gid_t group){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    if ( ret == 0 ){
-	return s_mem_mount_cpp->Chown( node, owner, group);
-    }
-    else{
-	SET_ERRNO(EBADF);
-	return -1;
-    }
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    return s_mem_mount_cpp->Chown( inode, owner, group);
 }
 
 static int mem_fchmod(int fd, uint32_t mode){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    if ( ret == 0 ){
-	return s_mem_mount_cpp->Chmod( node, mode);
-    }
-    else{
-	SET_ERRNO(EBADF);
-	return -1;
-    }
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    return s_mem_mount_cpp->Chmod( inode, mode);
 }
 
 
 static int mem_fstat(int fd, struct stat *buf){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    if ( ret == 0 ){
-	return s_mem_mount_cpp->Stat( node, buf);
-    }
-    else{
-	SET_ERRNO(EBADF);
-	return -1;
-    }
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    return s_mem_mount_cpp->Stat( inode, buf);
 }
 
 static int mem_getdents(int fd, void *buf, unsigned int count){
     ino_t inode;
-    int ret = s_handle_allocator->get_inode( fd, &inode );
-    if ( ret == 0 ){
-	off_t offset;
-	ret = s_handle_allocator->get_offset( fd, &offset );
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+
+    off_t offset;
+    int ret = s_handle_allocator->get_offset( fd, &offset );
+    assert( ret == 0 );
+    ssize_t readed = s_mem_mount_cpp->Getdents( inode, offset, (DIRENT*)buf, count);
+    if ( readed != -1 ){
+	offset += readed;
+	ret = s_handle_allocator->set_offset( fd, offset );
 	assert( ret == 0 );
-	ssize_t readed = s_mem_mount_cpp->Getdents( inode, offset, (DIRENT*)buf, count);
-	if ( readed != -1 ){
-	    offset += readed;
-	    ret = s_handle_allocator->set_offset( fd, offset );
-	    assert( ret == 0 );
-	}
-	return readed;
     }
-    else{
-	SET_ERRNO(EBADF);
-	return -1;
-    }
+    return readed;
 }
 
 static int mem_fsync(int fd){
@@ -304,25 +313,21 @@ static int mem_fsync(int fd){
 }
 
 static int mem_close(int fd){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    if ( ret == 0 ){
-	ret = s_handle_allocator->free_handle(fd);
-	assert( ret == 0 );
-	return 0;
-    }
-    else{
-	SET_ERRNO(EBADF);
-	return -1;
-    }
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+
+    int ret = s_handle_allocator->free_handle(fd);
+    assert( ret == 0 );
+    return 0;
 }
 
 static off_t mem_lseek(int fd, off_t offset, int whence){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    if ( ret == 0 && !is_dir(node) ){
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+
+    if ( !is_dir(inode) ){
 	off_t next;
-	ret = s_handle_allocator->get_offset(fd, &next );
+	int ret = s_handle_allocator->get_offset(fd, &next );
 	assert( ret == 0 );
 	ssize_t len;
 
@@ -336,7 +341,7 @@ static off_t mem_lseek(int fd, off_t offset, int whence){
 	    break;
 	case SEEK_END:
 	    // TODO(krasin, arbenson): FileHandle should store file len.
-	    len = get_file_len( node );
+	    len = get_file_len( inode );
 	    if (len == -1) {
 		return -1;
 	    }
@@ -394,13 +399,13 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 	/*file truncate support, only for writable files, reset size*/
 	if ( oflag&O_TRUNC && (oflag&O_RDWR || oflag&O_WRONLY) ){
 	    /*reset file size*/
-	    MemNode* mnode = s_mem_mount_cpp->ToMemNode(st.st_ino);
+	    MemNode* mnode = NODE_OBJECT_BYINODE(st.st_ino);
 	    if (mnode){ 
 		ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_TRUNC");
-		mnode->set_len(0);
-		ZRT_LOG(L_SHORT, "%s, %d", mnode->name().c_str(), mnode->len() );
 		/*update stat*/
 		st.st_size = 0;
+		mnode->set_len(st.st_size);
+		ZRT_LOG(L_SHORT, "%s, %d", mnode->name().c_str(), mnode->len() );
 	    }
 	}
 
@@ -412,9 +417,10 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 }
 
 static int mem_fcntl(int fd, int cmd, ...){
-    ino_t node;
-    int ret = s_handle_allocator->get_inode( fd, &node );
-    if ( ret == 0 && !is_dir(node) ){
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    int ret;
+    if ( !is_dir(inode) ){
 	va_list args;
 	va_start(args, cmd);
 	if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
@@ -441,6 +447,34 @@ static int mem_unlink(const char* path){
 
 static int mem_access(const char* path, int amode){
     return -1;
+}
+
+static int mem_ftruncate_size(int fd, off_t length){
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    if ( !is_dir(inode) ){
+	TRUNCATE_FILE(inode);
+	return 0;
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
+    return -1;
+}
+
+int mem_truncate_size(const char* path, off_t length){
+    struct stat st;
+    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
+    
+    /*it's not allowed to truncate directory*/
+    if ( S_ISDIR(st.st_mode) ){
+	SET_ERRNO(EISDIR);
+	return -1; 
+    }
+
+    TRUNCATE_FILE(st.st_ino);
+    return 0;
 }
 
 static int mem_isatty(int fd){
@@ -485,6 +519,8 @@ static struct MountsInterface s_mem_mount_wraper = {
     mem_remove,
     mem_unlink,
     mem_access,
+    mem_ftruncate_size,
+    mem_truncate_size,
     mem_isatty,
     mem_dup,
     mem_dup2,

@@ -16,7 +16,7 @@
 struct mount_specific_implem{
     /*return 0 if handle not valid, or 1 if handle is correct*/
     int  (*check_handle)(int handle);
-    /*if wrong handle gt NULL*/
+    /*if wrong handle return NULL*/
     const char* (*handle_path)(int handle);
 
     const struct flock* (*flock_data)( int fd );
