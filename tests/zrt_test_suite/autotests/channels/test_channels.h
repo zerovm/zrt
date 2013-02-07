@@ -12,7 +12,7 @@
 	*ret_p = operation;					\
 	if ( !(expect_expr) ) error (EXIT_FAILURE, errno,		\
 				     "%s unexpected result %d, expected %s\n", \
-				     #operation, *ret_p, #expect_expr);	\
+				     #operation, (int)*ret_p, #expect_expr); \
     }
 
 

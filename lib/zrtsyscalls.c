@@ -154,7 +154,7 @@ static int32_t zrt_open(uint32_t *args)
     mode = apply_umask(mode);
     int ret = s_transparent_mount->open( absolute_path, flags, mode );
     free(absolute_path);
-    LOG_SYSCALL_FINISH(ret, 
+    LOG_SHORT_SYSCALL_FINISH( ret, 
 		       "name=%s, flags=%s", 
 		       name, STR_FILE_OPEN_FLAGS(flags));
     return ret;
@@ -169,7 +169,7 @@ static int32_t zrt_close(uint32_t *args)
     errno = 0;
 
     int ret = s_transparent_mount->close(handle);
-    LOG_SYSCALL_FINISH(ret, "handle=%d", handle);
+    LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
 }
 
@@ -185,7 +185,7 @@ static int32_t zrt_read(uint32_t *args)
     VALIDATE_SYSCALL_PTR(buf);
 
     int32_t ret = s_transparent_mount->read(handle, buf, length);
-    LOG_SYSCALL_FINISH(ret, "handle=%d", handle);
+    LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
 }
 
@@ -206,7 +206,7 @@ static int32_t zrt_write(uint32_t *args)
 #endif
 
     int32_t ret = s_transparent_mount->write(handle, buf, length);
-    LOG_SYSCALL_FINISH(ret, "handle=%d length=%lld", handle, length);
+    LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d length=%lld", handle, length);
     return ret;
 }
 
@@ -227,7 +227,7 @@ static int32_t zrt_lseek(uint32_t *args)
     }
 
     *(off_t *)args[1] = offset;
-    LOG_SYSCALL_FINISH(offset, 
+    LOG_SHORT_SYSCALL_FINISH( offset, 
 		       "handle=%d whence=%s", 
 		       handle, STR_SEEK_WHENCE(whence));
     return offset;
@@ -254,7 +254,7 @@ static int32_t zrt_stat(uint32_t *args)
         debug_mes_stat(&st);
         set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
     }
-    LOG_SYSCALL_FINISH(ret, "file=%s", file);
+    LOG_SHORT_SYSCALL_FINISH( ret, "file=%s", file);
     return ret;
 }
 
@@ -273,7 +273,7 @@ static int32_t zrt_fstat(uint32_t *args)
         debug_mes_stat(&st);
         set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
     }
-    LOG_SYSCALL_FINISH(ret, "handle=%d", handle);
+    LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
 }
 
@@ -286,12 +286,12 @@ SYSCALL_MOCK(chmod, -EPERM) /* NACL does not support chmod*/
  * zrt lib will help user to do it transparently.
  */
 
-/* change space allocation. ZRT nothing do here just call sysbrk NACL syscall.*/
+/* change space allocation. */
 static int32_t zrt_sysbrk(uint32_t *args)
 {
     LOG_SYSCALL_START("addr=%p", (void*)args[0]);
     int32_t retaddr = s_memory_interface->sysbrk(s_memory_interface, (void*)args[0] );
-    LOG_SYSCALL_FINISH(retaddr, "param=%p", (void*)args[0]);
+    LOG_INFO_SYSCALL_FINISH( retaddr, "param=%p", (void*)args[0]);
     return retaddr;
 }
 
@@ -304,14 +304,14 @@ static int32_t zrt_mmap(uint32_t *args)
     uint32_t prot = args[2];
     uint32_t flags = args[3];
     uint32_t fd = args[4];
-    off_t offset = (off_t)args[5];
+    off_t offset = *((off_t*)args[5]);
     LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u offset=%lld",
     		      addr, length, prot, flags, fd, offset);
 
     retcode = s_memory_interface->mmap(s_memory_interface, addr, length, prot,
     		  flags, fd, offset);
   
-    LOG_SYSCALL_FINISH(retcode,
+    LOG_INFO_SYSCALL_FINISH( retcode,
     		       "addr=%p length=%u prot=%s flags=%s fd=%u offset=%lld",
     		       addr, length, STR_MMAP_PROT_FLAGS(prot), STR_MMAP_FLAGS(flags),
     		       fd, offset);
@@ -324,7 +324,7 @@ static int32_t zrt_munmap(uint32_t *args)
     uint32_t param2 = args[1];
     LOG_SYSCALL_START("addr=%p, param2=%u", addr, param2);
     int32_t retcode = s_memory_interface->munmap(s_memory_interface, addr, param2);
-    LOG_SYSCALL_FINISH(retcode, "addr=%p, param2=%u", addr, param2);
+    LOG_INFO_SYSCALL_FINISH( retcode, "addr=%p, param2=%u", addr, param2);
     return retcode;
 }
 
@@ -339,7 +339,7 @@ static int32_t zrt_getdents(uint32_t *args)
     VALIDATE_SYSCALL_PTR(buf);
 
     int32_t bytes_readed = s_transparent_mount->getdents(handle, buf, count);
-    LOG_SYSCALL_FINISH(bytes_readed, "handle=%d count=%u", handle, count);
+    LOG_SHORT_SYSCALL_FINISH( bytes_readed, "handle=%d count=%u", handle, count);
     return bytes_readed;
 }
 
@@ -355,7 +355,7 @@ static int32_t zrt_exit(uint32_t *args)
     ZRT_LOG(L_SHORT, P_TEXT, "exiting...");
     zvm_exit(args[0]); /*get controls into zerovm*/
     /* unreachable code*/
-    LOG_SYSCALL_FINISH(0, P_HEX, args[0]);
+    LOG_SHORT_SYSCALL_FINISH( 0, P_HEX, args[0]);
     return 0; 
 }
 
