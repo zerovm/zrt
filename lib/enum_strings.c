@@ -18,16 +18,6 @@
 
 static char s_buffer[MAX_FLAGS_LEN];
 
-#define GET_TEXT_FLAG(result, flag, array_flags, array_texts)		\
-    /*array size of flags and their textual representation shoul be equal*/ \
-    assert( sizeof(array_flags)/sizeof(*array_flags) ==			\
-	    sizeof(array_texts)/sizeof(*array_texts) );			\
-    /* pass array length as dedicated paramenter for statically constructed array \
-     *  because array passed as parameter can't determine own size correctly.*/ \
-    result = text_from_flag( flag, sizeof(array_flags)/sizeof(*array_flags), \
-			array_flags, array_texts );
-
-
 /****************************************************************
  *flags count should be equal to flag texts count for every pair
  *of flags and texts 
