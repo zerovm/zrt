@@ -15,6 +15,11 @@ endif
 #accessible at path described just here:
 ZEROVM=$(ZEROVM_ROOT)/zerovm
 
+#default types of channels we specifying from make
+DEF_CHANTYPE1=0
+DEF_CHANTYPE2=0
+DEF_CHANTYPE3=1
+
 OUTPUT_LAST=last_test.output
 OUTPUT_FAIL=fail_tests.output
 TEST_INCLUDES=$(shell find $(TESTS_ROOT) -name "*.h")
@@ -54,7 +59,7 @@ CFLAGS+=-std=gnu99
 CFLAGS+=-D_GNU_SOURCE
 CFLAGS+=-Wno-long-long -m64
 CFLAGS+=-Werror-implicit-function-declaration
-CFLAGS+=-I.. -I. -I../api -Isrc
+CFLAGS+=-I.. -I. 
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
 
@@ -108,6 +113,19 @@ CMDLINE-command_line.c=argument_number_1 argument_number_2 the_last_argument
 ENV-environment.c=, SafeWords, klaato_verada_nikto
 #####################################################################
 
+#####################################################################
+#in this section describe channels type for all channels in manifest which have 
+#separated channels of unspecified type:
+#{CHANTYPE1} {CHANTYPE2} {CHANTYPE3} possible channel types: [0, 1, 2, 3]
+#this option is allow create manifest with specified channel type
+#examples: 
+#CHANTYPE1-tst-channel.c=1
+CHANTYPE1-sequential.c=0
+CHANTYPE2-sequential.c=0
+CHANTYPE3-sequential.c=1
+#####################################################################
+
+
 all: clean $(ZEROVM) $(TEST_NEXES) report
 
 resume:$(ZEROVM) $(TEST_NEXES)
@@ -136,15 +154,20 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_FLAGS:=$(CFLAGS-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_CMDLINE:=$(CMDLINE-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_ENV:=$(ENV-$(NAMEONLY).c))
+#channels testing suport
+	$(eval SPECIFIC_TEST_CHANTYPE1:=$(firstword $(CHANTYPE1-$(NAMEONLY).c) $(DEF_CHANTYPE1)))
+	$(eval SPECIFIC_TEST_CHANTYPE2:=$(firstword $(CHANTYPE2-$(NAMEONLY).c) $(DEF_CHANTYPE2)))
+	$(eval SPECIFIC_TEST_CHANTYPE3:=$(firstword $(CHANTYPE3-$(NAMEONLY).c) $(DEF_CHANTYPE3)))
 	@echo -n "TEST RUN $@ "
 #compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
 	@$(CC) -o $@ $(LDFLAGS_ZMAIN) $(BASENAME).o $(LDFLAGS)
-#prepare binary
-	@binpatch $@ 4c01fc0f3148c1e2 4c01fc909048c1e2 > /dev/null
 #prepare manifest
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g manifest_zrttests.template | \
 	 sed s@{ABS_PATH}@$(CURDIR)/@g | \
+	 sed s@{CHANTYPE1}@$(SPECIFIC_TEST_CHANTYPE1)@g | \
+	 sed s@{CHANTYPE2}@$(SPECIFIC_TEST_CHANTYPE2)@g | \
+	 sed s@{CHANTYPE3}@$(SPECIFIC_TEST_CHANTYPE3)@g | \
 	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
 	 sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g | \
 	 sed s@{MEMMAX}@$(MEMMAX)@g | \
