@@ -46,7 +46,8 @@ lib/glibc_substitute/chmod.c \
 lib/glibc_substitute/fcntl.c \
 lib/glibc_substitute/remove.c \
 lib/glibc_substitute/rename.c \
-lib/glibc_substitute/chown.c 
+lib/glibc_substitute/chown.c \
+lib/glibc_substitute/truncate.c 
 #lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
@@ -86,7 +87,7 @@ CXXFLAGS = -I. -Ilib -Ilib/fs
 #debug: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
 
 all:
-all: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
+all: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests 
 
 prepare:
 	@chmod u+rwx ns_start.sh
