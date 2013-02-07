@@ -10,17 +10,13 @@
 SCRIPT=$(readlink -f "$0")
 CURDIR=`dirname "$SCRIPT"`
 
+TEMP_FILE=data/newf1
+FIFO_FOR_INPUT=data/fstest.fifo.input
+FIFO_FOR_OUTPUT=data/fstest.fifo.output
 STDIN=data/fstest.stdin.data
 STDOUT=data/fstest.stdout.data
 STDERR=data/fstest.stderr.data
 ZEROVM_OUTPUT=data/zerovm.output
-
-#get printable characters count via var COUNT
-COUNT=0
-function file_characters_count {
-    CONTENTS=`strings $1 2> /dev/null`
-    COUNT=`echo $CONTENTS | wc -c | cut -d' ' -f1`
-}
 
 NAME=fstest
 COMMAND_LINE="$@"
@@ -32,9 +28,11 @@ COMMAND_LINE="$@"
 p=`pgrep -f "zerovm -Mfstest.manifest"`
 if [ "$p" = "" ]
 then
-    rm -f ${STDOUT} ${STDERR}
-    DATE=`date`
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M${NAME}.manifest -v2 > ${ZEROVM_OUTPUT} &
+    rm -f ${FIFO_FOR_INPUT} ${FIFO_FOR_OUTPUT} ${STDOUT} ${STDIN} ${STDERR} ${TEMP_FILE}
+    mkfifo ${FIFO_FOR_INPUT} ${FIFO_FOR_OUTPUT}
+    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M${NAME}.manifest -v4 > ${ZEROVM_OUTPUT} &
+    sleep 1
+    p=`pgrep -f "zerovm -Mfstest.manifest"`
 fi
 
 #############################################
@@ -42,49 +40,31 @@ fi
 # command line parameters into input channel
 #############################################
 #it is a way send to zerovm stdin any required data
-PROC_STDIN=/proc/$p/fd/0
-file_characters_count $STDERR
-FERRCOUNT=$COUNT
-file_characters_count $STDOUT
-FOUTCOUNT=$COUNT
 
-#echo foutcount $FOUTCOUNT
-#echo ferrcount $FERRCOUNT
+#STDIN file just a file for storing of history
 echo fstest "${COMMAND_LINE}" >> $STDIN
-echo fstest "${COMMAND_LINE}" > $PROC_STDIN &
+#FIFO for input into zerovm
+echo fstest "${COMMAND_LINE}" > ${FIFO_FOR_INPUT} &
 
 #############################################
 # wait while zerovm write new data into stdout or stderr
 # and print tails of these files
 #############################################
 
-FERR_UPDATED=$FERRCOUNT
-FOUT_UPDATED=$FOUTCOUNT
-#echo ferrsize $FERRSIZE
-#echo foutsize $FERRSIZE
-#should be used -le operator but not -ne because sometimes file size calculates 
-#wrong and returning 0 size, examining file size can only grow
-while [ $FERR_UPDATED -le $FERRCOUNT ] && [ $FOUT_UPDATED -le $FOUTCOUNT ]
-do
-    file_characters_count $STDERR
-    FERR_UPDATED=$COUNT
-    file_characters_count $STDOUT
-    FOUT_UPDATED=$COUNT
-done
-#echo ferrsize $FNEWSIZE
-#echo foutsize $FNEWSIZE
+#cat will wait while pipe data not available, it will be available when 
+#zerovm will get response back
 
-RESULT=`tail -n2 ${STDOUT} 2> /dev/null | cut -d' ' -f1`
-#echo result $RESULT
+cat ${FIFO_FOR_OUTPUT} > ${TEMP_FILE}
+cat ${TEMP_FILE} >> ${STDERR}
+
+RESULT=`cat ${TEMP_FILE}`
+
+echo $RESULT
+
 if [ "$RESULT" = "0" ]
 then
-    #tail -n2 ${STDERR} 2> /dev/null
-    tail -n1 ${STDOUT} 2> /dev/null
     exit 0
 else
-    #tail -n2 ${STDERR} 2> /dev/null
-    #it is enough 1 line output as no new line in log 
-    tail -n1 ${STDOUT} 2> /dev/null
     exit 1
 fi
 

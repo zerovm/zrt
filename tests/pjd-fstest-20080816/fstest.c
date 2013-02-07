@@ -44,8 +44,8 @@
 /*if that data reading from stding application should exit*/
 #define CONTROL_DATA "test12345complete"
 #define PARAM_STRING_MAXSIZE 10240
-//#define DEBUG
-//#define PARSING_DEBUG
+#define DEBUG
+#define PARSING_DEBUG
 
 #ifndef HAS_TRUNCATE64
 #define	truncate64	truncate
@@ -570,11 +570,7 @@ read_stdin_parameters( char* argv[] ){
     do{
         prev=c;
         ssize_t bytes = read(stdin, &c, 1);
-	//if nothing readed break
         if ( bytes <= 0 ){
-#ifdef PARSING_DEBUG
-	    fprintf(stderr, "bytes readed=%d\n", bytes);
-#endif
             continue;
         }
 
