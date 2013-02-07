@@ -26,7 +26,7 @@
 #include "zvm.h"
 #include "zrt.h"
 #include "zrtsyscalls.h"
-#include "memory.h"
+#include "memory_syscall_handlers.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
@@ -298,26 +298,24 @@ static int32_t zrt_sysbrk(uint32_t *args)
 /* map region of memory. ZRT simple implementation;*/
 static int32_t zrt_mmap(uint32_t *args)
 {
-    errno=ENOSYS;
-    return -1;
-    /* int32_t retcode = -1; */
-    /* void* addr = (void*)args[0]; */
-    /* uint32_t length = args[1]; */
-    /* uint32_t prot = args[2]; */
-    /* uint32_t flags = args[3]; */
-    /* uint32_t fd = args[4]; */
-    /* off_t offset = (off_t)args[5]; */
-    /* LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u offset=%lld", */
-    /* 		      addr, length, prot, flags, fd, offset); */
+    int32_t retcode = -1;
+    void* addr = (void*)args[0];
+    uint32_t length = args[1];
+    uint32_t prot = args[2];
+    uint32_t flags = args[3];
+    uint32_t fd = args[4];
+    off_t offset = (off_t)args[5];
+    LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u offset=%lld",
+    		      addr, length, prot, flags, fd, offset);
 
-    /* retcode = s_memory_interface->mmap(s_memory_interface, addr, length, prot,  */
-    /* 		  flags, fd, offset); */
+    retcode = s_memory_interface->mmap(s_memory_interface, addr, length, prot,
+    		  flags, fd, offset);
   
-    /* LOG_SYSCALL_FINISH(retcode,  */
-    /* 		       "addr=%p length=%u prot=%s flags=%s fd=%u offset=%lld", */
-    /* 		       addr, length, STR_MMAP_PROT_FLAGS(prot), STR_MMAP_FLAGS(flags),  */
-    /* 		       fd, offset); */
-    /* return retcode; */
+    LOG_SYSCALL_FINISH(retcode,
+    		       "addr=%p length=%u prot=%s flags=%s fd=%u offset=%lld",
+    		       addr, length, STR_MMAP_PROT_FLAGS(prot), STR_MMAP_FLAGS(flags),
+    		       fd, offset);
+    return retcode;
 }
 
 static int32_t zrt_munmap(uint32_t *args)
