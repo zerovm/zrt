@@ -15,15 +15,33 @@ extern "C" {
 }
 #include "MemNode.h"
 
-MemNode::MemNode() {
+MemData::~MemData(){
+    free(data_);
+}
+
+MemData::MemData() {
     data_ = NULL;
     len_ = 0;
     capacity_ = 0;
     use_count_ = 0;
 }
 
+
+MemNode::MemNode() {
+}
+
 MemNode::~MemNode() {
     children_.clear();
+}
+
+void MemNode::second_phase_construct(MemData* nodedata){
+    if ( nodedata == NULL ){
+	//alloc new data, initialization of data is postponed
+	nodedata_ = new MemData;
+    }
+    else{
+	nodedata_ = nodedata;
+    }
 }
 
 int MemNode::stat(struct stat *buf) {
@@ -31,10 +49,10 @@ int MemNode::stat(struct stat *buf) {
     buf->st_ino = (ino_t)slot_;
     if (is_dir()) {
         /*YaroslavLitvinov added various modes support*/
-        buf->st_mode = S_IFDIR | mode_;
+        buf->st_mode = S_IFDIR | mode();
     } else {
-        buf->st_mode = S_IFREG | mode_;
-        buf->st_size = len_;
+        buf->st_mode = S_IFREG | mode();
+        buf->st_size = len();
     }
     buf->st_uid = 1001;
     buf->st_gid = 1002;
@@ -70,8 +88,8 @@ void MemNode::RemoveChild(int child) {
 void MemNode::ReallocData(int len) {
     assert(len > 0);
     // TODO(arbenson): Handle memory overflow more gracefully.
-    data_ = reinterpret_cast<char *>(realloc(data_, len));
-    assert(data_);
+    nodedata_->data_ = reinterpret_cast<char *>(realloc(data(), len));
+    assert(nodedata_->data_);
     set_capacity(len);
 }
 
@@ -84,5 +102,5 @@ std::list<int> *MemNode::children() {
 }
 
 void MemNode::set_flock(const struct flock* flock) { 
-    memcpy( &flock_, flock, sizeof(struct flock) );
+    memcpy( &nodedata_->flock_, flock, sizeof(struct flock) );
 }

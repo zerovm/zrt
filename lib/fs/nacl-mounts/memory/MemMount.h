@@ -43,10 +43,13 @@ class MemMount {
 
   // Open file, actually it's a wrapper around Create, 0 is returned if the 
   // node is file successfully opened. -1 is returned on failure. 
-  int Open(const std::string& path, int oflag, uint32_t mode);
+  int Open(const std::string& path, int oflag, uint32_t mode, MemData* hardlink=NULL);
 
   // Return the node corresponding to path.
   int GetNode(const std::string& path, struct stat *st);
+
+  /*Create new hardlink newpath for an oldpath, only for directories */
+  int Link(const std::string& oldpath, const std::string& newpath);
 
   // Remove the node at path.
   int Unlink(const std::string& path);
@@ -74,7 +77,7 @@ class MemMount {
   // Creat() creates a node at path with the given mode and stores the
   // information of that node in st.  0 is returned if the node is
   // successfully created. -1 is returned on failure.
-  int Creat(const std::string& path, mode_t mode, struct stat *st);
+  int Creat(const std::string& path, mode_t mode, struct stat *st, MemData* hardlink=NULL);
 
   // Return the MemNode corresponding to the inode.
   // Return the node that is a parent of the node at path.

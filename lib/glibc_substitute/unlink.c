@@ -31,6 +31,9 @@
  * it should be linked instead standard unlink;
  **************************************************************************/
 
+int link(const char *oldpath, const char *newpath){
+}
+
 
 int unlink(const char *pathname){
     LOG_SYSCALL_START("pathname=%s", pathname);

@@ -23,16 +23,13 @@
 
 static struct MountsManager* s_mounts_manager;
 
+#define CONVERT_PATH_TO_MOUNT(full_path)			\
+    s_mounts_manager->convert_path_to_mount( full_path )
 
 static int transparent_chown(const char* path, uid_t owner, gid_t group){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->chown( path, owner, group);
-        else{
-            return mount_info->mount->chown( s_mounts_manager->get_nested_mount_path( mount_info, path ), owner, group);
-        }
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->chown( CONVERT_PATH_TO_MOUNT(path), owner, group);
     else{
         errno = ENOENT;
         return -1;
@@ -40,14 +37,9 @@ static int transparent_chown(const char* path, uid_t owner, gid_t group){
 }
 
 static int transparent_chmod(const char* path, uint32_t mode){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->chmod( path, mode);
-        else{
-            return mount_info->mount->chmod( s_mounts_manager->get_nested_mount_path( mount_info, path ), mode);
-        }
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->chmod( CONVERT_PATH_TO_MOUNT(path), mode);
     else{
         errno = ENOENT;
         return -1;
@@ -55,19 +47,9 @@ static int transparent_chmod(const char* path, uint32_t mode){
 }
 
 static int transparent_stat(const char* path, struct stat *buf){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        int ret;
-	/*for channels mount do not use path transformation*/
-        if ( mount_info->mount->mount_id == EChannelsMountId ) {
-            ret = mount_info->mount->stat( path, buf);
-	}
-        else{
-            ret = mount_info->mount->
-		stat( s_mounts_manager->get_nested_mount_path( mount_info, path ), buf);
-        }
-        return ret;
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+            return mount->stat( CONVERT_PATH_TO_MOUNT(path), buf);
     else{
         errno = ENOENT;
         return -1;
@@ -75,14 +57,9 @@ static int transparent_stat(const char* path, struct stat *buf){
 }
 
 static int transparent_mkdir(const char* path, uint32_t mode){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->mkdir( path, mode);
-        else{
-            return mount_info->mount->mkdir( s_mounts_manager->get_nested_mount_path( mount_info, path ), mode);
-        }
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->mkdir( CONVERT_PATH_TO_MOUNT(path), mode);
     else{
 	SET_ERRNO(ENOENT);
         return -1;
@@ -90,14 +67,9 @@ static int transparent_mkdir(const char* path, uint32_t mode){
 }
 
 static int transparent_rmdir(const char* path){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->rmdir( path );
-        else{
-            return mount_info->mount->rmdir( s_mounts_manager->get_nested_mount_path( mount_info, path ) );
-        }
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->rmdir( CONVERT_PATH_TO_MOUNT(path) );
     else{
         errno = ENOENT;
         return -1;
@@ -214,18 +186,9 @@ static off_t transparent_lseek(int fd, off_t offset, int whence){
 }
 
 static int transparent_open(const char* path, int oflag, uint32_t mode){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) {
-	    /*for channels mount do not use path transformation*/
-            return mount_info->mount->open( path, oflag, mode );
-	}
-        else{
-            return mount_info->mount
-		->open( s_mounts_manager->get_nested_mount_path( mount_info, path ), 
-			oflag, mode );
-        }
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->open( CONVERT_PATH_TO_MOUNT(path), oflag, mode );
     else{
 	SET_ERRNO(ENOENT);
         return -1;
@@ -258,14 +221,9 @@ static int transparent_fcntl(int fd, int cmd, ...){
 
 
 static int transparent_remove(const char* path){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->remove( path );
-        else{
-            return mount_info->mount->remove( s_mounts_manager->get_nested_mount_path( mount_info, path ) );
-        }
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->remove( CONVERT_PATH_TO_MOUNT(path) );
     else{
         SET_ERRNO(ENOENT);
         return -1;
@@ -273,14 +231,9 @@ static int transparent_remove(const char* path){
 }
 
 static int transparent_unlink(const char* path){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->unlink( path );
-        else{
-            return mount_info->mount->unlink( s_mounts_manager->get_nested_mount_path( mount_info, path ) );
-        }
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->unlink( CONVERT_PATH_TO_MOUNT(path) );
     else{
         SET_ERRNO(ENOENT);
         return -1;
@@ -288,14 +241,9 @@ static int transparent_unlink(const char* path){
 }
 
 static int transparent_access(const char* path, int amode){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info ){
-        if ( mount_info->mount->mount_id == EChannelsMountId ) /*for channels mount do not use path transformation*/
-            return mount_info->mount->access( path, amode );
-        else{
-            return mount_info->mount->access( s_mounts_manager->get_nested_mount_path( mount_info, path ), amode );
-        }
-    }
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->access( CONVERT_PATH_TO_MOUNT(path), amode );
     else{
         errno = ENOENT;
         return -1;
@@ -303,9 +251,9 @@ static int transparent_access(const char* path, int amode){
 }
 
 static int transparent_ftruncate_size(int fd, off_t length){
-    struct MountsInterface* mount_info = s_mounts_manager->mount_byhandle(fd);
-    if ( mount_info )
-	return mount_info->ftruncate_size( fd, length );
+    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    if ( mount )
+	return mount->ftruncate_size( fd, length );
     else{
 	SET_ERRNO( EBADF );
         return -1;
@@ -313,9 +261,9 @@ static int transparent_ftruncate_size(int fd, off_t length){
 }
 
 static int transparent_truncate_size(const char* path, off_t length){
-    struct MountInfo* mount_info = s_mounts_manager->mountinfo_bypath(path);
-    if ( mount_info )
-	return mount_info->mount->truncate_size( path, length );
+    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+    if ( mount )
+	return mount->truncate_size( CONVERT_PATH_TO_MOUNT(path), length );
     else{
 	SET_ERRNO( EBADF );
         return -1;
@@ -343,9 +291,17 @@ static int transparent_dup2(int oldfd, int newfd){
     return -1;
 }
 
-static int transparent_link(const char* path1, const char* path2){
-    SET_ERRNO(ENOSYS);
-    return -1;
+static int transparent_link(const char *oldpath, const char *newpath){
+    struct MountsInterface* mount1 = s_mounts_manager->mount_bypath(oldpath); 
+    struct MountsInterface* mount2 = s_mounts_manager->mount_bypath(newpath); 
+    if ( mount1 == mount2 && mount1 != NULL ){
+	return mount1->link(CONVERT_PATH_TO_MOUNT(oldpath),
+			    CONVERT_PATH_TO_MOUNT(newpath) );
+    }
+    else{
+        SET_ERRNO(ENOENT);
+        return -1;
+    }
 }
 
 

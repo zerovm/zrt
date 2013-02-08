@@ -23,13 +23,14 @@ MemMount::MemMount() {
     slots_.Alloc();
     int slot = slots_.Alloc();
     root_ = slots_.At(slot);
+    root_->second_phase_construct(NULL); /*it's no hardlinks for this node*/
     root_->set_slot(slot);
     root_->set_mount(this);
     root_->set_is_dir(true);
     root_->set_name("/");
 }
 
-int MemMount::Open(const std::string& path, int oflag, uint32_t mode){
+int MemMount::Open(const std::string& path, int oflag, uint32_t mode, MemData* hardlink){
     struct stat st;
 
     /* handle O_CREAT flag
@@ -37,7 +38,7 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode){
     if (oflag & O_CREAT) {
 	ZRT_LOG(L_INFO, P_TEXT, "handle flag: O_CREAT");
 	/*if creat ok*/
-	if (0 == Creat(path, mode, &st)) {
+	if (0 == Creat(path, mode, &st, hardlink)) {
 	    /*file creat ok*/
 	} 
 	/*raise error if file not exist or should not exist*/
@@ -81,7 +82,7 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode){
     else return -1;
 }
 
-int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf) {
+int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf, MemData* hardlink) {
     MemNode *child;
     MemNode *parent;
 
@@ -113,6 +114,8 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf) {
     int slot = slots_.Alloc();
     ZRT_LOG(L_EXTRA, "created slot=%d", slot);
     child = slots_.At(slot);
+    /*if creating hardlink then it should not be a NULL*/
+    child->second_phase_construct(hardlink); 
     child->set_slot(slot);
     child->set_is_dir(false);
     child->set_mode(mode);
@@ -163,6 +166,7 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
     // Create a new node
     int slot = slots_.Alloc();
     child = slots_.At(slot);
+    child->second_phase_construct(NULL); /*it's no hardlinks for this node*/
     child->set_slot(slot);
     child->set_mount(this);
     child->set_is_dir(true);
@@ -313,6 +317,34 @@ int MemMount::Stat(ino_t slot, struct stat *buf) {
     return node->stat(buf);
 }
 
+int MemMount::Link(const std::string& oldpath, const std::string& newpath){
+   MemNode *node = GetMemNode(oldpath);
+    if (node == NULL) {
+	SET_ERRNO(ENOENT);
+        return -1;
+    }
+    MemNode *parent = GetParentMemNode(oldpath);
+    // Check that it's not the root.
+    if (parent == NULL) {
+	SET_ERRNO(EBUSY);
+        return -1;
+    }
+    // Check that it's a file.
+    if (node->is_dir()) {
+	SET_ERRNO(EISDIR);
+        return -1;
+    }
+
+    MemData* hardlink = node->hardlink_data();
+    
+    int fd = Open(newpath, O_CREAT|O_RDWR, S_IRUSR | S_IWUSR, hardlink);
+    if ( fd < 0 ){
+	/*error occured, errno setted*/
+	return -1;
+    }
+    return 0;
+}
+
 int MemMount::Unlink(const std::string& path) {
     MemNode *node = GetMemNode(path);
     if (node == NULL) {
@@ -336,6 +368,7 @@ int MemMount::Unlink(const std::string& path) {
 }
 
 int MemMount::Rmdir(ino_t slot) {
+    MemNode *parent;
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
 	SET_ERRNO(ENOENT);
@@ -352,12 +385,17 @@ int MemMount::Rmdir(ino_t slot) {
         return -1;
     }
     ZRT_LOG(L_INFO, "node->name()=%s", node->name().c_str() );
+    parent = slots_.At(node->parent());
 
     // if this isn't the root node, remove from parent's
     // children list
+
     if (slot != 0) {
-        slots_.At(node->parent())->RemoveChild(slot);
+        parent->RemoveChild(slot);
     }
+
+    //Just release node instead using of Unref because it's 
+    //not possible to have hardlinks for directories
     slots_.Free(slot);
     return 0;
 }

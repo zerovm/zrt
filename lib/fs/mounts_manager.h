@@ -26,7 +26,7 @@ struct MountsManager{
     struct MountsInterface* (*mount_bypath)( const char* path );
     struct MountsInterface* (*mount_byhandle)( int handle );
 
-    const char* (*get_nested_mount_path)(struct MountInfo*, const char* full_path);
+    const char* (*convert_path_to_mount)(const char* full_path);
 
     struct HandleAllocator* handle_allocator;
 };

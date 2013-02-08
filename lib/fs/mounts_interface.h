@@ -72,7 +72,7 @@ struct MountsInterface{
     int (*isatty)(int fd);
     int (*dup)(int oldfd);
     int (*dup2)(int oldfd, int newfd);
-    int (*link)(const char* path1, const char* path2);
+    int (*link)(const char *oldpath, const char *newpath);
 
     const MountId mount_id;
     struct mount_specific_implem* (*implem)();

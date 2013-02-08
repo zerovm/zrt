@@ -17,117 +17,136 @@
 
 class MemMount;
 
+/*Node data that can be shared between hardlinks*/
+class MemData {
+ public:
+    MemData();
+    ~MemData();
+
+    char *data_;
+    size_t len_;
+    size_t capacity_;
+    int use_count_;
+    /*added by YaroslavLitvinov
+     *Permissions should be supported by stat*/
+    mode_t mode_;
+    uint32_t uid_;
+    uint32_t gid_;
+    struct flock flock_;
+};
+
 // MemNode is the node object for the MemoryMount class
 class MemNode {
  public:
-  MemNode();
-  ~MemNode();
+    MemNode();
+    ~MemNode();
 
-  // System calls
-  int stat(struct stat *buf);
+    //it's should be called after allocation
+    //nodedata can be NULL, if creating hardlink then it should be a valid nodedata
+    void second_phase_construct(MemData* nodedata);
 
-  // Add child to this node's children.  This method will do nothing
-  // if this node is a directory or if child points to a child that is
-  // not in the children list of this node
-  void AddChild(int slot);
+    // System calls
+    int stat(struct stat *buf);
 
-  // Remove child from this node's children.  This method will do
-  // nothing if the node is not a directory
-  void RemoveChild(int slot);
+    // Add child to this node's children.  This method will do nothing
+    // if this node is a directory or if child points to a child that is
+    // not in the children list of this node
+    void AddChild(int slot);
 
-  // Reallocate the size of data to be len bytes.  Copies the
-  // current data to the reallocated memory.
-  void ReallocData(int len);
+    // Remove child from this node's children.  This method will do
+    // nothing if the node is not a directory
+    void RemoveChild(int slot);
 
-  // children() returns a list of MemNode pointers
-  // which represent the children of this node.
-  // If this node is a file or a directory with no children,
-  // a NULL pointer is returned.
-  std::list<int> *children(void);
+    // Reallocate the size of data to be len bytes.  Copies the
+    // current data to the reallocated memory.
+    void ReallocData(int len);
 
-  // set_name() sets the name of this node.  This is not the
-  // path but rather the name of the file or directory
-  void set_name(std::string name) { name_ = name; }
+    // children() returns a list of MemNode pointers
+    // which represent the children of this node.
+    // If this node is a file or a directory with no children,
+    // a NULL pointer is returned.
+    std::list<int> *children(void);
 
-  // name() returns the name of this node
-  std::string name(void) { return name_; }
+    // set_name() sets the name of this node.  This is not the
+    // path but rather the name of the file or directory
+    void set_name(std::string name) { name_ = name; }
 
-  // set_parent() sets the parent node of this node to
-  // parent
-  void set_parent(int parent) { parent_ = parent; }
+    // name() returns the name of this node
+    std::string name(void) { return name_; }
 
-  // parent() returns a pointer to the parent node of
-  // this node.  If this node is the root node, 0
-  // is returned.
-  int parent(void) { return parent_; }
+    // set_parent() sets the parent node of this node to
+    // parent
+    void set_parent(int parent) { parent_ = parent; }
 
-  // increase the use count by one
-  void IncrementUseCount(void) { ++use_count_; }
+    // parent() returns a pointer to the parent node of
+    // this node.  If this node is the root node, 0
+    // is returned.
+    int parent(void) { return parent_; }
 
-  // decrease the use count by one
-  void DecrementUseCount(void) { --use_count_; }
+    // set_mount() sets the mount to which this node belongs
+    void set_mount(MemMount *mount) { mount_ = mount; }
 
-  // returns the use count of this node
-  int use_count(void) { return use_count_; }
+    // is_dir() returns whether or not this node represents a directory
+    bool is_dir(void) { return is_dir_; }
+    void set_is_dir(bool is_dir) { is_dir_ = is_dir; }
 
-  // capacity() returns the capcity (in bytes) of this node
-  int capacity(void) { return capacity_; }
+    // slot() returns this nodes slot number in the MemMount's slots
+    int slot(void) { return slot_; }
+    void set_slot(int slot) { slot_ = slot; }
 
-  // set the capacity of this node to capacity bytes
-  void set_capacity(int capacity) { capacity_ = capacity; }
+    //////////////////////////////////////////////////////
+    // shared data 
+    //////////////////////////////////////////////////////
 
-  // data() returns a pointer to the data of this node
-  char *data(void) { return data_; }
+    MemData* hardlink_data() { return nodedata_; }
 
-  // set_data() sets the length of this node to len
-  void set_len(size_t len) { len_ = len; }
+    // increase the use count by one
+    void IncrementUseCount(void) { ++nodedata_->use_count_; }
 
-  // len() returns the length of this node
-  size_t len(void) { return len_; }
+    // decrease the use count by one
+    void DecrementUseCount(void) { --nodedata_->use_count_; }
 
-  // set_mount() sets the mount to which this node belongs
-  void set_mount(MemMount *mount) { mount_ = mount; }
+    // returns the use count of this node
+    int use_count(void) { return nodedata_->use_count_; }
 
-  // is_dir() returns whether or not this node represents a directory
-  bool is_dir(void) { return is_dir_; }
-  void set_is_dir(bool is_dir) { is_dir_ = is_dir; }
+    // capacity() returns the capcity (in bytes) of this node
+    int capacity(void) { return nodedata_->capacity_; }
 
-  // slot() returns this nodes slot number in the MemMount's slots
-  int slot(void) { return slot_; }
-  void set_slot(int slot) { slot_ = slot; }
+    // set the capacity of this node to capacity bytes
+    void set_capacity(int capacity) { nodedata_->capacity_ = capacity; }
 
-  /*added by YaroslavLitvinov*/
-  mode_t mode()const { return mode_; }
-  void set_mode(mode_t mode) { mode_ = mode; }
+    // data() returns a pointer to the data of this node
+    char *data(void) { return nodedata_->data_; }
 
-  /*added by YaroslavLitvinov*/
-  uint32_t uid()const { return uid_; }
-  uint32_t gid()const { return gid_; }
-  void set_chown(uint32_t uid, uint32_t gid) { uid_=uid; gid_=gid; }
+    // set_data() sets the length of this node to len
+    void set_len(size_t len) { nodedata_->len_ = len; }
 
-  /*added by YaroslavLitvinov*/
-  const struct flock* flock()const { return &flock_; }
-  void set_flock(const struct flock* flock);
+    // len() returns the length of this node
+    size_t len(void) { return nodedata_->len_; }
+
+    /*added by YaroslavLitvinov*/
+    mode_t mode()const { return nodedata_->mode_; }
+    void set_mode(mode_t mode) { nodedata_->mode_ = mode; }
+
+    /*added by YaroslavLitvinov*/
+    uint32_t uid()const { return nodedata_->uid_; }
+    uint32_t gid()const { return nodedata_->gid_; }
+    void set_chown(uint32_t uid, uint32_t gid) { nodedata_->uid_=uid; nodedata_->gid_=gid; }
+
+    /*added by YaroslavLitvinov*/
+    const struct flock* flock()const { return &nodedata_->flock_; }
+    void set_flock(const struct flock* flock);
 
  private:
-  int slot_;
-  std::string name_;
-  int parent_;
-  char *data_;
-  size_t len_;
-  size_t capacity_;
-  int use_count_;
-  bool is_dir_;
-  MemMount *mount_;
-  std::list<int> children_;
-  /*added by YaroslavLitvinov
-   *Permissions should be supported by stat*/
-  mode_t mode_;
-  uint32_t uid_;
-  uint32_t gid_;
-  struct flock flock_;
+    int slot_;
+    std::string name_;
+    int parent_;
+    bool is_dir_;
+    MemMount *mount_;
+    std::list<int> children_;
+    MemData*  nodedata_;  //can be shared between nodes
 
-  DISALLOW_COPY_AND_ASSIGN(MemNode);
+    DISALLOW_COPY_AND_ASSIGN(MemNode);
 };
 
 #endif  // PACKAGES_LIBRARIES_NACL_MOUNTS_MEMORY_MEMNODE_H_

@@ -23,7 +23,7 @@ int mm_mount_remove( const char* path );
 struct MountInfo* mm_mountinfo_bypath( const char* path );
 struct MountsInterface* mm_mount_bypath( const char* path );
 struct MountsInterface* mm_mount_byhandle( int handle );
-const char* mm_get_nested_mount_path(struct MountInfo* mount_info, const char* full_path);
+const char* mm_convert_path_to_mount(const char* full_path);
 
 static int s_mount_items_count;
 static struct MountInfo s_mount_items[EMountsCount];
@@ -33,7 +33,7 @@ static struct MountsManager s_mounts_manager = {
         mm_mountinfo_bypath,
         mm_mount_bypath,
         mm_mount_byhandle,
-        mm_get_nested_mount_path,
+        mm_convert_path_to_mount,
         NULL
     };
 
@@ -78,7 +78,6 @@ struct MountInfo* mm_mountinfo_bypath( const char* path ){
 
 struct MountsInterface* mm_mount_bypath( const char* path ){
     struct MountInfo* mount_info = mm_mountinfo_bypath(path);
-
     if ( mount_info )
         return mount_info->mount;
     else
@@ -89,14 +88,25 @@ struct MountsInterface* mm_mount_byhandle( int handle ){
     return s_mounts_manager.handle_allocator->mount_interface(handle);
 }
 
-const char* mm_get_nested_mount_path(struct MountInfo* mount_info, const char* full_path){
-    if ( strlen(mount_info->mount_path) == 1 && mount_info->mount_path[0] == '/' )
-        return full_path; /*use paths mounted on root '/' as is*/
-    else{
-        /*get path relative to mount path.
-         * for example: full_path="/tmp/fire", mount_path="/tmp", returned="/fire"  */
-        return &full_path[ strlen( mount_info->mount_path ) ];
+const char* mm_convert_path_to_mount(const char* full_path){
+    struct MountInfo* mount_info = mm_mountinfo_bypath( full_path );
+    if ( mount_info ){
+	if ( mount_info->mount->mount_id == EChannelsMountId ){
+	    /*for channels mount do not use path transformation*/
+	    return full_path;
+	}
+	else{
+	    if ( strlen(mount_info->mount_path) == 1 && mount_info->mount_path[0] == '/' )
+		return full_path; /*use paths mounted on root '/' as is*/
+	    else{
+		/*get path relative to mount path.
+		 * for example: full_path="/tmp/fire", mount_path="/tmp", returned="/fire" */
+		return &full_path[ strlen( mount_info->mount_path ) ];
+	    }
+	}
     }
+    else
+	return NULL;
 }
 
 struct MountsManager* mounts_manager(){
