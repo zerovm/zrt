@@ -35,12 +35,7 @@ int main(int argc, char** argv, char** envp)
     int i;
     struct UserManifest *setup = zvm_init();
     if(setup == NULL) return ERR_CODE;
-
-    /* user custom attributes passed via environment. 
-     * do we need this? */
-    setup->envp = envp;
     zrt_setup( setup );
-
     /* debug print */
     ZRT_LOG(L_SHORT, "DEBUG INFORMATION FOR '%s' NODE", argv[0]);
     ZRT_LOG(L_SHORT, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
@@ -53,13 +48,13 @@ int main(int argc, char** argv, char** envp)
     i=0;
     while( envp[i] ){
         ZRT_LOG(L_SHORT, "envp[%d] = '%s'", i, envp[i]);
-	++i;
+    	++i;
     }
     /*print environment variables*/
     i=0;
     while( argv[i] ){
         ZRT_LOG(L_SHORT, "argv[%d] = '%s'", i, argv[i]);
-	++i;
+    	++i;
     }
     ZRT_LOG_DELIMETER;
     /*print channels list*/
