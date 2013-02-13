@@ -489,8 +489,8 @@ static int mem_dup2(int oldfd, int newfd){
     return -1;
 }
 
-static int mem_link(const char* path1, const char* path2){
-    return -1;
+static int mem_link(const char* oldpath, const char* newpath){
+    return s_mem_mount_cpp->Link(oldpath, newpath);
 }
 
 struct mount_specific_implem* mem_implem(){

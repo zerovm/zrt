@@ -32,6 +32,22 @@
  **************************************************************************/
 
 int link(const char *oldpath, const char *newpath){
+    LOG_SYSCALL_START("oldpath=%s, newpath=%s", oldpath, newpath);
+
+    struct MountsInterface* transpar_mount = transparent_mount();
+    assert(transpar_mount);
+
+    errno=0;
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(oldpath);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(newpath);
+    char* absolute_path1 = alloc_absolute_path_from_relative(oldpath);
+    char* absolute_path2 = alloc_absolute_path_from_relative(newpath);
+
+    int ret = transpar_mount->link(absolute_path1, absolute_path2);
+    free(absolute_path1);
+    free(absolute_path2);
+    LOG_SHORT_SYSCALL_FINISH(ret, "oldpath=%s, newpath=%s", oldpath, newpath);
+    return ret;
 }
 
 
@@ -42,7 +58,6 @@ int unlink(const char *pathname){
     assert(transpar_mount);
 
     errno=0;
-    ZRT_LOG(L_SHORT, "pathname=%s", pathname );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     char* absolute_path = alloc_absolute_path_from_relative(pathname);
     int ret = transpar_mount->unlink(absolute_path);
