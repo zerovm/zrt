@@ -39,15 +39,18 @@ lib/glibc_substitute/getpwuid.c \
 lib/glibc_substitute/fdopen.c \
 lib/glibc_substitute/mkdir.c \
 lib/glibc_substitute/rmdir.c \
-lib/glibc_substitute/lstat.c \
 lib/glibc_substitute/umask.c \
 lib/glibc_substitute/unlink.c \
 lib/glibc_substitute/chmod.c \
 lib/glibc_substitute/fcntl.c \
+lib/glibc_substitute/lstat.c \
 lib/glibc_substitute/remove.c \
 lib/glibc_substitute/rename.c \
 lib/glibc_substitute/chown.c \
-lib/glibc_substitute/truncate.c 
+lib/glibc_substitute/eaccess.c \
+lib/glibc_substitute/truncate.c \
+lib/glibc_substitute/lockf_stub.c
+
 #lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
@@ -55,7 +58,8 @@ LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
 
 ############## ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
-lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a lib/sqlite3/libsqlite3.a 
+lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a \
+lib/tar-1.11.8/libtar.a lib/sqlite3/libsqlite3.a 
 
 ################# samples to build
 UNSTABLE_SAMPLES=
