@@ -10,5 +10,5 @@ value=0
 cat $LOCALES | while read line
 do
     #build pacthed localizations
-    sh add_single_zrt_locale.sh $line
+    sh add_single_patched_zrt_locale.sh $line
 done

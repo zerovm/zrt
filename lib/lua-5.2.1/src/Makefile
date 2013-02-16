@@ -1,3 +1,4 @@
+include $(ZRT_ROOT)/Makefile.env
 # Makefile for building Lua
 # See ../doc/readme.html for installation and customization instructions.
 
@@ -5,8 +6,8 @@
 
 # Your platform. See PLATS for possible values.
 PLAT= none
-PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
-CC= @${PNACL_TOOL}/bin/x86_64-nacl-gcc
+#PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
+#CC= @${PNACL_TOOL}/bin/x86_64-nacl-gcc
 #CC= gcc
 CFLAGS= -O2 -Wall -DLUA_COMPAT_ALL $(SYSCFLAGS) $(MYCFLAGS)
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)

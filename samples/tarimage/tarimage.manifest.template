@@ -11,9 +11,8 @@ Channel = {ABS_PATH}zrtdebug.data, /dev/debug, 0, 0, 0, 99999999, 99999999
 == inject tar archives contents into ZRT filesystem using fstab.conf
 =====================================================================
 Channel = {ABS_PATH}mounts/fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
-Channel = {ABS_PATH}mounts/tarimage.tar, /dev/mount/root, 1, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}glibc-locale/locale-lib.tar, /dev/mount/lib, 0, 999999, 999999, 0, 0
-Channel = {MOUNTS_PATH}glibc-locale/locale-share.tar, /dev/mount/share, 0, 999999, 999999, 0, 0
+Channel = {ABS_PATH}mounts/tarimage.tar, /dev/mount/import, 1, 9999999, 9999999, 0, 0
+Channel = {ABS_PATH}mounts/exported.tar, /dev/mount/export, 2, 0, 0, 9999999, 9999999
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -25,4 +24,4 @@ NexeMax = 10000000
 MemMax=134217728
 Timeout=10
 NodeName = cdrfs, 1
-Environment=VERBOSITY, 3
+Environment=VERBOSITY, 1

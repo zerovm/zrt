@@ -1,6 +1,4 @@
-PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
-CXX=$(PNACL_TOOL)/bin/x86_64-nacl-g++
-CC=$(PNACL_TOOL)/bin/x86_64-nacl-gcc
+include $(ZRT_ROOT)/Makefile.env
 
 #====================== taken from nacl-mounts
 # Add root of nacl-mounts to the include path

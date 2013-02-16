@@ -36,6 +36,6 @@ Nexe = {OUTFILE}.nexe
 ==MemMax=134217728
 MemMax={MEMMAX}
 Timeout=10
-Environment = VERBOSITY, 3, TimeStamp, 1344719070 {ENVIRONMENT}, LOCPATH, /lib/locale
+Environment = VERBOSITY, 1, TimeStamp, 1344719070 {ENVIRONMENT}, LOCPATH, /lib/locale
 NodeName=glibc-test,1
 

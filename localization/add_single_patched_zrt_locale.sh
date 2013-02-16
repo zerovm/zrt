@@ -14,28 +14,33 @@ fi
 #CHARMAPS_SOURCE=~/nacl/nativeclient/native_client/tools/SRC/glibc/localedata/charmaps
 MOUNTS_LOCALE_FOLDER=../mounts/locales
 LOCALE_NAME=$1.$2
-ADD_LOCALES_FOLDER=localedef
+ADD_LOCALES_FOLDER=lib/locale
 LOCALE_PATH=$ADD_LOCALES_FOLDER/$LOCALE_NAME
 LOCALE_PATCHER=locale_patcher/locale_patcher
 
-
+#build patcher if that not yet exist
+if [ ! -f $LOCALE_PATCHER ]
+then
+    echo error: you need build a patcher: $LOCALE_PATCHER 
+    exit
+fi
 
 #create dir for tar locales
 mkdir -p $MOUNTS_LOCALE_FOLDER
+mkdir -p $ADD_LOCALES_FOLDER
 
-#compile and add specific locale into archive
-LANG_TERRITORY=$1 CHARMAP=$2 make archive -C$ADD_LOCALES_FOLDER
-#compile specific locale
-LANG_TERRITORY=$1 CHARMAP=$2 make -C$ADD_LOCALES_FOLDER
+#compile locale
 
-#move localisation single archive into locales folder
-if [ -f $LOCALE_PATH.tar ]
+if [ ! -f $ADD_LOCALES_FOLDER/$1.$2/LC_CTYPE ]
 then
-    echo mv $LOCALE_PATH.tar $MOUNTS_LOCALE_FOLDER
-    mv $LOCALE_PATH.tar $MOUNTS_LOCALE_FOLDER
-    echo locale $LOCALE_PATH compiled.
+#    localedef -c -i $LOCALES_SOURCE/$1 -f $CHARMAPS_SOURCE/$2  $ADD_LOCALES_FOLDER/$1.$2
+    localedef -c -i $1 -f $2  $ADD_LOCALES_FOLDER/$1.$2
+#apply patch
+    $LOCALE_PATCHER $ADD_LOCALES_FOLDER/$1.$2/LC_CTYPE
 fi
 
+#add localisation files related to single archive into archive
+tar -cf $MOUNTS_LOCALE_FOLDER/$LOCALE_NAME.tar $LOCALE_PATH
 
 
 
