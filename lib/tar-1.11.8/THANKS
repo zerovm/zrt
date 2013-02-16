@@ -1,0 +1,171 @@
+GNU tar THANKS file
+
+GNU tar has originally been written by Graham Todd.  Many people
+further contributed to GNU tar by reporting problems, suggesting
+various improvements or submitting actual code.  Here is a list of
+these people.  Help me keep it complete and exempt of errors.
+
+Alan Bawden		Alan@lcs.mit.edu
+Alan Modra		alan@spri.levels.unisa.edu.au
+Alexander Dupuy		dupuy@smarts.com
+Alexander Lehmann	alex@hal.rhein-main.de
+Anders Andersson	andersa@docs.uu.se
+Andreas Schwab		schwab@issan.informatik.uni-dortmund.de
+Andrew A. Chernov	ache@astral.msk.su
+Andrew Torda		torda@igc.chem.ethz.ch
+Antonio Jose Coutinho	ajc@di.uminho.pt
+Arnold Robbins		arnold@gnu.ai.mit.edu
+Ben A. Mesander		ben@piglet.cr.usgs.gov
+Bernard Chen		bern@cs.ucla.edu
+Bob Mende Pie		mende@piecomputer.rutgers.edu
+Bruno Haible		haible@ma2s2.mathematik.uni-karlsruhe.de
+Bryant Fujimoto		fujimoto@denali.chem.washington.edu
+Burkhard Plache		plache@krusty.optimax.ns.ca
+Carl Streeter		streeter@cae.wisc.edu
+Charles Lopes		Charles.Lopes@infm.ulst.ac.uk
+Chip Salzenberg		tct!chip
+Chris Arthur		csa@gnu.ai.mit.edu
+Chris Hopps		sycom.mi.org!ro-chp!chopps
+Chris Ransom		chris@quests.com
+Christian T. Dum	ctd@mpe-garching.mpg.de
+Christopher Vickery	vickery@ipc1.cs.qc.edu
+Claude Scarpelli	claude@genethon.fr
+Cliff Krumvieda		cliff@cs.cornell.edu
+Dan Bloch		dan@transarc.com
+Daniel R. Guilderson	d.guilderson@ma30.bull.com
+Danny R. Johnston	danny@cs.weber.edu
+Dave Gentzel		gentzel@nova.enet.dec.com
+David J. MacKenzie	djm@uunet.uu.net
+David K. Drum		ccdavid@mizzou1.missouri.edu
+David Lemson		lemson@uiuc.edu
+David Taylor		taylor@think.com
+Dean Gaudet		dgaudet@watdragon.uwaterloo.ca
+Demizu Noritoshi	nori-d@is.aist-nara.ac.jp
+Denis Fortin		fortin@acm.org
+Dick Streefland		dicks@tasking.nl
+Dimitris Fousekis	dfousek@leon.nrcps.ariadne-t.gr
+Drew Sullivan		drew@sni.ca
+Drew Trieger		trieger@woodstock.abbott.com
+Edward Welbourne	eddy@gen.cam.ac.uk
+Elmar Heeb		heeb@itp.ethz.ch
+Eric Norum		eric@ee.ualberta.ca
+Esa Karell		karell@cs.helsinki.fi
+Ezra Peisach		epeisach@mit.edu
+François Pinard		pinard@iro.umontreal.ca
+Gerben Wierda		gerben@rna.indiv.nluug.nl
+Goeran Uddeborg		uddeborg@carmen.se
+George Chyu		gschyu@ccgate.dp.beckman.com
+Greg Black		gjb@gba.oz.au
+Greg McGary		gkm@magilla.cichlid.com
+Harald Koenig		koenig@tat.physik.uni-tuebingen.de
+Henrik Bakman		hb@csd.uu.se
+Hiroyuki Bessho		bsh@grotto.iijnet.or.jp
+Holger Teutsch		holger@hotbso.rhein-main.de
+Hugh Secker-Walker	hugh@ear.mit.edu
+Ian Jackson		iwj@cam-orl.co.uk
+Ian T. Zimmerman	itz@crl.com
+Indra Singhal		indra@synoptics.com
+J.T. Conklin		jtc@cygnus.com
+Jan Carlson		janc@sni.ca
+James W. McKelvey	mckelvey@fafnir.com
+Janice Burton		r06a165@bcc25.kodak.com
+Jay Fenlason		hack@gnu.ai.mit.edu
+Jean-Michel Soenen	soenen@lectra.fr
+Jean-Ph. Martin-Flatin	syj@ecmwf.int
+Jeff Moskow		jeff@rtr.com
+Jeff Prothero		jsp@betz.biostr.washington.edu
+Jeff Siegel		js@hornet.att.com
+Jeffrey Goldberg	J.Goldberg@cranfield.ac.uk
+John David Anglin	dave@hiauly1.hia.nrc.ca
+Jim Blandy		jimb@totoro.cs.oberlin.edu
+Jim Farrell		jwf@platinum.com
+Jim Meyering		meyering@acm.org
+John Clark		jclark@gray.cscwc.pima.edu
+John Gilmore		gnu@toad.com
+John L. Chmielewski	jlc@attmail.com
+John Oleynick		juo@klinzhai.rutgers.edu
+John Rouillard		rouilj@cs.umb.edu
+Jonathan I. Kamens	jik@cam.ov.com
+Jonathan N. Sherman	sysjns@etacrs1.safb.af.mil
+Joseph E. Sacco		jsacco@ssl.com
+Judy Ricker		jricker@gdstech.grumman.com
+Juha Sarlin		juha@tds.kth.se
+Kai Petzke		wpp@marie.physik.tu-berlin.de
+Karl Berry		karl@cs.umb.edu
+Karl Vogel		vogelke@c-17igp.wpafb.af.mil
+Kaveh R. Ghazi		ghazi@caip.rutgers.edu
+Kevin D Quitt		drs@netcom.com
+Kevin Dalley		kevin@aimnet.com
+Kimmy Posey		kimmyd@bnr.ca
+Kurt Jaeger		pi@rus.uni-stuttgart.de
+Laurent Sainte-Marthe	smarthe@genethon.fr
+Les Mikesell		les@mcs.com
+Mark Clements		mpc@mbsmm.com
+Mark Frost		mfrost@ncd.com
+Mark W. Eichin		eichin@cygnus.com
+Marty Leisner		leisner@eso.mc.xerox.com
+Massimo Dal Zotto	dz@cs.unitn.it
+Mats Lofkvist		d87-mal@nada.kth.se
+Michael Helm		mike@fionn.lbl.gov
+Michael Holmes		mholmes@lccinc.com
+Michael Innis Bushnell	mib@gnu.ai.mit.edu
+Michael Kubik		mkubik@qitgsdv1.telecom.com.au
+Michael Maass		michael.maass@bk.bosch.de
+Mike Muuss		mike@brl.mil
+Mike Nolan		nolan@lpl.arizona.edu
+Mike Rogers		mike@demon.net
+Milan Hodoscek		milan@kihp6.ki.si
+Minh Tran-Le		tranle@intellicorp.com
+Neil Jerram		nj104@cus.cam.ac.uk
+Nelson H.F. Beebe	beebe@math.utah.edu
+Nick Barron		nikb@cix.compulink.co.uk
+Noah Friedman		friedman@prep.ai.mit.edu
+Pascal Meheut		pascal@cnam.cnam.fr
+Patrick Timmons		timmons@electech.polymtl.ca
+Paul Eggert		eggert@twinsun.com
+Peder Chr. Norgaard	pcn@tbit.dk
+Per Bojsen		pb@delta.dk
+Per Foreby		perf@efd.lth.se
+Piercarlo Grandi	piercarl@sabi.demon.co.uk
+R. Scott Butler		butler@prism.es.dupont.com
+Rainer Orth		ro@thp.uni-koeln.de
+Ralf Suckow		suckow@contrib.de
+Ray Dassen		jdassen@wi.leidenuniv.nl
+Reuben Sumner		rasumner@undergrad.math.uwaterloo.ca
+Richard Deal		deal@xi.cs.fsu.edu
+Richard Lloyd		R.K.Lloyd@csc.liv.ac.uk
+Richard O'Neill		richard@nexus.vnus.bc.ca
+Rick Emerson		rick@ssg.com
+Rob Parry		rparry@hydrolab.arsusda.gov
+Robert Bernstein	rocky@panix.com
+Robert E. Brown		brown@bibliotech.com
+Robert McGraw		mcgraw@sunspot.noao.edu
+Robert W. Kim		robertwk@aixpdslib.seas.ucla.edu
+Robert Weissenfels	robert@hop.ping.de
+Roland Schemers III	schemers@vela.acs.oakland.edu
+Ron Guilmette		rfg@netcom.com
+Russ Evans		e_gs18@ub.nmh.ac.uk
+Sarah Quady		squady@warp10.keck.hawaii.edu
+Scott Grosch		garath@engin.umich.edu
+Scott S. Bertilson	scott@geom.umn.edu
+Sherwood Botsford	sherwood@space.ualberta.ca
+Stefan Skoglund		sp2stes1@ida.his.se
+Stephen Saroff		saroff@msc.edu
+Tarang Kumar Patel	mombasa@ptolemy.arc.nasa.gov
+The King		elvis@gnu.ai.mit.edu
+Thomas Koenig		Thomas.Koenig@ciw.uni-karlsruhe.de
+Thomas Krebs		krebs@faps.uni-erlangen.de
+Tilman Schmidt		ts@gb1.sema.de
+Tim Ramsey		tar@ksu.ksu.edu
+Timothy Fossum		fossum@cs.uwp.edu
+Tom Quinn		trq@astro.washington.edu
+Torbjorn Granlund	tege@sics.se
+Torkel Hasle		torkel@bibsyst.no
+Travis L. Priest	T.L.Priest@larc.nasa.gov
+Tsutomu Yamada		tsutomu@sra.co.jp
+Ulrich Drepper		drepper@gnu.ai.mit.edu
+Van Snyder		vsnyder@math.jpl.nasa.gov
+Vic Abell		abe@cc.purdue.edu
+W. Phillip Moore	wpm@morgan.com
+William Bader		wbader@pluto.csee.lehigh.edu
+William Kucharski	kucharsk@netcom.com

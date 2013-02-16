@@ -1,0 +1,1207 @@
+This is Info file tar.info, produced by Makeinfo-1.61 from the input
+file tar.texinfo.
+
+START-INFO-DIR-ENTRY
+* tar: (tar).			Making tape (or disk) archives.
+END-INFO-DIR-ENTRY
+
+   This file documents GNU `tar', a utility used to store, backup, and
+transport files.
+
+   Copyright (C) 1992, 1994, 1995 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Foundation.
+
+
+File: tar.info,  Node: Listing files in an archive bis,  Next: Getting Additional File Information bis,  Prev: How to List Archives,  Up: How to List Archives
+
+Listing the Contents of an Archive
+----------------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   You can list the contents of the archive you just created with
+another option of `tar': `--list' (`-t').  To list the contents of an
+archive, type:
+
+     % tar --list --file=records
+
+   `tar' will respond:
+
+     blues folk jazz
+
+FIXME: xref Listing Archive Contents
+   , for a more detailed tutorial of the `--list' (`-t') operation.
+FIXME: xref Listing Contents
+   for more information about the `--list' (`-t') operation.
+FIXME:
+
+   You can use `--list' (`-t') to output a list of the files in an
+archive.  If you use file name arguments with this operation, `tar'
+will look in the archive for the files specified and display their
+names only if they are, in fact, stored.  You can use `--list' (`-t')
+with the `--verbose' (`-v') option to find out the attributes (owner,
+size, etc.) of stored files.
+
+   You can list the contents of an archive with another operation of
+`tar': `--list' (`-t').  To list the contents of the archive you just
+created, type:
+
+     % tar --list --file=records
+
+   `tar' will respond:
+
+     blues folk jazz
+
+FIXME: xref Listing Archive Contents
+   , for a more detailed tutorial of the `--list' (`-t') operation.
+FIXME: xref Listing Contents
+   , for more information about the `--list' (`-t') operation.
+
+   In a previous example, you created the archive `music' in the home
+directory.  To list the contents of `music':
+
+   * List the contents of an archive by using `--list' (`-t') with
+     `tar'.
+
+   * Specify the name of the archive to be
+     listed--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   Thus:
+
+     % tar --list --file=music
+     practice/
+     practice/blues
+     practice/folk
+     practice/jazz
+     practice/records
+
+   Use `--list' (`-t') to print the names of files stored in an
+archive.  If you use file name arguments with this operation, `tar'
+prints the names of the specified files if they are stored in the
+archive.  If you use a directory name as a file name argument, `tar'
+also prints the names of all underlying files, including
+sub-directories.  If you use no file name arguments, `tar' prints the
+names of all the archive members.
+
+   You can use `--list' (`-t') with the `--verbose' (`-v') option to
+print archive members' attributes (owner, size, etc.).
+
+   To list the names of files stored in an archive, use the `--list'
+(`-t') operation of `tar'.
+
+   In a previous example, you created the archive `~/music'.  To list
+the contents of `music', while in your home directory:
+
+   * List the contents of an archive by using {No Value For "-list"}
+     with `tar'.
+
+   * Specify the archive to be listed--`--file=ARCHIVE-NAME' (`-f
+     ARCHIVE-NAME').
+
+   Thus:
+
+     % tar --list --file=music
+     practice/
+     practice/blues
+     practice/folk
+     practice/jazz
+     practice/records
+
+
+File: tar.info,  Node: Getting Additional File Information bis,  Next: List A Specific File in an Archive bis,  Prev: Listing files in an archive bis,  Up: How to List Archives
+
+Getting Additional File Information
+-----------------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   When you specify the `--verbose' (`-v') option in conjunction with
+`--list' (`-t'), `tar' will print additional information about the
+files being listed (file protection, owner and group ID, size, and date
+and time of creation).  The example above, in verbose mode, would be:
+
+     % tar --list --verbose --file=music
+     drwxrwxrwx myself/user 0 May 31 21:49 1990 practice/
+     -rw-rw-rw- myself/user 42 May 21 13:29 1990 practice/blues
+     -rw-rw-rw- myself/user 62 May 23 10:55 1990 practice/folk
+     -rw-rw-rw- myself/user 40 May 21 13:30 1990 practice/jazz
+     -rw-rw-rw- myself/user 10240 May 31 21:49 1990 practice/records
+     %
+
+   Note that using `--verbose' (`-v') with `--list' (`-t') does not
+cause `tar' to print the names of files as they are being acted on,
+though the `--verbose' (`-v') option will have this effect with all
+other operations.
+
+   To get more information when you list the names of files stored in an
+archive, specify the `--verbose' (`-v') option in conjunction with
+`--list' (`-t').
+
+   `tar' will print archive member's file protection, owner and group
+ID, size, and date and time of creation.
+
+   For example:
+
+     % tar --list --verbose --file=music
+     drwxrwxrwx myself/user 0 May 31 21:49 1990 practice/
+     -rw-rw-rw- myself/user 42 May 21 13:29 1990 practice/blues
+     -rw-rw-rw- myself/user 62 May 23 10:55 1990 practice/folk
+     -rw-rw-rw- myself/user 40 May 21 13:30 1990 practice/jazz
+     -rw-rw-rw- myself/user 10240 May 31 21:49 1990 practice/records
+     %
+
+   Note that when you use `--verbose' (`-v') with `--list' (`-t'),
+`tar' doesn't print the names of files as they are being acted on,
+though the `--verbose' (`-v') option will have this effect when used
+with all other operations.
+
+
+File: tar.info,  Node: List A Specific File in an Archive bis,  Next: Listing the Contents of a Stored Directory ter,  Prev: Getting Additional File Information bis,  Up: How to List Archives
+
+List A Specific File in an Archive
+----------------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+FIXME:
+   To to see if a particular file is in an archive, specify the name of
+the file in question as a file name argument while specifying the
+`--list' (`-t') operation.  For example, if you wanted to see if the
+file `folk' were in the archive file `music', you would:
+
+   * Invoke `tar', and specify the operation to list the contents of an
+     archive--`--list' (`-t').
+
+   * Specify the name of the archive file to be acted
+     on--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   * Specify the name of the file `tar' is to look for, as a file name
+     argument.  Because `tar' preserves paths, file names must be
+     specified as they appear in the archive (ie.. as they are relative
+     to the directory from which the archive was created).
+     FIXME: xref -P
+
+   Type:
+
+     % tar --list --file=music practice/folk
+
+`tar' responds:
+
+     practice/folk
+
+If the file were not in the archive (for example, the file
+`practice/rock'), the example above would look like:
+
+     % tar --list --file=music practice/rock
+     tar: practice/rock not found in archive
+
+   The `--verbose' (`-v') option does not have any effect on execution
+of the `--list' (`-t') operation when you have specified file name
+arguments.
+FIXME: this is a bug (?)
+
+   To to see if a particular file is in an archive, use the name of the
+file in question as a file name argument while specifying the `--list'
+(`-t') operation.  For example, to see whether the file `folk' is in the
+archive file `music', do the following:
+
+   * Invoke `tar', and specify the `--list' (`-t') operation.
+
+   * Specify the archive file to be acted on--`--file=ARCHIVE-NAME'
+     (`-f ARCHIVE-NAME').
+
+   * Specify the files to look for, by typing their names as file name
+     arguments.  You have to type the file name as it appears in the
+     archive (normally, as it is relative to the relative to the
+     directory from which the archive was created).
+     FIXME: xref absolute-names
+
+   Type:
+
+     % tar --list --file=music practice/folk
+
+   `tar' responds:
+
+     practice/folk
+
+   If the file were not stored in the archive (for example, the file
+`practice/rock'), the example above would look like:
+
+     % tar --list --file=music practice/rock
+     tar: practice/rock not found in archive
+
+   If you had used `--verbose' (`-v') mode, the example above would
+look like:
+
+     % tar --list --file=music practice/folk
+     -rw-rw-rw- myself/user 62 May 23 10:55 1990 practice/folk
+
+
+File: tar.info,  Node: Listing the Contents of a Stored Directory ter,  Prev: List A Specific File in an Archive bis,  Up: How to List Archives
+
+Listing the Contents of a Stored Directory
+------------------------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   To get information about the contents of an archived directory, use
+the directory name as a file name argument in conjunction with `--list'
+(`-t').  To find out file attributes, include the `--verbose' (`-v')
+option.
+
+   For example, to find out about files in the directory `practice', in
+the archive file `music', type:
+
+     % tar --list --file=music practice
+
+   `tar' responds:
+
+     drwxrwxrwx myself/user 0 May 31 21:49 1990 practice/
+     -rw-rw-rw- myself/user 42 May 21 13:29 1990 practice/blues
+     -rw-rw-rw- myself/user 62 May 23 10:55 1990 practice/folk
+     -rw-rw-rw- myself/user 40 May 21 13:30 1990 practice/jazz
+     -rw-rw-rw- myself/user 10240 May 31 21:49 1990 practice/records
+
+   When you use a directory name as a file name argument, `tar' acts on
+all the files (including sub-directories) in that directory.
+
+
+File: tar.info,  Node: How to Extract Members from an Archive,  Next: How to Add Files to Existing Archives,  Prev: How to List Archives,  Up: Tutorial
+
+How to Extract Members from an Archive
+======================================
+
+     *(This message will disappear, once this node revised.)*
+
+   In order to extract members from an archive, use the `--extract'
+(`-x') option.  Specify the name of the archive with
+`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').  To extract specific archive
+members, give their member names as arguments.  It essential to give
+their exact member name, as printed by `--list' (`-t').  This will
+create a copy of the archive member, with a file name the same as its
+name in the archive.
+
+   Keeping the example of the two archives created at the beginning of
+this tutorial, `tar --extract --file=afiles.tar apple' would create a
+file `apple' in the current directory with the contents of the archive
+member `apple'.  It would remove any file named `apple' already present
+in the directory, but it would not change the archive in any way.
+
+   Remember that specifying the exact member name is important.  `tar
+--extract --file=bfiles.tar baloons' will fail, because there is no
+member named `baloons'.  To extract the member named `./baloons' you
+would need to specify `tar --extract --file=bfiles.tar ./baloons'.  To
+find the exact member names of the members of an archive, use `--list'
+(`-t').
+FIXME: xref Listing Archives.
+
+   If you do not list any archive member names, then `--extract' (`-x')
+will extract all the members of the archive.
+
+   If you give the `--verbose' (`-v') option, then `--extract' (`-x')
+will print the names of the archive members as it extracts them.
+
+* Menu:
+
+* Extracting Files bis::
+* Extracting Files from an Archive ter::
+* Extracting Specific Files ter::
+* Extracting Directories ter::
+
+
+File: tar.info,  Node: Extracting Files bis,  Next: Extracting Files from an Archive ter,  Prev: How to Extract Members from an Archive,  Up: How to Extract Members from an Archive
+
+Extract Files from an Archive into Your Current Directory
+---------------------------------------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   Obviously, the ultimate goal of `tar' users is to eventually get
+their files back.  To do this, use the `--extract' (`-x') or `--get'
+operation.  `--extract' (`-x') can be used to retrieve individual files
+from an archive, or can be used to write all the files in the archive
+back into the file system.
+
+   In the previous example you concatenated two archives, `music', and
+`practice/records'.  To now retrieve the complete contents of `music'
+(the target file in the concatenation process), you would, from the
+home directory:
+
+   * Invoke `tar' and specify the operation to extract files from an
+     archive (`--extract' (`-x') or `--get'.
+
+   * Specify the name of the archive the files will be extracted
+     from--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   * Specify the names of the files you wish to extract, as file name
+     arguments (in this case you want to extract the entire archive, so
+     you don't need to specify anything).
+
+     % tar --extract --file=music
+     tar: Could not make directory practice : File exists
+
+Because the files stored originally in `music' were stored as files in
+a subdirectory (not as files in the working directory), they are stored
+in the archive with a leading directory name--`tar', in restoring them,
+has tried to recreate that directory and failed: the directory already
+exists.  The extraction has not been aborted, however.  If you now
+change into the `practice' directory and generate a directory listing,
+you will find that `jazz', which we removed in an earlier example, has
+been resurrected.
+
+     % cd practice
+     % ls
+     blues	   classical  folk	 jazz	    records    rock
+
+   If you look more closely at the files in the directory, however, you
+will find that `blues' and `folk' are, in fact, the original versions
+of the file, which were stored in `music' at the beginning of the
+tutorial.  `tar', in extracting the original files from `music', has
+overwritten the existing files in the file system.
+
+   While the newer versions of the files were stored in `records'
+above, they can no longer be extracted from it.  `records' too was
+archived by `tar' when the `practice' directory was stored in the
+archive file `music', and was restored to its older incarnation when
+the files in `practice' were overwritten.  However, the newer version
+of `records' was concatenated with `music'.  The contents of the newer
+version of `records', therefore, should have been extracted when all
+the contents of `music' were extracted.  They were.  `tar' has restored
+them into the working directory using the names with which they were
+originally stored.  Because they were originally stored as part of
+`records', in the `practice' directory, they had no preceeding
+directory stored as part of their file names.  To find the latest
+versions of `blues', `folk', `jazz', `rock' and `classical', look in
+your home directory.
+
+   You may wish to restore the files in your `practice' directory to
+their last state before we extracted the files from `music'.  Rather
+than moving the files from your home directory to the `practice'
+subdirectory, you can run the same extraction procedure as above using
+the `practice' subdirectory as your working directory:
+
+     % cd practice
+     % tar --extract --verbose --file=~/music
+     practice/
+     practice/blues
+     practice/folk
+     practice/jazz
+     practice/records
+     blues
+     folk
+     jazz
+     blues
+     rock
+     blues
+     classical
+     %
+
+If you now examine the files in the practice directory, you will find
+that the files have been restored to their previous, newer, states.
+The old versions of the files, which were stored in `music' with a
+preceeding directory name, have been written into a newly created
+subdirectory under the working directory (which is your `practice'
+subdirectory).  The new subdirectory is also called `practice'.
+
+
+File: tar.info,  Node: Extracting Files from an Archive ter,  Next: Extracting Specific Files ter,  Prev: Extracting Files bis,  Up: How to Extract Members from an Archive
+
+Extracting Files from an Archive
+--------------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   Creating an archive is only half the job--there would be no point in
+storing files in an archive if you couldn't retrieve them.  To extract
+files from an archive, use the `--extract' (`-x') operation.
+
+   To extract specific files, use their names as file name arguments.
+If you use a directory name as a file name argument, `tar' extracts all
+the files (including subdirectories) in that directory.  If you don't
+use any file name arguments, `tar' extracts all the files in the
+archive.
+
+   Note: `tar' will extract an archive member into the file system
+without checking to see if there is already a file with the archive
+member's file name.  If there is a file with that name, `tar' will
+*overwrite* that file and its contents will be lost.
+FIXME: xref keep-old
+
+
+File: tar.info,  Node: Extracting Specific Files ter,  Next: Extracting Directories ter,  Prev: Extracting Files from an Archive ter,  Up: How to Extract Members from an Archive
+
+Extracting Specific Files
+-------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   To extract specific files, specify them using file name arguments.
+
+   In an example above, you created the archive file
+`~/practice/records', which contained the files `blues', `folk' and
+`jazz' in the `practice' directory.  If, for some reason, you were to
+lose one of those text files (`rm ~/practice/blues'), you could extract
+it from the archive file.
+
+   First, change into the `practice' directory.  Then,
+
+   * Invoke `tar' and specify the `--extract' (`-x') or `--get'
+     operation.
+
+   * Specify the archive that the files will be extracted
+     from--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   * Specify the files to extract, using file name arguments (if you
+     don't specify any files, `tar' extracts all the archive members)
+
+     % tar --extract --file=records blues
+
+   If you list the contents of the directory, you will see that `blues'
+is back:
+
+     % ls
+     folk
+     jazz
+     records
+     blues
+
+
+File: tar.info,  Node: Extracting Directories ter,  Prev: Extracting Specific Files ter,  Up: How to Extract Members from an Archive
+
+Extracting Directories
+----------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   To extract a directory and all the files it contains, use the
+directory's name as a file name argument in conjunction with `tar
++extract'.  Remember-`tar' stores and extracts file names relative to
+the working directory.
+
+   In a previous example you stored the directory `~/practice' in the
+archive file `~/music'.  If you delete the contents of `practice', you
+can restore them using `tar'.
+
+   First, change into the `practice' subdirectory (`cd ~/practice').
+Then, remove all the files in `~/practice' (`rm *').  If you list the
+contents of the directory, you should now see that it is empty:
+
+     %ls
+     %
+
+   Let's try to restore the contents of `practice' by extracting them
+from the archive file `~/music':
+
+     tar --extract --file=~/music practice
+
+   Now, list the contents of `practice' again:
+
+     %ls
+     practice
+
+   What happened to the files?  When you created `~/music', your
+working directory was your home directory.  When you extracted
+`~/music', your working directory was `~/practice'. `tar' stored the
+files in `practice' relative to your home directory, and then extracted
+them relative to `~/practice'.  The files are now in a new
+subdirectory, called `~/practice/practice'.
+
+   To restore your files to their old positions, delete the new
+directory and its contents, and then redo the example above with your
+home directory as the working directory:
+
+     % rm ~/practice/practice/*
+     % rmdir practice
+     % cd ..
+     % tar --extract --file=music practice
+
+   (`tar' will report that it is unable to create the directory
+`~/practice' because it already exists.  This will not effect the
+extraction of the other archive members.)
+
+
+File: tar.info,  Node: How to Add Files to Existing Archives,  Next: How to Delete Members from Archives,  Prev: How to Extract Members from an Archive,  Up: Tutorial
+
+How to Add Files to Existing Archives
+=====================================
+
+     *(This message will disappear, once this node revised.)*
+
+   If you want to add files to an existing archive, then don't use
+`--create' (`-c').  That will erase the archive and create a new one in
+its place.  Instead, use `--append' (`-r').  The command `tar --append
+--file=afiles.tar arbalest' would add the file `arbalest' to the
+existing archive `afiles.tar'.  The archive must already exist in order
+to use `--append' (`-r').
+
+   As with `--create' (`-c'), the member names of the newly added files
+will be the exact same as their names given on the command line.  The
+`--verbose' (`-v') option will print out the names of the files as they
+are written into the archive.
+
+   If you add a file to an archive using `--append' (`-r') with the
+same name as an archive member already present in the archive, then the
+old member is not deleted.  What does happen, however, is somewhat
+complex.
+FIXME: xref Multiple Members with the Same Name.
+   If you want to replace an archive member, use `--delete' first, and
+then use `--append' (`-r').
+
+FIXME: we want people to use the script for backups, so I an not going
+FIXME: to use backups as an explanation in the tutorial.  (people can still
+FIXME: do it if they really want to)
+
+   While you can use `tar' to create a new archive every time you want
+to store a file, it is more sometimes efficient to add files to an
+existing archive.
+
+   To add new files to an existing archive, use the `--append' (`-r')
+operation.  To add newer versions of archive members to an archive, use
+the `--update' (`-u') operation.
+
+   While you can use `tar' to create an archive of an entire directory
+or directory tree, it is more efficient when performing backups to only
+archive those files which have been newly created or changed since the
+last backup.
+
+   To add new files to an existing archive, or to add newer versions of
+old files, you can use the `--append' (`-r') operation, or the
+`--update' (`-u') operation.
+
+* Menu:
+
+* Append bis::
+* Update bis::
+* Concatenate bis::
+
+
+File: tar.info,  Node: Append bis,  Next: Update bis,  Prev: How to Add Files to Existing Archives,  Up: How to Add Files to Existing Archives
+
+Appending Files to an Archive
+-----------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   The simplest method of adding a file to an already existing archive
+is the `--append' (`-r') operation, which writes the files specified
+into the archive without regard to whether or not they are already
+among the archived files.  When you use `--append' (`-r') you must
+specify file name arguments, there is no default.  If you specify a
+file that already exists in the archive another copy of the file will
+be added to the end of the archive anyway.
+
+   In the previous examples you created a file called `rock' in the
+practice directory which did not exist in either the archive file
+`records', in the practice directory, or the archive file `music', in
+the home directory.  To add `rock' to `records', you would, while in
+the practice directory:
+
+   * Invoke `tar' and specify the operation to add a file--`--append'
+     (`-r').
+
+   * Specify the name of the archive to which the file will be
+     added--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   * Specify the name(s) of the file(s) to be added to the archive as
+     the file name argument(s)
+
+     % tar --append --file=records rock
+
+If you now use the `--list' (`-t') operation, you will see that `rock'
+has been added to the archive:
+
+     % tar --list --file=records
+     blues
+     folk
+     jazz
+     rock
+
+   While all newly created files have now been added to `records', it
+is still not current with respect to the contents of the practice
+directory.  If you recall from the examples using `--compare' (`-d')
+above, `blues' was changed after the archive `records' was created.  It
+is simple, however, to use `--append' (`-r') to correct the problem:
+
+     % tar --append --verbose --file=records blues
+     blues
+
+Because you specified the `--verbose' (`-v') option, `tar' has printed
+the name of the file being appended as it was acted on.  If you now use
+`tar' with the `--list' (`-t') option specified to get the contents of
+the archive, you will optain the following:
+
+     % tar --list -f records
+     blues
+     folk
+     jazz
+     rock
+     blues
+
+The newest version of `blues' is now at the end of the archive.
+Because files are extracted from archives in the order in which they
+appear in the archive, and because extracted files are given the same
+names in the file system as they are stored under in the archive, when
+the files in `records' are extracted the newer version of `blues'
+(which has the same name as the older) will overwrite the version
+stored first.
+FIXME: xref Keep Old Files
+
+FIXME: --update wont take a directory argument if files that have been
+FIXME: archived from that directory are now no longer in it.  (I assume
+FIXME: because it looks in the archive first for the directory listing.)
+FIXME: this is a bug
+
+   The simplest method of adding a file to an existing archive is the
+`--append' (`-r') operation, which writes files into the archive
+without regard to whether or not they are already archive members.
+When you use `--append' (`-r') you must use file name arguments; there
+is no default.  If you specify a file that is already stored in the
+archive, `tar' adds another copy of the file to the archive.
+
+   If you have been following the previous examples, you should have a
+text file called `~/practice/rock' which has not been stored in either
+the archive file `~/practice/records', or the archive file `~/music'.
+To add `rock' to `records', first make `practice' the working directory
+(`cd practice').  Then:
+
+   * Invoke `tar' and specify the `--append' (`-r') operation.
+
+   * Specify the archive to which the file will be
+     added--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   * Specify the files to be added to the archive, using file name
+     arguments
+
+   For example:
+
+     % tar --append --file=records rock
+
+   If you list the archive members in `records', you will see that
+`rock' has been added to the archive:
+
+     % tar --list --file=records
+     blues
+     folk
+     jazz
+     rock
+
+FIXME: this should be some kind of node.
+
+   You can use `--append' (`-r') to keep archive members current with
+active files.  Because `--append' (`-r') stores a file whether or not
+there is already an archive member with the same file name, you can use
+`--append' (`-r') to add newer versions of archive members to an
+archive.  When you extract the file, only the version stored last will
+wind up in the file system.  Because `--extract' (`-x') extracts files
+from an archive in sequence, and overwrites files with the same name in
+the file system, if a file name appears more than once in an archive
+the last version of the file will overwrite the previous versions which
+have just been extracted.
+
+   If you recall from the examples using `--compare' (`-d') above,
+`blues' was changed after the archive `records' was created. It is
+simple, however, to use `--append' (`-r') to add the new version of
+`blues' to `records':
+
+     % tar --append --verbose --file=records blues
+     blues
+
+   If you now list the contents of the archive, you will obtain the
+following:
+
+     % tar --list -f records
+     blues
+     folk
+     jazz
+     rock
+     blues
+
+   The newest version of `blues' is at the end of the archive.  When the
+files in `records' are extracted, the newer version of `blues' (which
+has the same name as the older) will overwrite the version stored
+first.  When `--extract' (`-x') is finished, only the newer version of
+`blues' is in the file system.
+FIXME: xref keep-old-files
+
+
+File: tar.info,  Node: Update bis,  Next: Concatenate bis,  Prev: Append bis,  Up: How to Add Files to Existing Archives
+
+Updating Files in an Archive
+----------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   While the `--append' (`-r') option is useful for updating files in an
+archive, to keep an archive current with `--append' (`-r') you must
+first use the `--compare' (`-d') or `--list' (`-t') options to determine
+what files have been changed (or be willing to waste space by adding
+identical copies of archived files to the ends of archives).  It is
+simpler to use the `--update' (`-u') operation, and let `tar' do the
+work for you.
+
+   The `--update' (`-u') option causes `tar' to add files to the end of
+an archive, just like the `--append' (`-r') option.  When you invoke
+`tar' with the `--update' (`-u') option specified you must specify file
+name arguments.  Unlike `--append' (`-r'), the `--update' (`-u') option
+causes `tar' to check the archive to be updated to see if the specified
+file is already stored.  If the file (or one with the same name) is
+already in the archive, `tar' checks the modification date of the file
+in the archive and compares it to the file of the same name in the file
+system.  The file is only appended to the archive if it is new or if
+its modification date has changed to a later one.
+FIXME: xref After-Date
+
+   To see the `--update' (`-u') option at work, create a new file,
+`classical', in your practice directory, and add a line to the file
+`blues', using any text editor.  Then invoke `tar' with the `--update'
+(`-u') operation and the `--verbose' (`-v') option specified, using the
+names of all the files in the practice directory as file name arguments:
+
+     % tar --update --verbose --file=records blues folk rock classical
+     blues
+     classical
+     %
+
+Because we have specified verbose mode, `tar' prints out the names of
+the files it is working on, which in this case are the names of the
+files that needed to be updated.  If you now invoke `tar' with the
+`--list' (`-t') operation specified, to generate a listing of the files
+in the archive, you will see that `blues' and `classical' have been
+added to its end.
+
+   [The reason `tar' does not overwrite the older file when updating it
+is because writing to the middle of a section of tape is a difficult
+process.  Tapes are not designed to go backward.  Even if they were,
+imagine what would happen if the newer version were longer than the
+older one.]
+
+   To keep archive members up to date with their counterparts of the
+same name in the file system, use the `--update' (`-u') option.  This
+adds a specified file to an archive if no file of that name is already
+stored in the archive.  If there is already an archive member with the
+same name, `tar' checks the modification date of the archive member,
+and adds the file only if its modification date is later.  If a file is
+stored in the archive but no longer exists under the same name in the
+active file system, `tar' reports an error.
+
+   You could use the `--append' (`-r') option to keep an archive
+current, but do so you would either have to use the `--compare' (`-d')
+and `--list' (`-t') options to determine what files needed to be
+re-archived (which could waste a lot of time), or you would have to be
+willing to add identical copies of already archived files to the
+archive (which could waste a lot of space).
+
+   You must use file name arguments with the `--update' (`-u')
+operation-if you don't specify any files, `tar' won't act on any files.
+
+   To see the `--update' (`-u') option at work, create a new file,
+`~/practice/classical', and modify the file `~/practice/blues' (you can
+use a text editor, such as Emacs, to do both these things).  Then, with
+`practice' as your working directory, invoke `tar' with the `--update'
+(`-u') option, using the names of all the files in the practice
+directory as file name arguments, and specifying the `--verbose' (`-v')
+option:
+
+     % tar --update --verbose --file=records blues folk rock classical
+     blues
+     classical
+     %
+
+   Because you specified verbose mode, `tar' printed out the names of
+the files it acted on.  If you now list the archive members of the
+archive, (`tar --list --file=records'), you will see that the file
+`classical' and another version of the file `blues' have been added to
+`records'.
+
+   Note: When you update an archive, `tar' does not overwrite old
+archive members when it stores newer versions of a file.  This is
+because archive members appear in an archive in the order in which they
+are stored, and some archive devices do not allow writing in the middle
+of an archive.
+
+
+File: tar.info,  Node: Concatenate bis,  Prev: Update bis,  Up: How to Add Files to Existing Archives
+
+Concatenating Archives
+----------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   Rather than adding individual files onto the end of an archive, it
+may be more convenient to add archives themselves onto the end of an
+archive.  While it may seem intuitive to use `cat', the utility for
+adding files together, for this purpose, archives created by `tar'
+incorporate an end of file marker which must be removed if the
+concatenated archives are to be read properly as one archive
+FIXME: xref Ignore zeros.
+   To add archives to the end of another archive, therefore, you should
+use the `--concatenate' (`-A') operation.
+
+   In earlier examples you created an archive file, `music', in your
+home directory.  You have, however, since changed the contents of the
+`practice' directory which was stored in that archive.  `records', the
+archive file in the `practice' directory, has recently been updated,
+and contains a current version of the files in `practice'.  Rather than
+update the contents of `music', let's add `records' to it.
+
+   * Change into the home directory (`cd ..')
+
+   * Invoke `tar', and specify the operation to add archives to the end
+     of another archive--`--concatenate' (`-A').
+
+   * Specify the name of the archive file to be added
+     to--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   * Specify the file name arguments, which are, unusually, the names of
+     archive files.  Remember to include the directory name in the file
+     name, if the archive file is not in your working directory.
+
+     % cd ..
+     % tar --concatenate --file=music practice/records
+
+   Rather than list the new contents of `music', let's extract all the
+files and see what happens.
+
+   To concatenate archive files, use the `--concatenate' (`-A') option.
+This operation adds other archives to the end of an archive. While it
+may seem intuitive to concatenate archives using `cat', the utility for
+adding files together, archive files which have been "catted" together
+cannot be read properly by `tar'.  Archive files incorporate an end of
+file marker-if archives are concatenated using `cat', this marker will
+appear before the end of the new archive.  This will interfere with
+operations on that archive.
+FIXME: xref ignore-zeros
+
+   In earlier examples, you stored the `~/practice' directory in an
+archive file, `~/music'.  If you have been following the examples, you
+have since changed the contents of the `~/practice' directory.  There
+is a current version of the files in the `practice' directory, however,
+stored in the archive file `~/practice/records'.
+
+   To store current versions of the files in `practice' in the archive
+file `music', you can use `--concatenate' (`-A') to add the archive file
+`~/practice/records' to `music'.  First, make sure you are in your home
+directory (`cd ~').  Then:
+
+   * Invoke `tar', and specify the `--concatenate' (`-A') operation.
+
+   * Specify the archive file to be added to--`--file=ARCHIVE-NAME'
+     (`-f ARCHIVE-NAME').
+
+   * Specify the archives to be added, using file name arguments.  In
+     this case, the file name arguments are, unusually, the names of
+     archive files.  (Remember to include the path in the archive name,
+     if the archive file is not in your working directory.)
+
+     % cd ~
+     % tar --concatenate --file=music practice/records
+
+   If you now list the contents of the `music', you see it now contains
+the archive members of `practice/records':
+
+     %tar --list --file=music
+     blues
+     folk
+     jazz
+     rock
+     blues
+     practice/blues
+     practice/folk
+     practice/jazz
+     practice/rock
+     practice/blues
+     practice/classical
+
+
+File: tar.info,  Node: How to Delete Members from Archives,  Prev: How to Add Files to Existing Archives,  Up: Tutorial
+
+How to Delete Members from Archives
+===================================
+
+     *(This message will disappear, once this node revised.)*
+
+   You can delete members from an archive using `--delete'.  Specify
+the name of the archive with `--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+List the member names of the members to be deleted.  (If you list no
+member names, then nothing will be deleted.)  The `--verbose' (`-v')
+option will cause `tar' to print the names of the members as they are
+deleted.  As with `--extract' (`-x'), it is important that you give the
+exact member names when using `tar --delete'.  Use `--list' (`-t') to
+find out the exact member names in an archive.
+FIXME: xref Listing Archives.
+
+   The `--delete' option only works with archives stored on disk.  You
+cannot delete members from an archive stored on a tape.
+
+   In some instances, it may be advantageous to remove some files from
+an archive stored on disk (it is never advantageous to delete files from
+an archive stored on tape--the linear nature of tape storage makes this
+action likely to scramble the archive).  You can use the `--delete'
+operation to remove files from an archive.  The names of files to be
+removed must be specified to `tar' as file name arguments.  All
+versions of the named file are removed from the archive.  Execution of
+the `--delete' operation can be very slow.
+
+   To delete all versions of the file `blues' from the archive
+`records' in the `practice' directory, make sure you are in that
+directory, and then,
+
+   * List the contents of the archive file `records' (see above for the
+     steps involved) to insure that the file(s) you wish to delete are
+     stored in the archive.  (This step is optional)
+
+   * Invoke `tar' and specify the operation to delete files from an
+     archive (`--delete')
+
+   * Specify the name of the archive file that the file(s) will be
+     deleted--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   * Specify the name(s) of the file(s) to be deleted, as file name
+     arguments
+
+   * List the contents of the archive file again--note that the files
+     have been removed.  (this step is also optional)
+
+     % tar --list --file=records
+     blues
+     folk
+     jazz
+     % tar --delete --file=records blues
+     % tar --list --file=records
+     folk
+     jazz
+     %
+
+   In some instances, you may want to remove some files from an archive
+stored on disk
+
+     *Caution:* you should never delete files from an archive stored on
+     tape-because of the linear nature of tape storage, doing this is
+     likely to scramble the archive.
+
+   To remove archive members from an archive, use the `--delete'
+operation.  You must specify the names of files to be removed as file
+name arguments.  All versions of the named file are removed from the
+archive.
+
+   Execution of the `--delete' operation can be very slow.
+
+   To delete all versions of the file `blues' from the archive
+`records' in the `practice' directory, make sure you are in that
+directory, and then:
+
+   * List the contents of the archive file `records' (see above for the
+     steps involved) to insure that the file(s) you wish to delete are
+     stored in the archive.  (This step is optional)
+
+   * Invoke `tar' and specify the `--delete' operation (`--delete').
+
+   * Specify the name of the archive file that the file(s) will be
+     deleted from--`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME').
+
+   * Specify the files to be deleted, using file name arguments.
+
+   * List the contents of the archive file again--note that the files
+     have been removed.  (this step is also optional)
+
+     % tar --list --file=records
+     blues
+     folk
+     jazz
+     % tar --delete --file=records blues
+     % tar --list --file=records
+     folk
+     jazz
+     %
+
+
+File: tar.info,  Node: Invoking tar,  Next: Basic tar Operations,  Prev: Tutorial,  Up: Top
+
+Invoking GNU `tar'
+******************
+
+     *(This message will disappear, once this node revised.)*
+
+* Menu:
+
+* Synopsis::
+* Option Styles::
+* Options::
+
+
+File: tar.info,  Node: Synopsis,  Next: Option Styles,  Prev: Invoking tar,  Up: Invoking tar
+
+General Synopsis of `tar'
+=========================
+
+   The usual way to invoke `tar' is:
+
+     tar OPTION... [NAME]...
+
+   You can actually type in arguments in any order, but in this manual
+the options always precede the other arguments, to make examples easier
+to understand.  Further, the option stating the main operation mode
+(the `tar' "main command") is usually given first.
+
+   There are surely many options to `tar', and three different style
+for writing them: mnemonic options, short options, and old options.
+These styles are discussed below.  Some options make sense with any
+main command, while others are meaningful only with particular main
+commands.  One option should state the main command, all others are
+truly optional.
+
+   Beware that `tar' options are case sensitive.  For example, {No
+Value For "List"} or {No Value For "List"} options are not equivalent to
+`--list' (`-t'), in fact, they do not even exist.  Options `-T' and
+`-t' are different options, the first requires an argument for stating
+the name of a file providing a list of NAMEs, the second does not
+require an argument and is another way to write `--list' (`-t').
+
+   Each NAME in the synopsis above is interpreted as an archive member
+name when the main command is one of `--compare' (`-d'), `--delete',
+`--extract' (`-x'), `--list' (`-t') or `--update' (`-u').  For all
+other main commands, NAMEs are interpreted as the names of files
+(including directories) in the file system.  `tar' interprets relative
+file names as being relative to the working directory.
+
+   `tar' will make all file names relative (by removing leading `/'s
+when archiving or restoring files), unless you specify otherwise (using
+the `--absolute-names' (`-P') option).
+FIXME: xref File Name
+Interpretation
+   , for more information about `--absolute-names' (`-P').
+FIXME: yet another node name that is probably wrong.
+
+   The distinction between file names and archive member names is
+especially important when shell globbing is used, and sometimes a
+source of confusion for newcomers.  "Globbing" is the operation by
+which "wildcard" characters, `*' or `?' for example, are replaced and
+expanded into all existing files matching the given pattern.  The
+problem is that shells may only glob using existing files in the file
+system.  Only `tar' may glob on archive members, so when needed, you
+must ensure that wildcard characters reach `tar' without being
+interpreted by the shell first.  Using a backslash before `*' or `?',
+or putting the whole argument between quotes, is usually sufficient for
+this.
+
+   Even if NAMEs are often specified on the command line, they can also
+be read from a text file in the file system, using the
+`--files-from=FILE-OF-NAMES' (`-T FILE-OF-NAMES') option.
+
+   Each of the following subsection groups some options under a common
+functionality.
+
+   You can use `tar' to store files in an archive, to extract them from
+an archive, and to do other types of archive manipulation.  The primary
+argument to `tar', which is called the "operation", specifies which
+action to take.  The other arguments to `tar' are either "options",
+which change the way `tar' performs an operation, or "file names",
+which specify the files `tar' is to act on.  The typical `tar' command
+line syntax is:
+
+   GNU `tar' returns only a few exit statuses.  I'm really aiming
+simplicity in that area, for now.  If you are not using the `--compare'
+(`-d') option, zero means that everything went well, besides maybe
+innocuous warnings.  Nonzero means that something went wrong.  Right
+now, as of today, "nonzero" is almost always 2, except for remote
+operations, where it may be 128.
+
+
+File: tar.info,  Node: Option Styles,  Next: Options,  Prev: Synopsis,  Up: Invoking tar
+
+Many Styles for Options
+=======================
+
+* Menu:
+
+* Mnemonic Options::
+* Short Options::
+* Old Options::
+* Mixing Styles::
+
+
+File: tar.info,  Node: Mnemonic Options,  Next: Short Options,  Prev: Option Styles,  Up: Option Styles
+
+Mnemonic Option Style
+---------------------
+
+   Each OPTION has at least one mnemonic option name starting with two
+dashes in a row, v.g. `--list' (`-t').  The mnemonic option names are
+more legible than the corresponding short or old option names, you may
+prefer them if you highly praise clarity.  It sometimes happens that a
+single mnemonic option has many different different names, which are
+then synonymous.  In addition, mnemonic option names can be given unique
+abbreviations.  For example, `--cre' can be used in place of `--create'
+because there is no other mnemonic option which begins with `cre'.
+
+   Some options require an argument.  This is the case of the
+`--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME') option, which tells the name
+of the `tar' archive.  The argument of a mnemonic option is usually
+given right after the option itself, and introduced by an equal sign.
+For example, the `--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME') option is
+given the `archive.tar' file as argument by using the notation
+`--file=archive.tar' for the mnemonic option.
+
+   Mnemonic options are meant to be obvious and easy to remember,
+possibly more so than their corresponding short options, below.  For
+example:
+
+     tar --create --verbose --block-size=20 --file=/dev/rmt0
+
+gives a fairly good set of hints about what the command does, even for
+those not fully acquainted with `tar'.
+
+
+File: tar.info,  Node: Short Options,  Next: Old Options,  Prev: Mnemonic Options,  Up: Option Styles
+
+Short Option Style
+------------------
+
+   Most options, but not all of them, also have a short option name
+starting with a single dash, and followed by a single character, v.g.
+`-t'.  In fact, `-t' is exactly the short option name for the mnemonic
+option `--list' (`-t'), both having exactly the same meaning.  The
+forms are absolutely identical in function.
+
+   The short option names are faster to type than mnemonic option names.
+All along this manual, whenever a mnemonic option name is given, its
+equivalent short option name follows between parentheses, if such a
+short option name exists.
+
+   Short options which require arguments use the immediately following
+argument, so it may be thought as being merely introduced right after
+it, usually separate by white space.  It is also possible to stick the
+argument right after the short option name, using no intervening space.
+So one might write `-f archive.tar' or `-farchive.tar' instead of
+using `--file=archive.tar'.  Both `--file=ARCHIVE-NAME' and
+`-f ARCHIVE-NAME' denote the option to give the archive a non-default
+name, which in the example is `archive.tar'.  When the option is given
+separately, its argument follows it, as is usual for Unix programs.
+For example:
+
+     tar -c -v -b 20 -f /dev/rmt0
+
+   Short options letters may be lumped together, but contrary to old
+options, they do not necessarily have to.  When short options are
+nevertheless coalesced, use a single dash for them all.  Only the last
+one in such a set is allowed to have an argument.  (Clustering many
+options, the last of which taking an argument, seems to be fairly
+opaque writing to me.  I would even like that GNU `getopt' be helpful
+enough to make this illegal.)
+
+   If you move short options in the command, be sure to move their
+arguments along with them, if any.
+
