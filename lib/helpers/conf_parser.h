@@ -13,18 +13,11 @@
 
 #include <stdint.h>
 
-#define MAX_PARAMS_COUNT 10
+#define KEY_VALUE_DELIMETER '='
+#define STRIPING_CHARS      " \t\n"
 
-/*list of waiting keys in parsing data.
- *parsing parameter is pair key=value.*/
-struct KeyList{
-    char*  key_list[MAX_PARAMS_COUNT];
-    int    key_count;
-};
-/*just add key to list, no checks for duplicated items doing.*/
-void add_key_to_list(struct KeyList* list, const char* key);
-/*free memories allocated for keys,  it's not free struct memory*/
-void free_keylist(struct KeyList*);
+/*forward declarations*/
+struct KeyList;
 
 /*single parsed parameter, part of single record*/
 struct ParsedParam{
@@ -33,21 +26,33 @@ struct ParsedParam{
     uint16_t vallen;
 };
 
+#define ALLOC_PARAM_VALUE(parsed_param, str_value_pp){		\
+	*str_value_pp = calloc( parsed_param.vallen+1, 1 );		\
+	memcpy( *str_value_pp, parsed_param.val, parsed_param.vallen); \
+    }
+
+
 /*single parsed record*/
 struct ParsedRecord{
-    struct ParsedParam* parsed_params_array;
     /*parsed parameters count is the same as keys count in struct Keylist.key_count*/
+    struct ParsedParam* parsed_params_array;
 };
 
 /*parsing text data and observe all parsed data
+ *@param parsed_records_count pointer to get records count
  *@param text text to parse
  *@param len  text length to parse
  *@param key_list list of waiting keys
  *@param parsed_records_count pointer to get parsed records count
- *@return array or parsed records, get records count via param parsed_records_count
+ *@return array or parsed records, caller is responsible to free array
+ * by using free_records_array
  */
 struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_list,
 				int* parsed_records_count);
+
+void free_records_array(struct ParsedRecord *records, int count);
+
+const char* strip_all(const char* str, int len, uint16_t* striped_len );
 
 #endif //CONF_PARSER_H
 
