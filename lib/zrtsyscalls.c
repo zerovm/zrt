@@ -25,6 +25,7 @@
 
 #include "zvm.h"
 #include "zrt.h"
+#include "zrt_config.h"
 #include "zrtsyscalls.h"
 #include "memory_syscall_handlers.h"
 #include "zrtlog.h"
@@ -33,7 +34,7 @@
 #include "stream_reader.h"
 #include "path_utils.h"             /*alloc_absolute_path_from_relative*/
 #include "fstab_observer.h"
-#include "fstab_loader.h"
+#include "nvram_loader.h"
 #include "mounts_manager.h"
 #include "mem_mount_wraper.h"
 #include "nacl_struct.h"
@@ -49,9 +50,6 @@
  * BUGS
  * fdopen failed, ftell fread
  * */
-
-/*/dev/fstab support enable*/
-#define FSTAB_CONF_ENABLE
 
 #ifdef DEBUG
 #define ZRT_LOG_NAME "/dev/debug"
@@ -691,16 +689,18 @@ void zrt_setup_finally(){
 
 #ifdef FSTAB_CONF_ENABLE
     /*Get static fstab observer object, it's memory should not be freed*/
-    struct MFstabObserver* fstab_observer = get_fstab_observer();
-    /*read fstab configuration*/
-    struct FstabLoader* fstab = alloc_fstab_loader( s_channels_mount, s_transparent_mount );
+    struct MNvramObserver* fstab_observer = get_fstab_observer();
+    struct NvramLoader* nvram = alloc_nvram_loader( s_channels_mount, s_transparent_mount );
+    /*add observers here to handle various sections of config data*/
+    nvram->add_observer(nvram, fstab_observer);
     /*if readed not null bytes and result not negative then doing parsing*/
-    if ( fstab->read(fstab, DEV_FSTAB) > 0 ){
-        int res = fstab->parse(fstab, fstab_observer);
-	ZRT_LOG(L_SHORT, "fstab parse res=%d", res);
+    if ( nvram->read(nvram, DEV_FSTAB) > 0 ){
+        int res = nvram->parse(nvram);
+	ZRT_LOG(L_SHORT, "nvram parse res=%d", res);
     }
 
-    free_fstab_loader(fstab);
+    fstab_observer->cleanup( fstab_observer );
+    nvram->free( nvram );
     ZRT_LOG_DELIMETER;
 #endif
 }
