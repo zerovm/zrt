@@ -13,7 +13,7 @@
     }
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   char *name;
   FILE *fp = NULL;

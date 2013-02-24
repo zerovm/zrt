@@ -26,7 +26,7 @@
 
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   regex_t re;
   regmatch_t mat[10];

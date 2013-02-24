@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int
-zmain(int arc, char *argv[])
+main(int arc, char *argv[])
 {
   int res;
   unsigned int val;

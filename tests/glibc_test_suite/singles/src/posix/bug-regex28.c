@@ -45,7 +45,7 @@ struct tests
 };
 
 int
-zmain (void)
+main (void)
 {
   struct re_pattern_buffer r;
   size_t i;

@@ -36,7 +36,7 @@ calloc (size_t n, size_t m)
 }
 
 int
-zmain (void)
+main (void)
 {
 #if HAVE___THREAD
   if (magic[1] != MAGIC1 || magic[0] != MAGIC2)

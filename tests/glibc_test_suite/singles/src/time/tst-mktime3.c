@@ -18,7 +18,7 @@ struct tm expected[] =
 };
 
 int
-zmain (int argc, char** argv)
+main (int argc, char** argv)
 {
   setenv ("TZ", "UTC", 1);
   int i;

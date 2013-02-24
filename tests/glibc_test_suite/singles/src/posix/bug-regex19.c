@@ -390,7 +390,7 @@ do_mb_tests (const struct test_s *test)
 }
 
 int
-zmain (void)
+main (void)
 {
   size_t i;
   int ret = 0;

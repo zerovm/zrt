@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <assert.h>
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int rc=0;
     FILE* tmp = tmpfile();

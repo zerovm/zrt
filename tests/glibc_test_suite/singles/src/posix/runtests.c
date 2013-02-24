@@ -110,7 +110,7 @@ run_a_test (int id, const struct a_test * t)
 
 
 int
-zmain (int argc, char * argv[])
+main (int argc, char * argv[])
 {
   int x;
   int lo;

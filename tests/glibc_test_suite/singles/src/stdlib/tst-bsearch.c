@@ -57,7 +57,7 @@ comp (const void *p1, const void *p2)
 
 
 int
-zmain (void)
+main (void)
 {
   size_t cnt;
   int result = 0;

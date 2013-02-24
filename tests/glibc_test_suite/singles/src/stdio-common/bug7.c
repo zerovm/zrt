@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   int lose = 0;
   char filename[L_tmpnam];

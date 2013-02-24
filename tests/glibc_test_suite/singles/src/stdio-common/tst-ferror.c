@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   char buf[100];
   int result = 0;

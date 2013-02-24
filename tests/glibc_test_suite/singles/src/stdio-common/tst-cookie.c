@@ -65,7 +65,7 @@ cookieclose (void *cookie)
 
 
 int
-zmain (int argc, char** argv)
+main (int argc, char** argv)
 {
   cookie_io_functions_t fcts;
   char buf[1];

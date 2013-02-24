@@ -39,7 +39,7 @@ test (const char *input, const char *result)
 }
 
 int
-zmain (void)
+main (void)
 {
   int result = 0;
 

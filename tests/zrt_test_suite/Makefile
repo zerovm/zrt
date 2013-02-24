@@ -68,7 +68,7 @@ CFLAGS+=-I$(ZRT_ROOT)/lib
 #declaration, in case if test source didn't explicitly defined zmain it raises linking error;
 #in case if libzrt linking after test object file, then linker is using wrong entry point
 #if test was not properly ported to zerovm and didn't have zmain function
-LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
+#LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
 
 #in order to correectly link glibs substituted functions libzrt should be linked twice
 #before object file and after

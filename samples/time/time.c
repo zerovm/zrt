@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
   time_t cur_time;
   struct tm *date_time;

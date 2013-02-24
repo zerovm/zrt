@@ -1566,7 +1566,7 @@ or --use-compress-program) with --block-compress")));
 `-----------------------*/
 
 void
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
   program_name = argv[0];
   setlocale (LC_ALL, "");

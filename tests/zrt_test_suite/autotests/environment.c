@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "zrt.h"
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     extern char **environ;
     char **env = environ;

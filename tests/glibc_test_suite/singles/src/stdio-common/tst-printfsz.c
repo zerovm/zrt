@@ -7,7 +7,7 @@
 
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   char buf[1024];
   int result = 0;

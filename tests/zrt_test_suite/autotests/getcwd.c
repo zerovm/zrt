@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     char buf[PATH_MAX];
     char* res = getcwd(buf, PATH_MAX);

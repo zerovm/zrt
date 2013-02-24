@@ -30,7 +30,7 @@ check (const char *name, FILE *stream, int fd)
 }
 
 int
-zmain (void)
+main (void)
 {
   return (check ("stdin", stdin, STDIN_FILENO) ||
 	  check ("stdout", stdout, STDOUT_FILENO) ||

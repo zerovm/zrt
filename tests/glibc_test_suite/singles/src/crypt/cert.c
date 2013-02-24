@@ -13,7 +13,7 @@
 int totfails = 0;
 
 #if __STDC__ - 0
-int zmain (int argc, char *argv[]);
+int main (int argc, char *argv[]);
 void get8 (char *cp);
 void put8 (char *cp);
 void good_bye (void) __attribute__ ((noreturn));
@@ -33,7 +33,7 @@ void good_bye ()
 }
 
 int
-zmain(argc, argv)
+main(argc, argv)
      int argc;
      char *argv[];
 {

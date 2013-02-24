@@ -37,7 +37,7 @@ cb (const char *name, const struct stat64 *st, int type)
 }
 
 int
-zmain (void)
+main (void)
 {
   char name[32] = "/tmp/ftwXXXXXX", *p;
   int ret, i, result = 0, fd, fd1, fd2;

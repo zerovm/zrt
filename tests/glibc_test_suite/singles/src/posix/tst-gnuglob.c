@@ -358,7 +358,7 @@ test_result (const char *fmt, int flags, glob_t *gl, const char *str[])
 
 
 int
-zmain (void)
+main (void)
 {
   glob_t gl;
   int errval;

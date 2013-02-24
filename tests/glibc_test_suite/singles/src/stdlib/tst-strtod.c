@@ -80,7 +80,7 @@ static int long_dbl (void);
 static int locale_test (void);
 
 int
-zmain (int argc, char ** argv)
+main (int argc, char ** argv)
 {
   char buf[100];
   register const struct ltest *lt;

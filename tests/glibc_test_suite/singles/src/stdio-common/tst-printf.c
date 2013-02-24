@@ -130,7 +130,7 @@ fp_test (void)
 }
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   static char shortstr[] = "Hi, Z.";
   static char longstr[] = "Good morning, Doctor Chandra.  This is Hal.  \

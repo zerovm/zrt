@@ -2,7 +2,7 @@
 #include <string.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   const char salt[] = "$1$saltstring";
   char *cp;

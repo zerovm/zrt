@@ -19,7 +19,7 @@
 
 void mmap_test(off_t offset);
 
-int zmain(int argc, char**argv){
+int main(int argc, char**argv){
     /*create data file*/
     CREATE_FILE(MMAP_FILE, DATA_FOR_MMAP, DATASIZE_FOR_MMAP);
 

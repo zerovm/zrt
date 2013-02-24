@@ -338,7 +338,7 @@ test (const int Vint4, const long long int Vllong4)
 }
 
 int
-zmain (int argc, char** argv)
+main (int argc, char** argv)
 {
   return test (vint1, vllong1);
 }

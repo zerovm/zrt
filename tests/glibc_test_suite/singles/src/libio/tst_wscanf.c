@@ -3,7 +3,7 @@
 #include <wchar.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   int n;
   int result = 0;

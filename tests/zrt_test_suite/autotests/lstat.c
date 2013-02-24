@@ -8,7 +8,7 @@
 #include "channels/test_channels.h"
 
 
-int zmain(int argc, char**argv){
+int main(int argc, char**argv){
     int ret;
     struct stat st;
     //lstat substituted and fixed EPERM bug

@@ -12,7 +12,7 @@
 #define SLASHES_PATH "//wrng"
 #define OK_PATH "/wrng"
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     struct stat st;
     int res;

@@ -20,7 +20,7 @@
 #define EXIT_FAILURE -1
 
 int
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
     int fd = open(FILENAME, O_RDWR|O_CREAT);
     if (fd < 0)

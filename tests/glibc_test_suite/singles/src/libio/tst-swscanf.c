@@ -9,7 +9,7 @@ static int do_test (const char *loc);
 
 
 int
-zmain (void)
+main (void)
 {
   int result;
 

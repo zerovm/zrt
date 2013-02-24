@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 int
-zmain (void)
+main (void)
 {
   char *p;
   int pagesize = getpagesize ();

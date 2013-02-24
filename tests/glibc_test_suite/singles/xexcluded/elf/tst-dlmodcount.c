@@ -94,7 +94,7 @@ unload (const char *path, void *handle)
 }
 
 int
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
   void *handle1, *handle2;
 

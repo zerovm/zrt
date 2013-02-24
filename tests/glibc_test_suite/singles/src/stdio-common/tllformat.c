@@ -25,7 +25,7 @@ sprint_int_type sprint_ints[] =
 };
 
 int
-zmain (void)
+main (void)
 {
   int errcount = 0;
   int testcount = 0;

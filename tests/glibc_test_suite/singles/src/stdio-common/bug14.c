@@ -9,7 +9,7 @@ static const char string[] = "\
 \xc2\x80\xc2\x80\xc2\x80\xc2\x80\xc2\x80\xc2\x80";
 
 int
-zmain (void)
+main (void)
 {
   if (setlocale (LC_ALL, "de_DE.UTF-8") == NULL)
     {

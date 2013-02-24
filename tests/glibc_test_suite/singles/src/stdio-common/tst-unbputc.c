@@ -2,7 +2,7 @@
 
 
 int
-zmain (void)
+main (void)
 {
   putc ('1', stderr);
   putc ('2', stderr);

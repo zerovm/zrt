@@ -38,7 +38,7 @@ struct
 };
 
 int
-zmain (void)
+main (void)
 {
   regex_t re;
   regmatch_t rm[4];

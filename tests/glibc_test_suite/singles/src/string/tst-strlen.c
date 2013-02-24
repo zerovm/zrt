@@ -6,7 +6,7 @@
 #include <string.h>
 
 int
-zmain(int argc, char **argv)
+main(int argc, char **argv)
 {
   static const size_t lens[] = { 0, 1, 0, 2, 0, 1, 0, 3,
 				 0, 1, 0, 2, 0, 1, 0, 4 };

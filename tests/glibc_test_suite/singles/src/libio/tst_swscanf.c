@@ -3,7 +3,7 @@
 #include <wchar.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   const wchar_t in[] = L"7 + 35 is 42";
   size_t n;

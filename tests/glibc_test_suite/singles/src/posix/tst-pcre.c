@@ -26,7 +26,7 @@
 #include <string.h>
 
 int
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
   int ret = 0;
   char *line = NULL;

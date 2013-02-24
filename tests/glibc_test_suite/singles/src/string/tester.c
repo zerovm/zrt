@@ -1401,7 +1401,7 @@ test_strncasecmp (void)
 }
 
 int
-zmain (int argc, char** argv)
+main (int argc, char** argv)
 {
   int status;
 

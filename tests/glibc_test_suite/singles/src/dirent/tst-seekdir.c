@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   DIR * dirp;
   long int save3 = 0;

@@ -29,7 +29,7 @@ test (int x)
 }
 
 int
-zmain (void)
+main (void)
 {
   int i;
 

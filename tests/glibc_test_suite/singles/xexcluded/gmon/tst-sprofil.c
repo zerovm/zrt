@@ -57,7 +57,7 @@ fac (long int n)
 }
 
 int
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
   unsigned int ovfl = 0, profcnt = 0;
   struct timeval tv, start;

@@ -16,7 +16,7 @@ void test_writeonly_channel(const char* name);
 #define BUFFER_LEN 0x1000
 char s_buffer[BUFFER_LEN];
 
-int zmain(int argc, char**argv){
+int main(int argc, char**argv){
     test_readonly_channel(CHANNEL_NAME_READONLY);
     test_writeonly_channel(CHANNEL_NAME_WRITEONLY);
     return 0;

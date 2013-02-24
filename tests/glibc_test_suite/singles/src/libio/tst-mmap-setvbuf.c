@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 int 
-zmain (void)
+main (void)
 {
   char name[] = "/tmp/tst-mmap-setvbuf.XXXXXX";
   char buf[4096];

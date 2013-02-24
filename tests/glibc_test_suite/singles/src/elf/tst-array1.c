@@ -95,7 +95,7 @@ void (*const fini_array []) (void)
 };
 
 int
-zmain (void)
+main (void)
 {
   return 0;
 }

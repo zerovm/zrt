@@ -21,7 +21,7 @@ static struct
 
 
 int
-zmain (void)
+main (void)
 {
   size_t cnt;
   int result = 0;

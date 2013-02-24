@@ -22,7 +22,7 @@
 #include <string.h>
 
 int
-zmain (void)
+main (void)
 {
   void *h;
   const char *s;

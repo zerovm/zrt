@@ -8,7 +8,7 @@
 #include "channels/test_channels.h"
 
 
-int zmain(int argc, char**argv){
+int main(int argc, char**argv){
     int ret;
     TEST_OPERATION_RESULT(
 			  euidaccess(TEST_FILE, F_OK),

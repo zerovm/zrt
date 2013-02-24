@@ -39,7 +39,7 @@ static struct
 
 
 int
-zmain (void)
+main (void)
 {
   size_t i = 0;
   int errors = 0;

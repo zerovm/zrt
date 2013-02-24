@@ -10,7 +10,7 @@ void __attribute_noinline__ noop (void);
 #define NR	2	/* Exit code of the child.  */
 
 int
-zmain (void)
+main (void)
 {
   pid_t pid;
   int status;

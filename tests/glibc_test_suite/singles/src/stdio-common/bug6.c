@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 int
-zmain (void)
+main (void)
 {
   char buf[80];
   int i;

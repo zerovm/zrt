@@ -3,7 +3,7 @@
 
 
 int
-zmain (void)
+main (void)
 {
   int retval = 0;
 

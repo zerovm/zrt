@@ -5,7 +5,7 @@
 #include <wctype.h>
 
 int
-zmain (void)
+main (void)
 {
   wchar_t tmp[3];
   tmp[0] = '8';

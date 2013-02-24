@@ -19,7 +19,7 @@ static const struct
   };
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   size_t n;
   int result = 0;

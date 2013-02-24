@@ -476,7 +476,7 @@ static int pmain (lua_State *L) {
   return 1;
 }
 
-int zmain (int argc, char **argv) {
+int main (int argc, char **argv) {
 /*ZeroVM command line unescaping @ used insted =*/
   int i;
   int j;

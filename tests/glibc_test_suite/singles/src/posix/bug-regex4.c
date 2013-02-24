@@ -24,7 +24,7 @@
 #include <regex.h>
 
 int
-zmain (void)
+main (void)
 {
   struct re_pattern_buffer regex;
   const char *s;

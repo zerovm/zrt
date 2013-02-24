@@ -14,7 +14,7 @@
 #include "zrt.h"
 
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int fd = open( "/dev/bigfile", O_WRONLY );
     assert(fd >= 0);

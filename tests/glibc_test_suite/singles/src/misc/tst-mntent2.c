@@ -4,7 +4,7 @@
 
 
 int
-zmain (void)
+main (void)
 {
   int result = 0;
   struct mntent mef;

@@ -2,7 +2,7 @@
 #include <string.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   int ret;
   char buf [1024] = "Ooops";

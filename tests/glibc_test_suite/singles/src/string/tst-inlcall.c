@@ -33,7 +33,7 @@
 
 
 int
-zmain (int argc, char** argv)
+main (int argc, char** argv)
 {
   int status;
   int errors = 0;

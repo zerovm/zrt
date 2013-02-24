@@ -406,7 +406,7 @@ mb_tests (const char *pattern, int cflags, const char *string, int eflags,
 }
 
 int
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
   int ret = 0;
   char *line = NULL;

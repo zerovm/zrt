@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 int
-zmain (void)
+main (void)
 {
   int i1, i2;
   int j1, j2;

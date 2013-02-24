@@ -60,7 +60,7 @@ struct {
 };
 
 int
-zmain (void)
+main (void)
 {
   size_t i;
   int errors = 0;

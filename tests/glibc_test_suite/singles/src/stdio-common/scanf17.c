@@ -51,7 +51,7 @@ xfscanf (FILE *f, const char *fmt, ...)
 }
 
 int
-zmain (int argc, char**argv)
+main (int argc, char**argv)
 {
   float f;
   double d;

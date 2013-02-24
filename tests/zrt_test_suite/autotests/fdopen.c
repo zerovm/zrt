@@ -13,7 +13,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int fd = open("/newfile123", O_CREAT|O_RDWR);
     FILE* f = fdopen(fd, "rw+");

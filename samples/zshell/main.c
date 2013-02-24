@@ -111,7 +111,7 @@ int SearchNewLine( const char *buffer ){
 	return -1;
 }
 
-int zmain(int argc, char **argv){
+int main(int argc, char **argv){
     int fdscript = STDIN;
     char *buffer = NULL;
     int errcode = 0;

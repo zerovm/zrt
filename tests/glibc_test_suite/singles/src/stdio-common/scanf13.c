@@ -5,7 +5,7 @@
 #include <wchar.h>
 
 int
-zmain (void)
+main (void)
 {
   char *sp1, *sp2, *sp3, *sp4;
   wchar_t *lsp1, *lsp2, *lsp3, *lsp4;

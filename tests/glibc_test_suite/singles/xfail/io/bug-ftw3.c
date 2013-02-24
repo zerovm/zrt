@@ -16,7 +16,7 @@ cb (const char *fname, const struct stat *st, int flag)
 }
 
 int
-zmain (void)
+main (void)
 {
   char tmp[] = "/tmp/ftwXXXXXX";
   char tmp2[] = "/tmp/ftwXXXXXX/ftwXXXXXX";

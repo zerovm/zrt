@@ -23,7 +23,7 @@
 extern unsigned long long int wash (unsigned long long int a);
 
 int
-zmain (int argc, char**argv)
+main (int argc, char**argv)
 {
   int result = 0;
 

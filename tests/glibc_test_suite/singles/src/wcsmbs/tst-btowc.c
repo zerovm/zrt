@@ -76,7 +76,7 @@ eof_test (void)
 
 /* Test the btowc() function for a few locales with known character sets.  */
 int
-zmain (int argc, char** argv)
+main (int argc, char** argv)
 {
   int result = 0;
 

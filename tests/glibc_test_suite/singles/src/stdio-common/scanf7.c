@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   long long int n;
   int ret;

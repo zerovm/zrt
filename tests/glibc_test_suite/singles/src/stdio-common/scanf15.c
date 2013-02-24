@@ -18,7 +18,7 @@
   } while (0)
 
 int
-zmain (void)
+main (void)
 {
   float f;
   double d;

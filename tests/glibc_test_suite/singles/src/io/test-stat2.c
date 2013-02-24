@@ -26,7 +26,7 @@
 #include "ztests64_compatibility.h"
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   int i;
   int result = 0;

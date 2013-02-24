@@ -21,7 +21,7 @@
 #include <stdio.h>
 
 int
-zmain (void)
+main (void)
 {
 #ifdef _FPU_GETCW
 /* Some architectures don't have _FPU_GETCW (e.g. Linux/Alpha).  */

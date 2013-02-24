@@ -3,7 +3,7 @@
 #include <string.h>
 
 int
-zmain (void)
+main (void)
 {
   int matches;
   char str[10];

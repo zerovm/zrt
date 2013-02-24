@@ -4070,7 +4070,7 @@ matches (register char *result, register const char *desired)
 }
 
 int 
-zmain(int argc, char *argv[])
+main(int argc, char *argv[])
 {
   int errcount = 0;
   int testcount = 0;

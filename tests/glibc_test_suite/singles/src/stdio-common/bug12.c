@@ -4,7 +4,7 @@
 char x[4096], z[4096], b[21], m[4096 * 4];
 
 int
-zmain (void)
+main (void)
 {
   FILE *f = tmpfile ();
   int i, failed = 0;

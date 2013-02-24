@@ -5,7 +5,7 @@
 #include <dlfcn.h>
 
 int 
-zmain (void)
+main (void)
 {
   dlopen ("gnu-gettext-GetURL$1", RTLD_GLOBAL | RTLD_LAZY);
   dlopen ("gnu-gettext-GetURL${1", RTLD_GLOBAL | RTLD_LAZY);

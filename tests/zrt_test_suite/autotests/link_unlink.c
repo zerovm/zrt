@@ -12,7 +12,7 @@
 
 #define TEST_FILE2 (TEST_FILE "2")
 
-int zmain(int argc, char**argv){
+int main(int argc, char**argv){
     CREATE_FILE(TEST_FILE, DATA_FOR_FILE, DATASIZE_FOR_FILE);
 
     /*unlink*/

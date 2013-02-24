@@ -10,7 +10,7 @@
 #include <limits.h>
 #include <errno.h>
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int rc=0;
     struct passwd* pass = getpwuid(1);   /*valid uid=1*/

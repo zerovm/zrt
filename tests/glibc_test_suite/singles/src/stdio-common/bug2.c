@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 int
-zmain (void)
+main (void)
 {
   int i;
   puts ("This should print \"wow = I\" for I from 0 to 39 inclusive.");

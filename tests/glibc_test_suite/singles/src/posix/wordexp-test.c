@@ -226,7 +226,7 @@ command_line_test (const char *words)
 }
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   const char *globfile[] = { "one", "two", "three", NULL };
   char tmpdir[32];

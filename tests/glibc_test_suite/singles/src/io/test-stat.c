@@ -29,7 +29,7 @@
 #include "ztests64_compatibility.h"
 
 int
-zmain (void)
+main (void)
 {
   /* With _FILE_OFFSET_BITS=64 struct stat and struct stat64 should
      be identical.  */

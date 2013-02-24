@@ -11,7 +11,7 @@
 #define TEST_FILE "test-1"
 
 int
-zmain (void)
+main (void)
 {
   const char blah[] = "BLAH";
   FILE *fp;

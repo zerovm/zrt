@@ -64,7 +64,7 @@ static struct
 };
 
 int
-zmain (void)
+main (void)
 {
   struct re_pattern_buffer regbuf;
   const char *err;

@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -113,7 +114,7 @@ int recursive_listdir( const char *path) {
 }
 
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     /*recursively print filesystem contents*/
     int files = 0;

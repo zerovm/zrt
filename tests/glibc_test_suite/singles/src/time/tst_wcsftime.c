@@ -2,7 +2,7 @@
 #include <wchar.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   wchar_t buf[200];
   time_t t;

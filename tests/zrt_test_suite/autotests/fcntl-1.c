@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <assert.h>
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
     /*create & open file in MemMount*/
     int mode = O_CREAT|O_WRONLY;

@@ -24,7 +24,7 @@ int64_t file_size(char *name)
   return ftell(f);
 }
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
   uint32_t i;
   uint32_t *r;

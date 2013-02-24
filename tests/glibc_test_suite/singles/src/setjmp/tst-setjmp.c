@@ -30,7 +30,7 @@ jump (int val)
 }
 
 int
-zmain (void)
+main (void)
 {
   int value;
 

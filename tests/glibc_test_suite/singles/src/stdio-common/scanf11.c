@@ -21,7 +21,7 @@
 #include <stdio.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   int exc = 0;
   int retc;

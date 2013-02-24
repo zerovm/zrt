@@ -10,7 +10,7 @@
   } while (0)
 
 int
-zmain (void)
+main (void)
 {
   wchar_t *lsp;
   char *sp;

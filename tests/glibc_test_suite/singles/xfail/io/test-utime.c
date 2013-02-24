@@ -25,7 +25,7 @@
 #include <time.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   char file[L_tmpnam];
   struct utimbuf ut;

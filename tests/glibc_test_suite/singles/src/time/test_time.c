@@ -22,7 +22,7 @@
 
 
 int
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
   time_t t;
   register struct tm *tp;

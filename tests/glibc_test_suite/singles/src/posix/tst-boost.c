@@ -69,7 +69,7 @@ frob_escapes (char *src, int pattern)
 }
 
 int
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
   int ret = 0, n;
   char *line = NULL;

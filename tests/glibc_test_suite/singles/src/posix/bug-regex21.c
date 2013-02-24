@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 int 
-zmain (void)
+main (void)
 {
   regex_t re;
   int i;

@@ -26,7 +26,7 @@ verbose_free (void *buf)
 }
 
 int
-zmain (void)
+main (void)
 {
   int result = 0;
   int align = 2;

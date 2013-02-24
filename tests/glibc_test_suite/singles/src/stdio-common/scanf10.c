@@ -2,7 +2,7 @@
 #include <string.h>
 
 int
-zmain (int argc, char *argv[])
+main (int argc, char *argv[])
 {
   const char teststring[] = "<tag `word'>";
   int retc, a, b;

@@ -715,7 +715,7 @@ int run_syscall(int argc, char *argv[]){
 }
 
 int
-zmain(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     /*alloc array of strings it will be used for sequential run of syscalls*/
     const int array_len=10;

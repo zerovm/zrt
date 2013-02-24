@@ -5040,7 +5040,7 @@ sprint_int_type sprint_ints[] =
 };
 
 int
-zmain(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int errcount = 0;
     int testcount = 0;

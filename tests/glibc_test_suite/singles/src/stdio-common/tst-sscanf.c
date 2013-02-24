@@ -111,7 +111,7 @@ struct test double_tests[] =
 };
 
 int
-zmain (void)
+main (void)
 {
   double d[6];
   long l[6];

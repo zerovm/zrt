@@ -138,7 +138,7 @@ create_temp_file (const char *base, char **filename)
 
 /* We provide the entry point here.  */
 int
-zmain (int argc, char **argv)
+main (int argc, char **argv)
 {
   int status;
   int opt;

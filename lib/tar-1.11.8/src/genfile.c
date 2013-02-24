@@ -79,7 +79,7 @@ static const struct option long_options[] =
 };
 
 int
-zmain (int argc, char *const *argv)
+main (int argc, char *const *argv)
 {
   int option_char;		/* option character */
   int counter;			/* general purpose counter */

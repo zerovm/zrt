@@ -47,7 +47,7 @@ const unsigned int seed[3] = { 0x12344321U, 0xEE11DD22U, 0xFEDCBA98 };
 void fail (const char *msg, int s, int i) __attribute__ ((__noreturn__));
 
 int
-zmain (void)
+main (void)
 {
   long int rnd[nseq][nrnd];	/* pseudorandom numbers */
   char* state[nseq];		/* state for PRNG */

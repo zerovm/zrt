@@ -34,7 +34,7 @@ const char *listdir(DIR* opened_dir) {
     return NULL;
 }
 
-int zmain(int argc, char **argv){
+int main(int argc, char **argv){
     char path[MAX_PATH_LENGTH];
     const char *name;
     int fdr = -1;

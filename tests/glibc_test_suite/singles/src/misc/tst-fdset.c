@@ -22,7 +22,7 @@
 #include <sys/types.h>
 
 int
-zmain (void)
+main (void)
 {
   int retval = 0;
   int i;
