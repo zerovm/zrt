@@ -55,6 +55,8 @@
 #define ZRT_LOG_NAME "/dev/debug"
 #endif //DEBUG
 
+/* if given in manifest let user to have it */
+#define TIMESTAMP_STR "TimeStamp"
 
 
 /****************** static data*/
@@ -68,6 +70,77 @@ static struct MemoryInterface* s_memory_interface = NULL;
 /****************** */
 
 struct MountsInterface* transparent_mount() { return s_transparent_mount; }
+
+
+/***********************************************************
+ *ZRT initializators
+ ***********************************************************/
+
+/*first step zrt initializer*/
+static void zrt_setup( struct UserManifest* manifest ){
+    /*manage mounted filesystems*/
+    s_mounts_manager = alloc_mounts_manager();
+    /*alloc filesystem based on channels*/
+    s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator,
+					     manifest->channels, manifest->channels_count );
+    /*alloc entry point to mounted filesystems*/
+    s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
+
+    /* using direct call to channels_mount and create debuging log channel*/
+    int ZRT_LOG_fd = s_channels_mount->open( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
+    __zrt_log_set_fd( ZRT_LOG_fd );
+    __zrt_log_enable(1);
+
+    s_memory_interface = memory_interface( manifest->heap_ptr, manifest->heap_size );
+}
+
+/*second step zrt initializer*/
+static void zrt_setup_finally(){
+    /* using of channels_mount directly to preallocate standard channels sdtin, stdout, stderr */
+    /* logPushFilter(name,canberead,canbewrite,handle); */
+    s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
+    s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
+    s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
+    /* logPopFilter(); */
+
+    /* get time stamp from the environment, and cache it */
+    char *stamp = getenv( TIMESTAMP_STR );
+    if ( stamp && *stamp ){
+        s_cached_timeval.tv_usec = 0; /* msec not supported by nacl */
+        s_cached_timeval.tv_sec = atoi(stamp); /* manifest always contain decimal values */
+        ZRT_LOG(L_SHORT, 
+		"s_cached_timeval.nacl_abi_tv_sec=%lld", 
+		s_cached_timeval.tv_sec );
+    }
+
+    /*create mem mount*/
+    s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
+
+    /*Mount filesystems*/
+    s_mounts_manager->mount_add( "/dev", s_channels_mount );
+    s_mounts_manager->mount_add( "/", s_mem_mount );
+
+    /*explicitly create /dev directory in memmount, it's required for consistent
+      FS structure, readdir from now can list /dev dir recursively from root */
+    s_mem_mount->mkdir( "/dev", 0777 );
+
+#ifdef FSTAB_CONF_ENABLE
+    /*Get static fstab observer object, it's memory should not be freed*/
+    struct MNvramObserver* fstab_observer = get_fstab_observer();
+    struct NvramLoader* nvram = alloc_nvram_loader( s_channels_mount, s_transparent_mount );
+    /*add observers here to handle various sections of config data*/
+    nvram->add_observer(nvram, fstab_observer);
+    /*if readed not null bytes and result not negative then doing parsing*/
+    if ( nvram->read(nvram, DEV_FSTAB) > 0 ){
+        int res = nvram->parse(nvram);
+	ZRT_LOG(L_SHORT, "nvram parse res=%d", res);
+    }
+
+    fstab_observer->cleanup( fstab_observer );
+    nvram->free( nvram );
+    ZRT_LOG_DELIMETER;
+#endif
+}
 
 static inline void update_cached_time()
 {
@@ -129,40 +202,73 @@ mode_t apply_umask(mode_t mode){
  *********************************************************************************/
 
 
-SYSCALL_MOCK(null, 0)
-SYSCALL_MOCK(nameservice, 0)
-SYSCALL_MOCK(dup, -EPERM) /* duplicate the given file handle. n/a in the simple zrt version */
-SYSCALL_MOCK(dup2, -EPERM) /* duplicate the given file handle. n/a in the simple zrt version */
+/************************************************************************
+* zcalls_init_t interface implementation
+*************************************************************************/
 
+/* irt basic *************************/
 
 /*
- * return channel handle by given name. if given flags
- * doesn't answer channel's type/limits
+ * exit. without it the user program cannot terminate correctly.
  */
-static int32_t zrt_open(uint32_t *args)
-{
-    char* name = (char*)args[0];
-    int flags = (int)args[1];
-    uint32_t mode = (int)args[2];
-    LOG_SYSCALL_START("name=%s flags=%d mode=%u", name, flags, mode );
-    errno=0;
-    VALIDATE_SYSCALL_PTR(name);
-    
-    char* absolute_path = alloc_absolute_path_from_relative( name );
-    mode = apply_umask(mode);
-    int ret = s_transparent_mount->open( absolute_path, flags, mode );
-    free(absolute_path);
-    LOG_SHORT_SYSCALL_FINISH( ret, 
-		       "name=%s, flags=%s", 
-		       name, STR_FILE_OPEN_FLAGS(flags));
-    return ret;
+void zrt_zcall_exit(int status){
+    LOG_SYSCALL_START(P_HEX, status);
+    ZRT_LOG(L_SHORT, P_TEXT, "exiting...");
+    zvm_exit(status); /*get controls into zerovm*/
+    /* unreachable code*/
+    return; 
 }
 
+int  zrt_zcall_gettod(struct timeval *tvl){
+    struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)tvl;
+    int ret=0;
+    errno=0;
 
-/* do nothing but checks given handle */
-static int32_t zrt_close(uint32_t *args)
-{
-    int handle = (int)args[0];
+    if(!tv) {
+        errno = EFAULT;
+        ret =-1;
+    }
+    else{
+        /*retrieve and get cached time value*/
+        tv->nacl_abi_tv_usec = s_cached_timeval.tv_usec;
+        tv->nacl_abi_tv_sec = s_cached_timeval.tv_sec;
+        ZRT_LOG(L_INFO,
+		"tv->nacl_abi_tv_sec=%lld, tv->nacl_abi_tv_usec=%d",
+		tv->nacl_abi_tv_sec, tv->nacl_abi_tv_usec );
+
+        /* update time value*/
+        update_cached_time();
+    }
+
+    return ret;
+}
+int  zrt_zcall_clock(clock_t *ticks){
+    int ret=-1;
+    LOG_SYSCALL_START(P_HEX, (uint32_t)ticks);
+    /*
+     * should never be implemented if we want deterministic behaviour
+     * note: but we can allow to return each time synthetic value
+     * warning! after checking i found that nacl is not using it, so this
+     *          function is useless for current nacl sdk version.
+     */
+    SET_ERRNO(EPERM);
+    LOG_SHORT_SYSCALL_FINISH( ret, "ticks: " P_HEX, (uint32_t)ticks);
+    return ret;
+}
+int  zrt_zcall_nanosleep(const struct timespec *req, struct timespec *rem){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_sched_yield(void){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_sysconf(int name, int *value){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+/* irt fdio *************************/
+int  zrt_zcall_close(int handle){
     LOG_SYSCALL_START("handle=%d", handle);
     errno = 0;
 
@@ -170,49 +276,44 @@ static int32_t zrt_close(uint32_t *args)
     LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
 }
+int  zrt_zcall_dup(int fd, int *newfd){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_dup2(int fd, int newfd){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
 
-
-/* read the file with the given handle number */
-static int32_t zrt_read(uint32_t *args)
-{
-    int handle = (int)args[0];
-    void *buf = (void*)args[1];
-    int64_t length = (int64_t)args[2];
-    LOG_SYSCALL_START("handle=%d buf=%p length=%lld", handle, buf, length);
+int  zrt_zcall_read(int handle, void *buf, size_t count, size_t *nread){
+    LOG_SYSCALL_START("handle=%d buf=%p count=%u", handle, buf, count);
     errno = 0;
     VALIDATE_SYSCALL_PTR(buf);
 
-    int32_t ret = s_transparent_mount->read(handle, buf, length);
+    int32_t ret = s_transparent_mount->read(handle, buf, count);
+    /*get read bytes by pointer*/
+    *nread = ret;
     LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
 }
 
-/* example how to implement zrt syscall */
-static int32_t zrt_write(uint32_t *args)
-{
-    int handle = (int)args[0];
-    void *buf = (void*)args[1];
-    int64_t length = (int64_t)args[2];
-    LOG_SYSCALL_START("handle=%d buf=%p length=%lld", handle, buf, length);
+int  zrt_zcall_write(int handle, const void *buf, size_t count, size_t *nwrote){
+    /*disable logging write calls related to debug, stdout and stderr channel */
+    if ( handle != __zrt_log_fd() ){
+	LOG_SYSCALL_START("handle=%d buf=%p count=%u", handle, buf, count);
+    }
     VALIDATE_SYSCALL_PTR(buf);
 
-#ifdef DEBUG
-    /*disable logging write calls related to debug, stdout and stderr channel */
-    if ( handle == zrtlog_fd() ){
-        disable_logging_current_syscall();
+    int32_t ret = s_transparent_mount->write(handle, buf, count);
+    /*get wrote bytes by pointer*/
+    *nwrote = ret;
+    if ( handle != __zrt_log_fd() ){
+	LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d count=%u", handle, count);
     }
-#endif
-
-    int32_t ret = s_transparent_mount->write(handle, buf, length);
-    LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d length=%lld", handle, length);
     return ret;
 }
 
-static int32_t zrt_lseek(uint32_t *args)
-{
-    int32_t handle = (int32_t)args[0];
-    off_t offset = *((off_t*)args[1]);
-    int whence = (int)args[2];
+int  zrt_zcall_seek(int handle, off_t offset, int whence, off_t *new_offset){
     LOG_SYSCALL_START("handle=%d offset=%lld whence=%d", handle, offset, whence);
     errno = 0;
 
@@ -224,43 +325,16 @@ static int32_t zrt_lseek(uint32_t *args)
 	offset = s_transparent_mount->lseek(handle, offset, whence);
     }
 
-    *(off_t *)args[1] = offset;
+    /*get new offset by pointer*/
+    *new_offset = offset;
     LOG_SHORT_SYSCALL_FINISH( offset, 
 		       "handle=%d whence=%s", 
 		       handle, STR_SEEK_WHENCE(whence));
     return offset;
 }
 
-
-SYSCALL_MOCK(ioctl, -EINVAL) /* not implemented in the simple version of zrtlib */
-
-
-static int32_t zrt_stat(uint32_t *args)
-{
-    const char *file = (const char*)args[0];
-    struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
-
-    LOG_SYSCALL_START("file=%s sbuf=%p", file, sbuf);
-    errno = 0;
-    VALIDATE_SYSCALL_PTR(file);
-    VALIDATE_SYSCALL_PTR(sbuf);
-    struct stat st;
-    char* absolute_path = alloc_absolute_path_from_relative(file);
-    int ret = s_transparent_mount->stat(absolute_path, &st);
-    free(absolute_path);
-    if ( ret == 0 ){
-        debug_mes_stat(&st);
-        set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
-    }
-    LOG_SHORT_SYSCALL_FINISH( ret, "file=%s", file);
-    return ret;
-}
-
-
-static int32_t zrt_fstat(uint32_t *args)
-{
-    int handle = (int)args[0];
-    struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)args[1];
+int  zrt_zcall_fstat(int handle, struct stat *stat){
+    struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)stat;
     LOG_SYSCALL_START("handle=%d sbuf=%p", handle, sbuf);
     errno = 0;
     VALIDATE_SYSCALL_PTR(sbuf);
@@ -275,7 +349,51 @@ static int32_t zrt_fstat(uint32_t *args)
     return ret;
 }
 
-SYSCALL_MOCK(chmod, -EPERM) /* NACL does not support chmod*/
+int  zrt_zcall_getdents(int fd, struct dirent *dirent_buf, size_t count, size_t *nread){
+    LOG_SYSCALL_START("fd=%d dirent_buf=%p count=%u", fd, dirent_buf, count);
+    errno=0;
+    VALIDATE_SYSCALL_PTR(dirent_buf);
+
+    int32_t bytes_readed = s_transparent_mount->getdents(fd, (char*)dirent_buf, count);
+    LOG_SHORT_SYSCALL_FINISH( bytes_readed, "fd=%d count=%u", fd, count);
+    return bytes_readed;
+}
+
+int  zrt_zcall_open(const char *name, int flags, mode_t mode, int *newfd){
+    LOG_SYSCALL_START("name=%s flags=%d mode=%u", name, flags, mode );
+    errno=0;
+    VALIDATE_SYSCALL_PTR(name);
+    
+    char* absolute_path = alloc_absolute_path_from_relative( name );
+    mode = apply_umask(mode);
+    int ret = s_transparent_mount->open( absolute_path, flags, mode );
+    free(absolute_path);
+    /*get fd by pointer*/
+    if ( ret >= 0 ) *newfd  = ret;
+    LOG_SHORT_SYSCALL_FINISH( ret, 
+		       "name=%s, flags=%s", 
+		       name, STR_FILE_OPEN_FLAGS(flags));
+    return ret;
+}
+
+int  zrt_zcall_stat(const char *pathname, struct stat * stat){
+    LOG_SYSCALL_START("pathname=%s stat=%p", pathname, stat);
+    errno = 0;
+    VALIDATE_SYSCALL_PTR(pathname);
+    VALIDATE_SYSCALL_PTR(stat);
+
+    struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)stat;
+    struct stat st;
+    char* absolute_path = alloc_absolute_path_from_relative(pathname);
+    int ret = s_transparent_mount->stat(absolute_path, &st);
+    free(absolute_path);
+    if ( ret == 0 ){
+        debug_mes_stat(&st);
+        set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
+    }
+    LOG_SHORT_SYSCALL_FINISH( ret, "pathname=%s", pathname);
+    return ret;
+}
 
 /*
  * following 3 functions (sysbrk, mmap, munmap) is the part of the
@@ -284,425 +402,178 @@ SYSCALL_MOCK(chmod, -EPERM) /* NACL does not support chmod*/
  * zrt lib will help user to do it transparently.
  */
 
-/* change space allocation. */
-static int32_t zrt_sysbrk(uint32_t *args)
-{
-    LOG_SYSCALL_START("addr=%p", (void*)args[0]);
-    int32_t retaddr = s_memory_interface->sysbrk(s_memory_interface, (void*)args[0] );
-    LOG_INFO_SYSCALL_FINISH( retaddr, "param=%p", (void*)args[0]);
+/* irt memory *************************/
+int  zrt_zcall_sysbrk(void **newbrk){
+    LOG_SYSCALL_START("*newbrk=%p", *newbrk);
+    int32_t retaddr = s_memory_interface->sysbrk(s_memory_interface, *newbrk );
+    /*get new address via pointer*/
+    *newbrk = (void*)retaddr;
+    LOG_INFO_SYSCALL_FINISH( retaddr, "param=%p", *newbrk);
     return retaddr;
 }
 
-/* map region of memory. ZRT simple implementation;*/
-static int32_t zrt_mmap(uint32_t *args)
-{
+int  zrt_zcall_mmap(void **addr, size_t length, int prot, int flags, int fd, off_t off){
     int32_t retcode = -1;
-    void* addr = (void*)args[0];
-    uint32_t length = args[1];
-    uint32_t prot = args[2];
-    uint32_t flags = args[3];
-    uint32_t fd = args[4];
-    off_t offset = *((off_t*)args[5]);
-    LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u offset=%lld",
-    		      addr, length, prot, flags, fd, offset);
+    LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u off=%lld",
+    		      *addr, length, prot, flags, fd, off);
 
-    retcode = s_memory_interface->mmap(s_memory_interface, addr, length, prot,
-    		  flags, fd, offset);
+    retcode = s_memory_interface->mmap(s_memory_interface, *addr, length, prot,
+    		  flags, fd, off);
   
     LOG_INFO_SYSCALL_FINISH( retcode,
-    		       "addr=%p length=%u prot=%s flags=%s fd=%u offset=%lld",
-    		       addr, length, STR_MMAP_PROT_FLAGS(prot), STR_MMAP_FLAGS(flags),
-    		       fd, offset);
+    		       "addr=%p length=%u prot=%s flags=%s fd=%u off=%lld",
+    		       *addr, length, STR_MMAP_PROT_FLAGS(prot), STR_MMAP_FLAGS(flags),
+    		       fd, off);
     return retcode;
 }
 
-static int32_t zrt_munmap(uint32_t *args)
-{
-    void *addr=(void*)args[0];
-    uint32_t param2 = args[1];
-    LOG_SYSCALL_START("addr=%p, param2=%u", addr, param2);
-    int32_t retcode = s_memory_interface->munmap(s_memory_interface, addr, param2);
-    LOG_INFO_SYSCALL_FINISH( retcode, "addr=%p, param2=%u", addr, param2);
+int  zrt_zcall_munmap(void *addr, size_t len){
+    LOG_SYSCALL_START("addr=%p, len=%u", addr, len);
+    int32_t retcode = s_memory_interface->munmap(s_memory_interface, addr, len);
+    LOG_INFO_SYSCALL_FINISH( retcode, "addr=%p, len=%u", addr, len);
     return retcode;
 }
 
-
-static int32_t zrt_getdents(uint32_t *args)
-{
-    int handle = (int)args[0];
-    char *buf = (char*)args[1];
-    uint32_t count = args[2];
-    LOG_SYSCALL_START("handle=%d buf=%p count=%u", handle, buf, count);
-    errno=0;
-    VALIDATE_SYSCALL_PTR(buf);
-
-    int32_t bytes_readed = s_transparent_mount->getdents(handle, buf, count);
-    LOG_SHORT_SYSCALL_FINISH( bytes_readed, "handle=%d count=%u", handle, count);
-    return bytes_readed;
+/* irt dyncode *************************/
+int  zrt_zcall_dyncode_create(void *dest, const void *src, size_t size){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_dyncode_modify(void *dest, const void *src, size_t size){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_dyncode_delete(void *dest, size_t size){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+/* irt thread *************************/
+int  zrt_zcall_thread_create(void *start_user_address, void *stack, void *thread_ptr){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+void zrt_zcall_thread_exit(int32_t *stack_flag){
+    SET_ERRNO(ENOSYS);
+}
+int  zrt_zcall_thread_nice(const int nice){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+/* irt mutex *************************/
+int  zrt_zcall_mutex_create(int *mutex_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_mutex_destroy(int mutex_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_mutex_lock(int mutex_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_mutex_unlock(int mutex_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_mutex_trylock(int mutex_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+/* irt cond *************************/
+int  zrt_zcall_cond_create(int *cond_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_cond_destroy(int cond_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_cond_signal(int cond_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_cond_broadcast(int cond_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_cond_wait(int cond_handle, int mutex_handle){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_cond_timed_wait_abs(int cond_handle, int mutex_handle,
+				   const struct timespec *abstime){
+    SET_ERRNO(ENOSYS);
+    return -1;
 }
 
-
-/*
- * exit. most important syscall. without it the user program
- * cannot terminate correctly.
- */
-static int32_t zrt_exit(uint32_t *args)
-{
-    /* no need to check args for NULL. it is always set by syscall_manager */
-    LOG_SYSCALL_START(P_HEX, args[0]);
-    ZRT_LOG(L_SHORT, P_TEXT, "exiting...");
-    zvm_exit(args[0]); /*get controls into zerovm*/
-    /* unreachable code*/
-    LOG_SHORT_SYSCALL_FINISH( 0, P_HEX, args[0]);
-    return 0; 
+/* irt tls *************************/
+int  zrt_zcall_tls_init(void *thread_ptr){
+    LOG_SYSCALL_START("thread_ptr=%p", thread_ptr);
+    s_tls_cache = (uintptr_t)thread_ptr;
+    LOG_INFO_SYSCALL_FINISH( 0, "thread_ptr=%p", thread_ptr);
+    return 0;
 }
-
-SYSCALL_MOCK(getpid, 0)
-SYSCALL_MOCK(sched_yield, 0)
-SYSCALL_MOCK(sysconf, 0)
-
-/* if given in manifest let user to have it */
-#define TIMESTAMP_STR "TimeStamp"
-static int32_t zrt_gettimeofday(uint32_t *args)
-{
-    //LOG_SYSCALL_START(args,1);
-    struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)args[0];
-    int ret=0;
-    errno=0;
-
-    if(!tv) {
-        errno = EFAULT;
-        ret =-1;
-    }
-    else{
-        /*retrieve and get cached time value*/
-        tv->nacl_abi_tv_usec = s_cached_timeval.tv_usec;
-        tv->nacl_abi_tv_sec = s_cached_timeval.tv_sec;
-        ZRT_LOG(L_INFO,
-		"tv->nacl_abi_tv_sec=%lld, tv->nacl_abi_tv_usec=%d", 
-		tv->nacl_abi_tv_sec, tv->nacl_abi_tv_usec );
-
-        /* update time value*/
-        update_cached_time();
-    }
-
-    //LOG_SYSCALL_FINISH(ret);
-    return ret;
-}
-
-/*
- * should never be implemented if we want deterministic behaviour
- * note: but we can allow to return each time synthetic value
- * warning! after checking i found that nacl is not using it, so this
- *          function is useless for current nacl sdk version.
- */
-SYSCALL_MOCK(clock, -EPERM)
-SYSCALL_MOCK(nanosleep, 0)
-SYSCALL_MOCK(imc_makeboundsock, 0)
-SYSCALL_MOCK(imc_accept, 0)
-SYSCALL_MOCK(imc_connect, 0)
-SYSCALL_MOCK(imc_sendmsg, 0)
-SYSCALL_MOCK(imc_recvmsg, 0)
-SYSCALL_MOCK(imc_mem_obj_create, 0)
-SYSCALL_MOCK(imc_socketpair, 0)
-SYSCALL_MOCK(mutex_create, 0)
-SYSCALL_MOCK(mutex_lock, 0)
-SYSCALL_MOCK(mutex_trylock, 0)
-SYSCALL_MOCK(mutex_unlock, 0)
-SYSCALL_MOCK(cond_create, 0)
-SYSCALL_MOCK(cond_wait, 0)
-SYSCALL_MOCK(cond_signal, 0)
-SYSCALL_MOCK(cond_broadcast, 0)
-SYSCALL_MOCK(cond_timed_wait_abs, 0)
-SYSCALL_MOCK(thread_create, 0)
-SYSCALL_MOCK(thread_exit, 0)
-SYSCALL_MOCK(tls_init, 0)
-SYSCALL_MOCK(thread_nice, 0)
-
-/*
- * get tls through NaCl_tls_get at first call and next save returned 
- * value as cache. For rest calls it returns cached value.
- */
-static int32_t zrt_tls_get(uint32_t *args)
-{
+void * zrt_zcall_tls_get(void){
     /* tls_get return value would be cached because it remains unchanged 
      * after setup by tls_init call*/
     if ( s_tls_cache < 0 ){
-	/*cahched tls_get value is negative and required to be refreshed*/
-	zvm_syscallback(0); /* uninstall syscallback */
-	/* invoke syscall directly only once, to get tls value and cache it*/
-	s_tls_cache = NaCl_tls_get(); 
-	zvm_syscallback((intptr_t)syscall_director); /* reinstall syscallback */
+	assert(s_tls_cache>0);
     }
-    return s_tls_cache; /*valid tls*/
+    return (void*)s_tls_cache; /*valid tls*/
 }
 
-SYSCALL_MOCK(second_tls_set, 0)
-
-/*
- * get second tls.
- * since we only have single thread use instead of 2nd tls 1st one
- */
-static int32_t zrt_second_tls_get(uint32_t *args)
-{
-    int32_t ret = zrt_tls_get(NULL);
-    return ret;
+/* irt resource open *************************/
+int  zrt_zcall_open_resource(const char *file, int *fd){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+/* irt clock *************************/
+int  zrt_zcall_getres(clockid_t clk_id, struct timespec *res){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+int  zrt_zcall_gettime(clockid_t clk_id, struct timespec *tp){
+    return 0;
 }
 
-SYSCALL_MOCK(sem_create, 0)
-SYSCALL_MOCK(sem_wait, 0)
-SYSCALL_MOCK(sem_post, 0)
-SYSCALL_MOCK(sem_get_value, 0)
-SYSCALL_MOCK(dyncode_create, 0)
-SYSCALL_MOCK(dyncode_modify, 0)
-SYSCALL_MOCK(dyncode_delete, 0)
-SYSCALL_MOCK(test_infoleak, 0)
+/************************************************************************
+* zcalls_zrt_t implementation
+* Setup zrt
+*************************************************************************/
+void zrt_zcall_zrt_setup(void){
+    /* int i; */
+    /* struct UserManifest *setup = zvm_init(); */
+    /* if(setup == NULL){ */
+    /* 	exit(EXIT_FAILURE); */
+    /* } */
+    /* zrt_setup( setup ); */
+    /* /\* debug print *\/ */
+    /* ZRT_LOG(L_SHORT, "DEBUG INFORMATION%s", ""); */
+    /* ZRT_LOG(L_SHORT, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr); */
+    /* ZRT_LOG(L_SHORT, "user memory size = %u", setup->heap_size); */
+    /* ZRT_LOG_DELIMETER; */
+    /* ZRT_LOG(L_SHORT, "sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel)); */
+    /* ZRT_LOG(L_SHORT, "channels count = %d", setup->channels_count); */
+    /* ZRT_LOG_DELIMETER; */
+    /* /\*print channels list*\/ */
+    /* for(i = 0; i < setup->channels_count; ++i) */
+    /* { */
+    /*     ZRT_LOG(L_SHORT, "channel[%d].name = '%s'", i, setup->channels[i].name); */
+    /*     ZRT_LOG(L_SHORT, "channel[%d].type = %d", i, setup->channels[i].type); */
+    /*     ZRT_LOG(L_SHORT, "channel[%d].size = %lld", i, setup->channels[i].size); */
+    /*     ZRT_LOG(L_SHORT, "channel[%d].limits[GetsLimit] = %lld", i, setup->channels[i].limits[GetsLimit]); */
+    /*     ZRT_LOG(L_SHORT, "channel[%d].limits[GetSizeLimit] = %lld", i, setup->channels[i].limits[GetSizeLimit]); */
+    /*     ZRT_LOG(L_SHORT, "channel[%d].limits[PutsLimit] = %lld", i, setup->channels[i].limits[PutsLimit]); */
+    /*     ZRT_LOG(L_SHORT, "channel[%d].limits[PutSizeLimit] = %lld", i, setup->channels[i].limits[PutSizeLimit]); */
+    /* } */
+    /* ZRT_LOG_DELIMETER; */
+    /* ZRT_LOG(L_SHORT, "_SC_PAGE_SIZE=%ld", sysconf(_SC_PAGE_SIZE)); */
 
-/* Every SYSCALL_NOT_IMPLEMENTED should have appropriate SYSCALL_STUB_IMPLEMENTATION 
- * to be correctly referenced inside of zrt_syscalls list and for logging purposes*/
-SYSCALL_STUB_IMPLEMENTATION(0)
-SYSCALL_STUB_IMPLEMENTATION(3)
-SYSCALL_STUB_IMPLEMENTATION(4)
-SYSCALL_STUB_IMPLEMENTATION(5)
-SYSCALL_STUB_IMPLEMENTATION(6)
-SYSCALL_STUB_IMPLEMENTATION(7)
-SYSCALL_STUB_IMPLEMENTATION(19)
-SYSCALL_STUB_IMPLEMENTATION(24)
-SYSCALL_STUB_IMPLEMENTATION(25)
-SYSCALL_STUB_IMPLEMENTATION(26)
-SYSCALL_STUB_IMPLEMENTATION(27)
-SYSCALL_STUB_IMPLEMENTATION(28)
-SYSCALL_STUB_IMPLEMENTATION(29)
-SYSCALL_STUB_IMPLEMENTATION(34)
-SYSCALL_STUB_IMPLEMENTATION(35)
-SYSCALL_STUB_IMPLEMENTATION(36)
-SYSCALL_STUB_IMPLEMENTATION(37)
-SYSCALL_STUB_IMPLEMENTATION(38)
-SYSCALL_STUB_IMPLEMENTATION(39)
-SYSCALL_STUB_IMPLEMENTATION(43)
-SYSCALL_STUB_IMPLEMENTATION(44)
-SYSCALL_STUB_IMPLEMENTATION(45)
-SYSCALL_STUB_IMPLEMENTATION(46)
-SYSCALL_STUB_IMPLEMENTATION(47)
-SYSCALL_STUB_IMPLEMENTATION(48)
-SYSCALL_STUB_IMPLEMENTATION(49)
-SYSCALL_STUB_IMPLEMENTATION(50)
-SYSCALL_STUB_IMPLEMENTATION(51)
-SYSCALL_STUB_IMPLEMENTATION(52)
-SYSCALL_STUB_IMPLEMENTATION(53)
-SYSCALL_STUB_IMPLEMENTATION(54)
-SYSCALL_STUB_IMPLEMENTATION(55)
-SYSCALL_STUB_IMPLEMENTATION(56)
-SYSCALL_STUB_IMPLEMENTATION(57)
-SYSCALL_STUB_IMPLEMENTATION(58)
-SYSCALL_STUB_IMPLEMENTATION(59)
-SYSCALL_STUB_IMPLEMENTATION(67)
-SYSCALL_STUB_IMPLEMENTATION(68)
-SYSCALL_STUB_IMPLEMENTATION(69)
-SYSCALL_STUB_IMPLEMENTATION(78)
-SYSCALL_STUB_IMPLEMENTATION(87)
-SYSCALL_STUB_IMPLEMENTATION(88)
-SYSCALL_STUB_IMPLEMENTATION(89)
-SYSCALL_STUB_IMPLEMENTATION(90)
-SYSCALL_STUB_IMPLEMENTATION(91)
-SYSCALL_STUB_IMPLEMENTATION(92)
-SYSCALL_STUB_IMPLEMENTATION(93)
-SYSCALL_STUB_IMPLEMENTATION(94)
-SYSCALL_STUB_IMPLEMENTATION(95)
-SYSCALL_STUB_IMPLEMENTATION(96)
-SYSCALL_STUB_IMPLEMENTATION(97)
-SYSCALL_STUB_IMPLEMENTATION(98)
-SYSCALL_STUB_IMPLEMENTATION(99)
-SYSCALL_STUB_IMPLEMENTATION(107)
-SYSCALL_STUB_IMPLEMENTATION(108)
-
-
-
-/*
- * array of the pointers to zrt syscalls
- *
- * each zrt function (syscall) has uniform prototype: int32_t syscall(uint32_t *args)
- * where "args" pointer to syscalls' arguments. number and types of arguments
- * can be found in the nacl "nacl_syscall_handlers.c" file.
- * 
- * SYSCALL_NOT_IMPLEMENTED would be used for unsupported syscalls, any that definition
- * should have appropriate SYSCALL_STUB_IMPLEMENTATION to be correctly referenced
- */
-int32_t (*zrt_syscalls[])(uint32_t*) = {
-    SYSCALL_NOT_IMPLEMENTED(0),/* 0 -- not implemented syscall */
-    zrt_null,                  /* 1 -- empty syscall. does nothing */
-    zrt_nameservice,           /* 2 */
-    SYSCALL_NOT_IMPLEMENTED(3),/* 3 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(4),/* 4 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(5),/* 5 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(6),/* 6 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(7),/* 7 -- not implemented syscall */
-    zrt_dup,                   /* 8 */
-    zrt_dup2,                  /* 9 */
-    zrt_open,                  /* 10 */
-    zrt_close,                 /* 11 */
-    zrt_read,                  /* 12 */
-    zrt_write,                 /* 13 */
-    zrt_lseek,                 /* 14 */
-    zrt_ioctl,                 /* 15 */
-    zrt_stat,                  /* 16 */
-    zrt_fstat,                 /* 17 */
-    zrt_chmod,                 /* 18 */
-    SYSCALL_NOT_IMPLEMENTED(19),/* 19 -- not implemented syscall */
-    zrt_sysbrk,                /* 20 */
-    zrt_mmap,                  /* 21 */
-    zrt_munmap,                /* 22 */
-    zrt_getdents,              /* 23 */
-    SYSCALL_NOT_IMPLEMENTED(24),/* 24 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(25),/* 25 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(26),/* 26 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(27),/* 27 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(28),/* 28 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(29),/* 29 -- not implemented syscall */
-    zrt_exit,                  /* 30 -- must use trap:exit() */
-    zrt_getpid,                /* 31 */
-    zrt_sched_yield,           /* 32 */
-    zrt_sysconf,               /* 33 */
-    SYSCALL_NOT_IMPLEMENTED(34),/* 34 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(35),/* 35 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(36),/* 36 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(37),/* 37 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(38),/* 38 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(39),/* 39 -- not implemented syscall */
-    zrt_gettimeofday,          /* 40 */
-    zrt_clock,                 /* 41 */
-    zrt_nanosleep,             /* 42 */
-    SYSCALL_NOT_IMPLEMENTED(43),/* 43 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(44),/* 44 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(45),/* 45 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(46),/* 46 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(47),/* 47 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(48),/* 48 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(49),/* 49 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(50),/* 50 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(51),/* 51 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(52),/* 52 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(53),/* 53 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(54),/* 54 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(55),/* 55 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(56),/* 56 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(57),/* 57 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(58),/* 58 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(59),/* 59 -- not implemented syscall */
-    zrt_imc_makeboundsock,     /* 60 */
-    zrt_imc_accept,            /* 61 */
-    zrt_imc_connect,           /* 62 */
-    zrt_imc_sendmsg,           /* 63 */
-    zrt_imc_recvmsg,           /* 64 */
-    zrt_imc_mem_obj_create,    /* 65 */
-    zrt_imc_socketpair,        /* 66 */
-    SYSCALL_NOT_IMPLEMENTED(67),/* 67 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(68),/* 68 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(69),/* 69 -- not implemented syscall */
-    zrt_mutex_create,          /* 70 */
-    zrt_mutex_lock,            /* 71 */
-    zrt_mutex_trylock,         /* 72 */
-    zrt_mutex_unlock,          /* 73 */
-    zrt_cond_create,           /* 74 */
-    zrt_cond_wait,             /* 75 */
-    zrt_cond_signal,           /* 76 */
-    zrt_cond_broadcast,        /* 77 */
-    SYSCALL_NOT_IMPLEMENTED(78),/* 78 -- not implemented syscall */
-    zrt_cond_timed_wait_abs,   /* 79 */
-    zrt_thread_create,         /* 80 */
-    zrt_thread_exit,           /* 81 */
-    zrt_tls_init,              /* 82 */
-    zrt_thread_nice,           /* 83 */
-    zrt_tls_get,               /* 84 */
-    zrt_second_tls_set,        /* 85 */
-    zrt_second_tls_get,        /* 86 */
-    SYSCALL_NOT_IMPLEMENTED(87),/* 87 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(88),/* 88 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(89),/* 89 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(90),/* 90 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(91),/* 91 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(92),/* 92 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(93),/* 93 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(94),/* 94 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(95),/* 95 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(96),/* 96 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(97),/* 97 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(98),/* 98 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(99),/* 99 -- not implemented syscall */
-    zrt_sem_create,            /* 100 */
-    zrt_sem_wait,              /* 101 */
-    zrt_sem_post,              /* 102 */
-    zrt_sem_get_value,         /* 103 */
-    zrt_dyncode_create,        /* 104 */
-    zrt_dyncode_modify,        /* 105 */
-    zrt_dyncode_delete,        /* 106 */
-    SYSCALL_NOT_IMPLEMENTED(107),/* 107 -- not implemented syscall */
-    SYSCALL_NOT_IMPLEMENTED(108),/* 108 -- not implemented syscall */
-    zrt_test_infoleak          /* 109 */
-};
-
-
-void zrt_setup( struct UserManifest* manifest ){
-    /*manage mounted filesystems*/
-    s_mounts_manager = alloc_mounts_manager();
-    /*alloc filesystem based on channels*/
-    s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator,
-					     manifest->channels, manifest->channels_count );
-    /*alloc entry point to mounted filesystems*/
-    s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
-
-    /* using direct call to channels_mount and create debuging log channel*/
-    int ZRT_LOG_fd = s_channels_mount->open( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
-    set_zrtlog_fd( ZRT_LOG_fd );
-
-    s_memory_interface = memory_interface( manifest->heap_ptr, manifest->heap_size );
+    /* zrt_setup_finally(); */
 }
 
-void zrt_setup_finally(){
-    /* using of channels_mount directly to preallocate standard channels sdtin, stdout, stderr */
-    /* logPushFilter(name,canberead,canbewrite,handle); */
-    s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
-    s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
-    s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
-    /* logPopFilter(); */
+/*************************************************************************/
 
-    /* get time stamp from the environment, and cache it */
-    char *stamp = getenv( TIMESTAMP_STR );
-    if ( stamp && *stamp ){
-        s_cached_timeval.tv_usec = 0; /* msec not supported by nacl */
-        s_cached_timeval.tv_sec = atoi(stamp); /* manifest always contain decimal values */
-        ZRT_LOG(L_SHORT, 
-		"s_cached_timeval.nacl_abi_tv_sec=%lld", 
-		s_cached_timeval.tv_sec );
-    }
-
-    /*create mem mount*/
-    s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
-
-    /*Mount filesystems*/
-    s_mounts_manager->mount_add( "/dev", s_channels_mount );
-    s_mounts_manager->mount_add( "/", s_mem_mount );
-
-    /*explicitly create /dev directory in memmount, it's required for consistent
-      FS structure, readdir from now can list /dev dir recursively from root */
-    s_mem_mount->mkdir( "/dev", 0777 );
-
-#ifdef FSTAB_CONF_ENABLE
-    /*Get static fstab observer object, it's memory should not be freed*/
-    struct MNvramObserver* fstab_observer = get_fstab_observer();
-    struct NvramLoader* nvram = alloc_nvram_loader( s_channels_mount, s_transparent_mount );
-    /*add observers here to handle various sections of config data*/
-    nvram->add_observer(nvram, fstab_observer);
-    /*if readed not null bytes and result not negative then doing parsing*/
-    if ( nvram->read(nvram, DEV_FSTAB) > 0 ){
-        int res = nvram->parse(nvram);
-	ZRT_LOG(L_SHORT, "nvram parse res=%d", res);
-    }
-
-    fstab_observer->cleanup( fstab_observer );
-    nvram->free( nvram );
-    ZRT_LOG_DELIMETER;
-#endif
-}
 
 

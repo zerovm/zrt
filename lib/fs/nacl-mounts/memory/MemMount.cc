@@ -452,6 +452,7 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
     bytes_read + sizeof(DIRENT) <= buf_size;
     ++it) {
 	MemNode *node = slots_.At(*it);
+	ZRT_LOG(L_SHORT, "getdents entity: %s", node->name().c_str());
 	/*format in buf dirent structure, of variable size, and save current file data;
 	  original MemMount implementation was used dirent as having constant size */
 	bytes_read += 

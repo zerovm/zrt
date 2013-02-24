@@ -32,12 +32,79 @@
 
 #define UMASK_ENV "UMASK"
 
+
+#include <time.h>   /*clock_t*/
+
+/*forwards*/
+struct stat;
+struct dirent;
+struct timeval;
+
 struct MountsInterface;
 
-/*Assign own channels pointer to get it filled with channels at the syscallback*/
-void zrt_setup( struct UserManifest* manifest );
+/******************* zcalls_init_t functions **************/
+/* irt basic *************************/
+void zrt_zcall_exit(int status);
+int zrt_zcall_gettod(struct timeval *tv);
+int zrt_zcall_clock(clock_t *ticks);
+int zrt_zcall_nanosleep(const struct timespec *req, struct timespec *rem);
+int zrt_zcall_sched_yield(void);
+int zrt_zcall_sysconf(int name, int *value);
+/* irt fdio *************************/
+int zrt_zcall_close(int fd);
+int zrt_zcall_dup(int fd, int *newfd);
+int zrt_zcall_dup2(int fd, int newfd);
+int zrt_zcall_read(int fd, void *buf, size_t count, size_t *nread);
+int zrt_zcall_write(int fd, const void *buf, size_t count, size_t *nwrote);
+int zrt_zcall_seek(int fd, off_t offset, int whence, off_t *new_offset);
+int zrt_zcall_fstat(int fd, struct stat *);
+int zrt_zcall_getdents(int fd, struct dirent *, size_t count, size_t *nread);
+/* irt filename *************************/
+int zrt_zcall_open(const char *pathname, int oflag, mode_t cmode, int *newfd);
+int zrt_zcall_stat(const char *pathname, struct stat *);
+/* irt memory *************************/
+int zrt_zcall_sysbrk(void **newbrk);
+int zrt_zcall_mmap(void **addr, size_t len, int prot, int flags, int fd, off_t off);
+int zrt_zcall_munmap(void *addr, size_t len);
+/* irt dyncode *************************/
+int zrt_zcall_dyncode_create(void *dest, const void *src, size_t size);
+int zrt_zcall_dyncode_modify(void *dest, const void *src, size_t size);
+int zrt_zcall_dyncode_delete(void *dest, size_t size);
+/* irt thread *************************/
+int zrt_zcall_thread_create(void *start_user_address, void *stack, void *thread_ptr);
+void zrt_zcall_thread_exit(int32_t *stack_flag);
+int zrt_zcall_thread_nice(const int nice);
+/* irt mutex *************************/
+int zrt_zcall_mutex_create(int *mutex_handle);
+int zrt_zcall_mutex_destroy(int mutex_handle);
+int zrt_zcall_mutex_lock(int mutex_handle);
+int zrt_zcall_mutex_unlock(int mutex_handle);
+int zrt_zcall_mutex_trylock(int mutex_handle);
+/* irt cond *************************/
+int zrt_zcall_cond_create(int *cond_handle);
+int zrt_zcall_cond_destroy(int cond_handle);
+int zrt_zcall_cond_signal(int cond_handle);
+int zrt_zcall_cond_broadcast(int cond_handle);
+int zrt_zcall_cond_wait(int cond_handle, int mutex_handle);
+int zrt_zcall_cond_timed_wait_abs(int cond_handle, int mutex_handle,
+			   const struct timespec *abstime);
+/* irt tls *************************/
+int zrt_zcall_tls_init(void *thread_ptr);
+void *zrt_zcall_tls_get(void);
+/* irt resource open *************************/
+int zrt_zcall_open_resource(const char *file, int *fd);
+/* irt clock *************************/
+int zrt_zcall_getres(clockid_t clk_id, struct timespec *res);
+int zrt_zcall_gettime(clockid_t clk_id, struct timespec *tp);
 
-void zrt_setup_finally();
+
+/************************** zcalls_zrt_t functions **************/
+void zrt_zcall_zrt_setup(void);
+
+
+
+/*****************************************************************
+helpers, we should remove it from here */
 
 /*get static object from zrtsyscalls.c*/
 struct MountsInterface* transparent_mount();
@@ -47,95 +114,6 @@ mode_t get_umask();
 mode_t apply_umask(mode_t mode);
 /*move it from here*/
 void debug_mes_stat(struct stat *stat);
-
-/*
- * FULL NACL SYSCALL LIST
- */
-#define NACL_sys_null                    1 /* empty syscall. does nothing */
-#define NACL_sys_nameservice             2
-#define NACL_3                           3 /*unknown*/
-#define NACL_4                           4 /*unknown*/
-#define NACL_5                           5 /*unknown*/
-#define NACL_6                           6 /*unknown*/
-#define NACL_7                           7 /*unknown*/
-#define NACL_sys_dup                     8
-#define NACL_sys_dup2                    9
-#define NACL_sys_open                   10
-#define NACL_sys_close                  11
-#define NACL_sys_read                   12
-#define NACL_sys_write                  13
-#define NACL_sys_lseek                  14
-#define NACL_sys_ioctl                  15
-#define NACL_sys_stat                   16
-#define NACL_sys_fstat                  17
-#define NACL_sys_chmod                  18
-#define NACL_sys_sysbrk                 20
-#define NACL_sys_mmap                   21
-#define NACL_sys_munmap                 22
-#define NACL_sys_getdents               23
-#define NACL_sys_exit                   30
-#define NACL_sys_getpid                 31
-#define NACL_sys_sched_yield            32
-#define NACL_sys_sysconf                33
-#define NACL_sys_gettimeofday           40
-#define NACL_sys_clock                  41
-#define NACL_sys_nanosleep              42
-#define NACL_sys_imc_makeboundsock      60
-#define NACL_sys_imc_accept             61
-#define NACL_sys_imc_connect            62
-#define NACL_sys_imc_sendmsg            63
-#define NACL_sys_imc_recvmsg            64
-#define NACL_sys_imc_mem_obj_create     65
-#define NACL_sys_imc_socketpair         66
-#define NACL_sys_mutex_create           70
-#define NACL_sys_mutex_lock             71
-#define NACL_sys_mutex_trylock          72
-#define NACL_sys_mutex_unlock           73
-#define NACL_sys_cond_create            74
-#define NACL_sys_cond_wait              75
-#define NACL_sys_cond_signal            76
-#define NACL_sys_cond_broadcast         77
-#define NACL_sys_cond_timed_wait_abs    79
-#define NACL_sys_thread_create          80
-#define NACL_sys_thread_exit            81
-#define NACL_sys_tls_init               82
-#define NACL_sys_thread_nice            83
-#define NACL_sys_tls_get                84
-#define NACL_sys_second_tls_set         85
-#define NACL_sys_second_tls_get         86
-#define NACL_sys_sem_create             100
-#define NACL_sys_sem_wait               101
-#define NACL_sys_sem_post               102
-#define NACL_sys_sem_get_value          103
-#define NACL_sys_dyncode_create         104
-#define NACL_sys_dyncode_modify         105
-#define NACL_sys_dyncode_delete         106
-#define NACL_sys_test_infoleak          109
-
-/*
- * DIRECT NACL SYSCALLS FUNCTIONS (VIA TRAMPOLINE)
- * should be fulfilled with all syscalls and moved to the header.
- */
-/* mmap() -- nacl syscall via trampoline */
-#define NaCl_mmap(start, length, prot, flags, d, offp) \
-        ((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)) \
-                (NACL_sys_mmap * 0x20 + 0x10000))(start, length, prot, flags, d, offp)
-
-/* munmap() -- nacl syscall via trampoline */
-#define NaCl_munmap(start, length) ((int32_t (*)(uint32_t, uint32_t)) \
-        (NACL_sys_munmap * 0x20 + 0x10000))(start, length)
-
-/* sysbrk() -- nacl syscall via trampoline */
-#define NaCl_sysbrk(new_break) ((int32_t (*)(uint32_t)) \
-        (NACL_sys_sysbrk * 0x20 + 0x10000))(new_break)
-
-/* tls_get() -- nacl syscall via trampoline */
-#define NaCl_tls_get() ((int32_t (*)()) \
-        (NACL_sys_tls_get * 0x20 + 0x10000))()
-
-/* invalid syscall */
-#define NaCl_invalid() ((int32_t (*)()) \
-        (999 * 0x20 + 0x10000))()
 
 
 #endif //ZRT_LIB_ZRTSYSCALLS_H

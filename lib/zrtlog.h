@@ -42,29 +42,29 @@
 
 /*ZRT_LOG
  v_123 verbosity param, fmt_123 format string, ... arguments*/
-#define ZRT_LOG(v_123, fmt_123, ...){					\
+#define ZRT_LOG(v_123, fmt_123, ...) if( __zrt_log_is_enabled() ){		\
 	int debug_handle_123;						\
 	char *buf__123;							\
-	if( verbosity() >= v_123 &&					\
-	    (debug_handle_123=debug_handle_get_buf(&buf__123)) >= 0 ){	\
+	if( __zrt_log_verbosity() >= v_123 &&				\
+	    (debug_handle_123=__zrt_log_debug_get_buf(&buf__123)) >= 0 ){ \
 	    int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,		\
 				   #v_123 " %s; [%s]; %s, %d: " fmt_123 "\n", \
-				   __FILE__, syscall_stack_str(),	\
+				   __FILE__, __zrt_log_syscall_stack_str(), \
 			   __func__, __LINE__, __VA_ARGS__);		\
-	    zrtlog_write(debug_handle_123, buf__123, len_123, 0);	\
+	    __zrt_log_write(debug_handle_123, buf__123, len_123, 0);	\
 	}								\
     }
 
 
-#define ZRT_LOG_DELIMETER						\
-    do {								\
+#define ZRT_LOG_DELIMETER  if( __zrt_log_is_enabled() ){ 		\
 	char *buf__123;							\
-	int debug_handle = debug_handle_get_buf(&buf__123);		\
+	int debug_handle = __zrt_log_debug_get_buf(&buf__123);		\
 	int len;							\
-	if( debug_handle < 0) break;					\
-	len = snprintf(buf__123, LOG_BUFFER_SIZE, "%060d\n", 0 );	\
-	zrtlog_write(debug_handle, buf__123, len, 0);			\
-    } while(0)
+	if( debug_handle > 0){						\
+	    len = snprintf(buf__123, LOG_BUFFER_SIZE, "%060d\n", 0 );	\
+	    __zrt_log_write(debug_handle, buf__123, len, 0);		\
+	}								\
+    }
 
 /* ******************************************************************************
  * Syscallbacks debug macros*/
@@ -72,8 +72,7 @@
 /* Push current NACL syscall into logging stack that printing for every log invocation.
  * Enable logging for NACL syscall, and printing arguments*/
 #define LOG_SYSCALL_START(fmt_123, ...) {				\
-	log_push_name(__func__);					\
-	enable_logging_current_syscall();				\
+	__zrt_log_push_name(__func__);					\
 	ZRT_LOG(L_INFO, fmt_123, __VA_ARGS__);				\
     }
 
@@ -86,7 +85,7 @@
 	    ZRT_LOG(L_SHORT, "ret=0x%x " fmt_123 "",			\
 		    (int)ret, __VA_ARGS__);				\
 	}								\
-        log_pop_name(__func__);						\
+        __zrt_log_pop_name(__func__);						\
     }
 
 
@@ -101,19 +100,23 @@
 	    ZRT_LOG(L_INFO, "ret=0x%x " fmt_123 "",			\
 		    (int)ret, __VA_ARGS__);				\
 	}								\
-        log_pop_name(__func__);						\
+        __zrt_log_pop_name(__func__);						\
     }
 
-const char* syscall_stack_str();
-void log_push_name( const char* name );
-void log_pop_name( const char* name );
-void set_zrtlog_fd(int fd);
-int verbosity();
-int zrtlog_fd();
-void enable_logging_current_syscall();
-void disable_logging_current_syscall();
-int debug_handle_get_buf(char **buf);
-int32_t zrtlog_write( int handle, const char* buf, int32_t size, int64_t offset);
+const char* __zrt_log_syscall_stack_str();
+void __zrt_log_push_name( const char* name );
+void __zrt_log_pop_name( const char* name );
+void __zrt_log_set_fd(int fd);
+int  __zrt_log_verbosity();
+int  __zrt_log_fd();
+
+/* 0 switch on logging
+ * 1 switch off logging*/
+void __zrt_log_enable(int status);
+int  __zrt_log_is_enabled();
+
+int __zrt_log_debug_get_buf(char **buf);
+int32_t __zrt_log_write( int handle, const char* buf, int32_t size, int64_t offset);
 
 #else
 #define LOG_SYSCALL_START(fmt_123, ...)

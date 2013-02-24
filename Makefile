@@ -1,12 +1,13 @@
 include Makefile.env
 
 ############### libzrt.a source files to build
+LIBZRT0=lib/libzrt0.a
+LIBZRT0_SOURCES= lib/zrt.c
+
 LIBZRT=lib/libzrt.a
 LIBZRT_SOURCES= ${ZEROVM_ROOT}/api/zvm.c \
-lib/syscall_manager.S \
-lib/zrtlog.c \
-lib/zrt.c \
 lib/zrtsyscalls.c \
+lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
 lib/helpers/conf_keys.c \
@@ -26,6 +27,7 @@ lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c
 
+LIBZRT0_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT0_SOURCES) ) )
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 
 
@@ -93,12 +95,22 @@ CXXFLAGS = -I. -Ilib -Ilib/fs
 #debug: CFLAGS+=-Wdisabled-optimization -fprofile-arcs -ftest-coverage -fdump-rtl-all -fdump-ipa-all 
 #debug: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
 
-all:
-all: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests 
+all: 
+all: prepare ${LIBS} ${LIBZRT0} ${LIBZRT} ${LIBZGLIBC} autotests 
+
+
+#build zrt0 to be used as stub inside of zlibc
+zlibc_dep: CFLAGS+=-DZLIBC_STUB
+zlibc_dep: cleanzrt0 ${LIBZRT0}
+
 
 prepare:
 	@chmod u+rwx ns_start.sh
 	@chmod u+rwx ns_stop.sh
+
+${LIBZRT0} : $(LIBZRT0_OBJECTS)
+	$(AR) rcs $@ $(LIBZRT0_OBJECTS)
+	@echo $@ updated
 
 ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
@@ -147,10 +159,15 @@ clean: ${LIBS_CLEAN}
 ${LIBS_CLEAN}:
 	@make -C$(dir $@) clean 
 	@TESTS_ROOT=autotests make -Ctests/zrt_test_suite clean
+	@rm -f $(LIBZRT0_OBJECTS)
 	@rm -f $(LIBZRT_OBJECTS)
 	@rm -f $(LIBZGLIBC_OBJECTS)
 	@rm -f $(LIBS)
 	@rm -f lib/*.a
+
+cleanzrt0:
+	@rm -f ${LIBZRT0}
+	@rm -f $(LIBZRT0_OBJECTS)
 
 ################ "make clean_samples" Cleaning samples 
 SAMPLES_CLEAN =$(foreach smpl, ${SAMPLES}, $(smpl).clean)
