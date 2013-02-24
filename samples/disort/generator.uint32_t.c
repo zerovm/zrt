@@ -20,7 +20,7 @@ inline void swap(uint32_t *a, uint32_t *b)
   *b = temp;
 }
 
-int zmain(int argc, char **argv)
+int main(int argc, char **argv)
 {
   uint32_t i;
   uint32_t index;

@@ -103,7 +103,7 @@ int start_node(struct ChannelsConfigInterface *chan_if){
     return 0;
 }
 
-int zmain(int argc, char **argv){
+int main(int argc, char **argv){
     WRITE_FMT_LOG(LOG_DEBUG, "Manager node started argv[0]=%s.\n", argv[0] );
     if ( argc < 2 ){
 	WRITE_LOG(LOG_ERR, "argv[1] is expected, items count need to be passed.\n" );
