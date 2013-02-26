@@ -1,0 +1,19 @@
+* TODO file for GNU tar				-*- outline -*-
+
+Tell <pinard@iro.umontreal.ca> if you feel like volunteering for any
+of these ideas, listed more or less in decreasing order of priority.
+
+.@ ChangeLog
+
+.* Revise 3/rmail/{malloc,memcmp}.
+.* Rename --absolute-paths to --absolute-names
+.* Make so that --rsh-command may be used even if !HAVE_RTAPELIB.
+.* revise all NAMSIZ references, too often related to short buffers.
+.* current_link_name, current_file_name not always quoted when printed.
+.* Let DEVICE_PREFIX be configured from the environment.
+.* --ignore-failed-read might have been defeated.
+.* diffarch.c: confusion between stderr and stdlis, WARN and ERROR.
+.* create.c: diagnostics missing when `goto badfile'.
+.* split tar.h into genuine POSIX tar.h and system.h.
+.* error should have a way to emulate msg or msg_perror.
+.* Make a debugging feature out of all `#if 0'.

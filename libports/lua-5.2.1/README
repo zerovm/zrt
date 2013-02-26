@@ -1,0 +1,12 @@
+---------------------------------------------
+Lua static library. This is Lua 5.2.1, released on 08 Jun 2012. Ported to ZRT.
+source: www.lua.org
+---------------------------------------------
+
+1. Static Library using Lua 5.2.1 distribution files AS IS. Files related to lua compiler and interpretator
+ not a part of library and was moved into folder lua-5.2.1/src/not_for_lib;   
+2. In order link it add the folowing flags: -L{YOUR_ZRT_ROOT}/lib -lzrt -llua;
+3. Lua test suite is using this library, to pass Lua tests;
+4. Easy run of lua scripts is provided by zshell executable, can be found here /zrt/samples/zshell;
+5. Here is some limitations related to zrt library and ZeroVM for files I/O. see /zrt/lib/README 
+

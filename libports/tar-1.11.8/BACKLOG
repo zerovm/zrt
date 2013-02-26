@@ -1,0 +1,944 @@
+# Summary of pending email for GNU tar 1.11.8.
+# Last updated: Saturday, June 17, 1995.
+#
+# You may use this BACKLOG file for checking if I still have an
+# unprocessed report of yours, or just to have a feeling of how
+# this package is evolving (or not :-).  Please be kind enough to
+# check here before reporting again a problem that is not solved
+# in this release.
+# 
+# When I will process a report from you, you may reasonably count
+# on the fact that I will give you some feedback at that time.
+# By merely re-sending a report I already have, you are just putting
+# more burden on my shoulders, and surely not making things go
+# any faster.
+# 
+# I could of course withhold a release until all reported problems
+# are solved.  This would not always be practical, nor fair for
+# the community, when some of all reported bugs are solved indeed.
+# So I have to cut the pear in halves, draw a line somewhere, and
+# still make releases once in a while.
+#
+# About the principle of the BACKLOG file itself, my opinion is that
+# users deserve to know where maintenance stands for what they use.
+# Ignorance is sometimes more comfortable, but does not change facts.
+# If commercial companies were indeed publishing their own internal
+# bug lists, I think you would feel more secure with GNU software!
+
+
+rmail/announce
+ 1. 04 Dec 94 pinard@IRO.UMontreal.CA: Prerelease: GNU tar 1.11.6
+ 2. 09 Dec 94 Francois Pinard: Re: Jan1995 GNU's Bulletin: @item @code{tar}
+ 3. 17 May 95 François Pinard: Prerelease: GNU tar 1.11.7
+ 4. 07 Jun 95 Michael I Bushnell: Re: GNU tar documentation
+ 5. 07 Jun 95 François Pinard: Re: GNU tar documentation
+ 6. 17 Jun 95 François Pinard: GNU tar maintainance
+
+rmail/priorities
+ 1. 05 Sep 94 Francois Pinard: Re: tar changes
+ 2. 06 Sep 94 rms@gnu.ai.mit.edu: Re: tar changes
+ 3. 06 Sep 94 Francois Pinard: Re: tar changes
+ 4. 06 Sep 94 rms@gnu.ai.mit.edu: Re: tar changes
+ 5. 19 Nov 94 John Gilmore: Re: tar, block counts, and blocking factors 
+ 6. 18 May 95 Richard Stallman: Re: GNU tar 1.11.7 prereleased soon
+ 7. 04 Sep 94 Francois Pinard: Re: tar changes
+ 8. 05 Sep 94 Francois Pinard: Re: tar changes
+
+rmail/0/configuration
+ 1. 24 May 95 Bruno Haible: Re: Prerelease: GNU tar 1.11.7
+ 2. 28 May 95 K. Berry: Re: revised tar.texi
+ 3. 07 Jun 95 Ulrich Drepper: date + version.texi
+ 4. 16 Jun 95 Ulrich Drepper: pretar-1.11.8
+
+rmail/0/documentation
+ 1. 28 May 95 K. Berry: Re: revised tar.texi
+
+rmail/0/errno-problems
+ 1. 22 Aug 94 pcn@tbit.dk: Re: Prerelease: GNU tar version 1.11.5
+ 2. 24 Aug 94 uddeborg@carlstedt.se: Report on the compilation of tar 1.11.5
+ 3. 05 Nov 94 Roland McGrath: tar bug
+ 4. 08 Nov 94 pinard@gnu.ai.mit.edu: Re: tar bug
+
+rmail/0/ian-piercarlo
+ 1. 03 Oct 94 Ian Jackson: Re: uuencode 1.0: Ultrix, use of spaces, no table, n
+
+rmail/0/memory-management
+ 1. 08 Jul 91 pierce cantrell: tar-1.10 core dumps on long file names
+ 2. 13 Aug 91 Pierce Cantrell: GNU tar 1.10 Patch for multi-volume, long filena
+ 3. 04 Oct 91 ro@thp.uni-koeln.de: NULL ptr dereference in GNU tar 1.10
+ 4. 26 May 93 Operator: memory garbaging up bug found / causes gnutar to coredu
+ 5. 30 Sep 93 Vic Abell: GNU tar 1.11.2 under NeXTSTEP 3.1 (followup)
+ 6. 27 Nov 93 Axel Habermann: Bug in gnu-tar 1-11.2
+ 7. 20 Dec 93 Frank Gales [ET]: gnutar
+ 8. 10 May 94 Michael P Urban: GNUTAR 1.11.2: Coredump from long file names
+ 9. 19 Aug 94 haible@ma2s2.mathematik.uni-karlsruhe.de: Re: Prerelease: GNU tar
+10. 16 Oct 94 Matthew Dillon: Re: memory garbaging up bug found / causes gnutar
+11. 28 Nov 94 Paul Mitchell: tar-1.11.2
+12. 19 Jan 95 Ed Sirett: gnu-tar.1.11.2 - Verification on tape media.
+13. 19 Jan 95 Francois Pinard: Re: gnu-tar.1.11.2 - Verification on tape media.
+14. 07 Feb 95 Marty Leisner: problems with tar-1.11.[56]
+15. 07 Feb 95 Francois Pinard: Re: problems with tar-1.11.[56]
+16. 07 Feb 95 Marbury, Gerald D.: GNU tar version 1.11.2
+17. 25 Feb 95 Walter C. Pelissero: GNU tar on FreeBSD 2.0
+18. 28 Feb 95 Andrey A. Chernov, Black Mage: Re: GNU tar on FreeBSD 2.0
+19. 23 May 95 Kevin Dalley: core dump in tar-1.11.7 and tar-1.11.5 for multi-vo
+20. 28 May 95 François Pinard: Re: core dump in tar-1.11.7 and tar-1.11.5 for m
+
+rmail/0/restoring-permissions
+ 1. 03 Apr 93 Bruce Evans: tar-1.11.2 umask and USG
+ 2. 10 Aug 93 Gijsb. Wiesenekker: (none)
+ 3. 17 May 91 Leslie Mikesell: Re: Do you use find command?
+ 4. 05 Aug 94 tim@tct.com: filutils-3.9: install
+ 5. 14 Aug 94 andersa@Mizar.DoCS.UU.SE: Re: tar 1.11.2
+ 6. 09 Nov 94 Lack Mr G M: Bug(?) in cpio-2.3
+ 7. 08 Dec 94 Bruno Haible: tar-1.11.6 --same-owner
+ 8. 23 Aug 94 piercarl@ltd.c-d.com: Re: Prerelease: GNU tar version 1.11.4
+ 9. 25 Mar 95 Roland McGrath: tar -xp
+10. 05 Apr 95 François Pinard: Re: tar -xp
+
+rmail/0/rtapelib
+ 1. 12 Sep 94 abe@vic.cc.purdue.edu: Re: Prerelease: GNU tar version 1.11.5 
+ 2. 20 Dec 94 Minh Tran-Le: bug in tar-1.11.6 for remote tape device ...
+ 3. 17 Aug 94 schwab@issan.informatik.uni-dortmund.de: Tar 1.11.4: build proble
+
+rmail/0/sgtty-offt-etc
+ 1. 26 Feb 94 Jeanette Pauline Middelink: CPIO 2.3 bugs
+ 2. 15 Sep 94 Francois Pinard: Re: GNU tar 1.11.5
+ 3. 30 Sep 94 John L. Chmielewski: tar.1.11.5 problems and fixes
+ 4. 04 Oct 94 ghazi@caip.rutgers.edu: tar-1.11.5 build report ...
+ 5. 04 Oct 94 Francois Pinard: Re: tar-1.11.5 build report ...
+ 6. 20 Oct 94 ke@pertron.central.de: cpio 2.3: configure failed for rmt
+ 7. 05 Dec 94 Jim Blandy: Re: Prerelease: GNU tar 1.11.6
+ 8. 17 Jan 95 Thomas Krebs: tar patches for FreeBSD
+ 9. 16 Jan 95 Sergei Viznyuk: Re: How do I deal with #include <sgetty.h>
+10. 17 Jan 95 Alex Yuriev: Re: How do I deal with #include <sgetty.h>
+
+rmail/0/sigchild-problems
+ 1. 18 Aug 94 Marc Aurele La France: On SIGCHLD signals
+ 2. 22 Aug 94 tsi@gpu.srv.ualberta.ca: Changes to GNU tar-1.11.2 package
+ 3. 23 Aug 94 tsi@gpu.srv.ualberta.ca: Re: Changes to GNU tar-1.11.2 package
+ 4. 13 Apr 95 Marc Aurele La France: Re: Changes to GNU tar-1.11.2 package
+ 5. 13 Apr 95 François Pinard: Re: Changes to GNU tar-1.11.2 package
+ 6. 13 Apr 95 François Pinard: Re: Changes to GNU tar-1.11.2 package
+ 7. 13 Apr 95 Marc Aurele La France: Re: Changes to GNU tar-1.11.2 package
+
+rmail/0/signal-handling
+ 1. 07 Apr 95 Greg McGary: GNU tar is vulnerable to EINTR failures
+ 2. 09 May 95 Greg McGary: tar patches for safe_read, full_write
+
+rmail/0/syserrlist
+ 1. 08 Oct 94 ghudson@mit.edu: Compilation problems with cpio-2.3 under NetBSD
+ 2. 17 May 95 Chris Arthur: Re: Prerelease: GNU tar 1.11.7
+ 3. 28 May 95 François Pinard: [csa@csatech.com: Re: Prerelease: GNU tar 1.11.7
+ 4. 28 May 95 François Pinard: Re: Prerelease: GNU tar 1.11.7
+ 5. 28 May 95 David J. MacKenzie: I'm on vacation
+ 6. 31 May 95 David J. MacKenzie: Re: [csa@csatech.com: Re: Prerelease: GNU tar
+ 7. 01 Jun 95 François Pinard: Re: [csa@csatech.com: Re: Prerelease: GNU tar 1.
+
+rmail/0/union-wait
+ 1. 01 Jan 95 Francois Pinard: [mjshield@nyx.cs.du.edu: make 3.71 `configure' b
+ 2. 09 Jan 95 Coranth Gryphon: Configure problems with GMAKE 3.72.1
+ 3. 09 Jan 95 Francois Pinard: Re: Configure problems with GMAKE 3.72.1
+ 4. 09 Jan 95 Coranth Gryphon: Re: Configure problems...
+ 5. 09 Jan 95 Coranth Gryphon: Re: Tar configuration update...
+ 6. 03 Feb 95 Jean-Philippe Martin-Flatin: Re: GNU tar 1.11.2
+ 7. 06 Mar 95 Tarang Kumar Patel: Re: Ref: installation of tar-1.11.2 on SGI ru
+ 8. 15 Mar 95 François Pinard: Re: Ref: installation of tar-1.11.2 on SGI runni
+ 9. 19 Mar 95 Alan Bawden: GNU tar: BSD42 not set under FreeBSD, --sparse fails
+10. 22 Apr 95 R. Bernstein: make 3.73 vs. union wait
+11. 17 May 95 Chris Arthur: Re: Prerelease: GNU tar 1.11.7
+
+rmail/0/utimbuf-problems
+ 1. 13 Jan 95 Francois Pinard: Re: fileutils 3.12: AIX 2 changes
+ 2. 13 Jan 95 Jason Downs: Re: fileutils 3.12: AIX 2 changes 
+
+rmail/0/wrong-owner
+ 1. -- --- -- Johannes Helander: Re: tar should have numeric uid/gid option
+ 2. -- --- -- -----: GNU tar 1.10/beta bugfixes
+ 3. 11 Sep 91 wierda@ltb.bso.nl: here is a quick and dirty hack for the directo
+ 4. 23 Jun 93 Ian Jackson: Uid/gid extraction still broken in 1.11.2
+ 5. 23 Jun 93 Johannes Helander: Re: Uid/gid extraction still broken in 1.11.2
+ 6. 17 Apr 94 Ian Jackson: GNU tar 1.11.2 doesn't exit if -C fails
+ 7. 16 Jun 94 Ian Jackson: GNU tar-1.11.2 bugs - patch and new binary available
+ 8. 12 Jul 94 brown@bibliotech.com: bug in GNU tar?
+ 9. 14 Jul 94 ccwf@ludwig.klab.caltech.edu: Re: bug in GNU tar?
+10. 15 Jul 94 ccwf@klab.caltech.edu: Re: bug in GNU tar?
+11. 19 Jul 94 iwj10@cus.cam.ac.uk: Re: bug in GNU tar?
+12. 28 Jul 94 torkel@bibsyst.no: Re: gnu tar
+13. 23 Aug 94 piercarl@ltd.c-d.com: Re: Prerelease: GNU tar version 1.11.4
+14. 16 Dec 94 Tim P. Starrin: tar-1.11.2b patch
+15. 14 Mar 95 rbs@acs.bu.edu: Gnu tar - ownership of extracted files
+16. 04 May 95 Jean Bouchard Tech VLSI: tar ownership problem
+17. 15 Jun 95 Bernard Derval: GNU tar
+18. 15 Jun 95 François Pinard: Re: GNU tar
+
+rmail/1/8-bit-locales
+ 1. 22 Oct 91 axel@chaos1.ccc.in.sub.org: GNU tar 1.10 problem with 8-bit-ascii
+ 2. 09 Dec 94 Bruno Haible: tar-1.11.6 and Latin-1 characters
+ 3. 24 Apr 95 Ryutaro Susukita: tar-1.11.2 SunOS-4.1.3 JLE-1.1.3 segmentaion fa
+ 4. 09 Jan 95 Marty Leisner: what's code-to-tbl in tar?
+ 5. 13 Jan 95 Marty Leisner: Re: what's code-to-tbl in tar? 
+ 6. 08 Mar 95 Jochen Hein: GNU-packages to internationalize
+ 7. 01 Feb 95 Konno Hiroharu: Some problems in GNU tar-1.11.2
+ 8. 01 Feb 95 Francois Pinard: Re: Some problems in GNU tar-1.11.2
+
+rmail/1/blocking
+ 1. 29 Aug 92 David J. MacKenzie: another tar format difference
+ 2. 26 Mar 93 Mike Silano: Re: Bug in tar-1.11.1 on SCO 3.2.2
+ 3. 28 Mar 93 Pete Geenhuizen: Re: Version 1.11.2 of GNU tar is now available
+ 4. 28 Apr 93 Mike Silano: Re: Problem with gtar-1.11.2
+ 5. 28 Apr 93 Kambiz Aghaiepour: Re: Problem with gtar-1.11.2
+ 6. 20 May 93 Barracuda: GNU tar 1.10 problem
+ 7. 06 Jun 93 Jeff Finger: gnutar 1.11.2/gcc-2.4.3 installation problem
+ 8. 01 Jul 93 ian@cygnus.com: GNU tar and gcc header installation on Ultrix
+ 9. 05 Jul 93 ian@cygnus.com: GNU tar and gcc header installation on Ultrix
+10. 05 Jul 93 Richard Stallman: Re: [ian@cygnus.com: GNU tar and gcc header ins
+11. 11 Jul 94 Bill Beaton: Re: Transporting files using cpio
+12. 26 Aug 94 ericb@lsid.hp.com: Re: GNU cpio version 2.3 suggestion and proble
+13. 07 Nov 94 Jim Meyering: GNU tar vs SunOS tar (was Re: is this tar file ok? 
+14. 07 Nov 94 Shauh-Teh Juang: fileutils-3.12.tar.gz
+15. 08 Nov 94 john@bostech.com: Re: is this tar file ok?
+16. 09 Nov 94 John_D._Sybalsky.MV@envos.xerox.com: SGI install experience for t
+17. 10 Nov 94 Nelson Minar: fileutils-3.12 tar file problem
+18. 10 Nov 94 John Gilmore: Re: tar, block counts, and blocking factors 
+19. 11 Nov 94 Jim Meyering: GNU tar vs SunOS /bin/tar
+20. 11 Nov 94 Francois Pinard: Re: GNU tar vs SunOS /bin/tar
+21. 11 Nov 94 Jim Meyering: Re: fileutils-3.12 : tar file is 'foul'
+22. 10 Jan 95 Christian Jonsson: Re: kpathsea 2.6/xdvik 18f/dvipsk 5.58f/dviljk
+23. -- --- -- -----: (none)
+24. 10 Jan 95 Christian Jonsson: Re: kpathsea 2.6/xdvik 18f/dvipsk 5.58f/dviljk
+25. 10 Jan 95 K. Berry: GNU tar incompatibility?
+26. 10 Jan 95 Francois Pinard: Re: GNU tar incompatibility?
+27. 12 Jan 95 Peter Dyballa: Re: GNU tar incompatibility?
+28. 29 Jan 95 Kai: Re: gnu tar on bsdi
+29. 01 Feb 95 Ed Sirett: Re: gnu-tar.1.11.2 - Verification on tape media.
+30. 24 Feb 95 Dick Streefland: [tar-1.11.6] --sparse suggestion / Broken pipe
+31. 24 Feb 95 Dick Streefland: [tar-1.11.6] --sparse suggestion / Broken pipe
+32. 26 Feb 95 David Monro: bug + added feature in fileutils 3.12 cp
+33. 14 Mar 95 ralphc@sps.siemens.co.uk: Problems With GNU Tar 1.11.2 On AIX 3.2
+34. 28 Mar 95 Charles Lamb: tar and EOF markers
+35. 28 Mar 95 François Pinard: Re: tar and EOF markers
+36. 18 May 95 Tom Arnold: GNU tar not on blocke boundary problem
+37. 31 May 95 Glenn Coombs: Problem with blocking factor
+38. 12 Jun 95 Michael I Bushnell: Re: GNU tar format
+39. 12 Jun 95 François Pinard: Re: GNU tar format
+40. 12 Jun 95 Michael I Bushnell: Re: GNU tar format
+41. 12 Jun 95 François Pinard: Re: GNU tar format
+
+rmail/1/c-option
+ 1. 06 Oct 94 dave@hiauly1.hia.nrc.ca: Re: Possible problem with tar-1.11.5
+ 2. 04 Nov 94 patrick timmons: bug with tar 1.11.2 ?
+ 3. 07 Feb 95 Marty Leisner: problems with tar-1.11.[56]
+ 4. 17 May 95 John David Anglin: Re: Prerelease: GNU tar 1.11.7
+ 5. 28 May 95 K. Berry: revised tar.texi
+ 6. 07 Feb 95 Francois Pinard: Re: problems with tar-1.11.[56]
+
+rmail/1/create-problems
+ 1. 23 Sep 94 hoymand@gate.net: Problem w/ GNU tar 1.11.2 on Next
+ 2. 30 Oct 94 Alexander Lehmann: gnu tar: configure doesn't work correctly on N
+ 3. 03 Nov 94 Francois Pinard: Re: GNU tar question...
+ 4. 29 Nov 94 R. Bernstein: Mushrooms, Unix Haters
+ 5. 16 Dec 94 Jeffrey S. Sorensen: Problem with GNU tar
+ 6. 03 Nov 94 Francois Pinard: Re: GNU tar question...
+ 7. 03 Nov 94 Jeffrey W. Parker: GNU tar question...
+ 8. 03 Nov 94 root@lidp5: Results of backup started Wed Nov 2 19:00:01 CST 1994
+ 9. 10 Mar 94 Vax: Tar inconsistencies.
+10. 17 Jul 94 karl@owl.HQ.ileaf.com: tar c
+11. 17 Jul 94 Francois Pinard: Re: tar c
+12. 20 Feb 95 Stephen Gildea: tar: want to not write user/group info into archi
+13. 20 Feb 95 Francois Pinard: Re: tar: want to not write user/group info into 
+14. 27 Mar 95 Stephen Gildea: autoconf: to have tar follow links, which flag?
+15. 10 Apr 95 Rob MacLeod: tar bug
+16. 17 Apr 95 K. Berry: tar --create --verbose & sizes
+17. 17 Apr 95 François Pinard: Re: tar --create --verbose & sizes
+
+rmail/1/denotation-affixes
+ 1. 26 Sep 91 wierda@ltb.bso.nl: tar does not recognize name without ./
+ 2. 18 Feb 93 Peter W. Osel: Would these new tar options be useful?
+ 3. 20 Feb 93 Peter W. Osel: Re: Would these new tar options be useful?
+ 4. 25 Mar 93 John Giannandrea: gnu tar
+ 5. 08 Dec 94 David J. MacKenzie: making 'make dist' simpler and faster
+ 6. 08 Dec 94 Francois Pinard: Re: making 'make dist' simpler and faster
+ 7. 08 Dec 94 David J. MacKenzie: Re: making 'make dist' simpler and faster
+ 8. 08 Mar 95 Carl Mascott: GNU cpio POSIX ustar questions
+ 9. 15 Mar 95 François Pinard: Re: Ref: installation of tar-1.11.2 on SGI runni
+10. 31 May 95 Ulrich Mueller: GNU tar 1.11.2, routines quote_copy_string and un
+
+rmail/1/dir-nextstep
+ 1. 09 Sep 94 abe@vic.cc.purdue.edu: Re: Prerelease: GNU tar version 1.11.5 
+ 2. 17 Oct 94 amon@walt.music.qub.ac.uk: Has anyone compiled gnutar 1.11.2 for 
+ 3. 02 Dec 94 Stephen J. Perkins: Gnutar on NeXTSTEP	
+
+rmail/1/extract-problems
+ 1. 02 Jun 93 Robert Eckardt: tar-1.11.2
+ 2. 17 Jun 93 J. Mark Noworolski: tar 1.11.2 bug with -O ?
+ 3. 15 Dec 93 Andreas Schwab: cpio 2.3: bug in make_path
+ 4. 25 Mar 94 Goeran Uddeborg: possible improvement of configuration of fileuti
+ 5. 18 Jun 94 iwj10@cus.cam.ac.uk: Re: [tar 1.11.2] Ownership of extracted syml
+ 6. 18 Jun 94 koppenas@tick.informatik.uni-stuttgart.de: Re: [tar 1.11.2] Owner
+ 7. 12 Aug 94 ctd@space.mit.edu: Re: tar-1.11.3
+ 8. 26 Aug 94 curt@watson.ibm.com: GNU tar disaster!
+ 9. 02 Sep 94 Francois Pinard: Re: GNU tar disaster!
+10. 06 Sep 94 curt@watson.ibm.com: Note from you attached below
+11. 17 Sep 94 czyborra@cs.tu-berlin.de: tar-1.11.2 mkdir woes
+12. 17 Sep 94 czyborra@cs.tu-berlin.de: Re: tar-1.11.2 mkdir woes
+13. 12 Oct 94 kb@cs.umb.edu: tar enhancement
+14. 14 Oct 94 David J Topper: Tar | Seyon Problems
+15. 18 Oct 94 koenig@tat.physik.uni-tuebingen.de: bug/possible security problem
+16. 15 Nov 94 Lack Mr G M: Bug(?) in cpio-2.3
+17. 19 Dec 94 Harald Koenig: bug/possible security problem with GNU tar-1.11.6 
+18. 22 Jan 95 Paul Rubin: another tar suggestion
+19. 23 Jan 95 Karel Kubat: Re: DISCUSSION: afio 2.4.1 new feature 
+20. 24 Jan 95 Koen Holtman: Re: DISCUSSION: afio 2.4.1 new feature
+21. 24 Jan 95 Karel Kubat: Re: DISCUSSION: afio 2.4.1 new feature 
+22. 24 Jan 95 Koen Holtman: Re: DISCUSSION: afio 2.4.1 new feature
+23. 02 Feb 95 Marty Leisner: tar feature (not documented?)
+24. 02 Feb 95 Francois Pinard: Re: tar feature (not documented?)
+25. 07 Feb 95 Marty Leisner: problems with tar-1.11.[56]
+26. 13 Feb 95 Jonathan I. Kamens: GNU tar 1.11.2: handles hard links wrong when
+27. 25 Mar 95 François Pinard: Re: decipher "tar" options
+28. 07 Apr 95 Marty Leisner: backup patches to gnu tar...
+29. 07 Apr 95 Greg McGary: tar enhancement
+
+rmail/1/huge-archives
+ 1. 26 Jan 95 verberne@prl.philips.nl: backup > 2Gigabyte disk with gtar?
+ 2. 27 Jan 95 Francois Pinard: Re: backup > 2Gigabyte disk with gtar?
+
+rmail/1/incomplete-write
+ 1. 23 Dec 93 Bruno Haible: obvious bug in cat and several other text utilities
+ 2. 16 Aug 94 Thomas.Koenig@ciw.uni-karlsruhe.de: tar, on Linux this time
+ 3. 01 Sep 94 Chris Metcalf: lossage with "tar cz" writing to gzip; easy fix?
+ 4. 02 Sep 94 Chris Metcalf: Re: lossage with "tar cz" writing to gzip; easy fi
+ 5. 08 Sep 94 Mitch Davis: Re: lossage with "tar cz" writing to gzip; easy fix?
+
+rmail/1/long-names
+ 1. 03 Aug 91 Max Hailperin: contextualization of tar 1.10 diffs
+ 2. 11 Aug 91 Max Hailperin: bug in earlier tar-1.10 bug fix/improvment
+ 3. 10 Sep 92 Robert E. Brown: GNU tar version 1.11 bug
+ 4. 10 Sep 92 Robert E. Brown: GNU tar 1.11 bug ??
+ 5. 07 Jun 93 Tim Rylance: tar 1.11.2: "Visible longname error" bug
+ 6. 07 Jun 93 Brian R. Smith: bug in gnu tar 1.11.2 - long link names
+ 7. 16 Jun 93 Chris Verberne: Proposal for improvement of gtar 1.11.2
+ 8. 16 Jun 93 Steven Kimball 603-885-3306: tar-1.11.2
+ 9. 19 Aug 93 J.T. Conklin: cpio 2.3 can produce non-portable cpio archives.
+10. 07 Sep 93 Robert E. Brown: tar glitches
+11. 21 Jan 94 Marcel Waldvogel: GNU tar 1.11.2 and hard links to files with lon
+12. 02 Aug 94 kpc@ptolemy-ethernet.arc.nasa.gov: gtar: -X option and filename l
+13. 02 Aug 94 Francois Pinard: Re: gtar: -X option and filename length
+14. -- --- -- Nelson H.F. Beebe: Errata, comments, and bug in GNU tar 1.04
+15. 26 Oct 94 Chance Reschke: GNU tar 1.11.2 core dumps
+16. 27 Oct 94 Francois Pinard: Re: GNU tar 1.11.2 core dumps
+17. 29 Oct 94 Ben Stuyts: Re: GNU tar 1.11.2 core dumps
+18. 30 Oct 94 Chance Reschke: Re: GNU tar 1.11.2 core dumps
+19. 29 Oct 94 Ben Stuyts: Re: GNU tar 1.11.2 core dumps
+20. 13 Aug 91 Pierce Cantrell: GNU tar 1.10 Patch for multi-volume, long filena
+21. 23 Jan 95 Peter Fox: (none)
+22. 15 Mar 95 Joachim Schrod: Re: Problems With GNU Tar 1.11.2 On AIX 3.2.5.
+23. 20 Apr 95 Tom Tromey: Bug in GNU tar 1.11.2
+24. 10 Jun 95 Arne Wichmann: tar-1.11.2, verbose creation and longnames
+
+rmail/1/remote-user
+ 1. 30 Mar 93 Robert Eckardt: tar-1.11.2
+ 2. 19 Aug 94 haible@ma2s2.mathematik.uni-karlsruhe.de: Re: Prerelease: GNU tar
+ 3. 31 Mar 95 Friedhelm Waitzmann: Re: How do I forward incoming mail to a mail
+
+rmail/1/restoring-symlinks-etc
+ 1. 20 Jun 93 Jim Graham: problem (?) with GNU tar version 1.11.1
+ 2. 25 Oct 93 mhpower@MIT.EDU: tar symlink ownership problem
+ 3. 13 Jun 94 mib@gnu.ai.mit.edu: Re: A problem with tar-1.11.2 ??
+ 4. 13 Jun 94 Warren Dodge: Re: A problem with tar-1.11.2 ??
+ 5. 17 Jun 94 Wolfram Gloger: [tar 1.11.2] Ownership of extracted symlinks (w/ 
+ 6. 18 Jun 94 Andreas Koppenhoefer: Re: [tar 1.11.2] Ownership of extracted sym
+ 7. 28 Jul 93 Bo Nygaard Bai: Bug in gnu tar 1.11.2: restoring links fails in s
+ 8. 07 Sep 94 kpc@ptolemy-ethernet.arc.nasa.gov: gtar: symlink errors
+ 9. 07 Jun 94 fvm@tasking.nl: cpio/find problems with certain NFS implementatio
+
+rmail/1/rmt-location
+ 1. 09 Aug 94 Francois Pinard: Re: Prerelease: GNU tar version 1.11.3
+ 2. 23 Aug 94 torkel@bibsyst.no: Re: Prerelease: GNU tar version 1.11.5
+ 3. 23 Aug 94 wbader@CSEE.Lehigh.Edu: more on tar and sco unix
+ 4. 02 Sep 94 John David Anglin: Installation directory for rmt -- tar-1.11.5 p
+ 5. 07 Sep 94 tilman@gb1.sema.de: Re: Prerelease: GNU tar version 1.11.5
+ 6. 07 Dec 94 Jeff Longcore: tar-1.11.2 installation complaint
+ 7. 08 Dec 94 Francois Pinard: Re: tar-1.11.2 installation complaint
+ 8. 05 Jan 95 David J. MacKenzie: rtapelib.c, location of rmt
+ 9. 21 Mar 95 François Pinard: Re: GNU tar: BSD42 not set under FreeBSD, --spar
+10. 19 Mar 95 W. Phillip Moore: Inconfigurability in cpio-2.3 Makefile.in
+11. 16 Jun 95 David Kemp: rmt on an rs6000; missing mtio.h
+
+rmail/1/special-chars
+ 1. 01 Aug 91 Max Hailperin: bugs in tar 1.10 string quoting/unquoting
+ 2. 16 Oct 91 Martin Tomes: Bug in GNU tar version 1.08
+ 3. 22 Oct 91 axel@chaos1.ccc.in.sub.org: GNU tar 1.10 problem with 8-bit-ascii
+ 4. 13 Nov 91 Waltraud Lechner-Rau: GNU tar 1.10 problem with 8-bit-ascii-pathn
+ 5. 28 Oct 92 Andreas Schott: tar.1.11.1
+ 6. 10 May 93 Allen Delaney: Re: incrementals & unprintable characters in file 
+ 7. 29 Sep 93 System Admin (Mike Peterson): gnu tar 1.11.2 problems on HP-UX 9.
+ 8. 12 Apr 94 Robert E. Brown: file name quoting bugs in GNU tar 1.11.2
+ 9. 29 Mar 95 Joergen Haegg: Bug (?) in tar 1.11.2
+10. 01 Apr 95 Detlef Schwier: Gnu tar and umlaut character
+11. 10 Sep 94 Maarten Litmaath: bug found in GNU tar-1.11.2
+
+rmail/1/tape-problems
+ 1. 08 Sep 94 Alberto Maria Segre: FTAPE and GNU mt screw up
+ 2. 18 Apr 95 keith@cathi1.bsd.uchicago.edu: (none)
+ 3. 18 Apr 95 François Pinard: GNU tar [was: (none)]
+ 4. 18 Apr 95 keith@cathi1.bsd.uchicago.edu: (none)
+ 5. 18 Apr 95 François Pinard: GNU tar [was: (none)]
+ 6. 28 May 95 François Pinard: Re: Prerelease: GNU tar 1.11.7
+ 7. 01 Jan 95 Francois Pinard: Re: Prerelease: GNU tar version 1.11.5
+ 8. 17 May 95 Chris Arthur: Re: Prerelease: GNU tar 1.11.7
+
+rmail/1/unlink-before
+ 1. 27 Mar 93 Seth Robertson: tar-1.11.2 - remove-before (+code)
+ 2. 28 Jul 93 Chris G. Demetriou: diffs to tar, so it's more useful...
+ 3. 17 Sep 93 Warner Losh: tar 1.11.2 enhancement request
+ 4. 04 Nov 93 Wolfram Wagner: proposed extention for gnu-tar
+ 5. 15 Aug 94 verberne@prl.philips.nl: Gnu-tar 1.11.2 bug with extract
+ 6. 18 Nov 94 Andrew A. Chernov, Black Mage: Usuable addition to TAR
+
+rmail/1/verbosity
+ 1. 28 Aug 89 Zdenko Tomasic: Re: gnutar on mips rs2030, multi-volume problem
+ 2. 17 Jul 91 Virgil Champlin: Tar 1.10 bug with archive open errors.
+ 3. 19 Nov 92 John P. Rouillard: Patch for putting verbose listing info into fi
+ 4. 29 Mar 93 Vince DeMarco: Re: Tar suggestion
+ 5. 12 May 93 Karl Berry: tar 1.12.2 & --show-omitted-dirs extra newline
+ 6. 14 May 93 Noah Friedman: tar and absolute file names
+ 7. 19 Jul 93 gergen@edvulx.mpi-stuttgart.mpg.de: GNU tar 11.2
+ 8. 30 Jul 93 Chris G. Demetriou: oops...
+ 9. 10 Aug 93 Tony Silva: minor bug in GNU tar version 1.11.2
+10. 08 Dec 93 verberne@prl.philips.nl: Bug in GNU tar 1.11.2
+11. 10 Mar 94 John R. Vanderpool: status of GNU tar
+12. 26 Apr 94 Roland McGrath: tar feature idea: status reports
+13. 04 May 94 Steve Davis: Re: tar feature idea: status reports
+14. 10 May 94 Joerg Weule: Help -- whom to write for tar extension ?
+15. 29 Oct 92 John P. Rouillard: Need help with the manual?
+16. 15 Sep 94 kwzh@gnu.ai.mit.edu: fileutils-3.9: ls printf format
+17. 26 Sep 94 leisner@sdsp.mc.xerox.com: tar 1.11.5 -C <no existent directory>
+18. 15 Dec 94 George B. Ross: gnutar --totals option broken?
+19. 04 May 95 Jim Meyering: Re: GNU tar 1.11.[78] and localization
+20. 31 May 95 Rod Thompson: GNU Tar 1.11.2 integer overflow on --totals
+
+rmail/2/compression-mode
+ 1. -- --- -- Jean-loup Gailly: Re: gnu tar on bsdi 
+ 2. 25 Mar 89 Don Bennett (408)433-3311: tar 1.05 bugs
+ 3. 20 Apr 93 Frank Terhaar-Yonkers: gtar hacks
+ 4. 26 Apr 93 Frank Terhaar-Yonkers: Re: gtar hacks
+ 5. 30 Apr 93 Jean-loup Gailly: tar with compression on tapes
+ 6. 30 May 93 Brian J. Murrell: Re: file compression with tar
+ 7. 08 Sep 93 Casper: TAR-suggestion
+ 8. 10 Sep 93 Jean-loup Gailly: Re: TAR-suggestion 
+ 9. 15 Sep 93 Marcin Matuszewski (IA PW): GNU Tar
+10. 16 Sep 93 Jean-loup Gailly: Re: GNU Tar 
+11. 29 Sep 93 Esa Karell: Broken pipe/gtar: child returned status 1
+12. 04 Nov 93 Esa Karell: gtar: child returned status 2
+13. 21 Dec 93 Bennett Todd: Problem with GNU tar --- writer gets SIGPIPE
+14. 13 Feb 94 Richard Stallman: tar idea
+15. 02 Jun 94 Jean-loup Gailly: Re: GNU Tar version 1.11.2 
+16. 05 Aug 94 rms@gnu.ai.mit.edu: tar idea
+17. 02 Sep 94 Delemar: Re: Which is better: tar->gzip or gzip->tar?
+18. 08 Sep 94 Kai Petzke: Re: Which is better: tar->gzip or gzip->tar?
+19. 03 Nov 94 Jeffrey W. Parker: GNU tar question...
+20. 13 Nov 94 peter hayward: Re: Can DAT drives switch compression on and off?
+21. 14 Nov 94 Ron Pritchett: Re: Can DAT drives switch compression on and off?
+22. 15 Nov 94 Marc Ewing: Re: Can DAT drives switch compression on and off?
+23. 16 Nov 94 Doug McLaren: gnu tar with slightly different --gzip option ?
+24. 17 Nov 94 wd: Re: Can DAT drives switch compression on and off?
+25. 01 Dec 94 Koen Holtman: afio version 2.4 (archiver & backup program)
+26. 21 Dec 94 David L. Wade: tar-1.11.2 why not compression AND multiple tapes?
+27. 24 Dec 94 Francois Pinard: Re: tar-1.11.2 why not compression AND multiple 
+28. 20 Jan 95 Dave Gymer: Re: DISCUSSION: afio 2.4.1 new feature
+29. 28 Jan 95 Kai: gnu tar on bsdi
+30. 05 Feb 95 Michael Hohmuth: gzip-1.2.4: SIGSEGV in huft_build()
+31. 14 Feb 95 bpreece@eos.ncsu.edu: tar enhancement: compress files?
+32. 14 Feb 95 Daniel Quinlan: Re: tar enhancement: compress files?
+33. 08 May 95 Fred Clift: Possible bug with gnu tar 1.11.2 
+34. 11 May 95 Leigh Clayton: GNU Tar Question, or maybe RFE
+35. 11 May 95 Leigh Clayton: GNU Tar Question, or maybe RFE
+36. 14 May 95 François Pinard: Re: GNU Tar Question, or maybe RFE
+37. 28 May 95 K. Berry: revised tar.texi
+38. 09 Jun 95 François Pinard: tar -y / -Y
+39. 09 Jun 95 Jean-loup Gailly: Re: tar -y / -Y 
+40. 09 Jun 95 Jean-loup Gailly: Re: tar -y / -Y 
+
+rmail/2/date-problems
+ 1. 11 Sep 91 wierda@ltb.bso.nl: here is a quick and dirty hack for the directo
+ 2. 26 Apr 93 Richard O'Neill: Re: GNU Tar Bugs related to `-g' and `-G', with 
+ 3. 08 Mar 94 Dieter Woerz: Bug in tar 1.11.2
+ 4. 07 Jan 95 Dino Dini: Still maintaining tar?
+ 5. 07 Jan 95 Francois Pinard: Re: Still maintaining tar?
+ 6. 08 Jan 95 Dino Dini: Fixes/improvements to tar-1.11.2
+ 7. 24 Feb 95 Shaheen Tonse T3156: Re: Gnu Tar
+ 8. 23 Nov 94 Donald Douglas Jolley: Understanding the syntax for invoking tar
+ 9. 27 Apr 95 Sherwood Botsford: Re: Location of present release of gnutar
+10. 04 Jan 95 Jim Meyering: Re: getdate correction [was: Re: tar 1.11.2]
+11. 10 Jun 95 Bryan Higgins: tar --newer
+
+rmail/2/directory-option
+ 1. 29 Dec 91 Francois Pinard: GNU tar: options -C and -T do not work well toge
+ 2. 03 Aug 94 eddy@gen.cam.ac.uk: GNU tar status: here it is! [Re: bug in GNU t
+ 3. 04 Aug 94 pinard@IRO.UMontreal.CA: Re: GNU tar status: here it is! [Re: bug
+
+rmail/2/exclude-option
+ 1. 23 May 89 Gerry Wiener: problem with tar1.05 and tar1.07 on sun4-os4
+ 2. 06 Jul 89 Steven M Romig: tar 1.07 bugs
+ 3. 14 Aug 91 Eric Hanchrow: `tar' 1.10 +extract option sure is hard to use!
+ 4. 25 Sep 91 John A. Turner: tar 1.10
+ 5. 26 Sep 91 wierda@ltb.bso.nl: Exclude pattern does not work and directory il
+ 6. 26 Sep 91 wierda@ltb.bso.nl: Exclude pattern does not work and directory il
+ 7. 10 Aug 93 Ken Harrenstien: GNU tar misfeature
+ 8. 17 Jun 94 Andreas Schwab: Tar 1.11.2: bug with --exclude
+ 9. 12 Jul 94 carol@phoenix.oise.on.ca: --newer DATE option
+10. 13 Jul 94 carol@vizbiz.com: Re: --newer DATE option
+11. 13 Jul 94 carol@vizbiz.com: Re: --newer DATE option
+12. 02 Aug 94 kpc@ptolemy-ethernet.arc.nasa.gov: gtar: -X option and filename l
+13. 29 Aug 94 perry@jpunix.com: tar --exclude doesn't work.
+14. 31 Aug 94 les@mcs.com: Re: tar --exclude doesn't work.
+15. 15 Sep 94 ivo@next.agsm.ucla.edu: Re: gnutar
+16. 02 Oct 94 ellson@hotair.att.com: tar-1.11.2 -X switch doesn't work
+17. 02 Oct 94 Francois Pinard: Re: tar-1.11.2 -X switch doesn't work
+18. 05 Dec 94 Will Partain: tar 1.11.6 and -X option (buglet and comment)
+19. 05 Dec 94 Francois Pinard: Re: tar 1.11.6 and -X option (buglet and comment
+20. 23 Mar 95 Leslie Mikesell: Re: tar
+21. 23 Mar 95 Keith Briggs: tar
+
+rmail/2/exit-statuses
+ 1. 09 Aug 94 holger@hotbso.rhein-main.DE: Re: GNU tar: exit statuses 
+
+rmail/2/gcc-warnings
+ 1. 19 Aug 94 haible@ma2s2.mathematik.uni-karlsruhe.de: Re: Prerelease: GNU tar
+ 2. 21 Aug 94 pinard@IRO.UMontreal.CA: 1.11.5 - premier essai
+ 3. 22 Aug 94 Francois Pinard: (none)
+ 4. 23 Aug 94 gjb@maxim.gba.oz.au: Re: tar-1.11.5 (i486, BSDI-1.1) [create.c]
+ 5. 23 Aug 94 gjb@maxim.gba.oz.au: Re: tar-1.11.5 (i486, BSDI-1.1) [extract.c]
+ 6. 23 Aug 94 gjb@maxim.gba.oz.au: Re: tar-1.11.5 (i486, BSDI-1.1) [diffarch.c]
+ 7. 23 Aug 94 gjb@maxim.gba.oz.au: Re: tar-1.11.5 (i486, BSDI-1.1) [buffer.c]
+ 8. 23 Aug 94 gjb@maxim.gba.oz.au: Re: tar-1.11.5 (i486, BSDI-1.1) [1]
+
+rmail/2/incremental-mode
+ 1. 20 Jan 89 Leonard H. Tower Jr.: (none)
+ 2. 26 May 93 Operator: another gnutar 1.11.2 bug
+ 3. 02 Aug 93 Michael I Bushnell: Re: 1.11.1 on SCO - can't close tape device
+ 4. 25 Aug 93 Michael C. Grant: GNU tar 1.11.2 incremental backup question
+ 5. 13 Sep 93 Joachim Holzfuss,2d-111,16-2884: tar 1.11.2: --listed-incremental
+ 6. 04 Oct 93 Noah Friedman: [joed@itsa.ucsf.EDU: Re: tar]
+ 7. 18 Feb 94 Leslie Mikesell: find/cpio vs. gnutar
+ 8. 17 Mar 94 Leslie Mikesell: Re: Questions on which features work in gtar-1.1
+ 9. 21 Apr 94 Gert van Antwerpen: GNUtar problem
+10. 20 May 94 les@mcs.com: Re: gnu tar --newer option question
+11. 19 Jun 94 Melissa O'Neill: GNU tar incremental backup bug...
+12. 19 Jun 94 Leslie Mikesell: Re: GNU tar incremental backup bug...
+13. 05 Sep 94 uddeborg@carlstedt.se: tar 1.11.5 dumps core with certain flag co
+14. 16 Oct 94 Matthew Dillon: Re: memory garbaging up bug found / causes gnutar
+15. 11 Dec 94 rodrigo vanegas: GNU tar and incremental backups
+16. 10 Oct 94 thornbur@physics.ubc.ca: GNU tar 1.11.2: should --atime-preserve 
+17. 06 Jan 95 R. Kent Dybvig: gnu tar 1.11.2 and dumping OS2 NFS mounted file s
+18. 06 Jan 95 Francois Pinard: Re: gnu tar 1.11.2 and dumping OS2 NFS mounted f
+19. 19 Jan 95 Richard Stallman: [phr@gnu.ai.mit.edu: tape backup]
+20. 19 Jan 95 phr@gnu.ai.mit.edu: tape backup
+21. 19 Jan 95 Richard Stallman: Re: tape backup
+22. 21 Jan 95 Paul Rubin: Re: tape backup [folder: 2/incremental-option]
+23. 20 Apr 95 Ed Childs: Core dump in gnu tar, using level-1 backup script
+24. 20 Apr 95 Ed Childs: Re: Core dump in gnu tar, using level-1 backup script
+25. 12 Jul 91 Ernest Hua: tar 1.10 option G
+
+rmail/2/lib-doprnt
+ 1. 12 Jul 94 vogelke@c-17igp.wpafb.af.mil: Re: shar-3.52g1 on a Pyramid
+ 2. 12 Jul 94 djm@Glue.umd.edu: Re: [pinard: Re: shar-3.52g1 on a Pyramid]
+
+rmail/2/nfs-related
+ 1. 23 Feb 89 Laurence G Lundblade: Gnu tar 1.04 fix to avoid NFS mounted file 
+ 2. 28 May 89 Leonard H. Tower Jr.: [smsdpg!seg@uunet.uu.net: Re: GNU Tar exper
+ 3. 01 Aug 91 Max Hailperin: bug in tar 1.10 +one-file-system
+ 4. 02 Aug 91 Max Hailperin: socket handling in tar 1.10 would be better omitte
+ 5. 30 Aug 91 Jim Mayer: Bugs+fixes for gnu tar 1.10
+ 6. 02 Sep 91 Max Hailperin: better (?) fix to tar 1.10 bug
+ 7. 11 Sep 91 Gerben Wierda: tar 1.10 and directories on SUNOS 3.5, SUNOS 4.1.1
+ 8. 25 Mar 93 thorbjorn willoch: -N in gnu tar
+ 9. 25 Mar 93 Jim Meyering: tar-1.11.2 nit
+10. 11 May 93 Oliver Trepte: Gnu tar 1.11.2
+11. 16 Jul 93 Van Snyder: tar 1.11.1
+12. 06 May 94 Dean Gaudet: gnu tar-1.11.2, ultrix 4.2, and atol
+13. 24 Jun 94 marc@redhat.com: cpio-2.3 and st_size of symlinks
+14. 12 May 93 Oliver Trepte: Gnu tar on Apollo
+15. 30 Aug 91 Jim Mayer: Bugs+fixes for gnu tar 1.10
+16. 11 Sep 91 Gerben Wierda: tar 1.10 and directories on SUNOS 3.5, SUNOS 4.1.1
+17. 13 Oct 91 Magnus.Harlander@physik.tu-muenchen.de: Problem with incremental 
+18. 04 Jan 95 Francois Pinard: Re: bug found in GNU tar-1.11.2
+
+rmail/2/no-recurse
+ 1. 28 Jul 93 Chris G. Demetriou: diffs to tar, so it's more useful...
+ 2. 17 Sep 93 backus@lks.csi.com: taring directories
+
+rmail/2/remote-problems
+ 1. 09 Jun 89 Dave Gagne: Tar 1.07 Problem.
+ 2. 27 Apr 93 Kambiz Aghaiepour: Problem with gtar-1.11.2
+ 3. 19 Jul 93 Esa Karell: gtar, AIX 3.2.3, -Z option doesn't work
+ 4. 16 Aug 94 Thomas.Koenig@ciw.uni-karlsruhe.de: tar, on Linux this time
+ 5. 03 Sep 91 Roland Schemers III: GNU tar
+ 6. 12 Oct 94 David Kastrup: Absurd backup problem with tar
+ 7. 20 Apr 95 Mike Jagdis: Patch to cpio 2.3/tar 1.11.2 for remote archives
+
+rmail/2/salvaging-archives
+ 1. 13 Oct 90 Jean-Pierre Radley: Re: Recovering corrupted tar's
+ 2. 21 Mar 91 Rich Salz: v24i077: Tool to salvage data from damaged tar tapes
+ 3. 29 Oct 91 Robert W. Reinke: gnutar
+ 4. 04 Aug 93 Warren Burstein: error recover in gnutar after write-protected ta
+ 5. 07 Sep 94 jonboy@neuromancer.ucr.edu: Re: Any decent backup software for Li
+ 6. 06 Jul 94 Yasuo Ohgaki: Bad block in tape. Help
+ 7. 09 Jul 94 Dan Saunders: Re: Bad block in tape. Help
+ 8. 11 Jul 94 Mohan Kokal: Re: Bad block in tape. Help
+ 9. 06 Oct 94 brown@bibliotech.com: GNU tar and bad blocks
+10. 06 Oct 94 brown@bibliotech.com: GNU tar and bad blocks
+11. 05 Oct 94 Leon Shieh: Help Recovering Tar Tape Needed
+12. 08 Oct 94 Ray Vermey: Help Recovering Tar Tape Needed
+13. 27 Mar 95 Michael G. Phillips: Re: reading a corrupted Tar-File ?
+14. 27 Mar 95 Michael Haak: reading a corrupted Tar-File ?
+
+rmail/2/sparse-option
+ 1. 26 Jun 89 Joy Kendall: Tar questions
+ 2. 14 Sep 90 ian@sibyl.eleceng.ua.oz.au: Weird fileutils bug.
+ 3. 10 Dec 90 Dan Bernstein: Re: How do you find the symbolic links to files.
+ 4. 10 Dec 90 Dan Bernstein: Re: How do you find the symbolic links to files.
+ 5. 10 Dec 90 Rahul Dhesi: Re: How do you find the symbolic links to files.
+ 6. 10 Dec 90 Elizabeth Zwicky: Re: How do you find the symbolic links to files
+ 7. 10 Dec 90 Bob Goudreau: Re: How do you find the symbolic links to files.
+ 8. 11 Dec 90 Barry Shein: Re: How do you find the symbolic links to files.
+ 9. 12 Dec 90 Dan Bernstein: Re: How do you find the symbolic links to files.
+10. 15 Dec 90 John F Haugh II: Re: holes in files
+11. 15 Dec 90 Rahul Dhesi: Re: holes in files
+12. 16 Dec 90 Dan Bernstein: Re: holes in files
+13. 16 Dec 90 Dan Bernstein: Re: holes in files
+14. 17 Dec 90 Anthony DeBoer: Re: holes in files
+15. 17 Dec 90 Rahul Dhesi: Re: holes in files
+16. 20 Dec 90 Rahul Dhesi: Re: holes in files
+17. 26 Dec 90 Jim Balter: Re: holes in files
+18. 26 Dec 90 Barry Margolin: Re: holes in files
+19. 27 Dec 90 Paul Chamberlain: Re: holes in files
+20. 28 Dec 90 Andrew Hume: Re: holes in files
+21. 28 Dec 90 Paul Gillingwater: Re: holes in files
+22. 30 Jan 91 David Burren: holes in files
+23. 29 Oct 92 Jeff Moskow: tar enhancement.
+24. 25 Jan 93 Jim Murray: Bug report for tar.1.11.1
+25. 18 Aug 93 Joachim Holzfuss: tar 1.11.2: --sparse hangs tar
+26. 29 Nov 93 Dominic Dunlop: GNU tar 1.11.2: --sparse has no effect in tmpfs (
+27. 16 Aug 94 meyering@idefix.comco.com: Re: Sparse files
+28. 16 Aug 94 meyering@idefix.comco.com: Re: Sparse files
+29. 24 Aug 94 djm@va.pubnix.com: Re: Sparse files
+30. 24 Aug 94 djm@va.pubnix.com: Re: Sparse files
+31. 20 Sep 94 m.dsouza@mrc-apu.cam.ac.uk: Bug in tar-1.11.5
+32. 20 Sep 94 m.dsouza@mrc-apu.cam.ac.uk: Re: Bug in tar-1.11.5 
+33. 26 Sep 94 bap@scr.siemens.com: gtar bug (under linux)
+34. 27 Sep 94 bap@scr.siemens.com: Re: gtar bug (under linux)
+35. 27 Sep 94 bap@scr.siemens.com: Re: gtar bug (under linux)
+36. 30 Sep 94 Francois Pinard: Re: gtar bug (under linux)
+37. 30 Sep 94 faith@cs.unc.edu: Re: gtar bug (under linux)
+38. 30 Sep 94 Francois Pinard: Re: gtar bug (under linux)
+39. 09 Dec 94 Jeremy Fitzhardinge: cp fails to make sparse files under linux
+40. 09 Dec 94 Bruno Haible: fileutils-3.12 is too restrictive making holes
+41. 12 Dec 94 Ulrich Drepper: Re: cp fails to make sparse files under linux
+42. 25 Jan 95 Alan Modra: tar-1.11.2 improvements & fixes
+43. 27 Jan 95 Francois Pinard: Re: tar-1.11.2 improvements & fixes
+44. 28 Jan 95 Alan Modra: Re: tar-1.11.2 improvements & fixes
+45. 05 Feb 95 Karl Berry: tar: sparse file extraction bug
+46. 06 Feb 95 Karl Berry: Re: tar: sparse file extraction bug
+47. 13 Feb 95 Harald Koenig: small patch for cp in fileutils-3.12
+48. 24 Feb 95 Dick Streefland: [tar-1.11.6] --sparse suggestion / Broken pipe
+49. 24 Feb 95 Francois Pinard: Re: [tar-1.11.6] --sparse suggestion / Broken pi
+50. 13 Mar 95 David Monro: bug + added feature in fileutils 3.12 cp
+51. 19 Mar 95 Alan Bawden: GNU tar: BSD42 not set under FreeBSD, --sparse fails
+52. 27 May 95 Maarten Litmaath: another bug found in GNU tar 1.11.2
+
+rmail/2/switching-tapes
+ 1. 14 Jun 89 Brant Cheikes: bug in tar-1.07 on AT&T UNIXpc
+ 2. 17 Nov 90 Jay Ts: Re: tar or cpio, which is better?
+ 3. 15 Jul 91 Saul Lubkin: tar 1.10 problem with "-dM", "-WM", "-ML" or "-MR"
+ 4. 13 Aug 91 Pierce Cantrell: GNU tar 1.10 Patch for multi-volume, long filena
+ 5. 15 Sep 91 Francois Pinard: `tar dM' still does not work
+ 6. 11 Dec 92 Richard Stallman: [dump-remind@gnu.ai.mit.edu: Backup needs new t
+ 7. 19 Dec 92 Richard Stallman: [dump-remind@gnu.ai.mit.edu: Backup needs new t
+ 8. 02 Feb 93 Scott L. Burson: tar 1.11.1: "Prepare volume #3 for /dev/nrst9 an
+ 9. 19 Jul 93 Alessandro MAGNETTI: gtar/tar question
+10. 21 Jul 93 Alex MAGNETTI: gtar/tar question
+11. 04 Aug 93 Richard Stallman: [warren@nysernet.org: error recover in gnutar a
+12. 05 Aug 93 William Bader: tar question
+13. 29 Sep 93 Ronald Aarts: remark about GNU tar 1.11.2
+14. 09 Dec 93 Heiko Muenkel: Problem with tar on Suns
+15. 11 Jan 94 Hiroyuki Bessho: GNU tar 1.11.2 multivolume bugs
+16. 03 May 94 Ben Stuyts: Problem with GNU tar level-0 script
+17. 18 May 94 u31b3hs@pool.informatik.rwth-aachen.de: Two GNU tar 1.11.2 proble
+18. 22 Jun 94 Steven Buytaert: Re: How to split large tar file to fit on floppy
+19. 22 Jun 94 Jonathan A Buzzard: Re: How to split large tar file to fit on flo
+20. 22 Jun 94 Andreas Schwab: Re: How to split large tar file to fit on floppy
+21. 23 Jun 94 Charles Ian Walker: Re: How to split large tar file to fit on flo
+22. 24 Jun 94 Robert Osterlund: Re: How to split large tar file to fit on flopp
+23. 27 Jun 94 Vinod G Kulkarni: Re: How to split large tar file to fit on flopp
+24. 15 Sep 94 yjsu@hinet.net: (none)
+25. 23 Sep 94 leisner@sdsp.mc.xerox.com: tar 1.11.5
+26. 03 Oct 94 Brynn Rogers: tar cM possible (probable?) bug
+27. 04 Oct 94 leisner@sdsp.mc.xerox.com: tar 1.11.5 , making multiple volume co
+28. 05 Oct 94 dean@fors751.ice.ncr.doe.ca: gnutar 1.10 for HP-UX 700 series (9.
+29. 11 Oct 94 Patrick.Condran@corp.sun.com: Re: gnutar 1.10 for HP-UX 700 serie
+30. 18 Oct 94 leisner@sdsp.mc.xerox.com: tar fixes (autoeject)
+31. 18 Oct 94 Francois Pinard: Re: tar fixes (autoeject)
+32. 18 Oct 94 rittle@comm.mot.com: tar 1.11.2 [1] and 1.11.5 [1,2] bugs
+33. 20 Oct 94 Marty Leisner: Re: tar fixes (autoeject) 
+34. 22 Oct 94 Francois Pinard: Re: tar 1.11.2 [1] and 1.11.5 [1,2] bugs
+35. 11 Nov 94 Rocky Giannini: Problem with tar 1.11.2 --info-script option?
+36. 13 Nov 94 Olaf Schlueter: Several Problems (GNU Tar, cpio, smail)
+37. 14 Nov 94 Doug Pickering: Re: tar (via scsi interface /dev/st0)
+38. 20 Nov 94 Clinton Carr: Re: tar (via scsi interface /dev/st0)
+39. 14 Dec 94 Viertola Harri: GNU Tar behaviour
+40. 20 Jan 95 Francois Pinard: Re: gnutar: Multi volume archives
+41. 09 Feb 95 Vidiot: cpio and multi-volume files
+42. 17 Feb 95 Ed Silva: Re: gnutar EOT handling.
+43. 07 Apr 95 Simon Wright: tar -dM fails on floppies
+44. 10 Apr 95 Hernan Prieto Schmidt: Problems with GNU tar 1.11.6
+45. 11 Apr 95 Hernan Prieto Schmidt: Patch OK!
+
+rmail/2/to-stdout-option
+ 1. 10 Sep 92 Norbert Kiesel: tar 1.11 -O
+ 2. 13 Jan 95 dbgordon@gnu.ai.mit.edu: Possible GNU tar bug?
+ 3. 13 Jan 95 Francois Pinard: Re: Possible GNU tar bug?
+
+rmail/2/verify-problems
+ 1. 20 May 93 Jim Burnes: tar-1.10 bug
+ 2. 25 Aug 94 graham@tybj3.eglin.af.mil: Re: update on test CRC option
+ 3. 25 Aug 94 graham@tybj3.eglin.af.mil: GNU cpio version 2.3 suggestion and pr
+ 4. 23 Sep 94 brown@bibliotech.com: GNU tar enhancement
+ 5. 23 Sep 94 Francois Pinard: Re: GNU tar enhancement
+ 6. 19 Oct 94 iros1.IRO.UMontreal.CA!iastate.edu!gora: Problem with gtar
+ 7. 19 Oct 94 iros1.IRO.UMontreal.CA!iastate.edu!gora: Re: Problem with gtar 
+ 8. 01 Aug 91 Max Hailperin: bugs in tar-1.10 verification
+ 9. 01 Feb 95 Ed Sirett: Re: gnu-tar.1.11.2 - Verification on tape media.
+10. 07 Feb 95 Francois Pinard: Re: gnu-tar.1.11.2 - Verification on tape media.
+11. 07 Feb 95 Ed Sirett: Re: gnu-tar.1.11.2 - Verification on tape media.
+12. 08 Feb 95 Ed Sirett: Re: gnu-tar.1.11.2 - Verification on tape media.
+
+rmail/3/archive-pg-like
+ 1. 25 Feb 93 Patrick Sobalvarro: ITS Grim File Reaper
+
+rmail/3/configuration-files
+ 1. 03 May 93 Sarantos Kapidakis: tar/addition
+ 2. 27 Jul 94 wbader@CSEE.Lehigh.Edu: Re: GNU tar: exit statuses
+ 3. 27 Jul 94 Francois Pinard: Re: GNU tar: exit statuses
+ 4. 27 Jul 94 wbader@CSEE.Lehigh.Edu: Re: GNU tar: exit statuses
+
+rmail/3/delete-problems
+ 1. 04 Jul 91 Stuart Kemp: gnutar 1.10 problems
+ 2. 30 Jul 91 Saul Lubkin: Re: gnutar on ISC 2.2
+ 3. 02 Mar 94 Vincent M. Del Vecchio: GNU Tar delete problem [1.09, also 1.11.2
+ 4. 16 Aug 94 js@hornet.att.com: Re: Prerelease: GNU tar version 1.11.4
+
+rmail/3/dironly-option
+ 1. 05 Aug 94 mib@gnu.ai.mit.edu: Re: GNU tar: status of -D/f_dironly
+
+rmail/3/emacs-mode
+ 1. 07 Apr 95 Greg McGary: FYI: tar-mode.el hacks
+ 2. 07 Apr 95 François Pinard: Re: GNU tar is vulnerable to EINTR failures
+
+rmail/3/info-script-option
+ 1. 29 Oct 92 John P. Rouillard: Need help with the manual?
+ 2. 16 Mar 94 Neil Faulks: -F option causes tar to dump core
+ 3. 11 Nov 94 Rocky Giannini: Problem with tar 1.11.2 --info-script option?
+ 4. 06 Dec 94 Marty Leisner: tar 1.11.6
+
+rmail/3/pax-specifications
+ 1. -- --- -- Hal Jespersen: pax proposal
+ 2. -- --- -- Hal Jespersen: more thoughts on pax
+ 3. 07 Dec 93 Don Cragun: (POSIX.2 38) Proposal to replace ISO 1001 based new a
+ 4. 13 Dec 93 Hal Jespersen: (POSIX.2 42) Re: Some feedback on your new pax pro
+ 5. 18 Dec 93 Hal Jespersen: (POSIX.2 44) Re: Comments on pax proposal
+ 6. 22 Dec 93 Don Cragun: (POSIX.2 48) Re: (POSIX.2 44) Re: Comments on pax pro
+ 7. 23 Dec 93 Hal Jespersen: (POSIX.2 50) new pax proposal [nroff]
+ 8. 27 Dec 93 Hal Jespersen: (POSIX.2 52) pax prefix/name
+ 9. 15 Aug 94 Francois Pinard: Re: A pax implementation for GNU
+10. 20 Apr 95 Tom Tromey: Re: Bug in GNU tar 1.11.2
+11. 21 Apr 95 François Pinard: Re: Bug in GNU tar 1.11.2
+
+rmail/3/pax-utility-project
+ 1. 26 Dec 93 Richard Stallman: Re: pax proposals
+ 2. 28 Feb 94 Isaac Charles: Re: pax
+ 3. 29 May 94 j chapman flack: Integrating the 'pax' archiver with GNU utilitie
+ 4. 02 Aug 94 Francois Pinard: ustar compatibility, from cpio distribution
+ 5. 13 Aug 94 gjb@maxim.gba.oz.au: A pax implementation for GNU
+ 6. 12 Aug 94 Francois Pinard: Re: A pax implementation for GNU
+ 7. 16 Aug 94 gjb@maxim.gba.oz.au: Re: A pax implementation for GNU
+ 8. 16 Aug 94 gjb@maxim.gba.oz.au: Re: A pax implementation for GNU
+ 9. 20 Aug 94 Mail Delivery Subsystem: Returned mail: Cannot send message for 5
+10. 21 Aug 94 Mail Delivery Subsystem: Returned mail: Cannot send message for 5
+11. 21 Apr 95 Tom Tromey: Re: Bug in GNU tar 1.11.2
+12. 21 Apr 95 Tom Tromey: Re: Bug in GNU tar 1.11.2
+13. 25 Apr 95 François Pinard: Re: Bug in GNU tar 1.11.2
+
+rmail/3/performance-related
+ 1. 24 Jun 89 Brian Fox: tar idea
+ 2. 02 Sep 90 Steve Nuchia: Re: UNIX semantics do permit full support for async
+ 3. 17 Nov 90 Jay Ts: Re: tar or cpio, which is better?
+ 4. 20 Mar 93 RP Chamberlin: New patches for gnu tar-1.11.1
+ 5. 31 May 93 Lee M J McLoughlin: v37i098: buffer1.16 - Very Fast Tape Writer, 
+ 6. 03 Jun 93 Barry Margolin: GNU tar suggestions
+ 7. 16 Jun 93 Matthias Rabe: Re: Proposal for improvement of gtar 1.11.2
+ 8. 21 Jun 93 Superuser: GNU Tar and SCO UNIX 3.2.4
+ 9. 13 Jul 93 Doug Lenz: Suggestion Only...
+10. 22 Apr 94 mib@gnu.ai.mit.edu: Re: GNUtar problem
+11. 26 Apr 94 les@chinet.chinet.com: Re: GNUtar problem
+12. 10 Jun 94 Werner Krebs: improvements to tar 1.11.2
+13. 19 Jun 94 J"org Weule: (none)
+14. 05 Aug 94 haible@ma2s2.mathematik.uni-karlsruhe.de: Re: Prerelease: GNU tar
+15. 12 Aug 94 root@apollo.west.oic.com: gnu tar
+16. 12 Aug 94 Francois Pinard: Re: gnu tar
+17. 19 Aug 94 ig25@fg30.rz.uni-karlsruhe.de: Buffering for GNU cat
+18. 23 Aug 94 Russell Cattelan: tar mods
+19. 24 Aug 94 cattelan@thebarn.com: Re: tar mods
+20. 08 Oct 94 fheitkamp@nova.wright.edu: Speeding Linux Tar
+21. 12 Oct 94 Garry Adkins: Re: Tar and z option with DAT drive
+22. 12 Oct 94 Claus-Dieter Bredl: Re: Tar and z option with DAT drive
+23. 30 Nov 94 Russell Cattelan: Latest and greatest tar
+24. 20 Jan 95 Frankie K.T. Chu: tar like GTAK of OS/2...
+25. 24 Feb 95 Randall Glass: tar 1.11.2
+
+rmail/3/raw-tcp-sockets
+ 1. 27 Jul 94 mende@piecomputer.rutgers.edu: Re: (gnu)tar 1.10 patch
+
+rmail/3/rdump-emulation
+ 1. 08 Oct 92 Noah Friedman: [Harald.Eikrem@delab.sintef.no: backup dump w/ GNU
+ 2. 02 Oct 93 Alan Stebbens: Re: tar-1.11.2 and incremental backups 
+ 3. 19 May 94 Steve Warren: gnu tar --newer option question
+
+rmail/3/scripts-related
+ 1. 30 Sep 92 Derek Beatty: tar 1.11.1 --listed-incremental with --atime-preser
+ 2. 30 Sep 92 Derek Beatty: (none)
+ 3. 20 Apr 93 root: tar 1.11.2/level-{0,1}
+ 4. 05 May 93 Siddall P: GNU_tar 1.11
+ 5. 21 May 93 LEE@lpi.jsc.nasa.gov: Questions about tar-1.11.2
+ 6. 19 Jun 93 tim: GNU tar
+ 7. 26 Jul 93 Rob Parry: Compile error in regex.c in tar 1.11.2
+ 8. 30 Aug 93 John David Anglin: tar-1.11.2 of hp700 with hpux 9.01
+ 9. 30 Sep 93 Noah Friedman: tar-1.11.2 and incremental backups
+10. 22 Oct 93 Alberto Santini: about tar1.11.2
+11. 22 Oct 93 Noah Friedman: about tar1.11.2
+12. 30 Nov 93 Richard Stallman: Backup script bug
+13. 21 Feb 94 K Kubat: Backup scripts V1.00
+14. 26 Feb 94 Bennett Todd: Incrementals (was Re: find/cpio vs. gnutar)
+15. 15 Mar 94 Michael I Bushnell: Re: Questions on which features work in gtar-
+16. 11 Aug 94 rms@gnu.ai.mit.edu: idea for dump scripts
+17. 16 Aug 94 rms@gnu.ai.mit.edu: Re: GNU tar scripts maintainance
+18. 17 Aug 94 friedman@gnu.ai.mit.edu: Re: GNU tar scripts maintainance
+19. 17 Aug 94 rms@gnu.ai.mit.edu: Re: GNU tar scripts maintainance
+20. 17 Aug 94 friedman@gnu.ai.mit.edu: Re: GNU tar scripts maintainance
+21. 17 Aug 94 friedman@gnu.ai.mit.edu: Re: GNU tar scripts maintainance
+22. 17 Aug 94 rms@gnu.ai.mit.edu: Re: GNU tar scripts maintainance
+23. 23 Aug 94 Ashok Aiyar: Re: Any decent backup software for Linux ???
+24. 23 Aug 94 Leslie Mikesell: Re: Any decent backup software for Linux ???
+25. 23 Aug 94 Leslie Mikesell: Re: Any decent backup software for Linux ???
+26. 26 Aug 94 rms@gnu.ai.mit.edu: Re: GNU tar scripts maintainance
+27. 04 Sep 94 rms@gnu.ai.mit.edu: tar changes
+28. 04 Sep 94 rms@gnu.ai.mit.edu: Re: tar changes
+29. 05 Sep 94 rms@gnu.ai.mit.edu: Re: tar changes
+30. 06 Sep 94 henrik@picard.tamu.edu: How does one restore from a level-0 dump 
+31. 06 Sep 94 Jonathan Warburton-Brown: L.B.U - A Linux Backup Utility
+32. 03 Oct 94 dave@hiauly1.hia.nrc.ca: Re: Possible problem with tar-1.11.5
+33. 22 Nov 94 Kurt Mader: Backup scripts (GNU tar)
+34. 22 Nov 94 Francois Pinard: Re: Backup scripts (GNU tar)
+35. 22 Nov 94 Noah Friedman: [mader@cecam.fr: Backup scripts (GNU tar)]
+36. 20 Jan 95 Koen Holtman: DISCUSSION: afio 2.4.1 new feature
+37. 23 Jan 95 Joel M. Hoffman: Re: DISCUSSION: afio 2.4.1 new feature
+38. 29 Jan 95 Milan Hodoscek: Re: GNU tar 1.11.2 and IRIX kisg 5.3 11091812 IP2
+39. 02 Feb 95 Cliff Rayman: Re: tar backups w/ active files?
+40. 07 Feb 95 Jason Uberig: tar 1.11.2: FSF backup scripts: problem/question
+41. 18 Feb 95 Gerry Frank Gilmore: Re: tar backups w/ active files?
+42. 24 Feb 95 Noah Friedman: Re: GNU tar 1.11.2 and IRIX kisg 5.3 11091812 IP22
+43. 24 Feb 95 Noah Friedman: tar 1.11.2: FSF backup scripts: problem/question
+44. 24 Feb 95 Jason Uberig: Re: tar 1.11.2: FSF backup scripts: problem/questio
+45. 25 Feb 95 Milan Hodoscek: Re: GNU tar 1.11.2 and IRIX kisg 5.3 11091812 IP2
+46. 25 Feb 95 Leslie Mikesell: Re: tar 1.11.2: FSF backup scripts: problem/ques
+47. 02 Mar 95 Francois Pinard: Re: extra newline printed by cheesy checkpoint c
+48. 05 Mar 95 Trever Miller: Re: Safe to use TAR to backup?
+49. 06 Mar 95 Paul Southworth: Re: Safe to use TAR to backup?
+50. 06 Mar 95 Michael Meissner: Re: Safe to use TAR to backup?
+51. 07 Mar 95 Kevin Lentin: Re: TAR and backups...
+52. 10 Mar 95 Rod Troch: Re: Safe to use TAR to backup?
+53. 11 Mar 95 Leslie Mikesell: Re: Safe to use TAR to backup?
+54. 12 Mar 95 David Kastrup: Re: Safe to use TAR to backup?
+55. 13 Mar 95 Steven A. Reisman: Re: Safe to use TAR to backup?
+56. 17 Mar 95 Michael Meissner: Re: Safe to use TAR to backup?
+57. 24 Apr 95 Noah Friedman: As if you didn't have enough to do already
+58. 27 Apr 95 Uri Meth: tar-1.11.2
+59. 15 May 95 asb@ulysses.att.com: GNU tar incremental backup problem
+60. 22 May 95 M. Damerell: Re: GNU tar incremental backup problem
+61. 22 May 95 M. Damerell: Re: GNU tar incremental backup problem
+
+rmail/3/shared-libraries
+ 1. 11 Apr 93 Junio Hamano: GNU tar 1.11.2 not using GNU libc
+
+rmail/3/tape-length-option
+ 1. 20 Oct 93 Michael I Bushnell: Re: bug report for gnu tar 1.10
+
+rmail/3/ufos-and-horrors
+ 1. 29 Jun 89 Scott Garfinkle: HP diffs for tar
+ 2. 30 Jun 89 Scott Garfinkle: my tar patches
+ 3. 27 May 93 Daniel R. Guilderson: GNU tar and SCO UNIX: what to do?
+ 4. 28 May 93 Daniel R. Guilderson: Tar link type extensions for SCO UNIX
+ 5. 04 Jul 94 dave@hiauly1.hia.nrc.ca: Re: Patches for tar-1.11.2 for hpux s700
+ 6. 12 Jul 94 dave@hiauly1.hia.nrc.ca: Re: Patches for tar-1.11.2 for hpux s700
+ 7. 05 Aug 94 haible@ma2s2.mathematik.uni-karlsruhe.de: Re: Prerelease: GNU tar
+ 8. 08 Aug 94 Francois Pinard: Re: Prerelease: GNU tar version 1.11.3
+ 9. 10 Jul 91 Jan Dj{rv: Question about tar format
+10. 11 Oct 91 friedman@gnu.ai.mit.edu: Beware of copying HPUX devices with GNU 
+11. 16 Aug 94 R.K.Lloyd@csc.liv.ac.uk: Re: Prerelease: GNU tar version 1.11.4
+12. 17 Aug 94 R.K.Lloyd@csc.liv.ac.uk: Re: Prerelease: GNU tar version 1.11.4
+13. 28 May 93 Daniel R. Guilderson: SCO UNIX 3.2v4 patches to GNU tar 1.11.2
+14. 01 Sep 94 lkv@mania.robin.de: bug-fix for GNU-tar under HP-UX
+15. 04 Jul 94 Jordan Hazen: Why does 'tar -clf' archive /proc filesystem?
+16. 08 Jul 94 M. Shawn Easter: Re: Why does 'tar -clf' archive /proc filesystem
+17. 09 Jul 94 Juha Virtanen: Re: Why does 'tar -clf' archive /proc filesystem?
+18. 11 Nov 94 Ralf Lammers: fileutils-3.12
+
+rmail/3/update-problems
+ 1. 14 Mar 94 Matthew Swift: tar 1.11.2 on NeXT 3.0 black: bus errors
+ 2. 07 Nov 94 brad@instep.wimsey.com: WARNING: bug in gnutar
+ 3. 12 Oct 94 Carsten Menke: tar --update or --append on Connor Archive Viper 2
+
+rmail/3/validation-suite
+ 1. 06 Dec 91 Paul Eggert: Zwicky's reported bugs in GNU tar 1.10
+ 2. 03 Jul 94 pinard@IRO.UMontreal.CA: (none)
+ 3. 03 Jul 94 bigmac@erg.sri.com: Re: Finding Elizabeth D. Zwicky? 
+ 4. 06 Sep 94 rocky@panix.com: Re: tar 1.11.5 (make check)
+ 5. 06 Oct 94 lmcguyb@LMC.Ericsson.SE: Re: Just a question
+ 6. 08 Jun 95 François Pinard: Re: pinard@iro-genr-nosbe
+
+rmail/3/wish-list
+ 1. 08 Jan 94 Jamie Zawinski: tar feature request
+ 2. 05 Jun 94 Deron E. Meranda: GNU tar 1.11.2 doesn't handle hard-linked direc
+ 3. 08 Feb 95 Francois Pinard: Re: problems with tar-1.11.[56]
+ 4. 28 May 95 K. Berry: revised tar.texi
+ 5. 26 May 95 Charles Lamb: local tar modification to avoid reading partial fil
+ 6. 30 Mar 95 Charles Lamb: Re: tar and EOF markers
+ 7. 30 Mar 95 François Pinard: Re: tar and EOF markers
+
+admin/msdos/RMAIL
+ 1. 06 Dec 91 OPER2%ncuee.ncu.edu.tw@CUNYVM.CUNY.EDU: LTARV1.ZIP - DOS's deTAR 
+ 2. 15 Jan 92 Christoph Splittgerber: Re: TAR for MSDOS using ASPI
+ 3. 30 Apr 92 DARREL HANKERSON: Re: djgpp/go32 utilities archived?
+ 4. 24 Mar 93 Mark Bergman: names2dos Porting script upload
+ 5. 25 Apr 93 Alexey Vovenko: TAR 1.11.1 on MS-DOS, Borland C 3.10 Compilation 
+ 6. 31 Dec 93 js@hrmsf.att.com: Bug report for GNU tar 1.11.2
+ 7. 21 Jun 94 leisner@sdsp.mc.xerox.com: Improving portability of sh-util-1.10 
+ 8. 03 Oct 94 elf@netcom.com: tar-1.11 and DJGPP
+ 9. 04 Jan 95 Leslie Mikesell: Re: probable bug in tar 1.11.2
+10. 04 Jan 95 Francois Pinard: Re: gnu tar extention
+11. 05 Jan 95 pinard@gnu.ai.mit.edu: Assignments and disclaimers
+12. 25 Feb 95 Francois Pinard: Re: tar 1.11.2
+13. 25 Feb 95 Leslie Mikesell: Re: tar 1.11.2
+14. 01 Mar 95 Christoph Splittgerber: Re: tar 1.11.2
+15. 10 Feb 95 Gregory S. Thorne: Help with 'tar'
+16. 22 Apr 95 François Pinard: Re: TAR
+17. 28 Apr 95 Ronald F. Guilmette: Re: Building GNU sed requires GNU sed
+18. 28 Apr 95 François Pinard: Re: Building GNU sed requires GNU sed
+19. 28 Apr 95 Ronald F. Guilmette: WANTED: Ports of GNU tools to Windows95.
+20. 31 Mar 95 Piercarlo Grandi: Re: UNIX to DOS transfer
+21. 02 Feb 95 Dimitris Fousekis - KAPE: (none)
+22. 02 Feb 95 Francois Pinard: Autour de tar...
+23. 04 Feb 95 Mail Delivery Subsystem: Returned mail: Cannot send message for 3
+24. 14 Jun 95 Chris Kernstock: gnu tar 1.11.2

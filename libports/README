@@ -1,0 +1,6 @@
+Zrt ports:
+- Lua 5.2.1 Library, see here: zrt\libports\lua-5.2.1\README
+- Sqlite3 Library, see here: zrt\libports\sqlite3\README
+- Tar-1.11.8, see here: zrt\libports\tar-1.11.8\README
+- Gtest Library, experimental
+

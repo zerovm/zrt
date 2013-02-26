@@ -1,0 +1,92 @@
+[This pre-README pertains to the 1.11.8 release only]
+
+This release is being made explicitely for complying with the
+CDROM deadline of June 1995, that is, sooner than even 1.11.7 was
+initially scheduled.  So, sad to say, a few portability reports
+against 1.11.6 are still pending in 1.11.8.  None is lost, however!
+(For maintainers: Makefile.in engineering is not fully up-to-date.)
+
+A Texinfo manual is provided, but in a very draft state.  Many users
+want documentation, and even a draft manual is better than nothing.
+Please be kind to us, the manual will surely improve before 1.12.
+
+GNU `tar' is also a testbed for message localization as provided by
+the GNU `gettext' tool set.  I decided to leave this in for 1.11.8.
+Unless you feel like working on remaining problems, I suggest that
+you use either `--disable-nls' or `--with-gnu-nls' on the `configure'
+call.  See file `NLS' for more information on these matters.
+
+I roughly estimate that 40% of the 1.11.2 problem backlog is solved
+in 1.11.8.  The extensive diffsets contributed by Ian Jackson and
+Piercarlo Grandi are not fully processed, as I want to be overly
+careful at not breaking things while doing so.  *Many* other people
+contributed reports and solutions, I'm heartedly thanking them all.
+
+
+[This pre-README pertains to the 1.11.X series, with X > 2]
+
+This is a beta test version for GNU `tar' 1.12, which will be a
+bug fix release.  The emphasis is still on solving portability
+problems, rather than execution bugs or requests for enhancements.
+
+You should have received mail if a problem you submitted has been
+solved.  If you fear your report has been lost, please check file
+`BACKLOG' in the distribution.  It is not useful resubmitting a
+bug report for which a trace still exists in `BACKLOG'.
+
+The default archive device is now `stdin' on read and `stdout'
+on write.  The installer can still override this by presetting
+`DEFAULT_ARCHIVE' in the environment before configuring (the
+behavior of `-[0-7]' or `-[0-7]lmh' options in `tar' are then
+derived automatically).  Similarly, `DEFAULT_BLOCKING' can be preset
+to something else than 20.
+
+
+[The usual README follows]
+
+GNU `tar' saves many files together into a single tape or disk
+archive, and can restore individual files from the archive.
+It includes multivolume support, the ability to archive sparse files,
+automatic archive compression/decompression, remote archives and
+special features that allow `tar' to be used for incremental and
+full backups.  This distribution also includes `rmt', the remote
+tape server.  The `mt' tape drive control program is in the GNU
+`cpio' distribution.
+
+GNU `tar' is based heavily on John Gilmore's public domain `tar'.
+Unfortunately, GNU `tar' implements an early draft of the POSIX
+1003.1 `ustar' standard which is different from the final standard.
+Adding support for the new changes in a backward-compatible fashion
+is not trivial.
+
+See file `BACKLOG' for a summary of pending mail and articles.
+See file `COPYING' for copying conditions.
+See file `INSTALL' for compilation and installation instructions.
+See file `NEWS' for a list of major changes in the current release.
+See file `NLS' for how to customize this program to your language.
+See file `THANKS' for a list of contributors.
+
+The scripts used at the FSF for doing all our backups are included.
+Use them for making incremental dumps, instead of using --incremental
+(-G), --after-date (-N) or --newer-mtime.  The only option that
+works correctly for incremental backups is --listed-incremental.
+However, when extracting incremental dumps, use --incremental (-G).
+
+Various people have been having problems using floppies on a NeXT.  In
+order to have them work right, you need to kill the automounting
+program which tries to mount floppies as soon as they are added.
+
+Besides those configure options documented in files `INSTALL' and
+`NLS', a few extra options may be accepted after `./configure':
+
+* `--with-dmalloc' is a debugging option for looking memory management
+problems, it prerequires Gray Watson's package, which is available
+as `ftp://ftp.letters.com/src/dmalloc/dmalloc.tar.gz'.
+
+* `--with-regex' tells the installation to use the older regex
+package, instead of Tom Lord's GNU `rx' regular expression package.
+
+Send bug reports to `bug-gnu-utils@prep.ai.mit.edu'.  A bug report is
+an adequate description of the problem: your input, what you expected,
+what you got, and why this is wrong.  Diffs are welcome, but they only
+describe a solution, from which the problem might be uneasy to infer.

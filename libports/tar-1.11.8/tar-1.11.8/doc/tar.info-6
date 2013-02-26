@@ -1,0 +1,1308 @@
+This is Info file tar.info, produced by Makeinfo-1.61 from the input
+file tar.texinfo.
+
+START-INFO-DIR-ENTRY
+* tar: (tar).			Making tape (or disk) archives.
+END-INFO-DIR-ENTRY
+
+   This file documents GNU `tar', a utility used to store, backup, and
+transport files.
+
+   Copyright (C) 1992, 1994, 1995 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Foundation.
+
+
+File: tar.info,  Node: mt,  Prev: Tape Positioning,  Up: Many
+
+The `mt' Utility
+----------------
+
+     *(This message will disappear, once this node revised.)*
+
+FIXME: is it true that this only works on non-block devices?  should
+FIXME: explain the difference, xref to block-size (fixed or variable).
+
+   You can use the `mt' utility to advance or rewind a tape past a
+specified number of archive files on the tape.  This will allow you to
+move to the beginning of an archive before extracting or reading it, or
+to the end of all the archives before writing a new one.
+FIXME: why isn't there an "advance 'til you find two tape marks together"?
+
+   The syntax of the `mt' command is:
+
+     mt [-f TAPENAME] OPERATION [NUMBER]
+
+   where TAPENAME is the name of the tape device, NUMBER is the number
+of times an operation is performed (with a default of one), and
+OPERATION is one of the following:
+
+FIXME: is there any use for record operations?
+
+`eof'
+`weof'
+     Writes NUMBER tape marks at the current position on the tape.
+
+`fsf'
+     Moves tape position forward NUMBER files.
+
+`bsf'
+     Moves tape position back NUMBER files.
+
+`rewind'
+     Rewinds the tape. (Ignores NUMBER).
+
+`offline'
+`rewoff1'
+     Rewinds the tape and takes the tape device off-line. (Ignores
+     NUMBER).
+
+`status'
+     Prints status information about the tape unit.
+FIXME: is there a better way to frob the spacing on the list?
+
+   If you don't specify a TAPENAME, `mt' uses the environment variable
+TAPE; if TAPE does not exist, `mt' uses the device `/dev/rmt12'.
+
+   `mt' returns a 0 exit status when the operation(s) were successful,
+1 if the command was unrecognized, and 2 if an operation failed.
+
+FIXME: new node on how to find an archive?
+   If you use `--extract' (`-x') with the `--label=ARCHIVE-LABEL' (`-V
+ARCHIVE-LABEL') option specified, `tar' will read an archive label (the
+tape head has to be positioned on it) and print an error if the archive
+label doesn't match the ARCHIVE-NAME specified.  ARCHIVE-NAME can be
+any regular expression.  If the labels match, `tar' extracts the
+archive.
+FIXME: xref Archive Label
+   .
+FIXME: xref Matching Format Parameters
+   .
+FIXME: fix cross references
+
+   `tar --list --label' will cause `tar' to print the label.
+
+FIXME: program to list all the labels on a tape?
+
+
+File: tar.info,  Node: Using Multiple Tapes,  Next: Archive Label,  Prev: Many,  Up: Media
+
+Using Multiple Tapes
+====================
+
+     *(This message will disappear, once this node revised.)*
+
+   Often you might want to write a large archive, one larger than will
+fit on the actual tape you are using.  In such a case, you can run
+multiple `tar' commands, but this can be inconvenient, particularly if
+you are using options like `--exclude=PATTERN' or dumping entire
+filesystems.  Therefore, `tar' supports multiple tapes automatically.
+
+   Use `--multi-volume' (`-M') on the command line, and then `tar' will,
+when it reaches the end of the tape, prompt for another tape, and
+continue the archive.  Each tape will have an independent archive, and
+can be read without needing the other.  (As an exception to this, the
+file that `tar' was archiving when it ran out of tape will usually be
+split between the two archives; in this case you need to extract from
+the first archive, using `--multi-volume' (`-M'), and then put in the
+second tape when prompted, so `tar' can restore both halves of the
+file.)
+
+   When prompting for a new tape, `tar' accepts any of the following
+responses:
+
+`?'
+     Request `tar' to explain possible responses
+
+`q'
+     Request `tar' to exit immediately.
+
+`n FILE NAME'
+     Request `tar' to write the next volume on the file FILE NAME.
+
+`!'
+     Request `tar' to run a subshell.
+
+`y'
+     Request `tar' to begin writing the next volume.
+
+   (You should only type `y' after you have changed the tape; otherwise
+`tar' will write over the volume it just finished.)
+
+   If you want more elaborate behavior than this, give `tar' the
+`--info-script=SCRIPT-NAME' (`-F SCRIPT-NAME') option.  The file
+SCRIPT-NAME is expected to be a program (or shell script) to be run
+instead of the normal prompting procedure.  When the program finishes,
+`tar' will immediately begin writing the next volume.  The behavior of
+the `n' response to the normal tape-change prompt is not available if
+you use `--info-script=SCRIPT-NAME' (`-F SCRIPT-NAME').
+
+   The method `tar' uses to detect end of tape is not perfect, and
+fails on some operating systems or on some devices.  You can use the
+`--tape-length=1024-SIZE' (`-L 1024-SIZE') option if `tar' can't detect
+the end of the tape itself.  The SIZE argument should be the size of
+the tape.
+
+   The volume number used by `tar' in its tape-change prompt can be
+changed; if you give the `--volno-file=FILE-OF-NUMBER' option, then
+FILE-OF-NUMBER should contain a decimal number.  That number will be
+used as the volume number of the first volume written.  When `tar' is
+finished, it will rewrite the file with the now-current volume number.
+(This does not change the volume number written on a tape label (
+FIXME: pxref Special Options for Archiving
+   ; it *only* affects the number used in the prompt.)
+
+   If you want `tar' to cycle through a series of tape drives, then you
+can use the `n' response to the tape-change prompt.  This is error
+prone, however, and doesn't work at all with
+`--info-script=SCRIPT-NAME' (`-F SCRIPT-NAME').  Therefore, if you give
+`tar' multiple `--file=ARCHIVE-NAME' (`-f ARCHIVE-NAME') options, then
+the specified files will be used, in sequence, as the successive volumes
+of the archive.  Only when the first one in the sequence needs to be
+used again will `tar' prompt for a tape change (or run the info script).
+
+   Multi-volume archives
+
+   With `--multi-volume' (`-M'), `tar' will not abort when it cannot
+read or write any more data.  Instead, it will ask you to prepare a new
+volume.  If the archive is on a magnetic tape, you should change tapes
+now; if the archive is on a floppy disk, you should change disks, etc.
+
+   Each volume of a multi-volume archive is an independent `tar'
+archive, complete in itself.  For example, you can list or extract any
+volume alone; just don't specify `--multi-volume' (`-M').  However, if
+one file in the archive is split across volumes, the only way to extract
+it successfully is with a multi-volume extract command `--extract
+--multi-volume' (`-xM') starting on or before the volume where the file
+begins.
+
+* Menu:
+
+* Multi-Volume Archives::
+* Tape Files::
+
+
+File: tar.info,  Node: Multi-Volume Archives,  Next: Tape Files,  Prev: Using Multiple Tapes,  Up: Using Multiple Tapes
+
+Archives Longer than One Tape or Disk
+-------------------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   To create an archive that is larger than will fit on a single unit of
+the media, use the `--multi-volume' (`-M') option in conjunction with
+the `--create' (`-c') option (
+FIXME: pxref Creating Archives
+   ).  A "multi-volume" archive can be manipulated like any other
+archive (provided the `--multi-volume' (`-M') option is specified), but
+is stored on more than one tape or disk.
+
+   When you specify `--multi-volume' (`-M'), `tar' does not report an
+error when it comes to the end of an archive volume (when reading), or
+the end of the media (when writing).  Instead, it prompts you to load a
+new storage volume.  If the archive is on a magnetic tape, you should
+change tapes when you see the prompt; if the archive is on a floppy
+disk, you should change disks; etc.
+
+   You can read each individual volume of a multi-volume archive as if
+it were an archive by itself.  For example, to list the contents of one
+volume, use `--list' (`-t'), without `--multi-volume' (`-M') specified.
+To extract an archive member from one volume (assuming it is described
+that volume), use `--extract' (`-x'), again without `--multi-volume'
+(`-M').
+
+   If an archive member is split across volumes (ie. its entry begins on
+one volume of the media and ends on another), you need to specify
+`--multi-volume' (`-M') to extract it successfully.  In this case, you
+should load the volume where the archive member starts, and use `tar
+--extract --multi-volume'--`tar' will prompt for later volumes as it
+needs them.
+FIXME: xref Extracting From Archives
+   for more information about extracting archives.
+
+   `--info-script=SCRIPT-NAME' (`-F SCRIPT-NAME') is like
+`--multi-volume' (`-M'), except that `tar' does not prompt you directly
+to change media volumes when a volume is full--instead, `tar' runs
+commands you have stored in SCRIPT-NAME.  This option can be used to
+broadcast messages such as `Someone please come change my tape' when
+performing unattended backups.  When SCRIPT-NAME is done, `tar' will
+assume that the media has been changed.
+
+FIXME: There should be a sample program here, including an exit before
+FIXME: end.
+
+`--multi-volume'
+`-M'
+     Creates a multi-volume archive, when used in conjunction with
+     `--create' (`-c').  To perform any other operation on a
+     multi-volume archive, specify `--multi-volume' (`-M') in
+     conjunction with that operation.
+
+`--info-script=PROGRAM-FILE'
+`-F PROGRAM-FILE'
+     Creates a multi-volume archive via a script.  Used in conjunction
+     with `--create' (`-c').
+
+
+File: tar.info,  Node: Tape Files,  Prev: Multi-Volume Archives,  Up: Using Multiple Tapes
+
+Tape Files
+----------
+
+     *(This message will disappear, once this node revised.)*
+
+   When `tar' writes an archive to tape, it creates a single tape file.
+If multiple archives are written to the same tape, one after the
+other, they each get written as separate tape files.  When extracting,
+it is necessary to position the tape at the right place before running
+`tar'.  To do this, use the `mt' command.  For more information on the
+`mt' command and on the organization of tapes into a sequence of tape
+files.
+FIXME: see ***.
+
+
+File: tar.info,  Node: Archive Label,  Prev: Using Multiple Tapes,  Up: Media
+
+Including a Label in the Archive
+================================
+
+     *(This message will disappear, once this node revised.)*
+
+FIXME: Should the arg to --label be a quoted string??  no - ringo
+   To avoid problems caused by misplaced paper labels on the archive
+media, you can include a "label" entry--an archive member which
+contains the name of the archive--in the archive itself.  Use the
+`--label=ARCHIVE-LABEL' (`-V ARCHIVE-LABEL') option in conjunction with
+the `--create' (`-c') operation to include a label entry in the archive
+as it is being created.
+
+   If you create an archive using both `--label=ARCHIVE-LABEL' (`-V
+ARCHIVE-LABEL') and `--multi-volume' (`-M'), each volume of the archive
+will have an archive label of the form `ARCHIVE-LABEL Volume N', where
+N is 1 for the first volume, 2 for the next, and so on.
+
+FIXME: xref Multi-Volume Archives
+   , for information on creating multiple volume archives.
+
+   If you extract an archive using `--label=ARCHIVE-LABEL' (`-V
+ARCHIVE-LABEL'), `tar' will print an error if the archive label doesn't
+match the ARCHIVE-LABEL specified, and will then not extract the
+archive.  You can include a regular expression in ARCHIVE-LABEL, in
+this case only.
+FIXME: why is a reg. exp. useful here?  (to limit extraction to a
+FIXME: specific group?  ie for multi-volume???
+
+   To find out an archive's label entry (or to find out if an archive
+has a label at all), use `tar --list --verbose'.  `tar' will print the
+label first, and then print archive member information, as in the
+example below:
+
+     % tar --verbose --list --file=iamanarchive
+     V--------- 0/0        0 Mar  7 12:01 1992 iamalabel--Volume Header--
+     -rw-rw-rw- ringo/user 40 May 21 13:30 1990 iamafilename
+
+`--label=ARCHIVE-LABEL'
+`-V ARCHIVE-LABEL'
+     Includes an "archive-label" at the beginning of the archive when
+     the archive is being created, when used in conjunction with the
+     `--create' (`-c') option.  Checks to make sure the archive label
+     matches the one specified (when used in conjunction with the
+     `--extract' (`-x') option.
+FIXME: was --volume
+
+
+File: tar.info,  Node: Backups and Restoration,  Next: Date input formats,  Prev: Media,  Up: Top
+
+Performing Backups and Restoring Files
+**************************************
+
+     *(This message will disappear, once this node revised.)*
+
+     .* dumps
+     . + what are dumps
+     
+     . + different levels of dumps
+     .  - full dump = dump everything
+     .  - level 1, level 2 dumps etc, -
+     	A level n dump dumps everything changed since the last level
+     	n-1 dump (?)
+     
+     . + how to use scripts for dumps  (ie, the concept)
+     .  - scripts to run after editing backup specs (details)
+     
+     . + Backup Specs, what is it.
+     .  - how to customize
+     .  - actual text of script  [/sp/dump/backup-specs]
+     
+     . + Problems
+     .  - rsh doesn't work
+     .  - rtape isn't installed
+     .  - (others?)
+     
+     . + the --incremental option of tar
+     
+     . + tapes
+     .  - write protection
+     .  - types of media
+     .   : different sizes and types, useful for different things
+     .  - files and tape marks
+          one tape mark between files, two at end.
+     .  - positioning the tape
+          MT writes two at end of write, backspaces over one when writing again.
+
+   To "back up" a file system means to create archives that contain all
+the files in that file system.  Those archives can then be used to
+restore any or all of those files (for instance if a disk crashes or a
+file is accidently deleted).  File system "backups" are also called
+"dumps".
+
+* Menu:
+
+* Full Dumps::
+* Inc Dumps::
+* incremental and listed-incremental::
+* Backup Levels::
+* Backup Parameters::
+* Scripted Backups::
+* Scripted Restoration::
+
+
+File: tar.info,  Node: Full Dumps,  Next: Inc Dumps,  Prev: Backups and Restoration,  Up: Backups and Restoration
+
+Using `tar' to Perform Full Dumps
+=================================
+
+     *(This message will disappear, once this node revised.)*
+
+   Full dumps should only be made when no other people or programs are
+modifying files in the filesystem.  If files are modified while `tar'
+is making the backup, they may not be stored properly in the archive,
+in which case you won't be able to restore them if you have to.  (Files
+not being modified are written with no trouble, and do not corrupt the
+entire archive.)
+
+   You will want to use the `--label=ARCHIVE-LABEL' (`-V
+ARCHIVE-LABEL') option to give the archive a volume label, so you can
+tell what this archive is even if the label falls off the tape, or
+anything like that.
+
+   Unless the filesystem you are dumping is guaranteed to fit on one
+volume, you will need to use the `--multi-volume' (`-M') option.  Make
+sure you have enough tapes on hand to complete the backup.
+
+   If you want to dump each filesystem separately you will need to use
+the `--one-file-system' (`-l') option to prevent `tar' from crossing
+filesystem boundaries when storing (sub)directories.
+
+   The `--incremental' (`-G') option is not needed, since this is a
+complete copy of everything in the filesystem, and a full restore from
+this backup would only be done onto a completely empty disk.
+
+   Unless you are in a hurry, and trust the `tar' program (and your
+tapes), it is a good idea to use the `--verify' (`-W') option, to make
+sure your files really made it onto the dump properly.  This will also
+detect cases where the file was modified while (or just after) it was
+being archived.  Not all media (notably cartridge tapes) are capable of
+being verified, unfortunately.
+
+   `--listed-incremental=SNAPSHOT-FILE' (`-g SNAPSHOT-FILE') take a
+file name argument always.  If the file doesn't exist, run a level zero
+dump, creating the file.  If the file exists, uses that file to see
+what has changed.
+
+   `--incremental' (`-G')
+FIXME: look it up
+
+   `--incremental' (`-G') handle old GNU-format incremental backup.
+
+   This option should only be used when creating an incremental backup
+of a filesystem.  When the `--incremental' (`-G') option is used, `tar'
+writes, at the beginning of the archive, an entry for each of the
+directories that will be operated on.  The entry for a directory
+includes a list of all the files in the directory at the time the dump
+was done, and a flag for each file indicating whether the file is going
+to be put in the archive.  This information is used when doing a
+complete incremental restore.
+
+   Note that this option causes `tar' to create a non-standard archive
+that may not be readable by non-GNU versions of the `tar' program.
+
+   The `--incremental' (`-G') option means the archive is an incremental
+backup.  Its meaning depends on the command that it modifies.
+
+   If the `--incremental' (`-G') option is used with `--list' (`-t'),
+`tar' will list, for each directory in the archive, the list of files in
+that directory at the time the archive was created.  This information
+is put out in a format that is not easy for humans to read, but which
+is unambiguous for a program: each file name is preceded by either a
+`Y' if the file is present in the archive, an `N' if the file is not
+included in the archive, or a `D' if the file is a directory (and is
+included in the archive).  Each file name is terminated by a null
+character.  The last file is followed by an additional null and a
+newline to indicate the end of the data.
+
+   If the `--incremental' (`-G') option is used with `--extract'
+(`-x'), then when the entry for a directory is found, all files that
+currently exist in that directory but are not listed in the archive *are
+deleted from the directory*.
+
+   This behavior is convenient when you are restoring a damaged file
+system from a succession of incremental backups: it restores the entire
+state of the file system to that which obtained when the backup was
+made.  If you don't use `--incremental' (`-G'), the file system will
+probably fill up with files that shouldn't exist any more.
+
+   `--listed-incremental=SNAPSHOT-FILE' (`-g SNAPSHOT-FILE') handle new
+GNU-format incremental backup.
+
+   `--listed-incremental=SNAPSHOT-FILE' (`-g SNAPSHOT-FILE') acts like
+`--incremental' (`-G'), but when used in conjunction with `--create'
+(`-c') will also cause `tar' to use the file FILE, which contains
+information about the state of the filesystem at the time of the last
+backup, to decide which files to include in the archive being created.
+That file will then be updated by `tar'.  If the file FILE does not
+exist when this option is specified, `tar' will create it, and include
+all appropriate files in the archive.
+
+   The file, which is archive independent, contains the date it was last
+modified and a list of devices, inode numbers and directory names.
+`tar' will archive files with newer mod dates or inode change times,
+and directories with an unchanged inode number and device but a changed
+directory name.  The file is updated after the files to be archived are
+determined, but before the new archive is actually created.
+
+
+File: tar.info,  Node: Inc Dumps,  Next: incremental and listed-incremental,  Prev: Full Dumps,  Up: Backups and Restoration
+
+Using `tar' to Perform Incremental Dumps
+========================================
+
+     *(This message will disappear, once this node revised.)*
+
+   Performing incremental dumps is similar to performing full dumps,
+although a few more options will usually be needed.
+
+   You will need to use the `-N DATE' option to tell `tar' to only
+store files that have been modified since DATE.  DATE should be the
+date and time of the last full/incremental dump.
+
+   A standard scheme is to do a *monthly* (full) dump once a month, a
+*weekly* dump once a week of everything since the last monthly and a
+*daily* every day of everything since the last (weekly or monthly) dump.
+
+   Here is a copy of the script used to dump the filesystems of the
+machines here at the Free Software Foundation.  This script is run via
+`cron' late at night when people are least likely to be using the
+machines.  This script dumps several filesystems from several machines
+at once (via NFS).  The operator is responsible for ensuring that all
+the machines will be up at the time the dump happens.  If a machine is
+not running, its files will not be dumped, and the next day's
+incremental dump will *not* store files that would have gone onto that
+dump.
+
+     #!/bin/csh
+     # Dump thingie
+     set now = `date`
+     set then = `cat date.nfs.dump`
+     /u/hack/bin/tar -c -G -v\
+      -f /dev/rtu20\
+      -b 126\
+      -N "$then"\
+      -V "Dump from $then to $now"\
+      /alpha-bits/gp\
+      /gnu/hack\
+      /hobbes/u\
+      /spiff/u\
+      /sugar-bombs/u
+     echo $now > date.nfs.dump
+     mt -f /dev/rtu20 rew
+
+   Output from this script is stored in a file, for the operator to
+read later.
+
+   This script uses the file `date.nfs.dump' to store the date/time of
+the last dump.
+
+   Since this is a streaming tape drive, no attempt to verify the
+archive is done.  This is also why the high blocking factor (126) is
+used.  The tape drive must also be rewound by the `mt' command after
+the dump is made.
+
+
+File: tar.info,  Node: incremental and listed-incremental,  Next: Backup Levels,  Prev: Inc Dumps,  Up: Backups and Restoration
+
+The Incremental Options
+=======================
+
+     *(This message will disappear, once this node revised.)*
+
+   `--incremental' (`-G') is used in conjunction with `--create' (`-c'),
+`--extract' (`-x') or `--list' (`-t') when backing up and restoring file
+systems.  An archive cannot be extracted or listed with the
+`--incremental' (`-G') option specified unless it was created with the
+option specified.  This option should only be used by a script, not by
+the user, and is usually disregarded in favor of
+`--listed-incremental=SNAPSHOT-FILE' (`-g SNAPSHOT-FILE'), which is
+described below.
+
+   `--incremental' (`-G') in conjunction with `--create' (`-c') causes
+`tar' to write, at the beginning of the archive, an entry for each of
+the directories that will be archived.  The entry for a directory
+includes a list of all the files in the directory at the time the
+archive was created and a flag for each file indicating whether or not
+the file is going to be put in the archive.
+
+   Note that this option causes `tar' to create a non-standard archive
+that may not be readable by non-GNU versions of the `tar' program.
+
+   `--incremental' (`-G') in conjunction with `--extract' (`-x') causes
+`tar' to read the lists of directory contents previously stored in the
+archive, *delete* files in the file system that did not exist in their
+directories when the archive was created, and then extract the files in
+the archive.
+
+   This behavior is convenient when restoring a damaged file system from
+a succession of incremental backups: it restores the entire state of
+the file system to that which obtained when the backup was made.  If
+`--incremental' (`-G') isn't specified, the file system will probably
+fill up with files that shouldn't exist any more.
+
+   `--incremental' (`-G') in conjunction with `--list' (`-t'), causes
+`tar' to print, for each directory in the archive, the list of files in
+that directory at the time the archive was created.  This information
+is put out in a format that is not easy for humans to read, but which
+is unambiguous for a program: each file name is preceded by either a
+`Y' if the file is present in the archive, an `N' if the file is not
+included in the archive, or a `D' if the file is a directory (and is
+included in the archive).  Each file name is terminated by a null
+character.  The last file is followed by an additional null and a
+newline to indicate the end of the data.
+
+   `--listed-incremental=SNAPSHOT-FILE' (`-g SNAPSHOT-FILE') acts like
+`--incremental' (`-G'), but when used in conjunction with `--create'
+(`-c') will also cause `tar' to use the file SNAPSHOT-FILE, which
+contains information about the state of the file system at the time of
+the last backup, to decide which files to include in the archive being
+created.  That file will then be updated by `tar'.  If the file FILE
+does not exist when this option is specified, `tar' will create it, and
+include all appropriate files in the archive.
+
+   The file FILE, which is archive independent, contains the date it
+was last modified and a list of devices, inode numbers and directory
+names.  `tar' will archive files with newer mod dates or inode change
+times, and directories with an unchanged inode number and device but a
+changed directory name.  The file is updated after the files to be
+archived are determined, but before the new archive is actually created.
+
+FIXME: this section needs to be written
+
+
+File: tar.info,  Node: Backup Levels,  Next: Backup Parameters,  Prev: incremental and listed-incremental,  Up: Backups and Restoration
+
+Levels of Backups
+=================
+
+     *(This message will disappear, once this node revised.)*
+
+   An archive containing all the files in the file system is called a
+"full backup" or "full dump".  You could insure your data by creating a
+full dump every day.  This strategy, however, would waste a substantial
+amount of archive media and user time, as unchanged files are daily
+re-archived.
+
+   It is more efficient to do a full dump only occasionally.  To back up
+files between full dumps, you can a incremental dump.  A "level one"
+dump archives all the files that have changed since the last full dump.
+
+   A typical dump strategy would be to perform a full dump once a week,
+and a level one dump once a day.  This means some versions of files
+will in fact be archived more than once, but this dump strategy makes
+it possible to restore a file system to within one day of accuracy by
+only extracting two archives--the last weekly (full) dump and the last
+daily (level one) dump.  The only information lost would be in files
+changed or created since the last daily backup.  (Doing dumps more than
+once a day is usually not worth the trouble).
+
+   GNU `tar' comes with scripts you can use to do full and level-one
+dumps.  Using scripts (shell programs) to perform backups and
+restoration is a convenient and reliable alternative to typing out file
+name lists and `tar' commands by hand.
+
+   Before you use these scripts, you need to edit the file
+`backup-specs', which specifies parameters used by the backup scripts
+and by the restore script.
+FIXME: xref Script Syntax
+   .  Once the backup parameters are set, you can perform backups or
+restoration by running the appropriate script.
+
+   The name of the restore script is `restore'. The names of the level
+one and full backup scripts are, respectively, `level-1' and `level-0'.
+The `level-0' script also exists under the name `weekly', and the
+`level-1' under the name `daily'--these additional names can be changed
+according to your backup schedule.
+FIXME: xref Scripted Restoration
+   , for more information on running the restoration script.
+FIXME: xref Scripted Backups
+   , for more information on running the backup scripts.
+
+   *Please Note:* The backup scripts and the restoration scripts are
+designed to be used together.  While it is possible to restore files by
+hand from an archive which was created using a backup script, and to
+create an archive by hand which could then be extracted using the
+restore script, it is easier to use the scripts.
+FIXME: xref incremental
+and listed-incremental
+   , before making such an attempt.
+
+FIXME: shorten node names
+
+
+File: tar.info,  Node: Backup Parameters,  Next: Scripted Backups,  Prev: Backup Levels,  Up: Backups and Restoration
+
+Setting Parameters for Backups and Restoration
+==============================================
+
+     *(This message will disappear, once this node revised.)*
+
+   The file `backup-specs' specifies backup parameters for the backup
+and restoration scripts provided with `tar'.  You must edit
+`backup-specs' to fit your system configuration and schedule before
+using these scripts.
+
+FIXME: This about backup scripts needs to be written: BS is a shell
+FIXME: script ....  thus ... `backup-specs' is in shell script
+FIXME: syntax.  xref Script Syntax, for an explanation of this syntax.
+FIXME:
+FIXME: whats a parameter ....  looked at by the backup scripts ... which
+FIXME: will be expecting to find ... now syntax ... value is linked to
+FIXME: lame ...  `backup-specs' specifies the following parameters:
+
+`ADMINISTRATOR'
+     The user name of the backup administrator.
+
+`BACKUP_HOUR'
+     The hour at which the backups are done.  This can be a number from
+     0 to 23, or the string `now'.
+
+`TAPE_FILE'
+     The device `tar' writes the archive to.  This device should be
+     attached to the host on which the dump scripts are run.
+     FIXME: examples for all  ...
+
+`TAPE_STATUS'
+     The command to use to obtain the status of the archive device,
+     including error count.  On some tape drives there may not be such a
+     command; in that case, simply use `TAPE_STATUS=false'.
+
+`BLOCKING'
+     The blocking factor `tar' will use when writing the dump archive.
+
+     FIXME: xref Blocking Factor
+     .
+
+`BACKUP_DIRS'
+     A list of file systems to be dumped.  You can include any directory
+     name in the list--subdirectories on that file system will be
+     included, regardless of how they may look to other networked
+     machines.  Subdirectories on other file systems will be ignored.
+
+     The host name specifies which host to run `tar' on, and should
+     normally be the host that actually contains the file system.
+     However, the host machine must have GNU `tar' installed, and must
+     be able to access the directory containing the backup scripts and
+     their support files using the same file name that is used on the
+     machine where the scripts are run (ie. what `pwd' will print when
+     in that directory on that machine).  If the host that contains the
+     file system does not have this capability, you can specify another
+     host as long as it can access the file system through NFS.
+
+`BACKUP_FILES'
+     A list of individual files to be dumped.  These should be
+     accessible from the machine on which the backup script is run.
+     FIXME: same file name, be specific.  through nfs ...
+
+* Menu:
+
+* backup-specs example::
+* Script Syntax::
+
+
+File: tar.info,  Node: backup-specs example,  Next: Script Syntax,  Prev: Backup Parameters,  Up: Backup Parameters
+
+An Example Text of `Backup-specs'
+---------------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   The following is the text of `backup-specs' as it appears at FSF:
+
+     # site-specific parameters for file system backup.
+     
+     ADMINISTRATOR=friedman
+     BACKUP_HOUR=1
+     TAPE_FILE=/dev/nrsmt0
+     TAPE_STATUS="mts -t $TAPE_FILE"
+     BLOCKING=124
+     BACKUP_DIRS="
+     	albert:/fs/fsf
+     	apple-gunkies:/gd
+     	albert:/fs/gd2
+     	albert:/fs/gp
+     	geech:/usr/jla
+     	churchy:/usr/roland
+     	albert:/
+     	albert:/usr
+     	apple-gunkies:/
+     	apple-gunkies:/usr
+     	gnu:/hack
+     	gnu:/u
+     	apple-gunkies:/com/mailer/gnu
+     	apple-gunkies:/com/archive/gnu"
+     
+     BACKUP_FILES="/com/mailer/aliases /com/mailer/league*[a-z]"
+
+
+File: tar.info,  Node: Script Syntax,  Prev: backup-specs example,  Up: Backup Parameters
+
+Syntax for `Backup-specs'
+-------------------------
+
+     *(This message will disappear, once this node revised.)*
+
+   `backup-specs' is in shell script syntax.  The following conventions
+should be considered when editing the script:
+FIXME: "conventions?"
+
+   A quoted string is considered to be contiguous, even if it is on more
+than one line.  Therefore, you cannot include commented-out lines
+within a multi-line quoted string.  BACKUP_FILES and BACKUP_DIRS are
+the two most likely parameters to be multi-line.
+
+   A quoted string typically cannot contain wildcards.  In
+`backup-specs', however, the parameters BACKUP_DIRS and BACKUP_FILES
+can contain wildcards.
+
+
+File: tar.info,  Node: Scripted Backups,  Next: Scripted Restoration,  Prev: Backup Parameters,  Up: Backups and Restoration
+
+Using the Backup Scripts
+========================
+
+     *(This message will disappear, once this node revised.)*
+
+   The syntax for running a backup script is:
+
+     `script-name' [TIME-TO-BE-RUN]
+
+   where TIME-TO-BE-RUN can be a specific system time, or can be `now'.
+If you do not specify a time, the script runs at the time specified in
+`backup-specs' (
+FIXME: pxref Script Syntax
+   ).
+
+   You should start a script with a tape or disk mounted.  Once you
+start a script, it prompts you for new tapes or disks as it needs them.
+Media volumes don't have to correspond to archive files--a multi-volume
+archive can be started in the middle of a tape that already contains
+the end of another multi-volume archive.  The `restore' script prompts
+for media by its archive volume, so to avoid an error message you
+should keep track of which tape (or disk) contains which volume of the
+archive.
+FIXME: xref Scripted Restoration
+   .
+
+FIXME: have file names changed?
+   The backup scripts write two files on the file system.  The first is
+a record file in `/etc/tar-backup/', which is used by the scripts to
+store and retrieve information about which files were dumped.  This
+file is not meant to be read by humans, and should not be deleted by
+them.
+FIXME: xref incremental and listed-incremental
+   , for a more detailed explanation of this file.
+
+   The second file is a log file containing the names of the file
+systems and files dumped, what time the backup was made, and any error
+messages that were generated, as well as how much space was left in the
+media volume after the last volume of the archive was written.  You
+should check this log file after every backup.  The file name is
+`log-MMM-DDD-YYYY-level-1' or `log-MMM-DDD-YYYY-full'.
+
+   The script also prints the name of each system being dumped to the
+standard output.
+FIXME: the section on restore scripts is commented out.
+FIXME: a section on non-scripted testore mya be a good idea
+
+
+File: tar.info,  Node: Scripted Restoration,  Prev: Scripted Backups,  Up: Backups and Restoration
+
+Using the Restore Script
+========================
+
+FIXME: subject to change as things develop
+
+     *(This message will disappear, once this node revised.)*
+
+   (This node was @ignore'd--merely listing it for now.)
+
+   To restore files that were archived using a scripted backup, use the
+`restore' script.  The syntax for the script is:
+
+   where ***** are the file systems to restore from, and ***** is a
+regular expression which specifies which files to restore.  If you
+specify -all, the script restores all the files in the file system.
+
+   You should start the restore script with the media containing the
+first volume of the archive mounted.  The script will prompt for other
+volumes as they are needed.  If the archive is on tape, you don't need
+to rewind the tape to to its beginning--if the tape head is positioned
+past the beginning of the archive, the script will rewind the tape as
+needed.
+FIXME: xref Media
+   , for a discussion of tape positioning.
+
+   If you specify `--all' as the FILES argument, the `restore' script
+extracts all the files in the archived file system into the active file
+system.
+
+     *Warning:*The script will delete files from the active file system
+     if they were not in the file system when the archive was made.
+
+FIXME: xref incremental and listed-incremental
+   , for an explanation of how the script makes that determination.
+FIXME: this may be an option, not a given
+
+
+File: tar.info,  Node: Date input formats,  Next: Archive Format,  Prev: Backups and Restoration,  Up: Top
+
+Date input formats
+******************
+
+   This section describes the textual date representations that GNU
+programs accept.  These are the strings you, as a user, can supply as
+arguments to the various programs.  The C interface (via the `getdate'
+function) is not described here.
+
+   Although the date syntax here can represent any possible time since
+zero A.D., computer integers are not big enough for such a
+(comparatively) long time.  The earliest date semantically allowed on
+Unix systems is midnight, 1 January 1970 UCT.
+
+* Menu:
+
+* General date syntax::
+* Calendar date item::
+* Time of day item::
+* Timezone item::
+* Day of week item::
+* Relative item in date strings::
+* Pure numbers in date strings::
+* Authors of getdate::
+
+
+File: tar.info,  Node: General date syntax,  Next: Calendar date item,  Prev: Date input formats,  Up: Date input formats
+
+General date syntax
+===================
+
+   A "date" is a string, possibly empty, containing many items
+separated by whitespace.  The whitespace may be omitted when no
+ambiguity arises.  The empty string means the beginning of today (i.e.,
+midnight).  Order of the items is immaterial.  A date string may contain
+many flavors of items:
+
+   * calendar date items
+
+   * time of the day items
+
+   * time zone items
+
+   * day of the week items
+
+   * relative items
+
+   * pure numbers.
+
+We describe each of these item types in turn, below.
+
+   A few numbers may be written out in words in most contexts.  This is
+most useful for specifying day of the week items or relative items (see
+below).  Here is the list: `first' for 1, `next' for 2, `third' for 3,
+`fourth' for 4, `fifth' for 5, `sixth' for 6, `seventh' for 7, `eighth'
+for 8, `ninth' for 9, `tenth' for 10, `eleventh' for 11 and `twelfth'
+for 12.  Also, `last' means exactly -1.
+
+   When a month is written this way, it is still considered to be
+written numerically, instead of being "spelled in full"; this changes
+the allowed strings.
+
+   Alphabetic case is completely ignored in dates.  Comments may be
+introduced between round parentheses, as long as included parentheses
+are properly nested.  Hyphens not followed by a digit are currently
+ignored.  Leading zeros on numbers are ignored.
+
+
+File: tar.info,  Node: Calendar date item,  Next: Time of day item,  Prev: General date syntax,  Up: Date input formats
+
+Calendar date item
+==================
+
+   A "calendar date item" specifies a day of the year.  It is specified
+differently, depending on whether the month is specified numerically or
+literally.  All these strings specify the same calendar date:
+
+     1970-9-17            # ISO 8601.
+     70-9-17              # This century assumed by default.
+     70-09-17             # Leading zeros are ignored.
+     9/17/72              # Common U.S. writing.
+     24 September 1972
+     24 Sept 72           # September has a special abbreviation.
+     24 Sep 72            # Three-letter abbreviations always allowed.
+     Sep 24, 1972
+     24-sep-72
+     24sep72
+
+   The year can also be omitted.  In this case, the last specified year
+is used, or the current year if none.  For example:
+
+     9/17
+     sep 17
+
+   Here are the rules.
+
+   For numeric months, the ISO 8601 format `YEAR-MONTH-DAY' is allowed,
+where YEAR is any positive number, MONTH is a number between 1 and 12,
+and DAY is a number between 1 and 31.  If YEAR is less than 100, then
+1900 is added to it to force a date in this century.  The construct
+`MONTH/DAY/YEAR', popular in the United States, is accepted.  Also
+`MONTH/DAY', omitting the year.
+
+   Literal months may be spelled out in full: `January', `February',
+`March', `April', `May', `June', `July', `August', `September',
+`October', `November' or `December'.  Literal months may be abbreviated
+to their first three letters, possibly followed by an abbreviating dot.
+It is also permitted to write `Sept' instead of `September'.
+
+   When months are written literally, the calendar date may be given as
+any of the following:
+
+     DAY MONTH YEAR
+     DAY MONTH
+     MONTH DAY YEAR
+     DAY-MONTH-YEAR
+
+   Or, omitting the year:
+
+     MONTH DAY
+
+
+File: tar.info,  Node: Time of day item,  Next: Timezone item,  Prev: Calendar date item,  Up: Date input formats
+
+Time of day item
+================
+
+   A "time of day item" in date strings specifies the time on a given
+day.  Here are some examples, all of which represent the same time:
+
+     20:02:0
+     20:02
+     8:02pm
+     20:02-0500      # In EST (Eastern U.S. Standard Time).
+
+   More generally, the time of the day may be given as
+`HOUR:MINUTE:SECOND', where HOUR is a number between 0 and 23, MINUTE
+is a number between 0 and 59, and SECOND is a number between 0 and 59.
+Alternatively, `:SECOND' can be omitted, in which case it is taken to
+be zero.
+
+   If the time is followed by `am' or `pm' (or `a.m.' or `p.m.'), HOUR
+is restricted to run from 1 to 12, and `:MINUTE' may be omitted (taken
+to be zero).  `am' indicates the first half of the day, `pm' indicates
+the second half of the day.  In this notation, 12 is the predecessor of
+1: midnight is `12am' while noon is `12pm'.
+
+   The time may alternatively be followed by a timezone correction,
+expressed as `SHHMM', where S is `+' or `-', HH is a number of zone
+hours and MM is a number of zone minutes.  When a timezone correction
+is given this way, it forces interpretation of the time in UTC,
+overriding any previous specification for the timezone or the local
+timezone.  The MINUTE part of the time of the day may not be elided
+when a timezone correction is used.  This is the only way to specify a
+timezone correction by fractional parts of an hour.
+
+   Either `am'/`pm' or a timezone correction may be specified, but not
+both.
+
+
+File: tar.info,  Node: Timezone item,  Next: Day of week item,  Prev: Time of day item,  Up: Date input formats
+
+Timezone item
+=============
+
+   A "timezone item" specifies an international timezone, indicated by
+a small set of letters.  Any included period is ignored.  Military
+timezone designations use a single letter.  Currently, only integral
+zone hours may be represented in a timezone item.  See the previous
+section for a finer control over the timezone correction.
+
+   Here are many non-daylight-savings-time timezones, indexed by the
+zone hour value.
+
++000
+     `GMT' for Greenwich Mean, `UT' or `UTC' for Universal
+     (Coordinated), `WET' for Western European and `Z' for militaries.
+
++100
+     `WAT' for West Africa and `A' for militaries.
+
++200
+     `AT' for Azores and `B' for militaries.
+
++300
+     `C' for militaries.
+
++400
+     `AST' for Atlantic Standard and `D' for militaries.
+
++500
+     `E' for militaries and `EST' for Eastern Standard.
+
++600
+     `CST' for Central Standard and `F' for militaries.
+
++700
+     `G' for militaries and `MST' for Mountain Standard.
+
++800
+     `H' for militaries and `PST' for Pacific Standard.
+
++900
+     `I' for militaries and `YST' for Yukon Standard.
+
++1000
+     `AHST' for Alaska-Hawaii Standard, `CAT' for Central Alaska, `HST'
+     for Hawaii Standard and `K' for militaries.
+
++1100
+     `L' for militaries and `NT' for Nome.
+
++1200
+     `IDLW' for International Date Line West and `M' for militaries.
+
+-100
+     `CET' for Central European, `FWT' for French Winter, `MET' for
+     Middle European, `MEWT' for Middle European Winter, `N' for
+     militaries and `SWT' for Swedish Winter.
+
+-200
+     `EET' for Eastern European, USSR Zone 1 and `O' for militaries.
+
+-300
+     `BT' for Baghdad, USSR Zone 2 and `P' for militaries.
+
+-400
+     `Q' for militaries and `ZP4' for USSR Zone 3.
+
+-500
+     `R' for militaries and `ZP5' for USSR Zone 4.
+
+-600
+     `S' for militaries and `ZP6' for USSR Zone 5.
+
+-700
+     `T' for militaries and `WAST' for West Australian Standard.
+
+-800
+     `CCT' for China Coast, USSR Zone 7 and `U' for militaries.
+
+-900
+     `JST' for Japan Standard, USSR Zone 8 and `V' for militaries.
+
+-1000
+     `EAST' for East Australian Standard, `GST' for Guam Standard, USSR
+     Zone 9 and `W' for militaries.
+
+-1100
+     `X' for militaries.
+
+-1200
+     `IDLE' for International Date Line East, `NZST' for New Zealand
+     Standard, `NZT' for New Zealand and `Y' for militaries.
+
+   Here are many DST timezones, indexed by the zone hour value.  Also,
+by following a non-DST timezone by the string `DST' in a separate word
+(that is, separated by some whitespace), the corresponding DST timezone
+may be specified.
+
+0
+     `BST' for British Summer.
+
++400
+     `ADT' for Atlantic Daylight.
+
++500
+     `EDT' for Eastern Daylight.
+
++600
+     `CDT' for Central Daylight.
+
++700
+     `MDT' for Mountain Daylight.
+
++800
+     `PDT' for Pacific Daylight.
+
++900
+     `YDT' for Yukon Daylight.
+
++1000
+     `HDT' for Hawaii Daylight.
+
+-100
+     `MEST' for Middle European Summer, `MESZ' for Middle European
+     Summer, `SST' for Swedish Summer and `FST' for French Summer.
+
+-700
+     `WADT' for West Australian Daylight.
+
+-1000
+     `EADT' for Eastern Australian Daylight.
+
+-1200
+     `NZDT' for New Zealand Daylight.
+
+
+File: tar.info,  Node: Day of week item,  Next: Relative item in date strings,  Prev: Timezone item,  Up: Date input formats
+
+Day of week item
+================
+
+   The explicit mention of a day of the week will forward the date
+(only if necessary) to reach that day of the week in the future.
+
+   Days of the week may be spelled out in full: `Sunday', `Monday',
+`Tuesday', `Wednesday', `Thursday', `Friday' or `Saturday'.  Days may
+be abbreviated to their first three letters, optionally followed by a
+period.  The special abbreviations `Tues' for `Tuesday', `Wednes' for
+`Wednesday' and `Thur' or `Thurs' for `Thursday' are also allowed.
+
+   A number may precede a day of the week item to move forward
+supplementary weeks.  It is best used in expression like `third
+monday'.  In this context, `last DAY' or `next DAY' is also acceptable;
+they move one week before or after the day that DAY by itself would
+represent.
+
+   A comma following a day of the week item is ignored.
+
+
+File: tar.info,  Node: Relative item in date strings,  Next: Pure numbers in date strings,  Prev: Day of week item,  Up: Date input formats
+
+Relative item in date strings
+=============================
+
+   "Relative items" adjust a date (or the current date if none) forward
+or backward.  The effect of relative items accumulate.  Here are some
+examples:
+
+     1 year
+     1 year ago
+     3 years
+     2 days
+
+   The unit of time displacement may be selected by the string `year'
+or `month' for moving by whole years or months.  These are fuzzy units,
+as years and months are not all of equal duration.  More precise units
+are `fortnight' which is worth 14 days, `week' worth 7 days, `day'
+worth 24 hours, `hour' worth 60 minutes, `minute' or `min' worth 60
+seconds, and `second' or `sec' worth one second.  An `s' suffix on
+these units is accepted and ignored.
+
+   The unit of time may be preceded by a multiplier, given as an
+optionally signed number.  Unsigned numbers are taken as positively
+signed.  No number at all implies 1 for a multiplier.  Following a
+relative item by the string `ago' is equivalent to preceding the unit
+by a multiplicator with value -1.
+
+   The string `tomorrow' is worth one day in the future (equivalent to
+`day'), the string `yesterday' is worth one day in the past (equivalent
+to `day ago').
+
+   The strings `now' or `today' are relative items corresponding to
+zero-valued time displacement, these strings come from the fact a
+zero-valued time displacement represents the current time when not
+otherwise change by previous items.  They may be used to stress other
+items, like in `12:00 today'.  The string `this' also has the meaning
+of a zero-valued time displacement, but is preferred in date strings
+like `this thursday'.
+
+   When a relative item makes the resulting date to cross the boundary
+between DST and non-DST (or vice-versa), the hour is adjusted according
+to the local time.
+
+
+File: tar.info,  Node: Pure numbers in date strings,  Next: Authors of getdate,  Prev: Relative item in date strings,  Up: Date input formats
+
+Pure numbers in date strings
+============================
+
+   The precise intepretation of a pure decimal number is dependent of
+the context in the date string.
+
+   If the decimal number is of the form YYYYMMDD and no other calendar
+date item (
+FIXME: pxref Calendar date item
+   ) appears before it in the date string, then YYYY is read as the
+year, MM as the month number and DD as the day of the month, for the
+specified calendar date.
+
+   If the decimal number is of the form HHMM and no other time of day
+item appears before it in the date string, then HH is read as the hour
+of the day and MM as the minute of the hour, for the specified time of
+the day.  MM can also be omitted.
+
+   If both a calendar date and a time of day appear to the left of a
+number in the date string, but no relative item, then the number
+overrides the year.
+
+
+File: tar.info,  Node: Authors of getdate,  Prev: Pure numbers in date strings,  Up: Date input formats
+
+Authors of `getdate'
+====================
+
+   `getdate' was originally implemented by Steven M. Bellovin
+(`smb@research.att.com') while at the University of North Carolina at
+Chapel Hill.  The code was later tweaked by a couple of people on
+Usenet, then completely overhauled by Rich $alz (`rsalz@bbn.com') and
+Jim Berets (`jberets@bbn.com') in August, 1990.  Various revisions for
+the GNU system were made by David MacKenzie, Jim Meyering, and others.
+
+   This chapter was originally produced by Franc,ois Pinard
+(`pinard@iro.umontreal.ca') from the `getdate.y' source code, and then
+edited by K. Berry (`kb@cs.umb.edu').
+
+
+File: tar.info,  Node: Archive Format,  Next: Index,  Prev: Date input formats,  Up: Top
+
+Format of `tar' archives
+************************
+
+     *(This message will disappear, once this node revised.)*
+
+* Menu:
+
+* Standard::
+* Extensions::
+* cpio::
+
