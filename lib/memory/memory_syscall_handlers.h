@@ -48,6 +48,6 @@ struct MemoryInterface{
     void* brk;
 };
 
-struct MemoryInterface* memory_interface( void *heap_ptr, uint32_t heap_size );
+struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size );
 
 #endif //__MEMORY_SYSCALL_HANDLERS_H__

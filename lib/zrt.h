@@ -29,9 +29,12 @@
 struct stat;
 struct dirent;
 struct timeval;
+struct timespec;
 
 #define ZCALLS_INIT 1
 struct zcalls_init_t{
+    /*zcalls initializer, coming just after __zcalls_query*/
+    void (*init)(void);
     /* irt basic *************************/
     void (*exit)(int status);
     int (*gettod)(struct timeval *tv);

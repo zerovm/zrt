@@ -17,18 +17,18 @@
 #define MAX_NESTED_SYSCALLS_LOG 5
 #define MAX_NESTED_SYSCALL_LEN 50
 static int s_verbosity_level = 1;
-static int s_donotlog=0;
+static int s_log_enabled=0;
 static int s_zrt_log_fd = -1;
 static char s_logbuf[LOG_BUFFER_SIZE];
 
 static char s_nested_syscalls_str[MAX_NESTED_SYSCALL_LEN] = "\0";
 
 void __zrt_log_enable(int status){
-   s_donotlog = status;
+   s_log_enabled = status;
 }
 
 int  __zrt_log_is_enabled(){
-    return s_donotlog;
+    return s_log_enabled;
 }
 
 int __zrt_log_verbosity(){
@@ -55,6 +55,7 @@ const char* __zrt_log_syscall_stack_str(){
 }
 
 void __zrt_log_push_name( const char* name ){
+    if ( !s_log_enabled ) return; /*logging switched off*/
     int len = strlen(name);
     if ( (strlen(s_nested_syscalls_str) + len + 3) < MAX_NESTED_SYSCALL_LEN ){
         snprintf( s_nested_syscalls_str + strlen(s_nested_syscalls_str), MAX_NESTED_SYSCALL_LEN-len,
@@ -63,6 +64,7 @@ void __zrt_log_push_name( const char* name ){
 }
 
 void __zrt_log_pop_name( const char* name ) {
+    if ( !s_log_enabled ) return ; /*logging switched off*/
     char *s = strrchr(s_nested_syscalls_str, ' ');
     if ( s ){
         assert( !strcmp(name, s+1) ); /*check if popped name is equal to awaitings*/
@@ -71,11 +73,12 @@ void __zrt_log_pop_name( const char* name ) {
 }
 
 int32_t __zrt_log_write( int handle, const char* buf, int32_t size, int64_t offset){
+    if ( !s_log_enabled ) return 0; /*logging switched off*/
     return zvm_pwrite(handle, buf, size, offset);
 }
 
 int __zrt_log_debug_get_buf(char **buf){
-    if ( s_donotlog != 0 ) return -1; /*switch off log for some functions*/
+    if ( !s_log_enabled ) return -1; /*logging switched off*/
     *buf = s_logbuf;
     return s_zrt_log_fd;
 }

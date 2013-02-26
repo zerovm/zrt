@@ -32,7 +32,7 @@ struct MountsManager{
 };
 
 
-struct MountsManager* alloc_mounts_manager();
+struct MountsManager* get_mounts_manager();
 struct MountsManager* mounts_manager(); /*accessor*/
 
 

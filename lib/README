@@ -1,9 +1,7 @@
 ZRT - ZeroVM runtime library
 
-Zrt library contains:
+It's contains:
 - Simple OS implementation. Described in more details in the folowing section 
-- Lua 5.2.1 Library, see here: zrt\lib\lua-5.2.1\README
-- Sqlite3 Library, see here: zrt\lib\sqlite3\README
 - Mapreduce32/128 Library, see here: zrt\lib\mapreduce\README 
 - Networking Library, see here: zrt\lib\networking\README
 - Rewritable filesystem in memory - MemMount taken from nacl-mounts

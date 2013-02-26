@@ -131,7 +131,7 @@ static struct HandleAllocator s_handle_allocator = {
 };
 
 
-struct HandleAllocator* alloc_handle_allocator(){
+struct HandleAllocator* get_handle_allocator(){
     return &s_handle_allocator;
 }
 

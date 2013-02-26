@@ -17,7 +17,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "zrtsyscalls.h"
+#include "zcalls_zrt.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 

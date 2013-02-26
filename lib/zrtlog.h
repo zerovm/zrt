@@ -41,8 +41,8 @@
 #define LOG_BUFFER_SIZE 0x1000
 
 /*ZRT_LOG
- v_123 verbosity param, fmt_123 format string, ... arguments*/
-#define ZRT_LOG(v_123, fmt_123, ...) if( __zrt_log_is_enabled() ){		\
+  v_123 verbosity param, fmt_123 format string, ... arguments*/
+#define ZRT_LOG(v_123, fmt_123, ...) if( __zrt_log_is_enabled() ){	\
 	int debug_handle_123;						\
 	char *buf__123;							\
 	if( __zrt_log_verbosity() >= v_123 &&				\
@@ -50,7 +50,7 @@
 	    int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,		\
 				   #v_123 " %s; [%s]; %s, %d: " fmt_123 "\n", \
 				   __FILE__, __zrt_log_syscall_stack_str(), \
-			   __func__, __LINE__, __VA_ARGS__);		\
+				   __func__, __LINE__, __VA_ARGS__);	\
 	    __zrt_log_write(debug_handle_123, buf__123, len_123, 0);	\
 	}								\
     }
@@ -71,36 +71,36 @@
 
 /* Push current NACL syscall into logging stack that printing for every log invocation.
  * Enable logging for NACL syscall, and printing arguments*/
-#define LOG_SYSCALL_START(fmt_123, ...) {				\
-	__zrt_log_push_name(__func__);					\
-	ZRT_LOG(L_INFO, fmt_123, __VA_ARGS__);				\
+#define LOG_SYSCALL_START(fmt_123, ...) {	\
+	__zrt_log_push_name(__func__);		\
+	ZRT_LOG(L_INFO, fmt_123, __VA_ARGS__);	\
     }
 
-#define LOG_SHORT_SYSCALL_FINISH(ret, fmt_123, ...){			\
-        if ( ret < 0 ){							\
-	    ZRT_LOG(L_SHORT, "ret=0x%x errno=%d " fmt_123 "",		\
-		    (int)ret, errno, __VA_ARGS__);			\
-	}								\
-        else{								\
-	    ZRT_LOG(L_SHORT, "ret=0x%x " fmt_123 "",			\
-		    (int)ret, __VA_ARGS__);				\
-	}								\
-        __zrt_log_pop_name(__func__);						\
+#define LOG_SHORT_SYSCALL_FINISH(ret, fmt_123, ...){		\
+        if ( ret < 0 ){						\
+	    ZRT_LOG(L_SHORT, "ret=0x%x errno=%d " fmt_123 "",	\
+		    (int)ret, errno, __VA_ARGS__);		\
+	}							\
+        else{							\
+	    ZRT_LOG(L_SHORT, "ret=0x%x " fmt_123 "",		\
+		    (int)ret, __VA_ARGS__);			\
+	}							\
+        __zrt_log_pop_name(__func__);				\
     }
 
 
 /* Pop from logging stack current syscall function.
  * Prints retcode and errno*/
-#define LOG_INFO_SYSCALL_FINISH(ret, fmt_123, ...){			\
-        if ( ret < 0 ){							\
-	    ZRT_LOG(L_INFO, "ret=0x%x errno=%d " fmt_123 "",		\
-		    (int)ret, errno, __VA_ARGS__);			\
-	}								\
-        else{								\
-	    ZRT_LOG(L_INFO, "ret=0x%x " fmt_123 "",			\
-		    (int)ret, __VA_ARGS__);				\
-	}								\
-        __zrt_log_pop_name(__func__);						\
+#define LOG_INFO_SYSCALL_FINISH(ret, fmt_123, ...){		\
+        if ( ret < 0 ){						\
+	    ZRT_LOG(L_INFO, "ret=0x%x errno=%d " fmt_123 "",	\
+		    (int)ret, errno, __VA_ARGS__);		\
+	}							\
+        else{							\
+	    ZRT_LOG(L_INFO, "ret=0x%x " fmt_123 "",		\
+		    (int)ret, __VA_ARGS__);			\
+	}							\
+        __zrt_log_pop_name(__func__);				\
     }
 
 const char* __zrt_log_syscall_stack_str();

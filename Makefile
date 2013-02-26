@@ -1,12 +1,12 @@
 include Makefile.env
 
 ############### libzrt.a source files to build
-LIBZRT0=lib/libzrt0.a
-LIBZRT0_SOURCES= lib/zrt.c
+LIBDEP_SOURCES= lib/zrt.c
 
 LIBZRT=lib/libzrt.a
 LIBZRT_SOURCES= ${ZEROVM_ROOT}/api/zvm.c \
-lib/zrtsyscalls.c \
+lib/zcalls/zcalls_prolog.c \
+lib/zcalls/zcalls_zrt.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
@@ -27,7 +27,7 @@ lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c
 
-LIBZRT0_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT0_SOURCES) ) )
+LIBDEP_OBJECTS=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 
 
@@ -59,10 +59,17 @@ lib/glibc_substitute/lockf_stub.c
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
 
 
-############## ported libraries build
-LIBS= lib/mapreduce/libmapreduce.a lib/networking/libnetworking.a \
-lib/lua-5.2.1/liblua.a gtest/libgtest.a lib/fs/nacl-mounts/libfs.a \
-lib/tar-1.11.8/libtar.a lib/sqlite3/libsqlite3.a 
+############## zrtlibs and ported libraries build
+LIBS= \
+lib/mapreduce/libmapreduce.a \
+lib/networking/libnetworking.a \
+lib/fs/nacl-mounts/libfs.a 
+
+LIBPORTS= \
+libports/gtest/libgtest.a \
+libports/lua-5.2.1/liblua.a \
+libports/tar-1.11.8/libtar.a \
+libports/sqlite3/libsqlite3.a 
 
 ################# samples to build
 UNSTABLE_SAMPLES=
@@ -71,7 +78,6 @@ TEST_SAMPLES=file_stat bigfile
 TEST_SUITES=lua_test_suite
 
 ################# flags set
-CFLAGS = -Wall -Wno-long-long -O2 -m64
 CFLAGS += -Werror-implicit-function-declaration
 #include paths
 CFLAGS += -I. \
@@ -96,21 +102,17 @@ CXXFLAGS = -I. -Ilib -Ilib/fs
 #debug: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
 
 all: 
-all: prepare ${LIBS} ${LIBZRT0} ${LIBZRT} ${LIBZGLIBC} autotests 
+all: prepare ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} ${LIBZGLIBC} autotests 
 
 
 #build zrt0 to be used as stub inside of zlibc
 zlibc_dep: CFLAGS+=-DZLIBC_STUB
-zlibc_dep: cleanzrt0 ${LIBZRT0}
+zlibc_dep: ${LIBDEP_OBJECTS}
 
 
 prepare:
 	@chmod u+rwx ns_start.sh
 	@chmod u+rwx ns_stop.sh
-
-${LIBZRT0} : $(LIBZRT0_OBJECTS)
-	$(AR) rcs $@ $(LIBZRT0_OBJECTS)
-	@echo $@ updated
 
 ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
@@ -121,7 +123,12 @@ ${LIBZGLIBC} : $(LIBZGLIBC_OBJECTS)
 	@echo $@ updated
 
 ############## Build libs, invoke nested Makefiles
-${LIBS}:  
+${LIBS}:
+	@make -C$(dir $@)
+	@echo move $@ library to final folder
+	@mv -f $@ lib	
+
+${LIBPORTS}:
 	@make -C$(dir $@)
 	@echo move $@ library to final folder
 	@mv -f $@ lib	
@@ -149,25 +156,29 @@ all_samples: ${SAMPLES}
 ${SAMPLES}: 
 	@make -Csamples/$@
 
-################ "make cleanall" Cleaning libs, tests, samples 	
-cleanall: clean clean_samples clean_test_suites
+################ "make clean" Cleaning libs, tests, samples 	
+clean: libclean clean_ports clean_samples clean_test_suites
+	@rm -f lib/*.a
 
 ################ "make clean" Cleaning libs 
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
+LIBPORTS_CLEAN =$(foreach smpl, ${LIBPORTS}, $(smpl).clean)
 
-clean: ${LIBS_CLEAN}  
-${LIBS_CLEAN}:
+libclean: ${LIBS_CLEAN}  
+${LIBS_CLEAN}: cleandep
 	@make -C$(dir $@) clean 
 	@TESTS_ROOT=autotests make -Ctests/zrt_test_suite clean
-	@rm -f $(LIBZRT0_OBJECTS)
 	@rm -f $(LIBZRT_OBJECTS)
 	@rm -f $(LIBZGLIBC_OBJECTS)
 	@rm -f $(LIBS)
-	@rm -f lib/*.a
 
-cleanzrt0:
-	@rm -f ${LIBZRT0}
-	@rm -f $(LIBZRT0_OBJECTS)
+clean_ports: ${LIBPORTS_CLEAN}
+${LIBPORTS_CLEAN}:
+	@make -C$(dir $@) clean 
+	@rm -f $(LIBPORTS)
+
+cleandep:
+	@rm -f ${LIBDEP_OBJECTS}
 
 ################ "make clean_samples" Cleaning samples 
 SAMPLES_CLEAN =$(foreach smpl, ${SAMPLES}, $(smpl).clean)

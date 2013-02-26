@@ -113,8 +113,8 @@ struct MountsManager* mounts_manager(){
     return &s_mounts_manager;    
 }
 
-struct MountsManager* alloc_mounts_manager(){
-    s_mounts_manager.handle_allocator = alloc_handle_allocator();
+struct MountsManager* get_mounts_manager(){
+    s_mounts_manager.handle_allocator = get_handle_allocator();
     return &s_mounts_manager;
 }
 

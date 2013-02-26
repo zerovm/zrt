@@ -195,7 +195,7 @@ static struct MemoryInterface KMemoryInterface = {
     memory_munmap
 };
 
-struct MemoryInterface* memory_interface( void *heap_ptr, uint32_t heap_size ){
+struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size ){
     /*round up tests*/
     assert(roundup_pow2( 0 )== 0);
     assert(roundup_pow2( 4 )== 4);

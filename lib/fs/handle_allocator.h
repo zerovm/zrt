@@ -39,6 +39,6 @@ struct HandleAllocator{
 };
 
 
-struct HandleAllocator* alloc_handle_allocator();
+struct HandleAllocator* get_handle_allocator();
 
 #endif /* HANDLE_ALLOCATOR_H_ */

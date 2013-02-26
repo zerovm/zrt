@@ -5,70 +5,73 @@
  *      Author: YaroslavLitvinov
  */
 
-//#define ZLIBC_STUB
+#include "zrt.h"
+#include "zcalls.h"
 
+//#define ZLIBC_STUB
 /* Define ZLIBC_STUB to create empty implementation of zcalls interface.
  * It's needed while building ZLIBC to cut off the rest of ZRT library code.
  * For generic ZRT using it is should no be defined;*/
+
+
 #ifndef ZLIBC_STUB
-#  include "zrt.h"
-#  include "zrtsyscalls.h"
 static struct zcalls_init_t KZcalls_init = {
-    zrt_zcall_exit,
-    zrt_zcall_gettod,
-    zrt_zcall_clock,
-    zrt_zcall_nanosleep,
-    zrt_zcall_sched_yield,
-    zrt_zcall_sysconf,
+    zrt_zcall_prolog_init,
+    zrt_zcall_prolog_exit,
+    zrt_zcall_prolog_gettod,
+    zrt_zcall_prolog_clock,
+    zrt_zcall_prolog_nanosleep,
+    zrt_zcall_prolog_sched_yield,
+    zrt_zcall_prolog_sysconf,
 
-    zrt_zcall_close,
-    zrt_zcall_dup,
-    zrt_zcall_dup2,
-    zrt_zcall_read,
-    zrt_zcall_write,
-    zrt_zcall_seek,
-    zrt_zcall_fstat,
-    zrt_zcall_getdents,
+    zrt_zcall_prolog_close,
+    zrt_zcall_prolog_dup,
+    zrt_zcall_prolog_dup2,
+    zrt_zcall_prolog_read,
+    zrt_zcall_prolog_write,
+    zrt_zcall_prolog_seek,
+    zrt_zcall_prolog_fstat,
+    zrt_zcall_prolog_getdents,
 
-    zrt_zcall_open,
-    zrt_zcall_stat,
+    zrt_zcall_prolog_open,
+    zrt_zcall_prolog_stat,
 
-    zrt_zcall_sysbrk,
-    zrt_zcall_mmap,
-    zrt_zcall_munmap,
+    zrt_zcall_prolog_sysbrk,
+    zrt_zcall_prolog_mmap,
+    zrt_zcall_prolog_munmap,
 
-    zrt_zcall_dyncode_create,
-    zrt_zcall_dyncode_modify,
-    zrt_zcall_dyncode_delete,
+    zrt_zcall_prolog_dyncode_create,
+    zrt_zcall_prolog_dyncode_modify,
+    zrt_zcall_prolog_dyncode_delete,
 
-    zrt_zcall_thread_create,
-    zrt_zcall_thread_exit,
-    zrt_zcall_thread_nice,
+    zrt_zcall_prolog_thread_create,
+    zrt_zcall_prolog_thread_exit,
+    zrt_zcall_prolog_thread_nice,
 
-    zrt_zcall_mutex_create,
-    zrt_zcall_mutex_destroy,
-    zrt_zcall_mutex_lock,
-    zrt_zcall_mutex_unlock,
-    zrt_zcall_mutex_trylock,
+    zrt_zcall_prolog_mutex_create,
+    zrt_zcall_prolog_mutex_destroy,
+    zrt_zcall_prolog_mutex_lock,
+    zrt_zcall_prolog_mutex_unlock,
+    zrt_zcall_prolog_mutex_trylock,
 
-    zrt_zcall_cond_create,
-    zrt_zcall_cond_destroy,
-    zrt_zcall_cond_signal,
-    zrt_zcall_cond_broadcast,
-    zrt_zcall_cond_wait,
-    zrt_zcall_cond_timed_wait_abs,
+    zrt_zcall_prolog_cond_create,
+    zrt_zcall_prolog_cond_destroy,
+    zrt_zcall_prolog_cond_signal,
+    zrt_zcall_prolog_cond_broadcast,
+    zrt_zcall_prolog_cond_wait,
+    zrt_zcall_prolog_cond_timed_wait_abs,
 
-    zrt_zcall_tls_init,
-    zrt_zcall_tls_get,
+    zrt_zcall_prolog_tls_init,
+    zrt_zcall_prolog_tls_get,
 
-    zrt_zcall_open_resource,
+    zrt_zcall_prolog_open_resource,
 
-    zrt_zcall_getres,
-    zrt_zcall_gettime
+    zrt_zcall_prolog_getres,
+    zrt_zcall_prolog_gettime
 };
 
 static struct zcalls_zrt_t KZcalls_zrt = {
-    zrt_zcall_zrt_setup
+    zrt_zcall_prolog_zrt_setup
 };
 #endif //ZLIBC_STUB
 
