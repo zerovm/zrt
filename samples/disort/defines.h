@@ -13,7 +13,8 @@
 #define LOG_UI 1
 #define LOG_DETAILED_UI 2
 #define LOG_DEBUG 3
-#define LOG_LEVEL LOG_UI
+//#define LOG_LEVEL LOG_UI
+#define LOG_LEVEL LOG_DEBUG
 
 #define WRITE_FMT_LOG(level, fmt, args...) \
 		if (level<=LOG_LEVEL ){\

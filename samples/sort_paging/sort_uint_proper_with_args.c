@@ -16,7 +16,6 @@
 #include <emmintrin.h>
 #include <smmintrin.h>
 
-#include "zrt.h"
 #include "cpuid.h"
 
 #if 0

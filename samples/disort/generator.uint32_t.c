@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "zrt.h"
 
 inline void swap(uint32_t *a, uint32_t *b)
 {

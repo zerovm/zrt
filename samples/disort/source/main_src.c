@@ -14,7 +14,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "zrt.h"
 #include "sort.h"
 #include "dsort.h"
 #include "defines.h"

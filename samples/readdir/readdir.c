@@ -13,7 +13,6 @@
 #include <sys/syscall.h>
 #include <stddef.h>
 #include <assert.h>
-#include "zrt.h"
 
 struct linux_dirent {
     long           d_ino;

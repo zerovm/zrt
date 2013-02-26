@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include "zrt.h"
 
 #define ELEMENT_SIZE sizeof(uint32_t)
 

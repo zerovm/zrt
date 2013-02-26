@@ -1,8 +1,6 @@
 /*
  * this sample demonstrate zrt library - simple way to use libc
  * from untrusted code.
- *
- * in order to use zrt "api/zrt.h" should be included
  */
 #include <dirent.h>     /* Defines DT_* constants */
 #include <fcntl.h>
@@ -15,7 +13,6 @@
 #include <sys/syscall.h>
 #include <stddef.h>
 #include <assert.h>
-#include "zrt.h"
 
 struct stat s_temp_stat;
 

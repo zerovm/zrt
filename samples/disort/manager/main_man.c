@@ -12,7 +12,6 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#include "zrt.h"
 #include "histanlz.h"
 #include "defines.h"
 #include "dsort.h"

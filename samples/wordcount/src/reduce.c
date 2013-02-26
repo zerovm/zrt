@@ -12,9 +12,6 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#ifdef USER_SIDE
-    #include "zrt.h"
-#endif
 #include "user_implem.h"
 #include "mapreduce/map_reduce_lib.h"
 #include "networking/eachtoother_comm.h"

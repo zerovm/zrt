@@ -13,7 +13,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "zrt.h"
 #include "sort.h"
 #include "defines.h"
 #include "dsort.h"

@@ -15,8 +15,6 @@
 #include <dirent.h>
 #include <assert.h>
 
-#include "zrt.h"
-
 #define WRITE_FMT_LOG(fmt, args...) fprintf(stderr, fmt, args);fflush(0);
 #define WRITE_LOG(str) fprintf(stderr, "%s\n", str);fflush(0);
 
