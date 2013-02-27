@@ -103,9 +103,6 @@ int zrt_zcall_enhanced_stat(const char *pathname, struct stat *);
 int zrt_zcall_enhanced_sysbrk(void **newbrk);
 int zrt_zcall_enhanced_mmap(void **addr, size_t len, int prot, int flags, int fd, off_t off);
 int zrt_zcall_enhanced_munmap(void *addr, size_t len);
-/* irt tls *************************/
-int zrt_zcall_enhanced_tls_init(void *thread_ptr);
-void *zrt_zcall_enhanced_tls_get(void);
 
 /************************** zcalls_zrt_t functions **************/
 void zrt_zcall_enhanced_zrt_setup(void);

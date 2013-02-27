@@ -39,7 +39,6 @@ lib/glibc_substitute/realpath.c \
 lib/glibc_substitute/getcwd.c \
 lib/glibc_substitute/getuid.c \
 lib/glibc_substitute/getpwuid.c \
-lib/glibc_substitute/fdopen.c \
 lib/glibc_substitute/mkdir.c \
 lib/glibc_substitute/rmdir.c \
 lib/glibc_substitute/umask.c \
@@ -52,7 +51,8 @@ lib/glibc_substitute/rename.c \
 lib/glibc_substitute/chown.c \
 lib/glibc_substitute/eaccess.c \
 lib/glibc_substitute/truncate.c \
-lib/glibc_substitute/lockf_stub.c
+lib/glibc_substitute/lockf_stub.c \
+lib/glibc_substitute/fdopen.c
 
 #lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 
@@ -164,13 +164,13 @@ clean: libclean clean_ports clean_samples clean_test_suites
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 LIBPORTS_CLEAN =$(foreach smpl, ${LIBPORTS}, $(smpl).clean)
 
-libclean: ${LIBS_CLEAN}  
+libclean: ${LIBS_CLEAN}
 ${LIBS_CLEAN}: cleandep
-	@make -C$(dir $@) clean 
-	@TESTS_ROOT=autotests make -Ctests/zrt_test_suite clean
 	@rm -f $(LIBZRT_OBJECTS)
 	@rm -f $(LIBZGLIBC_OBJECTS)
-	@rm -f $(LIBS)
+	@rm -f $(LIBS) $(LIBZRT) $(LIBZGLIBC)
+	@make -C$(dir $@) clean 
+	@TESTS_ROOT=autotests make -Ctests/zrt_test_suite clean
 
 clean_ports: ${LIBPORTS_CLEAN}
 ${LIBPORTS_CLEAN}:

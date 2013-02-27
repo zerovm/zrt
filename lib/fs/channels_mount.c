@@ -177,11 +177,10 @@ static int check_channel_access_mode(const struct ZVMChannel *chan, int access_m
 static void debug_mes_zrt_channel_runtime( int handle ){
     if ( handle == 0 ) return;
     const struct ZrtChannelRt *zrt_chan_runtime = s_zrt_channels[handle];
-    ZRT_LOG(L_INFO, "handle=%d", handle);
     if (zrt_chan_runtime){
         ZRT_LOG(L_INFO, 
-		"flags=%s, sequential_access_pos=%llu, random_access_pos=%llu",
-                STR_FILE_OPEN_FLAGS(zrt_chan_runtime->flags),
+		"handle=%d, flags=%s, sequential_access_pos=%llu, random_access_pos=%llu",
+                handle, STR_FILE_OPEN_FLAGS(zrt_chan_runtime->flags),
                 zrt_chan_runtime->sequential_access_pos, zrt_chan_runtime->random_access_pos );
     }
 }

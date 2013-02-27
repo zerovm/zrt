@@ -8,7 +8,8 @@
 #include "zvm.h"
 #define SET_ERRNO(err) errno=err
 
-//#define LOW_LEVEL_LOG_ENABLE
+#define ONLY_PROLOG_SYSCALL 1
+#define LOW_LEVEL_LOG_ENABLE
 
 #define LOW_LEVEL_LOG_FD 1
 #define FUNC_NAME __func__
@@ -112,7 +113,7 @@ int  zrt_zcall_prolog_dup2(int fd, int newfd){
 
 int  zrt_zcall_prolog_read(int handle, void *buf, size_t count, size_t *nread){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -122,7 +123,7 @@ int  zrt_zcall_prolog_read(int handle, void *buf, size_t count, size_t *nread){
 }
 
 int  zrt_zcall_prolog_write(int handle, const void *buf, size_t count, size_t *nwrote){
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -132,7 +133,7 @@ int  zrt_zcall_prolog_write(int handle, const void *buf, size_t count, size_t *n
 
 int  zrt_zcall_prolog_seek(int handle, off_t offset, int whence, off_t *new_offset){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -142,17 +143,17 @@ int  zrt_zcall_prolog_seek(int handle, off_t offset, int whence, off_t *new_offs
 
 int  zrt_zcall_prolog_fstat(int handle, struct stat *stat){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
     else
-	return zrt_zcall_prolog_fstat(handle, stat);
+	return zrt_zcall_enhanced_fstat(handle, stat);
 }
 
 int  zrt_zcall_prolog_getdents(int fd, struct dirent *dirent_buf, size_t count, size_t *nread){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -162,7 +163,7 @@ int  zrt_zcall_prolog_getdents(int fd, struct dirent *dirent_buf, size_t count, 
 
 int  zrt_zcall_prolog_open(const char *name, int flags, mode_t mode, int *newfd){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -172,7 +173,7 @@ int  zrt_zcall_prolog_open(const char *name, int flags, mode_t mode, int *newfd)
 
 int  zrt_zcall_prolog_stat(const char *pathname, struct stat * stat){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -187,7 +188,7 @@ int  zrt_zcall_prolog_sysbrk(void **newbrk){
     else
 	sbrk_default = *newbrk;
 
-    if ( s_prolog_doing_now ){
+    if ( ONLY_PROLOG_SYSCALL || s_prolog_doing_now ){
 	return 0;
     }
     else
@@ -196,7 +197,7 @@ int  zrt_zcall_prolog_sysbrk(void **newbrk){
 
 int  zrt_zcall_prolog_mmap(void **addr, size_t length, int prot, int flags, int fd, off_t off){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -206,7 +207,7 @@ int  zrt_zcall_prolog_mmap(void **addr, size_t length, int prot, int flags, int 
 
 int  zrt_zcall_prolog_munmap(void *addr, size_t len){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -325,20 +326,15 @@ int  zrt_zcall_prolog_cond_timed_wait_abs(int cond_handle, int mutex_handle,
 /* irt tls *************************/
 int  zrt_zcall_prolog_tls_init(void *thread_ptr){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
-	s_tls_addr = thread_ptr;
-	return 0;
-    }
-    else
-	return zrt_zcall_enhanced_tls_init(thread_ptr);
+    /*very base implementation of tls handling*/
+    s_tls_addr = thread_ptr;
+    return 0;
 }
+
 void * zrt_zcall_prolog_tls_get(void){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
-	return s_tls_addr ; /*valid tls*/
-    }
-    else
-	return zrt_zcall_enhanced_tls_get();
+    /*very base implementation of tls handling*/
+    return s_tls_addr ; /*valid tls*/
 }
 
 /* irt resource open *************************/
@@ -367,7 +363,7 @@ void zrt_zcall_prolog_zrt_setup(void){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     /*prolog initialization done and now main syscall handling should be processed by
      *enhanced syscall handlers*/
-    //s_prolog_doing_now = 0; 
+    s_prolog_doing_now = 0; 
     zrt_zcall_enhanced_zrt_setup();    
 }
 

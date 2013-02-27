@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <error.h>
@@ -26,10 +27,11 @@ int main(int argc, char**argv){
 
     //////////////////////////////////////
 
-    //stat indicates EPERM bug, for non existing file
+    //stat indicates for non existing file -EPERM bug, note that errno is negative! 
     TEST_OPERATION_RESULT(
 			  stat(TEST_FILE, &st),
-			  &ret, (ret==-1&&errno==EPERM));
+			  &ret, (ret==-1&&errno==-EPERM));
+    fprintf(stderr, "errno=%d\n", errno);fflush(0);
 
     CREATE_FILE(TEST_FILE, DATA_FOR_FILE, DATASIZE_FOR_FILE);
     

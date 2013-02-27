@@ -15,7 +15,7 @@
 
 #ifdef DEBUG
 #define MAX_NESTED_SYSCALLS_LOG 5
-#define MAX_NESTED_SYSCALL_LEN 50
+#define MAX_NESTED_SYSCALL_LEN 1000
 static int s_verbosity_level = 1;
 static int s_log_enabled=0;
 static int s_zrt_log_fd = -1;
@@ -58,16 +58,25 @@ void __zrt_log_push_name( const char* name ){
     if ( !s_log_enabled ) return; /*logging switched off*/
     int len = strlen(name);
     if ( (strlen(s_nested_syscalls_str) + len + 3) < MAX_NESTED_SYSCALL_LEN ){
-        snprintf( s_nested_syscalls_str + strlen(s_nested_syscalls_str), MAX_NESTED_SYSCALL_LEN-len,
-                " %s", name );
+        snprintf( s_nested_syscalls_str + strlen(s_nested_syscalls_str), 
+		  MAX_NESTED_SYSCALL_LEN-len,
+		  " %s", name );
+    }
+    else{
+	assert(0);
     }
 }
 
-void __zrt_log_pop_name( const char* name ) {
+void __zrt_log_pop_name( const char* expected_name ) {
     if ( !s_log_enabled ) return ; /*logging switched off*/
     char *s = strrchr(s_nested_syscalls_str, ' ');
     if ( s ){
-        assert( !strcmp(name, s+1) ); /*check if popped name is equal to awaitings*/
+	const char* actual_name = s+1;
+	if (strcmp(expected_name, actual_name)){
+	    ZRT_LOG(L_ERROR, "expected_name=%s, actual_name=%s", expected_name, actual_name);
+	    /*check if popped name is equal to expectations*/
+	    assert( !strcmp(expected_name, actual_name) ); 
+	}
         s[0] = '\0';
     }
 }

@@ -60,7 +60,6 @@
 
 
 /****************** static data*/
-static int                     s_tls_cache=-1;
 struct timeval                 s_cached_timeval;
 struct MountsInterface*        s_channels_mount=NULL;
 struct MountsInterface*        s_mem_mount=NULL;
@@ -137,6 +136,7 @@ static void zrt_setup_finally(){
 
     fstab_observer->cleanup( fstab_observer );
     nvram->free( nvram );
+    ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished");
     ZRT_LOG_DELIMETER;
 #endif
 }
@@ -206,7 +206,6 @@ mode_t apply_umask(mode_t mode){
  * exit. without it the user program cannot terminate correctly.
  */
 void zrt_zcall_enhanced_exit(int status){
-    LOG_SYSCALL_START(P_HEX, status);
     ZRT_LOG(L_SHORT, P_TEXT, "exiting...");
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
@@ -215,12 +214,11 @@ void zrt_zcall_enhanced_exit(int status){
 
 int  zrt_zcall_enhanced_gettod(struct timeval *tvl){
     struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)tvl;
-    int ret=0;
+    int ret=-1;
     errno=0;
 
     if(!tv) {
         errno = EFAULT;
-        ret =-1;
     }
     else{
         /*retrieve and get cached time value*/
@@ -232,25 +230,10 @@ int  zrt_zcall_enhanced_gettod(struct timeval *tvl){
 
         /* update time value*/
         update_cached_time();
+	ret=0;
     }
 
     return ret;
-}
-int  zrt_zcall_enhanced_clock(clock_t *ticks){
-    SET_ERRNO(EPERM);
-    return -1;
-}
-int  zrt_zcall_enhanced_nanosleep(const struct timespec *req, struct timespec *rem){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_sched_yield(void){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_sysconf(int name, int *value){
-    SET_ERRNO(ENOSYS);
-    return -1;
 }
 /* irt fdio *************************/
 int  zrt_zcall_enhanced_close(int handle){
@@ -271,51 +254,64 @@ int  zrt_zcall_enhanced_dup2(int fd, int newfd){
 }
 
 int  zrt_zcall_enhanced_read(int handle, void *buf, size_t count, size_t *nread){
+    int ret=-1;
     LOG_SYSCALL_START("handle=%d buf=%p count=%u", handle, buf, count);
     errno = 0;
     VALIDATE_SYSCALL_PTR(buf);
 
-    int32_t ret = s_transparent_mount->read(handle, buf, count);
-    /*get read bytes by pointer*/
-    *nread = ret;
-    LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
+    int32_t bytes_read = s_transparent_mount->read(handle, buf, count);
+    if ( bytes_read >= 0 ){
+	/*get read bytes by pointer*/
+	*nread = bytes_read;
+	ret = 0;
+    }
+    LOG_SHORT_SYSCALL_FINISH( ret, "bytes_read=%d, handle=%d", bytes_read, handle);
     return ret;
 }
 
 int  zrt_zcall_enhanced_write(int handle, const void *buf, size_t count, size_t *nwrote){
+    int ret=-1;
+    int log_state = __zrt_log_is_enabled();
     /*disable logging write calls related to debug, stdout and stderr channel */
-    if ( handle != __zrt_log_fd() ){
-	LOG_SYSCALL_START("handle=%d buf=%p count=%u", handle, buf, count);
+    if ( __zrt_log_fd() == handle || handle <= 2 ){
+	__zrt_log_enable(0);
     }
+
+    LOG_SYSCALL_START("handle=%d buf=%p count=%u", handle, buf, count);
     VALIDATE_SYSCALL_PTR(buf);
 
-    int32_t ret = s_transparent_mount->write(handle, buf, count);
-    /*get wrote bytes by pointer*/
-    *nwrote = ret;
-    if ( handle != __zrt_log_fd() ){
-	LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d count=%u", handle, count);
+    int32_t bytes_wrote = s_transparent_mount->write(handle, buf, count);
+    if ( bytes_wrote >= 0 ){
+	/*get wrote bytes by pointer*/
+	*nwrote = bytes_wrote;
+	ret=0;
     }
+    LOG_SHORT_SYSCALL_FINISH( ret, "bytes_wrote=%d, handle=%d count=%u", 
+			      bytes_wrote, handle, count);
+    __zrt_log_enable(log_state); /*restore log state*/
     return ret;
 }
 
 int  zrt_zcall_enhanced_seek(int handle, off_t offset, int whence, off_t *new_offset){
+    int ret=-1;
     LOG_SYSCALL_START("handle=%d offset=%lld whence=%d", handle, offset, whence);
     errno = 0;
 
     if ( whence == SEEK_SET && offset < 0 ){
 	SET_ERRNO(EINVAL);
-	offset=-1;
     }
     else{
 	offset = s_transparent_mount->lseek(handle, offset, whence);
+	if ( offset != -1 ){
+	    /*get new offset by pointer*/
+	    *new_offset = offset;
+	    ret=0;
+	}
     }
 
-    /*get new offset by pointer*/
-    *new_offset = offset;
-    LOG_SHORT_SYSCALL_FINISH( offset, 
-		       "handle=%d whence=%s", 
-		       handle, STR_SEEK_WHENCE(whence));
-    return offset;
+    LOG_SHORT_SYSCALL_FINISH( ret, "newoffset=%lld, handle=%d whence=%s", 
+			      offset, handle, STR_SEEK_WHENCE(whence));
+    return ret;
 }
 
 int  zrt_zcall_enhanced_fstat(int handle, struct stat *stat){
@@ -335,29 +331,38 @@ int  zrt_zcall_enhanced_fstat(int handle, struct stat *stat){
 }
 
 int  zrt_zcall_enhanced_getdents(int fd, struct dirent *dirent_buf, size_t count, size_t *nread){
+    int ret = -1;
     LOG_SYSCALL_START("fd=%d dirent_buf=%p count=%u", fd, dirent_buf, count);
     errno=0;
     VALIDATE_SYSCALL_PTR(dirent_buf);
 
     int32_t bytes_readed = s_transparent_mount->getdents(fd, (char*)dirent_buf, count);
-    LOG_SHORT_SYSCALL_FINISH( bytes_readed, "fd=%d count=%u", fd, count);
-    return bytes_readed;
+    if ( bytes_readed >= 0 ){
+	*nread = bytes_readed;
+	ret=0;
+    }
+    LOG_SHORT_SYSCALL_FINISH( ret, "fd=%d count=%u", fd, count);
+    return ret;
 }
 
 int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newfd){
-    LOG_SYSCALL_START("name=%s flags=%d mode=%u", name, flags, mode );
+    int ret=-1;
+    LOG_SYSCALL_START("name=%s flags=%d mode=%d", name, flags, mode );
     errno=0;
     VALIDATE_SYSCALL_PTR(name);
     
     char* absolute_path = alloc_absolute_path_from_relative( name );
     mode = apply_umask(mode);
-    int ret = s_transparent_mount->open( absolute_path, flags, mode );
+    int fd = s_transparent_mount->open( absolute_path, flags, mode );
     free(absolute_path);
     /*get fd by pointer*/
-    if ( ret >= 0 ) *newfd  = ret;
+    if ( fd >= 0 ){
+	*newfd  = fd;
+	ret =0;
+    }
     LOG_SHORT_SYSCALL_FINISH( ret, 
-		       "name=%s, flags=%s", 
-		       name, STR_FILE_OPEN_FLAGS(flags));
+			      "newfd=%d, name=%s, flags=%s", 
+			      fd, name, STR_FILE_OPEN_FLAGS(flags));
     return ret;
 }
 
@@ -389,12 +394,16 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
 
 /* irt memory *************************/
 int  zrt_zcall_enhanced_sysbrk(void **newbrk){
+    int ret=-1;
     LOG_SYSCALL_START("*newbrk=%p", *newbrk);
     int32_t retaddr = s_memory_interface->sysbrk(s_memory_interface, *newbrk );
-    /*get new address via pointer*/
-    *newbrk = (void*)retaddr;
-    LOG_INFO_SYSCALL_FINISH( retaddr, "param=%p", *newbrk);
-    return retaddr;
+    if ( retaddr != -1 ){
+	/*get new address via pointer*/
+	*newbrk = (void*)retaddr;
+	ret=0;
+    }
+    LOG_INFO_SYSCALL_FINISH( retaddr, "*newbrk=%p", *newbrk);
+    return ret;
 }
 
 int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, int fd, off_t off){
@@ -404,6 +413,10 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
 
     retcode = s_memory_interface->mmap(s_memory_interface, *addr, length, prot,
     		  flags, fd, off);
+    if ( retcode > 0 ){
+	*addr = (void*)retcode;
+	retcode=0;
+    }
   
     LOG_INFO_SYSCALL_FINISH( retcode,
     		       "addr=%p length=%u prot=%s flags=%s fd=%u off=%lld",
@@ -419,95 +432,6 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
     return retcode;
 }
 
-/* irt dyncode *************************/
-int  zrt_zcall_enhanced_dyncode_create(void *dest, const void *src, size_t size){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_dyncode_modify(void *dest, const void *src, size_t size){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_dyncode_delete(void *dest, size_t size){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-/* irt thread *************************/
-int  zrt_zcall_enhanced_thread_create(void *start_user_address, void *stack, void *thread_ptr){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-void zrt_zcall_enhanced_thread_exit(int32_t *stack_flag){
-    SET_ERRNO(ENOSYS);
-}
-int  zrt_zcall_enhanced_thread_nice(const int nice){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-/* irt mutex *************************/
-int  zrt_zcall_enhanced_mutex_create(int *mutex_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_mutex_destroy(int mutex_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_mutex_lock(int mutex_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_mutex_unlock(int mutex_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_mutex_trylock(int mutex_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-/* irt cond *************************/
-int  zrt_zcall_enhanced_cond_create(int *cond_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_cond_destroy(int cond_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_cond_signal(int cond_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_cond_broadcast(int cond_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_cond_wait(int cond_handle, int mutex_handle){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_enhanced_cond_timed_wait_abs(int cond_handle, int mutex_handle,
-				   const struct timespec *abstime){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
-/* irt tls *************************/
-int  zrt_zcall_enhanced_tls_init(void *thread_ptr){
-    LOG_SYSCALL_START("thread_ptr=%p", thread_ptr);
-    s_tls_cache = (uintptr_t)thread_ptr;
-    LOG_INFO_SYSCALL_FINISH( 0, "thread_ptr=%p", thread_ptr);
-    return 0;
-}
-void * zrt_zcall_enhanced_tls_get(void){
-    /* tls_get return value would be cached because it remains unchanged 
-     * after setup by tls_init call*/
-    if ( s_tls_cache < 0 ){
-	assert(s_tls_cache>0);
-    }
-    return (void*)s_tls_cache; /*valid tls*/
-}
-
 /************************************************************************
 * zcalls_zrt_t implementation
 * Setup zrt
@@ -517,15 +441,6 @@ void zrt_zcall_enhanced_zrt_setup(void){
     struct UserManifest *setup = zvm_init();
     s_memory_interface = get_memory_interface( setup->heap_ptr, setup->heap_size );
 
-    /* /\* /\\*test code*\\/ *\/ */
-    /* malloc(2); */
-    /* exit(-1); */
-    /* s_mounts_manager = get_mounts_manager(); */
-    /* s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator, */
-    /* 					     setup->channels, setup->channels_count ); */
-
-    /* exit(0); */
-    /* /\* /\\*test code*\\/ *\/ */
     zrt_setup( setup );
 
     /* debug print */

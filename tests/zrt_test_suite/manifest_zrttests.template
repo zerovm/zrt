@@ -18,6 +18,8 @@ CommandLine = {COMMAND_LINE}
 =====================================================================
 Version = 09082012
 Nexe = {OUTFILE}.nexe
+==MemMax=33554432
+==MemMax=67108864
 ==MemMax=134217728
 MemMax={MEMMAX}
 Timeout=10

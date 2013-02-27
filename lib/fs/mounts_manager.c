@@ -52,7 +52,6 @@ int mm_mount_remove( const char* path ){
 
 
 struct MountInfo* mm_mountinfo_bypath( const char* path ){
-    ZRT_LOG(L_INFO, "path=%s", path);
     int most_long_mount=-1;
     int i;
     for( i=0; i < s_mount_items_count; i++ ){
@@ -67,7 +66,7 @@ struct MountInfo* mm_mountinfo_bypath( const char* path ){
     }
 
     if ( most_long_mount != -1 ){
-	ZRT_LOG(L_INFO, "mounted_on_path=%s", 
+	ZRT_LOG(L_EXTRA, "mounted_on_path=%s", 
 		s_mount_items[most_long_mount].mount_path);
         return &s_mount_items[most_long_mount];
     }

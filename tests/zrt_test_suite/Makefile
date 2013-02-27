@@ -36,6 +36,7 @@ COUNTER=0
 
 #get pipe from zerovm and parse output
 PRINT_ERRCODE=awk '{ \
+RESULT="FAIL"; \
 if (NR == 2) { RETCODE=$$1 } \
 if (NR == 5) { \
 	if (RETCODE == 0) { RESULT="PASS" } \
