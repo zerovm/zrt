@@ -108,6 +108,9 @@ int zrt_zcall_enhanced_munmap(void *addr, size_t len);
 void zrt_zcall_enhanced_zrt_setup(void);
 
 
+/*nonsyscalls*/
+int zrt_zcall_fcntl(int fd, int cmd, ...);
+
 
 #endif //__ZCALLS_H__
 

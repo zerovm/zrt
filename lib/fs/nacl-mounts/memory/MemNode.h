@@ -30,6 +30,8 @@ class MemData {
     /*added by YaroslavLitvinov
      *Permissions should be supported by stat*/
     mode_t mode_;
+    /*flags_ has sence only for opened files*/
+    int flags_; 
     uint32_t uid_;
     uint32_t gid_;
     struct flock flock_;
@@ -127,6 +129,10 @@ class MemNode {
     /*added by YaroslavLitvinov*/
     mode_t mode()const { return nodedata_->mode_; }
     void set_mode(mode_t mode) { nodedata_->mode_ = mode; }
+
+    /*added by YaroslavLitvinov*/
+    int flags()const { return nodedata_->flags_; }
+    void set_flags(int flags) { nodedata_->flags_ = flags; }
 
     /*added by YaroslavLitvinov*/
     uint32_t uid()const { return nodedata_->uid_; }

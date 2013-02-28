@@ -14,6 +14,10 @@
 
 int main(int argc, char **argv)
 {
+    int ret;
+    ret=fcntl(-1, F_SETLK);
+    assert( ret==-1 && errno==EBADF );
+    
     /*create & open file in MemMount*/
     int mode = O_CREAT|O_WRONLY;
     int fd = open("/testfile", mode);
@@ -23,9 +27,9 @@ int main(int argc, char **argv)
     
     /*test1*/
     lock.l_type = F_WRLCK;
-    printf("F_GETLK l_type %d before, p=%p ", lock.l_type, &lock );
-    int ret = fcntl(fd, F_GETLK, &lock);  
-    printf("l_type %d after, ret=%d\n",   lock.l_type, ret );
+    printf("F_GETLK l_type %d before, p=%p ", lock.l_type, &lock );fflush(0);
+    ret = fcntl(fd, F_GETLK, &lock);  
+    printf("l_type %d after, ret=%d\n",   lock.l_type, ret );fflush(0);
     assert(lock.l_type == F_UNLCK); /*it should not have any locks*/
 
     /*test2*/

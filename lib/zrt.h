@@ -95,6 +95,11 @@ struct zcalls_zrt_t{
     void (*zrt_setup)(void);
 };
 
+#define ZCALLS_NONSYSCALLS 3
+struct zcalls_nonsyscalls_t{
+    int (*fcntl) (int fd, int cmd, ...);
+};
+
 
 /*Part of ZLIBC, used for ZRT initialization;
  *@return retrieved table type, should be same as requested*/

@@ -96,6 +96,20 @@ static const char* handle_path(int handle){
     }
 }
 
+static int fileflags(int fd){
+    int flags=0;
+    if ( CHECK_FILE_OPENED(fd) != 0 ){
+	/*get runtime information related to channel*/
+	struct ZrtChannelRt *zrt_channel = s_zrt_channels[fd];
+	flags = zrt_channel->flags;
+    }
+    else{
+	SET_ERRNO(EBADF);
+	flags = -1;
+    }
+    return flags;
+}
+
 
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data( int fd ){
@@ -123,6 +137,7 @@ static int set_flock_data( int fd, const struct flock* flock_data ){
 static struct mount_specific_implem s_mount_specific_implem = {
     check_handle,
     handle_path,
+    fileflags,
     flock_data,
     set_flock_data
 };
@@ -858,17 +873,7 @@ static int channels_open(const char* path, int oflag, uint32_t mode){
 
 static int channels_fcntl(int fd, int cmd, ...){
     ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
-
-    int ret=0;
-    va_list args;
-    va_start(args, cmd);
-    if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
-	struct flock* input_lock = va_arg(args, struct flock*);
-	ret = fcntl_implem(&s_mount_specific_implem, fd, cmd, input_lock);
-    }
-    va_end(args);
-
-    return ret;
+    return 0;
 }
 
 static int channels_remove(const char* path){

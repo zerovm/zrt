@@ -73,6 +73,10 @@ static struct zcalls_init_t KZcalls_init = {
 static struct zcalls_zrt_t KZcalls_zrt = {
     zrt_zcall_prolog_zrt_setup
 };
+
+static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
+    zrt_zcall_fcntl
+};
 #endif //ZLIBC_STUB
 
 
@@ -90,6 +94,10 @@ __query_zcalls(int type, void** table )
 	break;
     case ZCALLS_ZRT:
 	*table = &KZcalls_zrt;
+	ret_type = type;
+	break;
+    case ZCALLS_NONSYSCALLS:
+	*table = &KZcalls_nonsyscalls;
 	ret_type = type;
 	break;
     default:

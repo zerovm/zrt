@@ -9,7 +9,7 @@
 #define SET_ERRNO(err) errno=err
 
 #define ONLY_PROLOG_SYSCALL 1
-#define LOW_LEVEL_LOG_ENABLE
+//#define LOW_LEVEL_LOG_ENABLE
 
 #define LOW_LEVEL_LOG_FD 1
 #define FUNC_NAME __func__
@@ -113,7 +113,7 @@ int  zrt_zcall_prolog_dup2(int fd, int newfd){
 
 int  zrt_zcall_prolog_read(int handle, void *buf, size_t count, size_t *nread){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -123,7 +123,7 @@ int  zrt_zcall_prolog_read(int handle, void *buf, size_t count, size_t *nread){
 }
 
 int  zrt_zcall_prolog_write(int handle, const void *buf, size_t count, size_t *nwrote){
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -133,7 +133,7 @@ int  zrt_zcall_prolog_write(int handle, const void *buf, size_t count, size_t *n
 
 int  zrt_zcall_prolog_seek(int handle, off_t offset, int whence, off_t *new_offset){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -143,7 +143,7 @@ int  zrt_zcall_prolog_seek(int handle, off_t offset, int whence, off_t *new_offs
 
 int  zrt_zcall_prolog_fstat(int handle, struct stat *stat){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -153,7 +153,7 @@ int  zrt_zcall_prolog_fstat(int handle, struct stat *stat){
 
 int  zrt_zcall_prolog_getdents(int fd, struct dirent *dirent_buf, size_t count, size_t *nread){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -163,7 +163,7 @@ int  zrt_zcall_prolog_getdents(int fd, struct dirent *dirent_buf, size_t count, 
 
 int  zrt_zcall_prolog_open(const char *name, int flags, mode_t mode, int *newfd){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -173,7 +173,7 @@ int  zrt_zcall_prolog_open(const char *name, int flags, mode_t mode, int *newfd)
 
 int  zrt_zcall_prolog_stat(const char *pathname, struct stat * stat){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -197,7 +197,7 @@ int  zrt_zcall_prolog_sysbrk(void **newbrk){
 
 int  zrt_zcall_prolog_mmap(void **addr, size_t length, int prot, int flags, int fd, off_t off){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
@@ -207,7 +207,7 @@ int  zrt_zcall_prolog_mmap(void **addr, size_t length, int prot, int flags, int 
 
 int  zrt_zcall_prolog_munmap(void *addr, size_t len){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( /* ONLY_PROLOG_SYSCALL || */ s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }

@@ -20,6 +20,7 @@
 #include "transparent_mount.h"
 #include "mounts_manager.h"
 #include "mounts_interface.h"
+#include "fcntl_implem.h"
 
 static struct MountsManager* s_mounts_manager;
 
@@ -200,20 +201,27 @@ static int transparent_fcntl(int fd, int cmd, ...){
     struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount ){
 	va_list args;
-	va_start(args, cmd);
 	if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
+	    va_start(args, cmd);
 	    struct flock* input_lock = va_arg(args, struct flock*);
 	    ZRT_LOG(L_SHORT, "flock=%p", input_lock );
-	    ret = mount->fcntl( fd, cmd, input_lock );
+	    if ( 0 == (ret=mount->fcntl(fd, cmd, input_lock)) ){
+		ret = fcntl_implem(mount->implem(), fd, cmd, input_lock);
+	    }
+	    va_end(args);
+	}
+	else if( cmd == F_GETFL	){
+	    if ( 0 == (ret=mount->fcntl(fd, cmd)) ){
+		ret = fcntl_implem(mount->implem(), fd, cmd);
+	    }
 	}
 	else{
 	    ret=-1;
 	    SET_ERRNO(ENOSYS);
 	}
-	va_end(args);
     }
     else{
-        SET_ERRNO(ENOENT);
+        SET_ERRNO(EBADF);
         ret = -1;
     }
     return ret;

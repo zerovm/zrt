@@ -77,6 +77,7 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode, MemData* h
     MemNode* mnode = GetMemNode(path);
     if ( mnode ){
 	mnode->set_mode(mode);
+	mnode->set_flags(oflag);
 	return 0;
     }
     else return -1;

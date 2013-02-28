@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "zcalls.h"
 #include "zcalls_zrt.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
@@ -27,6 +28,20 @@
 #include "enum_strings.h"
 
 
+const char *byte_to_binary(int x)
+{
+    static char b[9];
+    b[0] = '\0';
+
+    int z;
+    for (z = 128; z > 0; z >>= 1)
+    {
+        strcat(b, ((x & z) == z) ? "1" : "0");
+    }
+
+    return b;
+}
+
 /*************************************************************************
  * glibc substitution. Implemented functions below should be linked
  * instead of standard syscall that not implemented by NACL glibc
@@ -34,7 +49,7 @@
  **************************************************************************/
 
 /*override system glibc implementation */
-int fcntl(int fd, int cmd, ... /* arg */ ){
+int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
     int ret=0;
     LOG_SYSCALL_START("fd=%d cmd=%d", fd, cmd);
     errno=0;
@@ -49,6 +64,16 @@ int fcntl(int fd, int cmd, ... /* arg */ ){
 	ZRT_LOG(L_SHORT, "flock=%p", input_lock );
 	ret = transpar_mount->fcntl(fd, cmd, input_lock);
     }
+    else if ( cmd == F_GETFL ){
+	ret = transpar_mount->fcntl(fd, cmd);
+	ZRT_LOG(L_INFO, "flags    =%s", byte_to_binary(ret) );
+	ZRT_LOG(L_INFO, "O_ACCMODE=%s", byte_to_binary(O_ACCMODE) );
+	ZRT_LOG(L_INFO, "O_RDONLY =%s", byte_to_binary(O_RDONLY) );
+	ZRT_LOG(L_INFO, "O_WRONLY =%s", byte_to_binary(O_WRONLY) );
+	ZRT_LOG(L_INFO, "O_RDWR   =%s", byte_to_binary(O_RDWR) );
+	fflush(0);
+    }
+
     va_end(args);
     LOG_SHORT_SYSCALL_FINISH( ret, "fd=%d, cmd=%s", fd, STR_FCNTL_CMD(cmd));
     return ret;

@@ -1,5 +1,4 @@
-PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
-CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
+include ${ZRT_ROOT}/Makefile.env
 ifndef TESTS_ROOT
 TESTS_ROOT=src
 endif
@@ -58,12 +57,10 @@ CFLAGS+=-I$(ZRT_ROOT)/lib
 #if test was not properly ported to zerovm
 LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
 
-LDFLAGS+= -m64 -s -static -T $(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl
-LDFLAGS+= -lfs -lzrt -lstdc++ 
 #For rt tests
-LDFLAGS+= -lrt
+#LDFLAGS+= -lrt
 #For dlopen
-LDFLAGS+= -ldl
+#LDFLAGS+= -ldl
 #math
 LDFLAGS+= -lm
 #crypt

@@ -7,6 +7,7 @@ LIBZRT=lib/libzrt.a
 LIBZRT_SOURCES= ${ZEROVM_ROOT}/api/zvm.c \
 lib/zcalls/zcalls_prolog.c \
 lib/zcalls/zcalls_zrt.c \
+lib/glibc_substitute/fcntl.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
@@ -44,15 +45,14 @@ lib/glibc_substitute/rmdir.c \
 lib/glibc_substitute/umask.c \
 lib/glibc_substitute/unlink.c \
 lib/glibc_substitute/chmod.c \
-lib/glibc_substitute/fcntl.c \
 lib/glibc_substitute/lstat.c \
 lib/glibc_substitute/remove.c \
 lib/glibc_substitute/rename.c \
 lib/glibc_substitute/chown.c \
 lib/glibc_substitute/eaccess.c \
 lib/glibc_substitute/truncate.c \
-lib/glibc_substitute/lockf_stub.c \
-lib/glibc_substitute/fdopen.c
+lib/glibc_substitute/lockf_stub.c
+#lib/glibc_substitute/fdopen.c
 
 #lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 

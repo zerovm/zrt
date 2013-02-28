@@ -18,6 +18,10 @@ struct mount_specific_implem{
     int  (*check_handle)(int handle);
     /*if wrong handle return NULL*/
     const char* (*handle_path)(int handle);
+    /*flags was specified at file opening
+     *@param handle fd of opened file
+     *@return -1 of bad handle, 0 if OK*/
+    int  (*fileflags)(int handle);
 
     const struct flock* (*flock_data)( int fd );
     int (*set_flock_data)( int fd, const struct flock* flock_data );

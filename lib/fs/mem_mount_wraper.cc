@@ -136,6 +136,16 @@ static const char* path_handle(int handle){
     }
 }
 
+static int fileflags(int fd){
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    if ( mnode ){
+	return mnode->flags();
+    }
+    assert(0);
+}
+
 // static int handle_from_path(const char* path){
 //     struct stat st;
 //     int ret = s_mem_mount_cpp->GetNode( path, &st);
@@ -181,6 +191,7 @@ static int set_flock_data( int fd, const struct flock* flock_data ){
 static struct mount_specific_implem s_mount_specific_implem = {
     check_handle,
     path_handle,
+    fileflags,
     flock_data,
     set_flock_data
 };
@@ -418,20 +429,10 @@ static int mem_open(const char* path, int oflag, uint32_t mode){
 
 static int mem_fcntl(int fd, int cmd, ...){
     ino_t inode;
+    ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
     int ret;
-    if ( !is_dir(inode) ){
-	va_list args;
-	va_start(args, cmd);
-	if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
-	    struct flock* input_lock = va_arg(args, struct flock*);
-	    ZRT_LOG(L_SHORT, "flock=%p", input_lock );
-	    ret = fcntl_implem(&s_mount_specific_implem, fd, cmd, input_lock);
-	}
-	va_end(args);
-	return ret;
-    }
-    else{
+    if ( is_dir(inode) ){
 	SET_ERRNO(EBADF);
 	return -1;
     }

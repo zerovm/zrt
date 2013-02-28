@@ -81,11 +81,14 @@ int fcntl_implem(struct mount_specific_implem* implem, int fd, int cmd, ...){
 	}
 	break;
     }
+    case F_GETFL:
+	rc = implem->fileflags(fd);
+	break;	
     default:
 	SET_ERRNO(ENOSYS);
 	break;
     }
-
     
     return rc;
 }
+
