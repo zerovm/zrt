@@ -55,7 +55,7 @@ const char* strip_all(const char* str, int len, uint16_t* striped_len ){
 
 /*return 0 if extracted, -1 if not*/
 int extract_key_value( const char* src, int src_len,
-        char** key, uint16_t* key_len, char** val, uint16_t*val_len ){
+		       char** key, uint16_t* key_len, char** val, uint16_t*val_len ){
     /* just search KEY_VALUE_DELIMETER ('=') char, all before that will key, 
        and rest of data would be value*/
     char* delim = strchr(src, KEY_VALUE_DELIMETER );
@@ -118,11 +118,12 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 				int* parsed_records_count){
     assert(text);
     assert(key_list);
-    int error = 0;
     int lex_cursor = 0;
     int lex_length = 0;
     struct ParsedRecord* records = NULL;
     int parsed_params_count=0;
+    struct internal_parse_data s_temp_single_parsed;
+    memset(&s_temp_parsed, '\0', sizeof(struct internal_parse_data)*MAX_KEYS_COUNT);
     enum ParsingStatus st = EStProcessing;
     enum ParsingStatus st_prev = st;
 
@@ -201,49 +202,67 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 		ZRT_LOG(L_INFO, "token= '%s'", token_text);
 		free(token_text);
 		/*parse pair 'key=value', strip spaces */
+		int parsed_key_index = -1;
 		if ( !extract_key_value( striped_token, striped_token_len,
-					 &s_temp_parsed[parsed_params_count].key, 
-					 &s_temp_parsed[parsed_params_count].keylen,
-					 &s_temp_parsed[parsed_params_count].val, 
-					 &s_temp_parsed[parsed_params_count].vallen ) &&
-		     -1 != key_list->find(key_list, 
-				    s_temp_parsed[parsed_params_count].key,
-				    s_temp_parsed[parsed_params_count].keylen) ){
-                    /*one of record parameters was parsed*/
-                    /*increase counter of parsed data*/
-                    ++parsed_params_count;
-                    /*If get waiting count of record parameters*/
-                    if ( key_list->count( key_list ) == parsed_params_count ){
-			ZRT_LOG(L_SHORT, "key_list->count =%d", parsed_params_count);
-			(*parsed_records_count)++;
-			/*parsed params count is enough to save it as single record.
-			 *add it to parsed records array*/
-			records = realloc(records, 
-					  sizeof(struct ParsedRecord)*(*parsed_records_count));
-			ZRT_LOG(L_INFO, "save record #%d", (*parsed_records_count));
-			struct ParsedRecord* record = 
-			    save_parsed_param_into_record(key_list,
-							  s_temp_parsed, parsed_params_count);
-			ZRT_LOG(L_INFO, P_TEXT, "save record OK");
-			if ( record == NULL ){
-			    /*record parsing error*/
-			    free(records);
-			    records = NULL;
-			    break;
+					 &s_temp_single_parsed.key, 
+					 &s_temp_single_parsed.keylen,
+					 &s_temp_single_parsed.val, 
+					 &s_temp_single_parsed.vallen ) 
+		     )
+		    {
+			/*get key index*/
+			parsed_key_index = key_list->find(key_list, 
+							  s_temp_single_parsed.key,
+							  s_temp_single_parsed.keylen);
+			if ( parsed_key_index >= 0 ){
+			    if ( s_temp_parsed[parsed_key_index].key != NULL ){
+				/*parsed item with the same key already saved, and new 
+				  one will be ignored*/
+				ZRT_LOG(L_ERROR, P_TEXT, "last key duplicated, skipped");
+			    }
+			    else{
+				/*save parsed key,value*/
+				s_temp_parsed[parsed_key_index] = s_temp_single_parsed;
+				/*one of record parameters was parsed*/
+				/*increase counter of parsed data*/
+				++parsed_params_count;
+			    }
 			}
-			else{
-			    /*record parsed OK*/
-			    records[*parsed_records_count - 1] = *record;
-			}
-			/* current record parsed, reset params count 
-			 * to be able parse new record*/
-			parsed_params_count=0;
-                    }
-                }
+		    }
 		else{
 		    ZRT_LOG(L_ERROR, P_TEXT, "last token parsing error");
-		    error =-1;
 		}
+
+		    
+		/*If get waiting count of record parameters*/
+		if ( key_list->count( key_list ) == parsed_params_count ){
+		    ZRT_LOG(L_SHORT, "key_list->count =%d", parsed_params_count);
+		    (*parsed_records_count)++;
+		    /*parsed params count is enough to save it as single record.
+		     *add it to parsed records array*/
+		    records = realloc(records, 
+				      sizeof(struct ParsedRecord)*(*parsed_records_count));
+		    ZRT_LOG(L_INFO, "save record #%d", (*parsed_records_count));
+		    struct ParsedRecord* record = 
+			save_parsed_param_into_record(key_list,
+						      s_temp_parsed, parsed_params_count);
+		    ZRT_LOG(L_INFO, P_TEXT, "save record OK");
+		    if ( record == NULL ){
+			/*record parsing error*/
+			free(records);
+			records = NULL;
+			break;
+		    }
+		    else{
+			/*record parsed OK*/
+			records[*parsed_records_count - 1] = *record;
+		    }
+		    /* current record parsed, reset params count 
+		     * to be able parse new record*/
+		    parsed_params_count=0;
+		    memset(&s_temp_parsed, '\0', 
+			   sizeof(struct internal_parse_data)*MAX_KEYS_COUNT);
+                }
             }
 	    /*restore processing state*/
 	    st = st_prev;
