@@ -19,33 +19,61 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <assert.h>
+
+void test(void)
+{
+    int temp;
+    char tmpbufmem[L_tmpnam];
+    char *tmpbuf = tmpbufmem;
+
+    fprintf(stderr, "%s 1\n", __func__);
+    /* In the following call we use the buffer pointed to by S if
+       non-NULL although we don't know the size.  But we limit the size
+       to L_tmpnam characters in any case.  */
+    if (__builtin_expect (__path_search (tmpbuf, L_tmpnam, NULL, NULL, 0),
+			  0))
+	{
+	    fprintf(stderr, "errno=%d", errno);
+	    assert(0);
+	}
+
+    #define __GT_NOCREATE	2
+    fprintf(stderr, "%s 2\n", __func__);
+    if (__builtin_expect (temp=__gen_tempname (tmpbuf, 0, __GT_NOCREATE), 0)){
+	fprintf(stderr, "errno=%d, ret=%d", errno, temp);
+	assert(2);
+    }
+}
 
 int
 main (void)
 {
-  const char *name;
-  int retval = 0;
+    const char *name;
+    int retval = 0;
 
-  /* Set TMPDIR to a value other than the traditional /tmp.  */
-  setenv ("TMPDIR", "/usr", 1);
+    /* Set TMPDIR to a value other than the traditional /tmp.  */
+    setenv ("TMPDIR", "/usr", 1);
 
-  name = tmpnam (NULL);
+    name = tmpnam (NULL);
 
-  printf ("name = %s\n", name);
+    printf ("name = %s\n", name);
+    test();
 
-  /* Make sure the name is not based on the value in TMPDIR.  */
-  if (strncmp (name, "/usr", 4) == 0)
-    {
-      puts ("error: `tmpnam' used TMPDIR value");
-      retval = 1;
-    }
+    /* Make sure the name is not based on the value in TMPDIR.  */
+    if (strncmp (name, "/usr", 4) == 0)
+	{
+	    puts ("error: `tmpnam' used TMPDIR value");
+	    retval = 1;
+	}
 
-  /* Test that it is in the directory denoted by P_tmpdir.  */
-  if (strncmp (name, P_tmpdir, sizeof (P_tmpdir) - 1) != 0)
-    {
-      puts ("error: `tmpnam' return value not in P_tmpdir directory");
-      retval = 1;
-    }
+    /* Test that it is in the directory denoted by P_tmpdir.  */
+    if (strncmp (name, P_tmpdir, sizeof (P_tmpdir) - 1) != 0)
+	{
+	    puts ("error: `tmpnam' return value not in P_tmpdir directory");
+	    retval = 1;
+	}
 
-  return retval;
+    return retval;
 }

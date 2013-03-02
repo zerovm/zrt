@@ -52,7 +52,9 @@ class MemMount {
   int Link(const std::string& oldpath, const std::string& newpath);
 
   // Remove the node at path.
+  //@return 0 if removed, -1 on error, errno=EBUSY if file not closed (referred)
   int Unlink(const std::string& path);
+  int UnlinkInternal(MemNode *node);
 
   // Remove the node directory.  Returns -1 (failure) if node is not
   // a directory.

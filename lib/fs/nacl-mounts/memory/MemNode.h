@@ -27,6 +27,7 @@ class MemData {
     size_t len_;
     size_t capacity_;
     int use_count_;
+    int unlink_;
     /*added by YaroslavLitvinov
      *Permissions should be supported by stat*/
     mode_t mode_;
@@ -142,6 +143,9 @@ class MemNode {
     /*added by YaroslavLitvinov*/
     const struct flock* flock()const { return &nodedata_->flock_; }
     void set_flock(const struct flock* flock);
+
+    void TryUnlink(){ nodedata_->unlink_=1; }
+    int  UnlinkisTrying()const{ return nodedata_->unlink_; }
 
  private:
     int slot_;

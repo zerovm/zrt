@@ -98,6 +98,7 @@ struct zcalls_zrt_t{
 #define ZCALLS_NONSYSCALLS 3
 struct zcalls_nonsyscalls_t{
     int (*fcntl) (int fd, int cmd, ...);
+    int (*unlink)(const char *pathname);
 };
 
 

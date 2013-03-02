@@ -12,7 +12,7 @@
 int main(int argc, char**argv){
     int ret;
     struct stat st;
-    //lstat substituted and fixed EPERM bug
+    //lstat test
     TEST_OPERATION_RESULT(
 			  lstat(TEST_FILE, &st),
 			  &ret, (ret==-1&&errno==ENOENT)); 
@@ -27,10 +27,10 @@ int main(int argc, char**argv){
 
     //////////////////////////////////////
 
-    //stat indicates for non existing file -EPERM bug, note that errno is negative! 
+    //stat test
     TEST_OPERATION_RESULT(
 			  stat(TEST_FILE, &st),
-			  &ret, (ret==-1&&errno==-EPERM));
+			  &ret, (ret==-1&&errno==ENOENT));
     fprintf(stderr, "errno=%d\n", errno);fflush(0);
 
     CREATE_FILE(TEST_FILE, DATA_FOR_FILE, DATASIZE_FOR_FILE);

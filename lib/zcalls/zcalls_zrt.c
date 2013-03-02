@@ -148,27 +148,6 @@ static inline void update_cached_time()
     ++s_cached_timeval.tv_sec;
 }
 
-/* defined in nacl_struct.h
- * copy stat to nacl stat, strustures has vriable sizes*/
-void set_nacl_stat( const struct stat* stat, struct nacl_abi_stat* nacl_stat ){
-    nacl_stat->nacl_abi_st_dev = stat->st_dev;
-    nacl_stat->nacl_abi_st_ino = stat->st_ino;
-    nacl_stat->nacl_abi_st_mode = stat->st_mode;
-    nacl_stat->nacl_abi_st_nlink = stat->st_nlink;
-    nacl_stat->nacl_abi_st_uid = stat->st_uid;
-    nacl_stat->nacl_abi_st_gid = stat->st_gid;
-    nacl_stat->nacl_abi_st_rdev = stat->st_rdev;
-    nacl_stat->nacl_abi_st_size = stat->st_size;
-    nacl_stat->nacl_abi_st_blksize = stat->st_blksize;
-    nacl_stat->nacl_abi_st_blocks = stat->st_blocks;
-    nacl_stat->nacl_abi_st_atime = stat->st_atime;
-    nacl_stat->nacl_abi_st_atimensec = 0;
-    nacl_stat->nacl_abi_st_mtime = stat->st_mtime;
-    nacl_stat->nacl_abi_st_mtimensec = 0;
-    nacl_stat->nacl_abi_st_ctime = stat->st_ctime;
-    nacl_stat->nacl_abi_st_ctimensec = 0;
-}
-
 void debug_mes_stat(struct stat *stat){
     ZRT_LOG(L_INFO, 
 	    "st_dev=%lld, st_ino=%lld, nlink=%d, st_mode=%o(octal), st_blksize=%d" 
@@ -314,17 +293,14 @@ int  zrt_zcall_enhanced_seek(int handle, off_t offset, int whence, off_t *new_of
     return ret;
 }
 
-int  zrt_zcall_enhanced_fstat(int handle, struct stat *stat){
-    struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)stat;
-    LOG_SYSCALL_START("handle=%d sbuf=%p", handle, sbuf);
+int  zrt_zcall_enhanced_fstat(int handle, struct stat *st){
+    LOG_SYSCALL_START("handle=%d stat=%p", handle, st);
     errno = 0;
-    VALIDATE_SYSCALL_PTR(sbuf);
+    VALIDATE_SYSCALL_PTR(stat);
 
-    struct stat st;
-    int ret = s_transparent_mount->fstat( handle, &st);
+    int ret = s_transparent_mount->fstat( handle, st);
     if ( ret == 0 ){
-        debug_mes_stat(&st);
-        set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
+        debug_mes_stat(st);
     }
     LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
@@ -372,14 +348,11 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
     VALIDATE_SYSCALL_PTR(pathname);
     VALIDATE_SYSCALL_PTR(stat);
 
-    struct nacl_abi_stat *sbuf = (struct nacl_abi_stat *)stat;
-    struct stat st;
     char* absolute_path = alloc_absolute_path_from_relative(pathname);
-    int ret = s_transparent_mount->stat(absolute_path, &st);
+    int ret = s_transparent_mount->stat(absolute_path, stat);
     free(absolute_path);
     if ( ret == 0 ){
-        debug_mes_stat(&st);
-        set_nacl_stat( &st, sbuf ); //convert from nacl_stat into stat
+        debug_mes_stat(stat);
     }
     LOG_SHORT_SYSCALL_FINISH( ret, "pathname=%s", pathname);
     return ret;

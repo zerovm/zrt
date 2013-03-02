@@ -26,7 +26,8 @@ extern "C" {
 #include "enum_strings.h"
 }
 
-#define NODE_OBJECT_BYINODE(inode) s_mem_mount_cpp->ToMemNode(inode);
+#define NODE_OBJECT_BYINODE(inode) s_mem_mount_cpp->ToMemNode(inode)
+#define NODE_OBJECT_BYPATH(path) s_mem_mount_cpp->GetMemNode(path)
 
 /*retcode -1 at fail, 0 if OK*/
 #define GET_INODE_BY_HANDLE(handle, inode_p, retcode_p){		\
@@ -326,7 +327,13 @@ static int mem_fsync(int fd){
 static int mem_close(int fd){
     ino_t inode;
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    assert(mnode);
 
+    if ( mnode->UnlinkisTrying() ){
+	s_mem_mount_cpp->UnlinkInternal(mnode);
+    }
+    
     int ret = s_handle_allocator->free_handle(fd);
     assert( ret == 0 );
     return 0;

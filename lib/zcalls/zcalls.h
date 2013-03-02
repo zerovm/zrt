@@ -110,7 +110,7 @@ void zrt_zcall_enhanced_zrt_setup(void);
 
 /*nonsyscalls*/
 int zrt_zcall_fcntl(int fd, int cmd, ...);
-
+int zrt_zcall_unlink(const char *pathname);
 
 #endif //__ZCALLS_H__
 

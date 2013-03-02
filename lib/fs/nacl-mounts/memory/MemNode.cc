@@ -24,6 +24,7 @@ MemData::MemData() {
     len_ = 0;
     capacity_ = 0;
     use_count_ = 0;
+    unlink_ = 0;
 }
 
 

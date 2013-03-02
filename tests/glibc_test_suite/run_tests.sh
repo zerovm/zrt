@@ -3,7 +3,7 @@
 #create tar image to be injected into glibc fs
 CPWD=`pwd`
 cd singles/mounts/glibc-fs
-tar -cf ../tmp_dir.tar tmp
+tar -cf ../tmp_dir.tar tmp usr
 cd $CPWD
 
 #run tests

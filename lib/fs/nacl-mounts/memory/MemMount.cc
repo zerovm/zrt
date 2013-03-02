@@ -78,6 +78,7 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode, MemData* h
     if ( mnode ){
 	mnode->set_mode(mode);
 	mnode->set_flags(oflag);
+	Ref(mnode->slot()); 	/*set file referred*/
 	return 0;
     }
     else return -1;
@@ -352,7 +353,16 @@ int MemMount::Unlink(const std::string& path) {
 	SET_ERRNO(ENOENT);
         return -1;
     }
-    MemNode *parent = GetParentMemNode(path);
+    return UnlinkInternal(node);
+}
+
+int MemMount::UnlinkInternal(MemNode *node) {
+    int parent_inode = node->parent();
+    if ( parent_inode < 0 ){
+	SET_ERRNO(ENOENT);
+	return -1;
+    }
+    MemNode *parent = slots_.At(parent_inode);;
     if (parent == NULL) {
         // Can't delete root
 	SET_ERRNO(EBUSY);
@@ -363,10 +373,19 @@ int MemMount::Unlink(const std::string& path) {
 	SET_ERRNO(EISDIR);
         return -1;
     }
-    parent->RemoveChild(node->slot());
+
     Unref(node->slot());
-    return 0;
+    /*if file not used then delete it*/
+    if ( !node->use_count() ){
+	parent->RemoveChild(node->slot());
+	errno=0;
+	return 0;
+    }
+    node->TryUnlink(); /*autotry to remove it at file close*/
+    SET_ERRNO(EBUSY);
+    return -1;
 }
+
 
 int MemMount::Rmdir(ino_t slot) {
     MemNode *parent;

@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "zcalls.h"
 #include "zcalls_zrt.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
@@ -51,7 +52,7 @@ int link(const char *oldpath, const char *newpath){
 }
 
 
-int unlink(const char *pathname){
+int zrt_zcall_unlink(const char *pathname){
     LOG_SYSCALL_START("pathname=%s", pathname);
 
     struct MountsInterface* transpar_mount = transparent_mount();

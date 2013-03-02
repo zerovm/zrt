@@ -35,7 +35,7 @@ LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 ############### zlibc.a source files to build
 LIBZGLIBC=lib/libzglibc.a
 
-LIBZGLIBC_SOURCES= lib/glibc_substitute/tmpfile.c \
+LIBZGLIBC_SOURCES= \
 lib/glibc_substitute/realpath.c \
 lib/glibc_substitute/getcwd.c \
 lib/glibc_substitute/getuid.c \
@@ -45,13 +45,14 @@ lib/glibc_substitute/rmdir.c \
 lib/glibc_substitute/umask.c \
 lib/glibc_substitute/unlink.c \
 lib/glibc_substitute/chmod.c \
-lib/glibc_substitute/lstat.c \
 lib/glibc_substitute/remove.c \
 lib/glibc_substitute/rename.c \
 lib/glibc_substitute/chown.c \
 lib/glibc_substitute/eaccess.c \
 lib/glibc_substitute/truncate.c \
-lib/glibc_substitute/lockf_stub.c
+lib/glibc_substitute/lockf_stub.c \
+lib/glibc_substitute/fdopen.c
+#lib/glibc_substitute/tmpfile.c
 #lib/glibc_substitute/fdopen.c
 
 #lib/glibc_substitute/malloc_free.c lib/memory/bget.c 

@@ -45,8 +45,7 @@ EXCL=
 CFLAGS+=-g #debug
 CFLAGS+=-std=gnu99
 CFLAGS+=-D_GNU_SOURCE
-CFLAGS+=-Wno-long-long -m64
-CFLAGS+=-Werror-implicit-function-declaration
+#CFLAGS+=-Werror-implicit-function-declaration
 CFLAGS+=-I.. -I. -I../api -Isrc
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
@@ -55,12 +54,12 @@ CFLAGS+=-I$(ZRT_ROOT)/lib
 #declaration, in case if test source didn't explicitly defined zmain it raises linking error;
 #in case if libzrt linking after test object file, then linker is using wrong entry point
 #if test was not properly ported to zerovm
-LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
+#LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
 
 #For rt tests
-#LDFLAGS+= -lrt
+LDFLAGS+= -lrt
 #For dlopen
-#LDFLAGS+= -ldl
+LDFLAGS+= -ldl
 #math
 LDFLAGS+= -lm
 #crypt
