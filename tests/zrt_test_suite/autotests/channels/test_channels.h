@@ -6,7 +6,9 @@
 #define CHANNEL_NAME_WRITEONLY       "/dev/writeonly"
 #define CHANNEL_NAME_RDWR            "/dev/read-write"
 
+#ifndef EXIT_FAILURE
 #define EXIT_FAILURE -1
+#endif
 
 #define TEST_FILE "/newfilefortests"
 #define DATA_FOR_FILE "something something something something something\0"

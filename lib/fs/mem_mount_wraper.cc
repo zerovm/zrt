@@ -330,6 +330,7 @@ static int mem_close(int fd){
     MemNode* mnode = NODE_OBJECT_BYINODE(inode);
     assert(mnode);
 
+    s_mem_mount_cpp->Unref(mnode->slot()); /*decrement use count*/
     if ( mnode->UnlinkisTrying() ){
 	s_mem_mount_cpp->UnlinkInternal(mnode);
     }

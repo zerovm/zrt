@@ -107,7 +107,10 @@ class MemNode {
     void IncrementUseCount(void) { ++nodedata_->use_count_; }
 
     // decrease the use count by one
-    void DecrementUseCount(void) { --nodedata_->use_count_; }
+    void DecrementUseCount(void) { 
+	if(nodedata_->use_count_>0)
+	    --nodedata_->use_count_; 
+    }
 
     // returns the use count of this node
     int use_count(void) { return nodedata_->use_count_; }

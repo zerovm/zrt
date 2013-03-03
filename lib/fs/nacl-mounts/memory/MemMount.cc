@@ -126,7 +126,6 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf, MemD
     child->set_name(p.Last());
     child->set_parent(parent_slot);
     parent->AddChild(slot);
-    child->IncrementUseCount();
 
     if (!buf) {
         return 0;
@@ -348,21 +347,29 @@ int MemMount::Link(const std::string& oldpath, const std::string& newpath){
 }
 
 int MemMount::Unlink(const std::string& path) {
+    int ret;
     MemNode *node = GetMemNode(path);
     if (node == NULL) {
 	SET_ERRNO(ENOENT);
-        return -1;
+        ret = -1;
     }
-    return UnlinkInternal(node);
+    else{
+	ret = UnlinkInternal(node);
+	if ( ret ==0 ){
+	    ZRT_LOG(L_SHORT, "file %s removed", path.c_str());
+	}
+    }
+    return ret;
 }
 
 int MemMount::UnlinkInternal(MemNode *node) {
+    int inode = node->slot();
     int parent_inode = node->parent();
     if ( parent_inode < 0 ){
 	SET_ERRNO(ENOENT);
 	return -1;
     }
-    MemNode *parent = slots_.At(parent_inode);;
+    MemNode *parent = slots_.At(parent_inode);
     if (parent == NULL) {
         // Can't delete root
 	SET_ERRNO(EBUSY);
@@ -374,10 +381,11 @@ int MemMount::UnlinkInternal(MemNode *node) {
         return -1;
     }
 
-    Unref(node->slot());
     /*if file not used then delete it*/
     if ( !node->use_count() ){
-	parent->RemoveChild(node->slot());
+	parent->RemoveChild(inode);
+	slots_.Free(inode);
+	ZRT_LOG(L_SHORT, "file inode=%d removed", inode);
 	errno=0;
 	return 0;
     }
@@ -425,7 +433,9 @@ void MemMount::Ref(ino_t slot) {
     if (node == NULL) {
         return;
     }
+    ZRT_LOG(L_INFO, "before inode=%d use_count=%d", node->slot(), node->use_count());
     node->IncrementUseCount();
+    ZRT_LOG(L_INFO, "after inode=%d use_count=%d", node->slot(), node->use_count());
 }
 
 void MemMount::Unref(ino_t slot) {
@@ -436,14 +446,12 @@ void MemMount::Unref(ino_t slot) {
     if (node->is_dir()) {
         return;
     }
+    ZRT_LOG(L_INFO, "before inode=%d use_count=%d", node->slot(), node->use_count());
     node->DecrementUseCount();
+    ZRT_LOG(L_INFO, "after inode=%d use_count=%d", node->slot(), node->use_count());
     if (node->use_count() > 0) {
         return;
     }
-    // If Ref/Unref misused by KernelProxy, it's possible
-    // that parent will have a dangling inode to the deleted child
-    // TODO(krasin): remove the possibility to misuse this API.
-    slots_.Free(node->slot());
 }
 
 int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_size) {
