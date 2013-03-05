@@ -499,7 +499,34 @@ static int mem_dup2(int oldfd, int newfd){
 }
 
 static int mem_link(const char* oldpath, const char* newpath){
-    return s_mem_mount_cpp->Link(oldpath, newpath);
+    /*create new hardlink*/
+    int ret = s_mem_mount_cpp->Link(oldpath, newpath);
+
+    if ( ret == -1 ){
+	/*errno already setted*/
+	return ret;
+    }
+
+    /*ask for file descriptor in handle allocator*/
+    int fd = s_handle_allocator->allocate_handle( s_this );
+    if ( fd < 0 ){
+	/*it's hipotetical but possible case if amount of open files 
+	  are exceeded an maximum value*/
+	SET_ERRNO(ENFILE);
+	return -1;
+    }
+
+    MemNode* mnode = NODE_OBJECT_BYPATH(newpath);
+    assert(mnode);
+
+    /* As inode and fd are depend each form other, we need update 
+     * inode in handle allocator and stay them linked*/
+    ret = s_handle_allocator->set_inode( fd, mnode->slot() );
+    ZRT_LOG(L_EXTRA, "errcode ret=%d", ret );
+    assert( ret == 0 );
+
+    close(fd); /*unref file*/
+    return 0;
 }
 
 struct mount_specific_implem* mem_implem(){

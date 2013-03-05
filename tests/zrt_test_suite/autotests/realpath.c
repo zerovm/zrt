@@ -19,15 +19,19 @@
 int main(int argc, char **argv)
 {
     char resolved_path[PATH_MAX];
-    char* res = realpath( NULL, resolved_path);
-    assert(res==NULL&&errno==EINVAL);
+    char* res;
 
-    res = realpath( "", resolved_path);
-    assert(res==NULL&&errno==ENOENT);
+    TEST_OPERATION_RESULT( realpath( NULL, resolved_path),
+			   &res, res==NULL&&errno==EINVAL );
 
+    TEST_OPERATION_RESULT( realpath( "", resolved_path),
+			   &res, res==NULL&&errno==ENOENT );
+
+    /*create file not using absolute name, note filenam eis TEST_FILE+1*/
     CREATE_FILE(TEST_FILE+1, "some data", sizeof("some data"));
-    res = realpath( TEST_FILE, resolved_path);
-    assert(res!=NULL);
+
+    TEST_OPERATION_RESULT( realpath( TEST_FILE, resolved_path),
+			   &res, res!=NULL );
 
     int64_t size = sizeof(TEST_FILE);
     CMP_MEM_DATA(res, TEST_FILE, size);

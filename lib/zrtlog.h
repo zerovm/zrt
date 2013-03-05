@@ -103,6 +103,23 @@
         __zrt_log_pop_name(__func__);				\
     }
 
+
+#define ZRT_LOG_STAT(v123, stat)					\
+    ZRT_LOG(v123,							\
+	    "st_dev=%lld,\n"						\
+	    "st_ino=%lld,\n"						\
+	    "nlink=%d,\n"						\
+	    "st_mode=%s,\n"						\
+	    "st_blksize=%d,\n"						\
+	    "st_size=%lld,\n"						\
+	    "st_blocks=%d,\n"						\
+	    "st_atime=%lld,\n"						\
+	    "st_mtime=%lld",						\
+	    stat->st_dev, stat->st_ino, stat->st_nlink,			\
+	    STR_STAT_ST_MODE(stat->st_mode), (int)stat->st_blksize,	\
+	    stat->st_size, (int)stat->st_blocks, stat->st_atime, stat->st_mtime );
+
+
 const char* __zrt_log_syscall_stack_str();
 void __zrt_log_push_name( const char* name );
 void __zrt_log_pop_name( const char* name );

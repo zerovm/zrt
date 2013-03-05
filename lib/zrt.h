@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#define UMASK_ENV "UMASK"
 
 /*forwards*/
 struct stat;
@@ -31,7 +32,7 @@ struct dirent;
 struct timeval;
 struct timespec;
 
-#define ZCALLS_INIT 1
+#define ZCALLS_INIT 1   /*use as type param in __query_zcalls*/
 struct zcalls_init_t{
     /*zcalls initializer, coming just after __zcalls_query*/
     void (*init)(void);
@@ -90,15 +91,19 @@ struct zcalls_init_t{
     int (*gettime)(clockid_t clk_id, struct timespec *tp);
 };
 
-#define ZCALLS_ZRT 2
+#define ZCALLS_ZRT 2         /*use as type param in __query_zcalls*/
 struct zcalls_zrt_t{
     void (*zrt_setup)(void);
 };
 
-#define ZCALLS_NONSYSCALLS 3
+#define ZCALLS_NONSYSCALLS 3 /*use as type param in __query_zcalls*/
 struct zcalls_nonsyscalls_t{
-    int (*fcntl) (int fd, int cmd, ...);
-    int (*unlink)(const char *pathname);
+    void (*loglibc)(const char* str);
+    int  (*fcntl) (int fd, int cmd, ...);
+    int  (*link)(const char *oldpath, const char *newpath);
+    int  (*unlink)(const char *pathname);
+    int  (*rmdir)(const char *pathdir);
+    int  (*mkdir)(const char *pathdir, mode_t mode);
 };
 
 

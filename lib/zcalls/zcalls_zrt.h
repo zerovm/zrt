@@ -30,19 +30,10 @@
 #define DEV_STDERR "/dev/stderr"
 #define DEV_FSTAB  "/dev/fstab"
 
-#define UMASK_ENV "UMASK"
-
 /*****************************************************************
 helpers, we should remove it from here */
 
 /*get static object from zrtsyscalls.c*/
 struct MountsInterface* transparent_mount();
-/*move it from here*/
-mode_t get_umask();
-/*move it from here*/
-mode_t apply_umask(mode_t mode);
-/*move it from here*/
-void debug_mes_stat(struct stat *stat);
-
 
 #endif //__ZCALLS_ZRT_H__

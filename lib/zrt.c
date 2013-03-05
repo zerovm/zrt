@@ -75,8 +75,12 @@ static struct zcalls_zrt_t KZcalls_zrt = {
 };
 
 static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
+    zrt_zcall_loglibc,
     zrt_zcall_fcntl,
-    zrt_zcall_unlink
+    zrt_zcall_link,
+    zrt_zcall_unlink,
+    zrt_zcall_rmdir,
+    zrt_zcall_mkdir
 };
 #endif //ZLIBC_STUB
 

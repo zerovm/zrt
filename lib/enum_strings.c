@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <alloca.h>
 
 #include "unpack_interface.h"
 #include "enum_strings.h"
@@ -71,6 +72,13 @@ static struct enum_data_t s_archive_entry_type_array7[] = {
     EITEM(ETypeFile), EITEM(ETypeDir)
 };
 
+static struct enum_data_t s_stat_mode_array8[] = {
+    EITEM(S_IFMT), EITEM(S_IFSOCK), EITEM(S_IFLNK), EITEM(S_IFREG), EITEM(S_IFBLK),
+    EITEM(S_IFDIR),EITEM(S_IFCHR),  EITEM(S_IFIFO), EITEM(S_ISUID), EITEM(S_ISGID),
+    EITEM(S_ISVTX),EITEM(S_IRWXU),  EITEM(S_IRUSR), EITEM(S_IWUSR), EITEM(S_IXUSR),
+    EITEM(S_IRWXG),EITEM(S_IRGRP),  EITEM(S_IWGRP), EITEM(S_IXGRP), EITEM(S_IRWXO),
+    EITEM(S_IROTH),EITEM(S_IWOTH),  EITEM(S_IXOTH)
+};
 
 /*add here new arrays*/
 static struct enum_data_t* array_by_enum(int index, int* size){
@@ -100,6 +108,9 @@ static struct enum_data_t* array_by_enum(int index, int* size){
     case EArchEntryType:
 	*size = GET_SIZE_ARRAY(s_archive_entry_type_array7);
 	return s_archive_entry_type_array7;
+    case EStatStMode:
+	*size = GET_SIZE_ARRAY(s_stat_mode_array8);
+	return s_stat_mode_array8;
     default:
 	assert(0);
 	break;
@@ -146,6 +157,7 @@ const char* text_from_flag( int flags, enum array_list_t enum_id ){
 	    strcpy(s_buffer, "none");
 	}
     }
+
     return s_buffer;
 }
 

@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "zrt.h"
 #include "zcalls_zrt.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
@@ -42,7 +43,7 @@ int chmod(const char *path, mode_t mode){
     errno=0;
     ZRT_LOG(L_SHORT, "path=%s, mode=%u", path, mode );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
-    mode = apply_umask(mode);
+    APPLY_UMASK(&mode);
     char* absolute_path = alloc_absolute_path_from_relative(path);
     int ret = transpar_mount->chmod(absolute_path, mode);
     free(absolute_path);
@@ -57,7 +58,7 @@ int fchmod(int fd, mode_t mode){
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
     /*update mode according to the mask and propogate it to fchmod implementation*/
-    mode = apply_umask(mode);
+    APPLY_UMASK(&mode);
     int ret = transpar_mount->fchmod(fd, mode);
     LOG_SHORT_SYSCALL_FINISH(ret, "fd=%d mode=%o(octal)", fd, mode);
     return ret;

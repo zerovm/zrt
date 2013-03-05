@@ -148,31 +148,6 @@ static inline void update_cached_time()
     ++s_cached_timeval.tv_sec;
 }
 
-void debug_mes_stat(struct stat *stat){
-    ZRT_LOG(L_INFO, 
-	    "st_dev=%lld, st_ino=%lld, nlink=%d, st_mode=%o(octal), st_blksize=%d" 
-	    "st_size=%lld, st_blocks=%d, st_atime=%lld, st_mtime=%lld", 
-	    stat->st_dev, stat->st_ino, stat->st_nlink, stat->st_mode, (int)stat->st_blksize,
-	    stat->st_size, (int)stat->st_blocks, stat->st_atime, stat->st_mtime );
-}
-
-/*move it from here*/
-mode_t get_umask(){
-    mode_t prev_umask=0;
-    const char* prev_umask_str = getenv(UMASK_ENV);
-    if ( prev_umask_str ){
-        sscanf( prev_umask_str, "%o", &prev_umask);
-    }
-    return prev_umask;
-}
-
-/*move it from here*/
-mode_t apply_umask(mode_t mode){
-    mode_t umasked_mode = ~get_umask() & mode; /*reset umask bits for specified mode*/
-    ZRT_LOG( L_INFO, "mode=%o, umasked mode=%o", mode, umasked_mode );
-    return umasked_mode;
-}
-
 
 /********************************************************************************
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
@@ -300,7 +275,7 @@ int  zrt_zcall_enhanced_fstat(int handle, struct stat *st){
 
     int ret = s_transparent_mount->fstat( handle, st);
     if ( ret == 0 ){
-        debug_mes_stat(st);
+	ZRT_LOG_STAT(L_INFO, st);
     }
     LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
@@ -323,12 +298,15 @@ int  zrt_zcall_enhanced_getdents(int fd, struct dirent *dirent_buf, size_t count
 
 int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newfd){
     int ret=-1;
-    LOG_SYSCALL_START("name=%s flags=%d mode=%d", name, flags, mode );
+    LOG_SYSCALL_START("name=%s flags=%d mode=%o(octal)", name, flags, mode );
     errno=0;
     VALIDATE_SYSCALL_PTR(name);
     
+    /*reset mode bits, that is not actual for permissions*/
+    mode&=(S_IRWXU|S_IRWXG|S_IRWXO);
+
     char* absolute_path = alloc_absolute_path_from_relative( name );
-    mode = apply_umask(mode);
+    APPLY_UMASK(&mode);
     int fd = s_transparent_mount->open( absolute_path, flags, mode );
     free(absolute_path);
     /*get fd by pointer*/
@@ -337,8 +315,10 @@ int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newf
 	ret =0;
     }
     LOG_SHORT_SYSCALL_FINISH( ret, 
-			      "newfd=%d, name=%s, flags=%s", 
-			      fd, name, STR_FILE_OPEN_FLAGS(flags));
+			      "newfd=%d, name=%s, flags=%s, mode=%s", 
+			      fd, name, 
+			      STR_ALLOCA_COPY(STR_FILE_OPEN_FLAGS(flags)),
+			      STR_ALLOCA_COPY(STR_STAT_ST_MODE(mode)));
     return ret;
 }
 
@@ -352,7 +332,7 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
     int ret = s_transparent_mount->stat(absolute_path, stat);
     free(absolute_path);
     if ( ret == 0 ){
-        debug_mes_stat(stat);
+	ZRT_LOG_STAT(L_INFO, stat);
     }
     LOG_SHORT_SYSCALL_FINISH( ret, "pathname=%s", pathname);
     return ret;
@@ -393,7 +373,9 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
   
     LOG_INFO_SYSCALL_FINISH( retcode,
     		       "addr=%p length=%u prot=%s flags=%s fd=%u off=%lld",
-    		       *addr, length, STR_MMAP_PROT_FLAGS(prot), STR_MMAP_FLAGS(flags),
+			     *addr, length, 
+			     STR_ALLOCA_COPY(STR_MMAP_PROT_FLAGS(prot)), 
+			     STR_ALLOCA_COPY(STR_MMAP_FLAGS(flags)),
     		       fd, off);
     return retcode;
 }

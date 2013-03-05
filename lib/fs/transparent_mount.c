@@ -50,7 +50,7 @@ static int transparent_chmod(const char* path, uint32_t mode){
 static int transparent_stat(const char* path, struct stat *buf){
     struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-            return mount->stat( CONVERT_PATH_TO_MOUNT(path), buf);
+	return mount->stat( CONVERT_PATH_TO_MOUNT(path), buf);
     else{
         errno = ENOENT;
         return -1;

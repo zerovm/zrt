@@ -1,6 +1,6 @@
 /*
  * unlink.c
- * unlink implementation that substitude glibc stub implementation
+ * unlink implementation
  *
  *  Created on: 19.01.2013
  *      Author: yaroslav
@@ -24,33 +24,6 @@
 #include "transparent_mount.h"
 #include "mounts_interface.h"
 #include "path_utils.h"
-
-
-/*************************************************************************
- * glibc substitution. Implemented functions below should be linked
- * instead of standard syscall that not implemented by NACL glibc
- * it should be linked instead standard unlink;
- **************************************************************************/
-
-int link(const char *oldpath, const char *newpath){
-    LOG_SYSCALL_START("oldpath=%s, newpath=%s", oldpath, newpath);
-
-    struct MountsInterface* transpar_mount = transparent_mount();
-    assert(transpar_mount);
-
-    errno=0;
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(oldpath);
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(newpath);
-    char* absolute_path1 = alloc_absolute_path_from_relative(oldpath);
-    char* absolute_path2 = alloc_absolute_path_from_relative(newpath);
-
-    int ret = transpar_mount->link(absolute_path1, absolute_path2);
-    free(absolute_path1);
-    free(absolute_path2);
-    LOG_SHORT_SYSCALL_FINISH(ret, "oldpath=%s, newpath=%s", oldpath, newpath);
-    return ret;
-}
-
 
 int zrt_zcall_unlink(const char *pathname){
     LOG_SYSCALL_START("pathname=%s", pathname);

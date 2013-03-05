@@ -338,12 +338,7 @@ int MemMount::Link(const std::string& oldpath, const std::string& newpath){
 
     MemData* hardlink = node->hardlink_data();
     
-    int fd = Open(newpath, O_CREAT|O_RDWR, S_IRUSR | S_IWUSR, hardlink);
-    if ( fd < 0 ){
-	/*error occured, errno setted*/
-	return -1;
-    }
-    return 0;
+    return Open(newpath, O_CREAT|O_RDWR, S_IRUSR | S_IWUSR, hardlink);
 }
 
 int MemMount::Unlink(const std::string& path) {

@@ -7,8 +7,12 @@ LIBZRT=lib/libzrt.a
 LIBZRT_SOURCES= ${ZEROVM_ROOT}/api/zvm.c \
 lib/zcalls/zcalls_prolog.c \
 lib/zcalls/zcalls_zrt.c \
+lib/libc/loglibc.c \
 lib/libc/fcntl.c \
+lib/libc/link.c \
 lib/libc/unlink.c \
+lib/libc/rmdir.c \
+lib/libc/mkdir.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
@@ -36,25 +40,15 @@ LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 ############### zlibc.a source files to build
 LIBZGLIBC=lib/libzglibc.a
 
-#lib/glibc_substitute/getcwd.c
-#lib/glibc_substitute/realpath.c
 LIBZGLIBC_SOURCES= \
 lib/glibc_substitute/getuid.c \
 lib/glibc_substitute/getpwuid.c \
-lib/glibc_substitute/mkdir.c \
-lib/glibc_substitute/rmdir.c \
-lib/glibc_substitute/umask.c \
 lib/glibc_substitute/chmod.c \
-lib/glibc_substitute/remove.c \
-lib/glibc_substitute/rename.c \
 lib/glibc_substitute/chown.c \
 lib/glibc_substitute/eaccess.c \
 lib/glibc_substitute/truncate.c \
 lib/glibc_substitute/lockf_stub.c 
-#lib/glibc_substitute/fdopen.c
-#lib/glibc_substitute/tmpfile.c
-#lib/glibc_substitute/fdopen.c
-
+#lib/glibc_substitute/rename.c 
 #lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )

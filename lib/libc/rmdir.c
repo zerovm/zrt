@@ -1,6 +1,6 @@
 /*
- * remove.c
- * remove implementation that substitude glibc stub implementation
+ * rmdir.c
+ * rmdir implementation that substitude glibc stub implementation
  *
  *  Created on: 19.01.2013
  *      Author: yaroslav
@@ -31,15 +31,17 @@
  * it should be linked instead standard rmdir;
  **************************************************************************/
 
-/*substitude unsupported glibc implementation */
-int remove(const char *pathname){
+
+int zrt_zcall_rmdir(const char *pathname){
     LOG_SYSCALL_START("pathname=%s", pathname);
+    VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     errno=0;
 
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
-    int ret = transpar_mount->remove(pathname);
-    LOG_SHORT_SYSCALL_FINISH( ret, "pathname=%s", pathname );
+    char* absolute_path = alloc_absolute_path_from_relative( pathname );
+    int ret = transpar_mount->rmdir( absolute_path );
+    free(absolute_path);
+    LOG_SHORT_SYSCALL_FINISH(ret, "pathname=%s", pathname);
     return ret;
 }
-

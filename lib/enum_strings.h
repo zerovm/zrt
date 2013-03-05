@@ -37,8 +37,12 @@ enum array_list_t{
     ELockTypeFlags,
     EFcntlCmd,
     EFileOpenMode,
-    EArchEntryType
+    EArchEntryType,
+    EStatStMode,
 };
+
+/*Macroses returns text representation of data, but it saves texts in temporary buffer,
+ *for subsequent calls you need to save intermediate results beetwen calls*/
 
 #define STR_FILE_OPEN_FLAGS(flags) text_from_flag(flags, EFileOpenFlags)
 #define STR_FILE_OPEN_MODE(mode)   text_from_id((mode), EFileOpenMode)
@@ -48,6 +52,7 @@ enum array_list_t{
 #define STR_LOCK_TYPE_FLAGS(flags) text_from_flag(flags, ELockTypeFlags)
 #define STR_FCNTL_CMD(flags)       text_from_id(flags, EFcntlCmd)
 #define STR_ARCH_ENTRY_TYPE(flags) text_from_id(flags, EArchEntryType)
+#define STR_STAT_ST_MODE(flags)    text_from_flag(flags, EStatStMode)
 
 /*Get all list of set flags*/
 const char* text_from_flag( int flags, enum array_list_t enum_id );

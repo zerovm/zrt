@@ -46,7 +46,7 @@ void MemNode::second_phase_construct(MemData* nodedata){
 }
 
 int MemNode::stat(struct stat *buf) {
-    memset(buf, 0, sizeof(struct stat));
+    memset(buf, '\0', sizeof(struct stat));
     buf->st_ino = (ino_t)slot_;
     if (is_dir()) {
         /*YaroslavLitvinov added various modes support*/
