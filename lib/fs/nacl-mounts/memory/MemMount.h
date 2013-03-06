@@ -39,7 +39,8 @@ class MemMount {
   // Mkdir() makes a directory at path with the given mode and stores the
   // information of that node in st.  0 is returned if the directory is
   // successfully created. -1 is returned on failure.
-  int Mkdir(const std::string& path, mode_t mode, struct stat *st);
+  // @parent hardlink specify it if creating hardlink for existing directory
+  int Mkdir(const std::string& path, mode_t mode, struct stat *st, MemData* hardlink=NULL);
 
   // Open file, actually it's a wrapper around Create, 0 is returned if the 
   // node is file successfully opened. -1 is returned on failure. 
@@ -51,8 +52,10 @@ class MemMount {
   /*Create new hardlink newpath for an oldpath, only for directories */
   int Link(const std::string& oldpath, const std::string& newpath);
 
-  // Remove the node at path.
+  //Remove hardlink for file at path. If it's a last hardlink file data will be freed;
+  //It doesn't removing directories, but it can remove directory hardlink if it's not a last
   //@return 0 if removed, -1 on error, errno=EBUSY if file not closed (referred)
+  //errno=EISDIR if trying to remove directory with nlink=2
   int Unlink(const std::string& path);
   int UnlinkInternal(MemNode *node);
 

@@ -49,7 +49,7 @@
 			      &ret2, ret2!=-1);			\
     }
 
-#define CHECK_FILE_EXISTANCE(filepath){			\
+#define CHECK_PATH_EXISTANCE(filepath){			\
     	int ret;					\
 	struct stat st;					\
 	TEST_OPERATION_RESULT(				\

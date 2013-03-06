@@ -25,9 +25,11 @@ class MemData {
 
     char *data_;
     size_t len_;
+    bool is_dir_;
     size_t capacity_;
-    int use_count_;
-    int unlink_;
+    int use_count_; 
+    int nlink_; /*hardlinks count*/
+    int want_unlink_;
     /*added by YaroslavLitvinov
      *Permissions should be supported by stat*/
     mode_t mode_;
@@ -90,8 +92,8 @@ class MemNode {
     void set_mount(MemMount *mount) { mount_ = mount; }
 
     // is_dir() returns whether or not this node represents a directory
-    bool is_dir(void) { return is_dir_; }
-    void set_is_dir(bool is_dir) { is_dir_ = is_dir; }
+    bool is_dir(void) { return nodedata_->is_dir_; }
+    void set_is_dir(bool is_dir) { nodedata_->is_dir_ = is_dir; }
 
     // slot() returns this nodes slot number in the MemMount's slots
     int slot(void) { return slot_; }
@@ -103,16 +105,30 @@ class MemNode {
 
     MemData* hardlink_data() { return nodedata_; }
 
+    // increase the hardlink count by one
+    void increment_nlink(void) { ++nodedata_->nlink_; }
+
+    // decrease the hardlinks count by one
+    void decrement_nlink(void) { 
+	if(nodedata_->nlink_>0)
+	    --nodedata_->nlink_; 
+    }
+
+    //hard link count, file opened and not closed
+    //returns the use count of this node
+    int nlink_count(void) { return nodedata_->nlink_; }
+    
     // increase the use count by one
-    void IncrementUseCount(void) { ++nodedata_->use_count_; }
+    void increment_use_count(void) { ++nodedata_->use_count_; }
 
     // decrease the use count by one
-    void DecrementUseCount(void) { 
+    void decrement_use_count(void) { 
 	if(nodedata_->use_count_>0)
 	    --nodedata_->use_count_; 
     }
 
-    // returns the use count of this node
+    //File refer count, file opened and not closed
+    //returns the use count of this node
     int use_count(void) { return nodedata_->use_count_; }
 
     // capacity() returns the capcity (in bytes) of this node
@@ -147,14 +163,13 @@ class MemNode {
     const struct flock* flock()const { return &nodedata_->flock_; }
     void set_flock(const struct flock* flock);
 
-    void TryUnlink(){ nodedata_->unlink_=1; }
-    int  UnlinkisTrying()const{ return nodedata_->unlink_; }
+    void TryUnlink(){ nodedata_->want_unlink_=1; }
+    int  UnlinkisTrying()const{ return nodedata_->want_unlink_; }
 
  private:
     int slot_;
     std::string name_;
     int parent_;
-    bool is_dir_;
     MemMount *mount_;
     std::list<int> children_;
     MemData*  nodedata_;  //can be shared between nodes

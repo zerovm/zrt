@@ -22,9 +22,11 @@ MemData::~MemData(){
 MemData::MemData() {
     data_ = NULL;
     len_ = 0;
+    is_dir_ = 0;
     capacity_ = 0;
     use_count_ = 0;
-    unlink_ = 0;
+    nlink_ = 1; /*new file has 1 hardlink at creature time*/
+    want_unlink_ = 0;
 }
 
 
@@ -32,6 +34,11 @@ MemNode::MemNode() {
 }
 
 MemNode::~MemNode() {
+    decrement_nlink();
+    if ( !nlink_count() ){
+	//delete file data if no hardlinks
+	delete nodedata_; 
+    }
     children_.clear();
 }
 
@@ -42,6 +49,8 @@ void MemNode::second_phase_construct(MemData* nodedata){
     }
     else{
 	nodedata_ = nodedata;
+	/*+1 hardlink; pass increment after nodedata_ init*/
+	increment_nlink(); 
     }
 }
 
@@ -51,8 +60,13 @@ int MemNode::stat(struct stat *buf) {
     if (is_dir()) {
         /*YaroslavLitvinov added various modes support*/
         buf->st_mode = S_IFDIR | mode();
+	/*synthetically increase hardlinks count by one,
+	 *because for our fs we has not links '.', .. 
+	 currently nlink for directories calculating incorrectly*/
+	buf->st_nlink = 1 + nlink_count();
     } else {
         buf->st_mode = S_IFREG | mode();
+	buf->st_nlink = nlink_count();
         buf->st_size = len();
     }
     buf->st_uid = 1001;

@@ -18,8 +18,7 @@
 int main(int argc, char **argv)
 {
     int ret;
-    char buf[PATH_MAX];
-    char* res = getcwd(buf, PATH_MAX);
+    struct stat st;
     char* nullstr = NULL;
 
     TEST_OPERATION_RESULT(
@@ -32,17 +31,17 @@ int main(int argc, char **argv)
     TEST_OPERATION_RESULT(
 			  remove(DIR_NAME),
 			  &ret, ret==-1&&errno==ENOTEMPTY );
-
-    #define FULL_DIR_FILE DIR_NAME "/" DIR_FILE
     TEST_OPERATION_RESULT(
-			  remove(FULL_DIR_FILE),
+			  remove(DIR_NAME "/" DIR_FILE),
 			  &ret, ret==0 );
-
     TEST_OPERATION_RESULT(
 			  remove(DIR_NAME),
 			  &ret, ret==0 );
+    TEST_OPERATION_RESULT(
+			  stat(DIR_NAME, &st),
+			  &ret, ret==-1&&errno==ENOENT );
 
-    return !res;
+    return 0;
 }
 
 

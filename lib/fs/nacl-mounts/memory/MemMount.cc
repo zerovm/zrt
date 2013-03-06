@@ -15,6 +15,12 @@ extern "C" {
 }
 #include "MemMount.h"
 
+#define GET_PARENT(mnode_child_p, mnode_parent_p )	\
+    if ( mnode_child_p->parent() >= 0 ){		\
+	mnode_parent_p =				\
+	    slots_.At(mnode_child_p->parent());		\
+	assert(mnode_parent_p);				\
+    }
 
 /*MemMount implementation*/
 
@@ -23,7 +29,7 @@ MemMount::MemMount() {
     slots_.Alloc();
     int slot = slots_.Alloc();
     root_ = slots_.At(slot);
-    root_->second_phase_construct(NULL); /*it's no hardlinks for this node*/
+    root_->second_phase_construct(NULL); /*it's no another hardlinks for this node*/
     root_->set_slot(slot);
     root_->set_mount(this);
     root_->set_is_dir(true);
@@ -116,7 +122,7 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf, MemD
     int slot = slots_.Alloc();
     ZRT_LOG(L_EXTRA, "created slot=%d", slot);
     child = slots_.At(slot);
-    /*if creating hardlink then it should not be a NULL*/
+    /*in case if creating hardlink then it should not be a NULL*/
     child->second_phase_construct(hardlink); 
     child->set_slot(slot);
     child->set_is_dir(false);
@@ -133,7 +139,8 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf, MemD
     return Stat(slot, buf);
 }
 
-int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
+int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf,
+		    MemData* hardlink ) {
     ZRT_LOG( L_INFO, "path=%s", path.c_str() );
     MemNode *parent;
     MemNode *child;
@@ -167,7 +174,8 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf) {
     // Create a new node
     int slot = slots_.Alloc();
     child = slots_.At(slot);
-    child->second_phase_construct(NULL); /*it's no hardlinks for this node*/
+    /*hardlink can be not null if currently used by link*/
+    child->second_phase_construct(hardlink);
     child->set_slot(slot);
     child->set_mount(this);
     child->set_is_dir(true);
@@ -247,7 +255,7 @@ int MemMount::GetSlot(std::string path) {
     std::list<std::string>::iterator path_it;
     // loop through path components
     for (path_it = path_components.begin();
-            path_it != path_components.end(); ++path_it) {
+	 path_it != path_components.end(); ++path_it) {
         // check if we are at a non-directory
         if (!(slots_.At(slot)->is_dir())) {
             SET_ERRNO(ENOTDIR);
@@ -319,26 +327,37 @@ int MemMount::Stat(ino_t slot, struct stat *buf) {
 }
 
 int MemMount::Link(const std::string& oldpath, const std::string& newpath){
-   MemNode *node = GetMemNode(oldpath);
-    if (node == NULL) {
+    int ret;
+    MemNode *parent=NULL;
+    MemNode *oldnode = GetMemNode(oldpath);
+    if (oldnode == NULL) {
 	SET_ERRNO(ENOENT);
         return -1;
     }
-    MemNode *parent = GetParentMemNode(oldpath);
+    GET_PARENT(oldnode, parent);
     // Check that it's not the root.
     if (parent == NULL) {
 	SET_ERRNO(EBUSY);
         return -1;
     }
-    // Check that it's a file.
-    if (node->is_dir()) {
-	SET_ERRNO(EISDIR);
+    MemNode *newnode = GetMemNode(newpath);
+    if (newnode != NULL) {
+	SET_ERRNO(EEXIST);
         return -1;
     }
 
-    MemData* hardlink = node->hardlink_data();
-    
-    return Open(newpath, O_CREAT|O_RDWR, S_IRUSR | S_IWUSR, hardlink);
+    MemData* hardlink = oldnode->hardlink_data();
+    if ( oldnode->is_dir() ){
+	/*create  hardlink for directoy*/
+	ret = Mkdir(newpath, oldnode->mode(), NULL, hardlink );
+	MemNode *newnode_hardlink = GetMemNode(newpath);
+    }
+    else{
+	/*create hardlink file*/
+	ret = Open(newpath, O_CREAT|O_RDWR, S_IRUSR | S_IWUSR, hardlink);
+	Unref( GetSlot(newpath) );
+    }
+    return ret;
 }
 
 int MemMount::Unlink(const std::string& path) {
@@ -370,8 +389,11 @@ int MemMount::UnlinkInternal(MemNode *node) {
 	SET_ERRNO(EBUSY);
         return -1;
     }
-    // Check that it's a file.
-    if (node->is_dir()) {
+
+    // Check if it's a directory.
+    if ( node->is_dir() && node->nlink_count() < 2 ) {
+	/*it is not allowed to unlink directory with hardlinks count >1;
+	 *actualy it can't remove directory*/
 	SET_ERRNO(EISDIR);
         return -1;
     }
@@ -429,7 +451,7 @@ void MemMount::Ref(ino_t slot) {
         return;
     }
     ZRT_LOG(L_INFO, "before inode=%d use_count=%d", node->slot(), node->use_count());
-    node->IncrementUseCount();
+    node->increment_use_count();
     ZRT_LOG(L_INFO, "after inode=%d use_count=%d", node->slot(), node->use_count());
 }
 
@@ -442,7 +464,7 @@ void MemMount::Unref(ino_t slot) {
         return;
     }
     ZRT_LOG(L_INFO, "before inode=%d use_count=%d", node->slot(), node->use_count());
-    node->DecrementUseCount();
+    node->decrement_use_count();
     ZRT_LOG(L_INFO, "after inode=%d use_count=%d", node->slot(), node->use_count());
     if (node->use_count() > 0) {
         return;
@@ -472,8 +494,8 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
     }
 
     for (; it != children->end() &&
-    bytes_read + sizeof(DIRENT) <= buf_size;
-    ++it) {
+	     bytes_read + sizeof(DIRENT) <= buf_size;
+	 ++it) {
 	MemNode *node = slots_.At(*it);
 	ZRT_LOG(L_SHORT, "getdents entity: %s", node->name().c_str());
 	/*format in buf dirent structure, of variable size, and save current file data;
@@ -527,7 +549,7 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
 }
 
 ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
-        size_t count) {
+			size_t count) {
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
         errno = ENOENT;

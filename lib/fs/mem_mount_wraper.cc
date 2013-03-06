@@ -501,9 +501,8 @@ static int mem_dup2(int oldfd, int newfd){
 static int mem_link(const char* oldpath, const char* newpath){
     /*create new hardlink*/
     int ret = s_mem_mount_cpp->Link(oldpath, newpath);
-
     if ( ret == -1 ){
-	/*errno already setted*/
+	/*errno already setted by MemMount*/
 	return ret;
     }
 
@@ -525,7 +524,6 @@ static int mem_link(const char* oldpath, const char* newpath){
     ZRT_LOG(L_EXTRA, "errcode ret=%d", ret );
     assert( ret == 0 );
 
-    close(fd); /*unref file*/
     return 0;
 }
 
