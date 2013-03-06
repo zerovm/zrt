@@ -104,7 +104,6 @@ all: prepare ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} ${LIBZGLIBC} autote
 zlibc_dep: CFLAGS+=-DZLIBC_STUB
 zlibc_dep: ${LIBDEP_OBJECTS}
 
-
 prepare:
 	@chmod u+rwx ns_start.sh
 	@chmod u+rwx ns_stop.sh

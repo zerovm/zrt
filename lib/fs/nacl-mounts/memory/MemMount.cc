@@ -538,13 +538,6 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
 
     // Do the read.
     memcpy(buf, node->data() + offset, len);
-    /*debugging*/
-    if ( len < 100 ){
-	char temp[100+1];
-	memcpy(temp, buf, len);
-	temp[len] = '\0';
-	ZRT_LOG(L_EXTRA, "%s", temp);
-    }
     return len;
 }
 
@@ -584,15 +577,6 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     if (offset > static_cast<off_t>(node->len())) {
         node->set_len(offset);
     }
-
-    /*debugging*/
-    if ( count < 100 ){
-	char temp[100+1];
-	memcpy(temp, buf, count);
-	temp[count] = '\0';
-	ZRT_LOG(L_EXTRA, "%s", temp);
-    }
-
     return count;
 }
 

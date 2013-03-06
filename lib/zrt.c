@@ -5,9 +5,6 @@
  *      Author: YaroslavLitvinov
  */
 
-#include "zrt.h"
-#include "zcalls.h"
-
 //#define ZLIBC_STUB
 /* Define ZLIBC_STUB to create empty implementation of zcalls interface.
  * It's needed while building ZLIBC to cut off the rest of ZRT library code.
@@ -15,6 +12,9 @@
 
 
 #ifndef ZLIBC_STUB
+#  include "zrt.h"
+#  include "zcalls.h"
+
 static struct zcalls_init_t KZcalls_init = {
     zrt_zcall_prolog_init,
     zrt_zcall_prolog_exit,

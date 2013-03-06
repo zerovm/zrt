@@ -28,13 +28,10 @@ class MemData {
     bool is_dir_;
     size_t capacity_;
     int use_count_; 
-    int nlink_; /*hardlinks count*/
-    int want_unlink_;
-    /*added by YaroslavLitvinov
-     *Permissions should be supported by stat*/
-    mode_t mode_;
-    /*flags_ has sence only for opened files*/
-    int flags_; 
+    int nlink_;      //nlink_ is hardlinks count
+    int want_unlink_;//want_unlink_ flag indicates file waiting for remove if close
+    mode_t mode_;    //mode_ used by stat indicate permissions
+    int flags_;      //flags_ has sence only for opened files
     uint32_t uid_;
     uint32_t gid_;
     struct flock flock_;
@@ -110,8 +107,7 @@ class MemNode {
 
     // decrease the hardlinks count by one
     void decrement_nlink(void) { 
-	if(nodedata_->nlink_>0)
-	    --nodedata_->nlink_; 
+	if(nodedata_->nlink_>0) --nodedata_->nlink_; 
     }
 
     //hard link count, file opened and not closed
