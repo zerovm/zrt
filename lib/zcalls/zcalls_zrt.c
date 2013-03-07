@@ -76,7 +76,7 @@ struct MountsInterface* transparent_mount() { return s_transparent_mount; }
  ***********************************************************/
 
 /*first step zrt initializer*/
-static void zrt_setup( struct UserManifest* manifest ){
+static void zrt_setup( const struct UserManifest* manifest ){
     /*manage mounted filesystems*/
     s_mounts_manager = get_mounts_manager();
 
@@ -393,7 +393,7 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
 *************************************************************************/
 void zrt_zcall_enhanced_zrt_setup(void){
     int i;
-    struct UserManifest *setup = zvm_init();
+    const struct UserManifest *setup = MANIFEST;
     s_memory_interface = get_memory_interface( setup->heap_ptr, setup->heap_size );
 
     zrt_setup( setup );

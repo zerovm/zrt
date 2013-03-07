@@ -30,8 +30,8 @@ static void* sbrk_default = NULL;
 void zrt_zcall_prolog_init(){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     s_prolog_doing_now = 1;
-    if ( zvm_init() )
-	sbrk_default = zvm_init()->heap_ptr;
+    if ( MANIFEST )
+	sbrk_default = MANIFEST->heap_ptr;
 }
 
 void zrt_zcall_prolog_exit(int status){

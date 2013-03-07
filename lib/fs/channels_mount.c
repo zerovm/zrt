@@ -620,7 +620,8 @@ static ssize_t channels_read(int fd, void *buf, size_t nbyte){
     ZRT_LOG(L_EXTRA, "channel fd=%d, bytes readed=%d", fd, readed );
 
     if ( readed < 0 ){
-        SET_ERRNO( zvm_errno() );
+	/*negative result returned by zvm_pread is an actual errno*/
+        SET_ERRNO( readed );
         return -1;
     }
 
@@ -665,7 +666,8 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
     ZRT_LOG(L_EXTRA, "channel fd=%d, bytes wrote=%d", fd, wrote);
 
     if ( wrote < 0 ){
-        SET_ERRNO( zvm_errno() );
+	/*negative result returned by zvm_pwrite is an actual errno*/
+        SET_ERRNO( wrote );
         return -1;
     }
 

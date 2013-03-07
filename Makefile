@@ -4,7 +4,7 @@ include Makefile.env
 LIBDEP_SOURCES= lib/zrt.c
 
 LIBZRT=lib/libzrt.a
-LIBZRT_SOURCES= ${ZEROVM_ROOT}/api/zvm.c \
+LIBZRT_SOURCES= \
 lib/zcalls/zcalls_prolog.c \
 lib/zcalls/zcalls_zrt.c \
 lib/libc/loglibc.c \
@@ -32,6 +32,7 @@ lib/fs/unpack/stream_reader.c \
 lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c
+#${ZEROVM_ROOT}/api/zvm.c
 
 LIBDEP_OBJECTS=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
@@ -48,7 +49,6 @@ lib/glibc_substitute/chown.c \
 lib/glibc_substitute/eaccess.c \
 lib/glibc_substitute/truncate.c \
 lib/glibc_substitute/lockf_stub.c 
-#lib/glibc_substitute/rename.c 
 #lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )

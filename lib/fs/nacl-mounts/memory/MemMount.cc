@@ -184,6 +184,7 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf,
     child->set_name(p.Last());
     child->set_parent(parent_slot);
     parent->AddChild(slot);
+    parent->increment_nlink(); /*emulate of creating hardlink to parent directory*/
     if (!buf) {
         return 0;
     }
@@ -392,7 +393,7 @@ int MemMount::UnlinkInternal(MemNode *node) {
 
     // Check if it's a directory.
     if ( node->is_dir() && node->nlink_count() < 2 ) {
-	/*it is not allowed to unlink directory with hardlinks count >1;
+	/*it is not allowed to unlink directory if no anymore hardlinks to it;
 	 *actualy it can't remove directory*/
 	SET_ERRNO(EISDIR);
         return -1;
@@ -431,6 +432,7 @@ int MemMount::Rmdir(ino_t slot) {
     }
     ZRT_LOG(L_INFO, "node->name()=%s", node->name().c_str() );
     parent = slots_.At(node->parent());
+    parent->decrement_nlink(); /*emulate of removing hardlink to parent directory*/
 
     // if this isn't the root node, remove from parent's
     // children list

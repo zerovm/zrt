@@ -25,7 +25,7 @@ MemData::MemData() {
     is_dir_ = 0;
     capacity_ = 0;
     use_count_ = 0;
-    nlink_ = 1; /*new file has 1 hardlink at creature time*/
+    nlink_ = 1; /*new file/dir has 1 hardlink at creature time*/
     want_unlink_ = 0;
 }
 

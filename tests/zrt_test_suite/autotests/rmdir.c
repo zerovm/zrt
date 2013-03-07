@@ -18,8 +18,7 @@
 int main(int argc, char **argv)
 {
     int ret;
-    char buf[PATH_MAX];
-    char* res = getcwd(buf, PATH_MAX);
+    struct stat st;
     char* nullstr = NULL;
 
     TEST_OPERATION_RESULT(
@@ -29,6 +28,9 @@ int main(int argc, char **argv)
 			  rmdir("nonexistent"),
 			  &ret, ret==-1&&errno==ENOENT );
     CREATE_NON_EMPTY_DIR(DIR_NAME, DIR_FILE);
+    TEST_OPERATION_RESULT(
+			  stat(DIR_NAME, &st),
+			  &ret, ret==0&&st.st_nlink==2 );
     TEST_OPERATION_RESULT(
 			  rmdir(DIR_NAME),
 			  &ret, ret==-1&&errno==ENOTEMPTY );
@@ -43,7 +45,7 @@ int main(int argc, char **argv)
 			  rmdir(DIR_NAME2),
 			  &ret, ret==0 );
 
-    return !res;
+    return 0;
 }
 
 
