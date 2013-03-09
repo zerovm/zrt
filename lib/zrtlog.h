@@ -26,6 +26,7 @@
 #define P_UINT  "%u"
 #define P_LONGINT  "%lld"
 
+#define ZRT_LOG_NAME "/dev/debug"
 
 #ifndef DEBUG
 #define DEBUG

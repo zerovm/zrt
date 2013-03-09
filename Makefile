@@ -13,6 +13,8 @@ lib/libc/link.c \
 lib/libc/unlink.c \
 lib/libc/rmdir.c \
 lib/libc/mkdir.c \
+lib/libc/chmod.c \
+lib/libc/chown.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
@@ -32,7 +34,6 @@ lib/fs/unpack/stream_reader.c \
 lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c
-#${ZEROVM_ROOT}/api/zvm.c
 
 LIBDEP_OBJECTS=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
@@ -42,13 +43,11 @@ LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 LIBZGLIBC=lib/libzglibc.a
 
 LIBZGLIBC_SOURCES= \
-lib/glibc_substitute/getuid.c \
-lib/glibc_substitute/getpwuid.c \
-lib/glibc_substitute/chmod.c \
-lib/glibc_substitute/chown.c \
-lib/glibc_substitute/eaccess.c \
 lib/glibc_substitute/truncate.c \
 lib/glibc_substitute/lockf_stub.c 
+#lib/glibc_substitute/eaccess.c
+#lib/glibc_substitute/getpwuid.c
+#lib/glibc_substitute/getuid.c
 #lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
@@ -97,7 +96,7 @@ CXXFLAGS = -I. -Ilib -Ilib/fs
 #debug: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
 
 all: 
-all: prepare ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} ${LIBZGLIBC} autotests 
+all: prepare doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} ${LIBZGLIBC} autotests
 
 
 #build zrt0 to be used as stub inside of zlibc
@@ -191,3 +190,6 @@ clean_test_suites: ${TESTS_CLEAN}
 ${TESTS_CLEAN}:
 	@make -Ctests/$(basename $@) clean
 
+################ "make doc" Generate doc file concatenating all READMEs
+doc:
+	@find -name "README" | xargs cat > README.gen

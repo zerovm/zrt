@@ -7,7 +7,7 @@ ifndef TESTS_ROOT
 TESTS_ROOT=autotests
 endif
 ifndef MEMMAX
-MEMMAX=234217728
+MEMMAX=268435456
 endif
 
 #Note2: RELEASE VERSION OF ZEROVM
@@ -177,7 +177,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #$shell should could not be used to get test result from file because it unexpectadly
 #using contents of previosly saved test output, and it is the main reason why using awk;
 #parsing correct output retrieved via pipe
-	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest \
+	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest -v1 \
 	| $(PRINT_ERRCODE) > $(OUTPUT_LAST)
 	@cat $(OUTPUT_LAST)
 #save failed tests to displaytheir at report

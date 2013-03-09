@@ -1,6 +1,6 @@
 /*
  * chmod.c
- * chmod implementation that substitude glibc stub implementation
+ * chmod implementation 
  *
  *  Created on: 19.01.2013
  *      Author: yaroslav
@@ -26,15 +26,7 @@
 #include "path_utils.h"
 
 
-/*************************************************************************
- * glibc substitution. Implemented functions below should be linked
- * instead of standard syscall that not implemented by NACL glibc
- * it should be linked instead standard chmod, fchmod;
- **************************************************************************/
-
-/*todo: check if syscall chmod is supported by NACL then use it
-*instead of this glibc substitution*/
-int chmod(const char *path, mode_t mode){
+int zrt_zcall_chmod(const char *path, mode_t mode){
     LOG_SYSCALL_START("path=%s mode=%o(octal)", path, mode);
 
     struct MountsInterface* transpar_mount = transparent_mount();
@@ -51,7 +43,7 @@ int chmod(const char *path, mode_t mode){
     return ret;
 }
 
-int fchmod(int fd, mode_t mode){
+int zrt_zcall_fchmod(int fd, mode_t mode){
     LOG_SYSCALL_START("fd=%d mode=%o(octal)", fd, mode);
     errno=0;
 

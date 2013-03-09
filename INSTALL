@@ -1,0 +1,39 @@
+ABOUT:
+ZRT - ZeroVM Run-Time environment for user executables running on virtual hardware 
+represented by ZeroVM. ZRT act as part of glibc library and implements zerovm platform
+dependent functions. ZVM toolchain must be used in order to create user applications;
+
+INSTALL & RUN
+1. Install ZeroVM, Consult http://github.com/zerovm/zerovm/blob/master/README
+2. Install ZVM SDK. Consult http://github.com/zerovm/toolchain/README
+Below should work okay in most cases.
+
+Here must be section with step-by-step instruction on how to install zvm toolchain
+
+3. Install zrt
+
+git clone https://github.com/zerovm/zrt.git
+
+4.Set environmant variables on ~/.bashrc
+
+ZVM_TOOLCHAIN -path to zvm sdk, x86_64-nacl folder
+ZEROVM_ROOT   -path to ZeroVM
+ZRT_ROOT      -path to ZRT
+ZPYTHON_ROOT  -path to zpython port from cpython2 / cpython3
+
+For example:
+
+export ZVM_TOOLCHAIN=${HOME}/zvm-sdk/x86_64-nacl
+export ZEROVM_ROOT=${HOME}/zerovm
+export ZRT_ROOT=${HOME}/zrt
+export ZPYTHON_ROOT=${HOME}/zpython
+
+5. Fix the validator config
+validator is a part of zerovm project, refer to paragraph 1 to details
+
+ln -s ${NACL_SDK_ROOT}/tools/ncval_x86_64 /usr/local/bin/ncval
+
+6. run
+
+cd ${ZRT_ROOT}
+make

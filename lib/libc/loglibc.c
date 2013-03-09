@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "zvm.h"
 #include "zcalls_zrt.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
@@ -19,14 +20,22 @@
 #include "path_utils.h"
 
 
+static int s_debugfd = -1;
+
 int zrt_zcall_loglibc(const char *str){
-    if (str && __zrt_log_is_enabled()){
-	int debug_handle_123;						
-	char *buf__123;							
-	if( (debug_handle_123=__zrt_log_debug_get_buf(&buf__123)) >= 0 ){ 
-	    int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,		
-				   "ENOSYS on %s\n", str );	
-	    __zrt_log_write(debug_handle_123, buf__123, len_123, 0);	
-	}								
+    if ( s_debugfd < 0 ){
+	int i;
+	for (i=0; i < MANIFEST->channels_count; i++ ){
+	    if ( !strcmp(ZRT_LOG_NAME, MANIFEST->channels[i].name) ){
+		s_debugfd = i;
+		break;
+	    }
+	}
+    }
+
+    if ( s_debugfd >0 && str ){
+	__zrt_log_write(s_debugfd, str, strlen(str), 0);
+#define ENOSYS_STR_LEN 11
+	__zrt_log_write(s_debugfd, "ENOSYS on \n", ENOSYS_STR_LEN, 0);
     }
 }

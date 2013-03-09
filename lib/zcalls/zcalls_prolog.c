@@ -4,20 +4,21 @@
 
 #include "zcalls.h"
 
+#include <stdlib.h>
 #include <errno.h>
 #include "zvm.h"
+#include "zcalls.h"
 #define SET_ERRNO(err) errno=err
 
 #define ONLY_PROLOG_SYSCALL 1
-//#define LOW_LEVEL_LOG_ENABLE
+#define LOW_LEVEL_LOG_ENABLE
 
 #define LOW_LEVEL_LOG_FD 1
 #define FUNC_NAME __func__
 
 #ifdef LOW_LEVEL_LOG_ENABLE
 #  define ZRT_LOG_LOW_LEVEL(str) \
-    zvm_pwrite(LOW_LEVEL_LOG_FD, str, sizeof(str), 0); \
-    zvm_pwrite(LOW_LEVEL_LOG_FD, "\n", sizeof("\n"), 0)
+    zrt_zcall_loglibc(str)
 #else
 #  define ZRT_LOG_LOW_LEVEL(str)
 #endif //LOW_LEVEL_LOG_ENABLE
@@ -352,6 +353,13 @@ int  zrt_zcall_prolog_getres(clockid_t clk_id, struct timespec *res){
     return -1;
 }
 int  zrt_zcall_prolog_gettime(clockid_t clk_id, struct timespec *tp){
+    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
+    /*not implemented for both prolog and zrt enhanced */
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+int zrt_zcall_prolog_chdir(const char *path){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     /*not implemented for both prolog and zrt enhanced */
     SET_ERRNO(ENOSYS);

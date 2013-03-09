@@ -73,7 +73,8 @@ int zrt_zcall_prolog_open_resource(const char *file, int *fd);
 /* irt clock *************************/
 int zrt_zcall_prolog_getres(clockid_t clk_id, struct timespec *res);
 int zrt_zcall_prolog_gettime(clockid_t clk_id, struct timespec *tp);
-
+/* another *************************/
+int zrt_zcall_prolog_chdir(const char *path);
 
 /************************** zcalls_zrt_t functions **************/
 void zrt_zcall_prolog_zrt_setup(void);
@@ -117,6 +118,10 @@ int zrt_zcall_rmdir(const char *pathdir);
 /*Create directory
  *@param mode umasked mode*/
 int zrt_zcall_mkdir(const char *pathdir, mode_t mode);
+int zrt_zcall_chmod(const char *path, mode_t mode);
+int zrt_zcall_fchmod(int fd, mode_t mode);
+int zrt_zcall_chown(const char *path, uid_t owner, gid_t group);
+int zrt_zcall_fchown(int fd, uid_t owner, gid_t group);
 
 #endif //__ZCALLS_H__
 

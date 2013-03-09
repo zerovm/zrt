@@ -2,13 +2,13 @@ include $(ZRT_ROOT)/Makefile.env
 # Makefile for building Lua
 # See ../doc/readme.html for installation and customization instructions.
 
+#uncomment line below if you need to build lua interpretator
+#BUILD_LUA_EXE
+
 # == CHANGE THE SETTINGS BELOW TO SUIT YOUR ENVIRONMENT =======================
 
 # Your platform. See PLATS for possible values.
 PLAT= none
-#PNACL_TOOL=$(NACL_SDK_ROOT)/toolchain/linux_x86_glibc
-#CC= @${PNACL_TOOL}/bin/x86_64-nacl-gcc
-#CC= gcc
 CFLAGS= -O2 -Wall -DLUA_COMPAT_ALL $(SYSCFLAGS) $(MYCFLAGS)
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
 LIBS= -lm $(SYSLIBS) $(MYLIBS)
@@ -41,10 +41,14 @@ LIB_O=	lauxlib.o lbaselib.o lbitlib.o lcorolib.o ldblib.o liolib.o \
 BASE_O= $(CORE_O) $(LIB_O) $(MYOBJS)
 
 #do not build native executables
-#LUA_T=	../../lua.nexe
+ifdef BUILD_LUA_EXE
+LUA_T=	../../lua.nexe
+endif
 LUA_O=	lua.o
-#
-#LUAC_T=	../../luac.nexe
+
+ifdef BUILD_LUA_EXE
+LUAC_T=	../../luac.nexe
+endif
 LUAC_O=	luac.o
 
 ALL_O= $(BASE_O) #$(LUA_O) $(LUAC_O)
@@ -65,11 +69,13 @@ $(LUA_A): $(BASE_O) # $(LUA_O) $(LUAC_O)
 #	$(RANLIB) $@
 
 #do not build native executables
-#$(LUA_T): $(LUA_O) $(LUA_A)
-#	$(CC) -o $@ $(LDFLAGS) $(LUA_O) $(LUA_A) $(LIBS)
-#
-#$(LUAC_T): $(LUAC_O) $(LUA_A)
-#	$(CC) -o $@ $(LDFLAGS) $(LUAC_O) $(LUA_A) $(LIBS)
+ifdef BUILD_LUA_EXE
+$(LUA_T): $(LUA_O) $(LUA_A)
+	$(CC) -o $@ $(LDFLAGS) $(LUA_O) $(LUA_A) $(LIBS)
+
+$(LUAC_T): $(LUAC_O) $(LUA_A)
+	$(CC) -o $@ $(LDFLAGS) $(LUAC_O) $(LUA_A) $(LIBS)
+endif
 
 clean:
 	@$(RM) $(ALL_T) $(ALL_O)

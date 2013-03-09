@@ -89,6 +89,8 @@ struct zcalls_init_t{
     /* irt clock *************************/
     int (*getres)(clockid_t clk_id, struct timespec *res);
     int (*gettime)(clockid_t clk_id, struct timespec *tp);
+    /* another ***************************/
+    int (*chdir)(const char *path);
 };
 
 #define ZCALLS_ZRT 2         /*use as type param in __query_zcalls*/
@@ -104,6 +106,10 @@ struct zcalls_nonsyscalls_t{
     int  (*unlink)(const char *pathname);
     int  (*rmdir)(const char *pathdir);
     int  (*mkdir)(const char *pathdir, mode_t mode);
+    int  (*chmod)(const char *path, mode_t mode);
+    int  (*fchmod)(int fd, mode_t mode);
+    int  (*chown)(const char *path, uid_t owner, gid_t group);
+    int  (*fchown)(int fd, uid_t owner, gid_t group);
 };
 
 

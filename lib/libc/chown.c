@@ -32,7 +32,7 @@
  **************************************************************************/
 
 
-int chown(const char *path, uid_t owner, gid_t group){
+int zrt_zcall_chown(const char *path, uid_t owner, gid_t group){
     LOG_SYSCALL_START("path=%s owner=%u group=%u", path, owner, group);
     errno=0;
 
@@ -46,7 +46,7 @@ int chown(const char *path, uid_t owner, gid_t group){
     return ret;
 }
 
-int fchown(int fd, uid_t owner, gid_t group){
+int zrt_zcall_fchown(int fd, uid_t owner, gid_t group){
     LOG_SYSCALL_START("fd=%d owner=%u group=%u", fd, owner, group);
 
     struct MountsInterface* transpar_mount = transparent_mount();
@@ -56,14 +56,5 @@ int fchown(int fd, uid_t owner, gid_t group){
     ZRT_LOG(L_SHORT, "fd=%d, owner=%u, group=%u", fd, owner, group );
     int ret = transpar_mount->fchown(fd, owner, group);
     LOG_SHORT_SYSCALL_FINISH( ret, "fd=%d", fd);
-    return ret;
-}
-
-int lchown(const char *path, uid_t owner, gid_t group){
-    LOG_SYSCALL_START("path=%s owner=%u group=%u", path, owner, group);
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
-    /*do not do transformaton path, it's called in nested chown*/
-    int ret =chown(path, owner, group);
-    LOG_SHORT_SYSCALL_FINISH( ret, "path=%s", path);
     return ret;
 }

@@ -51,10 +51,6 @@
  * fdopen failed, ftell fread
  * */
 
-#ifdef DEBUG
-#define ZRT_LOG_NAME "/dev/debug"
-#endif //DEBUG
-
 /* if given in manifest let user to have it */
 #define TIMESTAMP_STR "TimeStamp"
 
@@ -76,7 +72,7 @@ struct MountsInterface* transparent_mount() { return s_transparent_mount; }
  ***********************************************************/
 
 /*first step zrt initializer*/
-static void zrt_setup( const struct UserManifest* manifest ){
+static void zrt_setup( const struct UserManifest const* manifest ){
     /*manage mounted filesystems*/
     s_mounts_manager = get_mounts_manager();
 
@@ -160,7 +156,7 @@ static inline void update_cached_time()
  * exit. without it the user program cannot terminate correctly.
  */
 void zrt_zcall_enhanced_exit(int status){
-    ZRT_LOG(L_SHORT, P_TEXT, "exiting...");
+    ZRT_LOG(L_SHORT, "status %d exiting...", status);
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
     return; 
@@ -393,7 +389,7 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
 *************************************************************************/
 void zrt_zcall_enhanced_zrt_setup(void){
     int i;
-    const struct UserManifest *setup = MANIFEST;
+    const struct UserManifest const *setup = MANIFEST;
     s_memory_interface = get_memory_interface( setup->heap_ptr, setup->heap_size );
 
     zrt_setup( setup );

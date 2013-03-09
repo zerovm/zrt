@@ -67,7 +67,9 @@ static struct zcalls_init_t KZcalls_init = {
     zrt_zcall_prolog_open_resource,
 
     zrt_zcall_prolog_getres,
-    zrt_zcall_prolog_gettime
+    zrt_zcall_prolog_gettime,
+
+    zrt_zcall_prolog_chdir,
 };
 
 static struct zcalls_zrt_t KZcalls_zrt = {
