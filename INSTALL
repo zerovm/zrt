@@ -16,24 +16,19 @@ git clone https://github.com/zerovm/zrt.git
 
 4.Set environmant variables on ~/.bashrc
 
-ZVM_TOOLCHAIN -path to zvm sdk, x86_64-nacl folder
+ZVM_SDK_ROOT  -path to zvm sdk
 ZEROVM_ROOT   -path to ZeroVM
 ZRT_ROOT      -path to ZRT
 ZPYTHON_ROOT  -path to zpython port from cpython2 / cpython3
 
 For example:
 
-export ZVM_TOOLCHAIN=${HOME}/zvm-sdk/x86_64-nacl
+export ZVM_SDK_ROOT=${HOME}/zvm-sdk
 export ZEROVM_ROOT=${HOME}/zerovm
 export ZRT_ROOT=${HOME}/zrt
 export ZPYTHON_ROOT=${HOME}/zpython
 
-5. Fix the validator config
-validator is a part of zerovm project, refer to paragraph 1 to details
-
-ln -s ${NACL_SDK_ROOT}/tools/ncval_x86_64 /usr/local/bin/ncval
-
-6. run
+5. run
 
 cd ${ZRT_ROOT}
 make
