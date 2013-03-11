@@ -13,7 +13,6 @@
 #define ONLY_PROLOG_SYSCALL 1
 #define LOW_LEVEL_LOG_ENABLE
 
-#define LOW_LEVEL_LOG_FD 1
 #define FUNC_NAME __func__
 
 #ifdef LOW_LEVEL_LOG_ENABLE
