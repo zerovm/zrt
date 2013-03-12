@@ -19,6 +19,7 @@
 
 #include "zrt.h"
 #include "zcalls_zrt.h"
+#include "zcalls.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
@@ -27,6 +28,13 @@
 
 
 int zrt_zcall_chmod(const char *path, mode_t mode){
+    if ( !is_user_main_running() ){
+	SAFE_LOG(__func__);
+	/*while not initialized completely*/
+	errno=ENOSYS;
+	return -1;
+    }
+
     LOG_SYSCALL_START("path=%s mode=%o(octal)", path, mode);
 
     struct MountsInterface* transpar_mount = transparent_mount();

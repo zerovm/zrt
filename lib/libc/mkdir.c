@@ -17,9 +17,10 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "zcalls_zrt.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
+#include "zcalls.h"
+#include "zcalls_zrt.h"
 #include "transparent_mount.h"
 #include "mounts_interface.h"
 #include "path_utils.h"
@@ -31,6 +32,13 @@
  **************************************************************************/
 
 int zrt_zcall_mkdir(const char* pathname, mode_t mode){
+    if ( !is_user_main_running() ){
+	SAFE_LOG(__func__);
+	/*while not initialized completely*/
+	errno=ENOSYS;
+	return -1;
+    }
+
     LOG_SYSCALL_START("pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
     
     struct MountsInterface* transpar_mount = transparent_mount();

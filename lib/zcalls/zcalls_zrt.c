@@ -62,6 +62,7 @@ struct MountsInterface*        s_mem_mount=NULL;
 static struct MountsManager* s_mounts_manager = NULL;
 static struct MountsInterface* s_transparent_mount = NULL;
 static struct MemoryInterface* s_memory_interface = NULL;
+static int                     s_user_main_running=0;
 /****************** */
 
 struct MountsInterface* transparent_mount() { return s_transparent_mount; }
@@ -417,7 +418,14 @@ void zrt_zcall_enhanced_zrt_setup(void){
     ZRT_LOG(L_SHORT, "_SC_PAGE_SIZE=%ld", sysconf(_SC_PAGE_SIZE));
 
     zrt_setup_finally();
+    s_user_main_running = 1;
+    /*user main execution just after zrt initialization*/
 }
+
+int is_user_main_running(){
+    return s_user_main_running;
+}
+
 
 /*************************************************************************/
 

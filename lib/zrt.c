@@ -70,20 +70,19 @@ static struct zcalls_init_t KZcalls_init = {
     zrt_zcall_prolog_gettime,
 
     zrt_zcall_prolog_chdir,
-};
-
-static struct zcalls_zrt_t KZcalls_zrt = {
-    zrt_zcall_prolog_zrt_setup
-};
-
-static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
     zrt_zcall_loglibc,
     zrt_zcall_fcntl,
     zrt_zcall_link,
     zrt_zcall_unlink,
     zrt_zcall_rmdir,
     zrt_zcall_mkdir
+
 };
+
+static struct zcalls_zrt_t KZcalls_zrt = {
+    zrt_zcall_prolog_zrt_setup
+};
+
 #endif //ZLIBC_STUB
 
 
@@ -101,10 +100,6 @@ __query_zcalls(int type, void** table )
 	break;
     case ZCALLS_ZRT:
 	*table = &KZcalls_zrt;
-	ret_type = type;
-	break;
-    case ZCALLS_NONSYSCALLS:
-	*table = &KZcalls_nonsyscalls;
 	ret_type = type;
 	break;
     default:

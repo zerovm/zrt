@@ -41,6 +41,8 @@
 #ifdef DEBUG
 #define LOG_BUFFER_SIZE 0x1000
 
+#define SAFE_LOG(s_123) zrt_zcall_loglibc(s_123)
+
 /*ZRT_LOG
   v_123 verbosity param, fmt_123 format string, ... arguments*/
 #define ZRT_LOG(v_123, fmt_123, ...) if( __zrt_log_is_enabled() ){	\

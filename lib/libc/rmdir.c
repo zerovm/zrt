@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "zcalls.h"
 #include "zcalls_zrt.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
@@ -33,6 +34,13 @@
 
 
 int zrt_zcall_rmdir(const char *pathname){
+    if ( !is_user_main_running() ){
+	SAFE_LOG(__func__);
+	/*while not initialized completely*/
+	errno=ENOSYS;
+	return -1;
+    }
+
     LOG_SYSCALL_START("pathname=%s", pathname);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     errno=0;

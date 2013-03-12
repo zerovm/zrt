@@ -26,6 +26,13 @@
 #include "path_utils.h"
 
 int zrt_zcall_unlink(const char *pathname){
+    if ( !is_user_main_running() ){
+	SAFE_LOG(__func__);
+	/*while not initialized completely*/
+	errno=ENOSYS;
+	return -1;
+    }
+
     LOG_SYSCALL_START("pathname=%s", pathname);
 
     struct MountsInterface* transpar_mount = transparent_mount();

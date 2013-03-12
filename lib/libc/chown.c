@@ -18,6 +18,7 @@
 #include <assert.h>
 
 #include "zcalls_zrt.h"
+#include "zcalls.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
@@ -33,6 +34,13 @@
 
 
 int zrt_zcall_chown(const char *path, uid_t owner, gid_t group){
+    if ( !is_user_main_running() ){
+	SAFE_LOG(__func__);
+	/*while not initialized completely*/
+	errno=ENOSYS;
+	return -1;
+    }
+
     LOG_SYSCALL_START("path=%s owner=%u group=%u", path, owner, group);
     errno=0;
 

@@ -15,6 +15,7 @@ lib/libc/rmdir.c \
 lib/libc/mkdir.c \
 lib/libc/chmod.c \
 lib/libc/chown.c \
+lib/libc/getpwuid.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \

@@ -50,6 +50,13 @@ const char *byte_to_binary(int x)
 
 /*override system glibc implementation */
 int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
+    if ( !is_user_main_running() ){
+	SAFE_LOG(__func__);
+	/*while not initialized completely*/
+	errno=ENOSYS;
+	return -1;
+    }
+
     int ret=0;
     LOG_SYSCALL_START("fd=%d cmd=%d", fd, cmd);
     errno=0;

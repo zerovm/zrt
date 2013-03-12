@@ -18,6 +18,10 @@ struct MountsInterface;
 * should be used for initialization of struct zcalls_init_t in __query_zcalls.
 ***************************************************************************/
 
+/*zrt application has 3 stages of startup: running prolog, zrt setup, user main
+*@return 1 if user main running*/
+int is_user_main_running();
+
 /******************* zcalls_init_t functions **************/
 void zrt_zcall_prolog_init(void);
 /* irt basic *************************/
