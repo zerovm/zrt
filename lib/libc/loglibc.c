@@ -9,6 +9,11 @@
 
 static int s_debugfd = -1;
 
+/*************************************************************************
+ * Implementation used by glibc, through zcall interface; It's not using weak alias;
+ **************************************************************************/
+
+/*logging primitive*/
 int zrt_zcall_loglibc(const char *str){
     /*It also can be used in prolog, because it is using zvm api and only strcmp
      call that is correct for prolog */

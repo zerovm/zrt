@@ -25,13 +25,9 @@
 #include "mounts_interface.h"
 #include "path_utils.h"
 
-
 /*************************************************************************
- * glibc substitution. Implemented functions below should be linked
- * instead of standard syscall that not implemented by NACL glibc
- * it should be linked instead standard lchown, chown, fchown;
+ * Implementation used by glibc, through zcall interface; It's not using weak alias;
  **************************************************************************/
-
 
 int zrt_zcall_chown(const char *path, uid_t owner, gid_t group){
     if ( !is_user_main_running() ){

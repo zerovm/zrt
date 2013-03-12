@@ -25,6 +25,10 @@
 #include "mounts_interface.h"
 #include "path_utils.h"
 
+/*************************************************************************
+ * Implementation used by glibc, through zcall interface; It's not using weak alias;
+ **************************************************************************/
+
 int zrt_zcall_link(const char *oldpath, const char *newpath){
     LOG_SYSCALL_START("oldpath=%s, newpath=%s", oldpath, newpath);
 

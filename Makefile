@@ -15,7 +15,7 @@ lib/libc/rmdir.c \
 lib/libc/mkdir.c \
 lib/libc/chmod.c \
 lib/libc/chown.c \
-lib/libc/getpwuid.c \
+lib/libc/ftruncate.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/conf_parser.c \
@@ -44,12 +44,7 @@ LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 LIBZGLIBC=lib/libzglibc.a
 
 LIBZGLIBC_SOURCES= \
-lib/glibc_substitute/truncate.c \
 lib/glibc_substitute/lockf_stub.c 
-#lib/glibc_substitute/eaccess.c
-#lib/glibc_substitute/getpwuid.c
-#lib/glibc_substitute/getuid.c
-#lib/glibc_substitute/malloc_free.c lib/memory/bget.c 
 
 LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
 

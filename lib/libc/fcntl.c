@@ -43,12 +43,9 @@ const char *byte_to_binary(int x)
 }
 
 /*************************************************************************
- * glibc substitution. Implemented functions below should be linked
- * instead of standard syscall that not implemented by NACL glibc
- * it should be linked instead standard fcntl;
+ * Implementation used by glibc, through zcall interface; It's not using weak alias;
  **************************************************************************/
 
-/*override system glibc implementation */
 int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
     if ( !is_user_main_running() ){
 	SAFE_LOG(__func__);

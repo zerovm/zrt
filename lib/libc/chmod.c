@@ -26,6 +26,9 @@
 #include "mounts_interface.h"
 #include "path_utils.h"
 
+/*************************************************************************
+ * Implementation used by glibc, through zcall interface; It's not using weak alias;
+ **************************************************************************/
 
 int zrt_zcall_chmod(const char *path, mode_t mode){
     if ( !is_user_main_running() ){

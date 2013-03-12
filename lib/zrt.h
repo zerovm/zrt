@@ -110,6 +110,7 @@ struct zcalls_nonsyscalls_t{
     int  (*fchmod)(int fd, mode_t mode);
     int  (*chown)(const char *path, uid_t owner, gid_t group);
     int  (*fchown)(int fd, uid_t owner, gid_t group);
+    int  (*ftruncate)(int fd, off_t length);
 };
 
 

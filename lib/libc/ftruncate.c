@@ -19,6 +19,7 @@
 #include <assert.h>
 
 #include "zcalls_zrt.h"
+#include "zcalls.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
@@ -53,11 +54,17 @@ static int write_file_padding(int fd, off_t length){
 
 
 /*************************************************************************
- * glibc substitution. Implemented functions below should be linked
- * instead of standard syscall that not implemented by NACL glibc
+ * Implementation used by glibc, through zcall interface; It's not using weak alias;
  **************************************************************************/
 
-int ftruncate(int fd, off_t length){
+int zrt_zcall_ftruncate(int fd, off_t length){
+    if ( !is_user_main_running() ){
+	SAFE_LOG(__func__);
+	/*while not initialized completely*/
+	errno=ENOSYS;
+	return -1;
+    }
+
     LOG_SYSCALL_START("fd=%d,length=%lld", fd, length);
     
     struct MountsInterface* transpar_mount = transparent_mount();
@@ -113,32 +120,3 @@ int ftruncate(int fd, off_t length){
     return 0;
 }
 
-
-int truncate(const char *path, off_t length){
-    LOG_SYSCALL_START("path=%s,length=%lld", path, length);
-
-    int ret=-1;
-    VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
-    char* absolute_path = alloc_absolute_path_from_relative( path );
-
-    struct MountsManager* mm = mounts_manager();        /*get access to main mounts object*/
-    struct MountsInterface* mif = mm->mount_bypath(absolute_path); /*get valid mount or NULL*/
-    if ( mif ){
-	struct mount_specific_implem* implem = mif->implem();
-    	assert(implem);                                /*mount specific implem can't be NULL*/
-
-	FILE * f= fopen(absolute_path, "w");
-	if (f){
-	    /*get file handle from FILE object and call existing ftruncate implementation*/
-	    ret = ftruncate(f->_fileno, length);
-	    fclose(f);
-	}
-	else{
-	    SET_ERRNO(ENOENT);
-	}
-    }
-    
-    free(absolute_path);
-    LOG_SHORT_SYSCALL_FINISH( ret, "path=%s,length=%lld", path, length);
-    return ret;
-}

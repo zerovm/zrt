@@ -27,8 +27,7 @@
 #include "enum_strings.h"
 
 /*************************************************************************
- * glibc substitution. Implemented functions below should be linked
- * instead of standard syscall that not implemented by NACL glibc
+ * Implementation used by glibc, through zcall interface; It's not using weak alias;
  **************************************************************************/
 
 int zrt_zcall_mkdir(const char* pathname, mode_t mode){
