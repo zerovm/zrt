@@ -40,15 +40,6 @@ LIBDEP_OBJECTS=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 
 
-############### zlibc.a source files to build
-LIBZGLIBC=lib/libzglibc.a
-
-LIBZGLIBC_SOURCES= \
-lib/glibc_substitute/lockf_stub.c 
-
-LIBZGLIBC_OBJECTS=$(addsuffix .o, $(basename $(LIBZGLIBC_SOURCES) ) )
-
-
 ############## zrtlibs and ported libraries build
 LIBS= \
 lib/mapreduce/libmapreduce.a \
@@ -89,10 +80,10 @@ CXXFLAGS = -I. -Ilib -Ilib/fs
 
 #debug: LDFLAGS+=-lgcov -fprofile-arcs
 #debug: CFLAGS+=-Wdisabled-optimization -fprofile-arcs -ftest-coverage -fdump-rtl-all -fdump-ipa-all 
-#debug: prepare ${LIBS} ${LIBZRT} ${LIBZGLIBC} autotests
+#debug: prepare ${LIBS} ${LIBZRT} autotests
 
 all: 
-all: prepare doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} ${LIBZGLIBC} autotests
+all: prepare doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} autotests
 
 
 #build zrt0 to be used as stub inside of zlibc
@@ -105,10 +96,6 @@ prepare:
 
 ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
-	@echo $@ updated
-
-${LIBZGLIBC} : $(LIBZGLIBC_OBJECTS)
-	$(AR) rcs $@ $(LIBZGLIBC_OBJECTS)
 	@echo $@ updated
 
 ############## Build libs, invoke nested Makefiles
@@ -156,8 +143,7 @@ LIBPORTS_CLEAN =$(foreach smpl, ${LIBPORTS}, $(smpl).clean)
 libclean: ${LIBS_CLEAN}
 ${LIBS_CLEAN}: cleandep
 	@rm -f $(LIBZRT_OBJECTS)
-	@rm -f $(LIBZGLIBC_OBJECTS)
-	@rm -f $(LIBS) $(LIBZRT) $(LIBZGLIBC)
+	@rm -f $(LIBS) $(LIBZRT)
 	@make -C$(dir $@) clean 
 	@TESTS_ROOT=autotests make -Ctests/zrt_test_suite clean
 

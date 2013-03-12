@@ -81,8 +81,6 @@ LDFLAGS+= -ldl
 LDFLAGS+= -lm
 #crypt
 LDFLAGS+= -lcrypt
-#glibc substitute
-LDFLAGS+= -lzglibc
 
 #####################################################################
 #in this section describe compiler flags by defining makefile variable 

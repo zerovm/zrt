@@ -64,8 +64,6 @@ LDFLAGS+= -ldl
 LDFLAGS+= -lm
 #crypt
 LDFLAGS+= -lcrypt
-#glibc substitute
-LDFLAGS+= -lzglibc
 
 ################ strings CFLAGS
 CFLAGS-inl-tester.c = -fno-builtin

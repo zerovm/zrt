@@ -7,10 +7,7 @@ CFLAGS+=-I$(ZPYTHON_ROOT) -I$(ZPYTHON_ROOT)/Include
 
 LDFLAGS+=-llua -lsqlite3 
 
-#Add python library path and libraries
-#it's significant to link zglibc library just after all libraries
-#it's needed to correctly link glibc substitute functions
-LDFLAGS+=-L$(ZPYTHON_ROOT) -lpython3.2m -lm -ldl -lutil -lzglibc
+LDFLAGS+=-L$(ZPYTHON_ROOT) -lpython3.2m -lm -ldl -lutil
 
 all: createdirs clean zshell.nexe
 
