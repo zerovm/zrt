@@ -21,7 +21,6 @@ run:
 	sed s@{ABS_PATH}@${CURDIR}/@g $(NAME).manifest.template | sed s@{NAME}@$(NAME)@g > $(NAME).manifest
 	chmod u+rwx fstest kill_fstest.sh run_test.sh run_zrtfs_tests.sh
 	mkdir -p data
-	binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 clean:
 	@rm -f $(NAME).nexe $(NAME).o data/*.output data/*.log data/*.data *.manifest

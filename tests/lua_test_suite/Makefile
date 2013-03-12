@@ -11,7 +11,6 @@ all: $(NAME).nexe run
 
 $(NAME).nexe: $(NAME).o
 	$(CC) -o $(NAME).nexe $(NAME).o $(LDFLAGS)
-	binpatch $(NAME).nexe 4c01fc0f3148c1e2 4c01fc909048c1e2
 
 $(NAME).o: $(SRC_PATH)/$(NAME).c
 	$(CC) -o $(NAME).o $(CFLAGS) $(SRC_PATH)/${NAME}.c 

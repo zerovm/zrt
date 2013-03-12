@@ -151,8 +151,6 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
 	@$(CC) -o $@ $(LDFLAGS_ZMAIN) $(BASENAME).o $(LDFLAGS)
-#prepare binary
-	@binpatch $@ 4c01fc0f3148c1e2 4c01fc909048c1e2 > /dev/null
 #prepare manifest
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
 	 sed s@{ABS_PATH}@$(CURDIR)/@g | \
