@@ -31,7 +31,7 @@
  **************************************************************************/
 
 int zrt_zcall_mkdir(const char* pathname, mode_t mode){
-    if ( !is_user_main_running() ){
+    if ( !is_zrt_ready() ){
 	SAFE_LOG(__func__);
 	/*while not initialized completely*/
 	errno=ENOSYS;

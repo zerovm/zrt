@@ -62,7 +62,7 @@ struct MountsInterface*        s_mem_mount=NULL;
 static struct MountsManager* s_mounts_manager = NULL;
 static struct MountsInterface* s_transparent_mount = NULL;
 static struct MemoryInterface* s_memory_interface = NULL;
-static int                     s_user_main_running=0;
+static int                     s_zrt_ready=0;
 /****************** */
 
 struct MountsInterface* transparent_mount() { return s_transparent_mount; }
@@ -73,7 +73,7 @@ struct MountsInterface* transparent_mount() { return s_transparent_mount; }
  ***********************************************************/
 
 /*first step zrt initializer*/
-static void zrt_setup( const struct UserManifest const* manifest ){
+static void zrt_init( const struct UserManifest const* manifest ){
     /*manage mounted filesystems*/
     s_mounts_manager = get_mounts_manager();
 
@@ -87,6 +87,8 @@ static void zrt_setup( const struct UserManifest const* manifest ){
     int zrtlog_fd = s_channels_mount->open( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
     __zrt_log_set_fd( zrtlog_fd );
     __zrt_log_enable(1);
+    s_zrt_ready = 1;
+    /*user main execution just after zrt initialization*/
 }
 
 /*second step zrt initializer*/
@@ -393,7 +395,7 @@ void zrt_zcall_enhanced_zrt_setup(void){
     const struct UserManifest const *setup = MANIFEST;
     s_memory_interface = get_memory_interface( setup->heap_ptr, setup->heap_size );
 
-    zrt_setup( setup );
+    zrt_init( setup );
 
     /* debug print */
     ZRT_LOG(L_SHORT, "DEBUG INFORMATION%s", "");
@@ -418,12 +420,10 @@ void zrt_zcall_enhanced_zrt_setup(void){
     ZRT_LOG(L_SHORT, "_SC_PAGE_SIZE=%ld", sysconf(_SC_PAGE_SIZE));
 
     zrt_setup_finally();
-    s_user_main_running = 1;
-    /*user main execution just after zrt initialization*/
 }
 
-int is_user_main_running(){
-    return s_user_main_running;
+int is_zrt_ready(){
+    return s_zrt_ready;
 }
 
 

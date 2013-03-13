@@ -47,7 +47,7 @@ const char *byte_to_binary(int x)
  **************************************************************************/
 
 int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
-    if ( !is_user_main_running() ){
+    if ( !is_zrt_ready() ){
 	SAFE_LOG(__func__);
 	/*while not initialized completely*/
 	errno=ENOSYS;

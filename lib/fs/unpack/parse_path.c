@@ -37,7 +37,7 @@ int mkpath(char* file_path, mode_t mode) {
  * it's extract part related to full directory name from path and compare it
  * to previously cached dir name that's already created on filesystem.
  * @param path to check
- * @return 0 if cached, 1 if not;
+ * @return 0 if cached, -1 if not;
  *  */
 int create_dir_and_cache_name( const char* dirpath, int len ){
     int res = strncmp( dirpath, s_cached_full_path, len) == 0? 0: 1;
@@ -51,7 +51,7 @@ int create_dir_and_cache_name( const char* dirpath, int len ){
 	    /*error while creating dir, new path handled, cache not saved, 
 	     *it is needed to create sub dir previously*/
 	    memset(s_cached_full_path, '\0', sizeof(s_cached_full_path));
-	    res = 1; /*new path handled, cache not saved*/
+	    res = -1; /*new path handled, cache not saved*/
 	}
 	ZRT_LOG(L_EXTRA, "mkdir errno=%d, ret=%d: %s", errno, ret, s_cached_full_path);
     }

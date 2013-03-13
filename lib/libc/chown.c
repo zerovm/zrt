@@ -30,7 +30,7 @@
  **************************************************************************/
 
 int zrt_zcall_chown(const char *path, uid_t owner, gid_t group){
-    if ( !is_user_main_running() ){
+    if ( !is_zrt_ready() ){
 	SAFE_LOG(__func__);
 	/*while not initialized completely*/
 	errno=ENOSYS;

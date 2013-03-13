@@ -58,7 +58,7 @@ static int write_file_padding(int fd, off_t length){
  **************************************************************************/
 
 int zrt_zcall_ftruncate(int fd, off_t length){
-    if ( !is_user_main_running() ){
+    if ( !is_zrt_ready() ){
 	SAFE_LOG(__func__);
 	/*while not initialized completely*/
 	errno=ENOSYS;

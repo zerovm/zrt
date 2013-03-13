@@ -30,6 +30,13 @@
  **************************************************************************/
 
 int zrt_zcall_link(const char *oldpath, const char *newpath){
+    if ( !is_zrt_ready() ){
+	SAFE_LOG(__func__);
+	/*while not initialized completely*/
+	errno=ENOSYS;
+	return -1;
+    }
+
     LOG_SYSCALL_START("oldpath=%s, newpath=%s", oldpath, newpath);
 
     struct MountsInterface* transpar_mount = transparent_mount();
