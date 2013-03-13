@@ -16,17 +16,14 @@ MOUNTS_LOCALE_FOLDER=../mounts/locales
 LOCALE_NAME=$1.$2
 ADD_LOCALES_FOLDER=localedef
 LOCALE_PATH=$ADD_LOCALES_FOLDER/$LOCALE_NAME
-LOCALE_PATCHER=locale_patcher/locale_patcher
-
 
 
 #create dir for tar locales
 mkdir -p $MOUNTS_LOCALE_FOLDER
 
-#compile and add specific locale into archive
-LANG_TERRITORY=$1 CHARMAP=$2 make archive -C$ADD_LOCALES_FOLDER
-#compile specific locale
-LANG_TERRITORY=$1 CHARMAP=$2 make -C$ADD_LOCALES_FOLDER
+cd $ADD_LOCALES_FOLDER
+#compile and add specific locale into archive & create LC_TYPE* files
+LANG_TERRITORY=$1 CHARMAP=$2 sh locale_create.sh
 
 #move localisation single archive into locales folder
 if [ -f $LOCALE_PATH.tar ]

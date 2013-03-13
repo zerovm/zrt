@@ -20,6 +20,19 @@
 static char s_cached_full_path[4096] = "";
 
 
+int mkpath(char* file_path, mode_t mode) {
+    assert(file_path && *file_path);
+    char* p;
+    for (p=strchr(file_path+1, '/'); p; p=strchr(p+1, '/')) {
+	*p='\0';
+	if (mkdir(file_path, mode)==-1) {
+	    if (errno!=EEXIST) { *p='/'; return -1; }
+	}
+	*p='/';
+    }
+    return 0;
+}
+
 /* check path directory is cached or not.
  * it's extract part related to full directory name from path and compare it
  * to previously cached dir name that's already created on filesystem.
@@ -40,7 +53,7 @@ int create_dir_and_cache_name( const char* dirpath, int len ){
 	    memset(s_cached_full_path, '\0', sizeof(s_cached_full_path));
 	    res = 1; /*new path handled, cache not saved*/
 	}
-	ZRT_LOG(L_EXTRA, "mkdir ret=%d: %s", ret, s_cached_full_path);
+	ZRT_LOG(L_EXTRA, "mkdir errno=%d, ret=%d: %s", errno, ret, s_cached_full_path);
     }
     else{
 	/*path already handled*/
@@ -90,9 +103,7 @@ int parse_path( struct ParsePathObserver* observer, const char *path ){
 	dir_path_len = strlen(path);
 
     if ( create_dir_and_cache_name(path, dir_path_len) != 0 ){
-	/*new dir was created*/
-        int len = strlen(path);
-	/*handle subdir*/
+	/*new dir was created, handle subdir*/
         int count = process_subdirs_via_callback( observer, path, dir_path_len );
         return count;
     }

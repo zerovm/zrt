@@ -214,6 +214,10 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 			parsed_key_index = key_list->find(key_list, 
 							  s_temp_single_parsed.key,
 							  s_temp_single_parsed.keylen);
+			/*log found key string up to 9 chars*/
+			char temp[10];
+			strncpy(temp, s_temp_single_parsed.key, MIN(sizeof(temp) -1, s_temp_single_parsed.keylen));
+			ZRT_LOG(L_INFO, "key found, name=%s index=%d", temp, parsed_key_index);
 			if ( parsed_key_index >= 0 ){
 			    if ( s_temp_parsed[parsed_key_index].key != NULL ){
 				/*parsed item with the same key already saved, and new 
