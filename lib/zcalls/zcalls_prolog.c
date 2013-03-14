@@ -11,7 +11,7 @@
 #define SET_ERRNO(err) errno=err
 
 #define ONLY_PROLOG_SYSCALL 1
-#define LOW_LEVEL_LOG_ENABLE
+//#define LOW_LEVEL_LOG_ENABLE
 
 #define FUNC_NAME __func__
 
@@ -188,7 +188,7 @@ int  zrt_zcall_prolog_sysbrk(void **newbrk){
     else
 	sbrk_default = *newbrk;
 
-    if ( ONLY_PROLOG_SYSCALL || s_prolog_doing_now ){
+    if ( /* ONLY_PROLOG_SYSCALL ||  */s_prolog_doing_now ){
 	return 0;
     }
     else

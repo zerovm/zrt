@@ -3,6 +3,7 @@
 == placed here for completeness and future changes
 =====================================================================
 Channel = {ABS_PATH}data/{NODEID}input.txt, /dev/stdin, 0, 99999999, 99999999, 0, 0
+==Channel = {ABS_PATH}data/{NODEID}_file.txt, /dev/stdin, 0, 99999999, 99999999, 0, 0
 ==Channel = {ABS_PATH}log/map{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 999999999, 999999999
 Channel = /dev/null, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {ABS_PATH}log/map{NODEID}.stderr.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
@@ -20,7 +21,7 @@ Channel = tcp:2:, r_map{NODEID}-map-2, 0, 99999999, 99999999, 0, 0
 Channel = tcp:3:, r_map{NODEID}-map-3, 0, 99999999, 99999999, 0, 0
 Channel = tcp:4:, r_map{NODEID}-map-4, 0, 99999999, 99999999, 0, 0
 
-Environment =MAP_NAME,map, REDUCE_NAME,red
+Environment =MAP_NAME,map, REDUCE_NAME,red, VERBOSITY,2, MAP_CHUNK_SIZE,10485760
 ==CommandLine = map-{NODEID}
 
 =====================================================================

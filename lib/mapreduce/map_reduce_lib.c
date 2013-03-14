@@ -116,6 +116,8 @@ void LocalSort(const Buffer *keys, const Buffer *values, Buffer *sorted_keys, Bu
 	SetBufferItem( sorted_values, i, &value );
     }
     sorted_keys->header.count = sorted_values->header.count = keys->header.count;
+    /*don't need sort_array*/
+    free(sort_array);
 }
 
 
@@ -265,27 +267,29 @@ void SummarizeHistograms( Histogram *histograms, int histograms_count, int divid
 
 size_t MapInputDataLocalProcessing( const char *buf, size_t buf_size, int last_chunk, Buffer*result_keys, Buffer *result_values ){
     size_t unhandled_data_pos = 0;
-    WRITE_FMT_LOG("Before User Map : input buffer=%p, buf_size=%u\n", buf, (uint32_t)buf_size );
+    WRITE_FMT_LOG("sbrk()=%p\n", sbrk(0) );
+    WRITE_FMT_LOG("======= new portion of data read: input buffer=%p, buf_size=%u\n", buf, (uint32_t)buf_size );
     /*Setup keys, values buffer types. user required to allocate buffers spaces (Buffer::data)*/
     Buffer keys;
     Buffer values;
     /*user Map process input data and allocate keys, values buffers*/
     unhandled_data_pos = __userif->Map( buf, buf_size, last_chunk, &keys, &values );
-    WRITE_FMT_LOG("After User Map : keys_count=%u, values_count=%u, unhandled pos=%u\n",
+    WRITE_FMT_LOG("User Map() function result : keys_count=%u, values_count=%u, unhandled pos=%u\n",
 		  (uint32_t)keys.header.count, (uint32_t)values.header.count, (uint32_t)unhandled_data_pos );
     assert( keys.header.count == values.header.count );
 
-    WRITE_FMT_LOG( "User Map: output keys count= %d\n", (uint32_t)keys.header.count );
-
+    WRITE_LOG("1\n");
 #ifdef DEBUG
     PrintBuffers( &keys, &values );
 #endif //DEBUG
-
+    WRITE_LOG("2\n");
     Buffer sorted_keys;
     Buffer sorted_values;
     LocalSort( &keys, &values, &sorted_keys, &sorted_values);
+    WRITE_LOG("3\n");
 
     FreeBufferData(&keys);
+    WRITE_LOG("4\n");
     FreeBufferData(&values);
 
     WRITE_FMT_LOG("MapCallEvent:sorted map, count=%u\n", (uint32_t)sorted_keys.header.count);
@@ -514,16 +518,26 @@ int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *
     /*should be initialized at fist call of DataProvider*/
     char *buffer = NULL;
     size_t returned_buf_size = 0;
-    size_t split_input_size = SPLIT_FILE_SIZE_BYTES;
+    /*default block size for input file*/
+    size_t split_input_size=DEFAULT_MAP_CHUNK_SIZE_BYTES;
+
+    /*get from environment block size for input file*/
+    if ( getenv(MAP_CHUNK_SIZE_ENV) )
+	split_input_size = atoi(getenv(MAP_CHUNK_SIZE_ENV));
+    WRITE_FMT_LOG( "MAP_CHUNK_SIZE_BYTES=%d\n", split_input_size );
+	
     /*by default can set any number, but actually it should be point to start of unhandled data,
      * for fully handled data it should be set to data size*/
     size_t current_unhandled_data_pos = 0;
     int last_chunk = 0;
 
+    /*get input channel*/
+    struct UserChannel *channel = chif->Channel(chif,EInputOutputNode, 1, EChannelModeRead);
+    assert(channel);
+
     do{
-        /*get input channel*/
-	struct UserChannel *channel = chif->Channel(chif,EInputOutputNode, 1, EChannelModeRead);
-	assert(channel);
+	free(buffer), buffer=NULL;
+
 	/*4rd parameter is not used for first call, for another calls it should be assigned by Map call return value*/
 	returned_buf_size = events.MapInputDataProvider(
 							channel->fd,
@@ -560,6 +574,8 @@ int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *
 	/*based on dividers list which helps easy distribute data on the reduce nodes*/
 	events.MapSendKeysValuesToAllReducers( chif, last_chunk, &keys, &values);
 
+	FreeBufferData(&keys);
+	FreeBufferData(&values);
     }while( last_chunk == 0 );
 
     WRITE_LOG("MapNodeMain Complete\n");

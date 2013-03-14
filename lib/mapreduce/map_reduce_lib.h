@@ -11,8 +11,9 @@ enum { EMapNode=1, EReduceNode=2, EInputOutputNode=3 };
 
 typedef uint32_t KeyType;
 #define MIN(a,b) (a < b ? a : b )
-#define SPLIT_FILE_SIZE_BYTES (1024*1024)
 
+#define DEFAULT_MAP_CHUNK_SIZE_BYTES (1024*1024)
+#define MAP_CHUNK_SIZE_ENV "MAP_CHUNK_SIZE"
 
 /*structure intended to wrap key data to get it sortable together with value, because
  * linked key, values data are hold by different buffers and can't be sorted in common way */

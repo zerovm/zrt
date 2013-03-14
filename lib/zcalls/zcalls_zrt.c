@@ -54,6 +54,7 @@
 /* if given in manifest let user to have it */
 #define TIMESTAMP_STR "TimeStamp"
 
+extern char **environ;
 
 /****************** static data*/
 struct timeval                 s_cached_timeval;
@@ -392,6 +393,7 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
 *************************************************************************/
 void zrt_zcall_enhanced_zrt_setup(void){
     int i;
+    char **envp = environ;
     const struct UserManifest const *setup = MANIFEST;
     s_memory_interface = get_memory_interface( setup->heap_ptr, setup->heap_size );
 
@@ -403,6 +405,14 @@ void zrt_zcall_enhanced_zrt_setup(void){
     ZRT_LOG(L_SHORT, "user memory size = %u", setup->heap_size);
     ZRT_LOG_DELIMETER;
     ZRT_LOG(L_SHORT, "sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel));
+
+    /*print environment variables*/
+    i=0;
+    while( envp[i] ){
+        ZRT_LOG(L_SHORT, "envp[%d] = '%s'", i, envp[i]);
+	++i;
+    }
+
     ZRT_LOG(L_SHORT, "channels count = %d", setup->channels_count);
     ZRT_LOG_DELIMETER;
     /*print channels list*/
