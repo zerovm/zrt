@@ -14,11 +14,12 @@
 #include "mr_defines.h"
 
 #define MAX_UINT32 4294967295
+
+typedef int exclude_flag_t;
 #define MAP_NODE_NO_EXCLUDE 0
 #define MAP_NODE_EXCLUDE 1
 
 struct MapReduceUserIf *__userif = NULL;
-
 
 #ifdef DEBUG
 void PrintBuffers( const Buffer *keys, const Buffer *values ){
@@ -278,18 +279,14 @@ size_t MapInputDataLocalProcessing( const char *buf, size_t buf_size, int last_c
 		  (uint32_t)keys.header.count, (uint32_t)values.header.count, (uint32_t)unhandled_data_pos );
     assert( keys.header.count == values.header.count );
 
-    WRITE_LOG("1\n");
 #ifdef DEBUG
     PrintBuffers( &keys, &values );
 #endif //DEBUG
-    WRITE_LOG("2\n");
     Buffer sorted_keys;
     Buffer sorted_values;
     LocalSort( &keys, &values, &sorted_keys, &sorted_values);
-    WRITE_LOG("3\n");
 
     FreeBufferData(&keys);
-    WRITE_LOG("4\n");
     FreeBufferData(&values);
 
     WRITE_FMT_LOG("MapCallEvent:sorted map, count=%u\n", (uint32_t)sorted_keys.header.count);
@@ -589,38 +586,76 @@ void MergeBuffersToNew( Buffer *newkeys, Buffer *newvalues,
     int merge_pos[merge_count];
     memset(merge_pos, '\0', sizeof(merge_pos) );
     int all_merged_condition = 0;
-    int min_key_pos = 0;
+    int min_key_array = 0;
     char minimal_value[newvalues->header.item_size];
     KeyType minimal_key = 0;
     KeyType temp_key = 0;
-    const Buffer *current_buffer = NULL;
+    /*debug*/
+    int i;
+    for(i=0; i < merge_count; i++ ){
+	WRITE_FMT_LOG( "merge buffer %d, keys count %d\n", i, merge_buffers_keys[i].header.count );
+    }    
+    /*debug*/
     assert( sizeof(minimal_key) == merge_buffers_keys->header.item_size ); //uint32_t key only allowed now
     do{
 	all_merged_condition = 1; /*set flag always before next merge step*/
 	minimal_key = 0;
 	/*search minimal key for current keys buffers positions*/
 	for( int i=0; i < merge_count; i++ ){
-	    current_buffer = &merge_buffers_keys[i];
-	    if ( merge_pos[i] < current_buffer->header.count ){
-		GetBufferItem( current_buffer, merge_pos[i], &temp_key);
-		if ( minimal_key == 0 ){
-		    min_key_pos = 0;
-		    minimal_key = temp_key;
-		}
-		if ( temp_key <= minimal_key ){
+	    /*if current buffer has items to be merged*/
+	    if ( merge_pos[i] < merge_buffers_keys[i].header.count ){
+		GetBufferItem( &merge_buffers_keys[i], merge_pos[i], &temp_key);
+
+		if ( temp_key <= minimal_key || all_merged_condition != 0 ){
 		    all_merged_condition = 0; /*not all data merged*/
-		    min_key_pos = i;
+		    min_key_array = i;
 		    minimal_key = temp_key;
 		}
 	    }
 	}
 	/*copy minimal key and linked value into merged keys,values buffers*/
 	/*get value item and copy to merged values*/
-	GetBufferItem( &merge_buffers_values[min_key_pos], merge_pos[min_key_pos], minimal_value);
+	GetBufferItem( &merge_buffers_values[min_key_array], merge_pos[min_key_array], minimal_value);
 	AddBufferItem( newkeys, &minimal_key );
 	AddBufferItem( newvalues, minimal_value );
-	merge_pos[min_key_pos]++;
+	merge_pos[min_key_array]++;
     }while(all_merged_condition == 0);
+}
+
+
+static exclude_flag_t
+RecvDataFromSingleMap(int fdr, Buffer *keys, Buffer *values) {
+    exclude_flag_t excl_flag;
+    int bytes;
+
+    /*read last data flag 0 | 1, if reducer receives 1 then it should
+     * exclude sender map node from communications*/
+    bytes = read( fdr, &excl_flag, sizeof(int) );
+    assert( bytes == sizeof(int) );
+    WRITE_FMT_LOG( "readmap exclude flag=%d\n", excl_flag );
+
+    /*read keys header*/
+    bytes = read( fdr, &keys->header, sizeof(BufferHeader));
+    assert( bytes == sizeof(BufferHeader) );
+    /*alloc memory for keys data*/
+    keys->data = malloc( keys->header.buf_size );
+    WRITE_FMT_LOG( "readmap keys header buf_size=%d\n", (int)keys->header.buf_size );
+    /*read keys data*/
+    bytes = read( fdr, keys->data, keys->header.buf_size );
+    assert( bytes == keys->header.buf_size );
+    /*read values header*/
+    bytes = read( fdr, &values->header, sizeof(BufferHeader));
+    assert(bytes == sizeof(BufferHeader));
+    /*alloc memory for values data*/
+    values->data = malloc( values->header.buf_size );
+    WRITE_FMT_LOG( "readmap values header buf_size=%d\n",
+		   (int)values->header.buf_size );
+    /*read values data*/
+    bytes = read( fdr, values->data, values->header.buf_size );
+    assert(bytes == values->header.buf_size );
+    WRITE_FMT_LOG( "readmap values data size =%d\n", bytes );
+
+    return excl_flag;
 }
 
 
@@ -663,103 +698,53 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterfac
     do{
 	leave_map_nodes = 0;
 	for( int i=0; i < map_nodes_count; i++ ){
-	    /*If current map node should send data*/
+	    /*If expecting data from current map node*/
 	    if ( excluded_map_nodes[i] != MAP_NODE_EXCLUDE ){
 		struct UserChannel *channel = chif->Channel(chif, EMapNode, map_nodes_list[i], EChannelModeRead );
 		assert(channel);
-		WRITE_FMT_LOG( "fdr=%d\n", channel->fd );
-		int fdr = channel->fd;
-		/*read last data flag 0 | 1, if reducer receives 1 then it should
-		 * exclude sender map node from communications*/
-		bytes = read( fdr, &excluded_map_nodes[i], sizeof(excluded_map_nodes[i]) );
-		assert( bytes == sizeof(excluded_map_nodes[i]) );
-		WRITE_FMT_LOG( "read from map %d, map exclude flag=%d\n", map_nodes_list[i], (int)excluded_map_nodes[i] );
+		WRITE_FMT_LOG( "Read %d map#%d, fdr=%d\n", i, map_nodes_list[i], channel->fd );
+
+		excluded_map_nodes[i] = RecvDataFromSingleMap( channel->fd, &recv_keys[i], &recv_values[i]);
+
 		/*set next wait loop condition*/
 		if ( excluded_map_nodes[i] != MAP_NODE_EXCLUDE ){
+		    /* have mappers expected to send again*/
 		    leave_map_nodes = 1;
 		}
-		/*read keys header*/
-		bytes = read( fdr, &recv_keys[i].header, sizeof(BufferHeader));
-		assert( bytes == sizeof(BufferHeader) );
-		/*alloc memory for keys data*/
-		recv_keys[i].data = malloc( recv_keys[i].header.buf_size );
-		WRITE_FMT_LOG( "read from map %d, keys header, buf_size=%d\n",
-			       map_nodes_list[i], (int)recv_keys[i].header.buf_size );
-		/*read keys data*/
-		bytes = read( fdr, recv_keys[i].data, recv_keys[i].header.buf_size );
-		assert( bytes == recv_keys[i].header.buf_size );
-		/*read values header*/
-		bytes = read( fdr, &recv_values[i].header, sizeof(BufferHeader));
-		assert(bytes == sizeof(BufferHeader));
-		/*alloc memory for values data*/
-		recv_values[i].data = malloc( recv_values[i].header.buf_size );
-		WRITE_FMT_LOG( "read from map %d, value header, buf_size=%d\n",
-			       map_nodes_list[i], (int)recv_values[i].header.buf_size );
-		/*read values data*/
-		bytes = read( fdr, recv_values[i].data, recv_values[i].header.buf_size );
-		assert(bytes == recv_values[i].header.buf_size );
-		WRITE_FMT_LOG( "readed from map %d, data size =%d\n", map_nodes_list[i], bytes );
 	    }
 	    else{
-		/*current map node excluded, free memory for unused buffers*/
-		if ( recv_keys[i].data ){
-		    free( recv_keys[i].data );
-		    recv_keys[i].data = NULL;
-		    recv_keys[i].header.count = 0;
-		    recv_keys[i].header.buf_size = 0;
-		}
-		if ( recv_values[i].data ){
-		    free( recv_values[i].data );
-		    recv_values[i].data = NULL;
-		    recv_values[i].header.count = 0;
-		    recv_values[i].header.buf_size = 0;
-		}
+		/*current map node excluded, free memory and reset data for unused buffers*/
+		FreeBufferData(&recv_keys[i]);
+		FreeBufferData(&recv_values[i]);
 	    }
-	}
-
-	WRITE_LOG( "Prepare to merge" );
+	}//for
 
 	/*portion of data received from map nodes; merge all received data stored in
 	 * recv_keys, recv_values arrays in positions range "[0, map_nodes_cunt-1]";
 	 * last_merge_item_index points to previous merge result stored in the same arrays */
+
+	WRITE_LOG( "Data received from mappers, merge it" );
 
 	/*current result (all_keys,all_values) always copy to last array item before next merge
 	 * ownership istransfered into new Buffers */
 	recv_keys[last_merge_item_index] = all_keys;
 	recv_values[last_merge_item_index] = all_values;
 
-	/*Alloc buffers for merge results, and merge*/
+	/*Alloc buffers for merge results, and merge previous and new data*/
 	int result_granul = merged_keys.header.buf_size ? merged_keys.header.buf_size/merged_keys.header.item_size : granularity;
 	assert( !AllocBuffer( &merged_keys, userif->data.keytype, result_granul ) );
 	assert( !AllocBuffer( &merged_values, userif->data.valuetype, result_granul ) );
 	MergeBuffersToNew( &merged_keys, &merged_values, recv_keys, recv_values, merge_count );
-	WRITE_LOG( "merge complete" );
+	WRITE_FMT_LOG( "merge complete, keys count %d\n", merged_keys.header.count );
 
-	/*Merge complete, so free merge input intermediate data*/
-	if ( recv_keys[last_merge_item_index].data ){
-	    free(recv_keys[last_merge_item_index].data);
-	    recv_keys[last_merge_item_index].data = NULL;
-	}
-	if ( recv_values[last_merge_item_index].data ){
-	    free(recv_values[last_merge_item_index].data);
-	    recv_values[last_merge_item_index].data = NULL;
-	}
-	for ( int i=0; i < map_nodes_count; i++ ){
-	    if ( recv_keys[i].data ){
-		free( recv_keys[i].data );
-		recv_keys[i].data = NULL;
-		recv_keys[i].header.count = 0;
-		recv_keys[i].header.buf_size = 0;
-	    }
-	    if ( recv_values[i].data ){
-		free( recv_values[i].data );
-		recv_values[i].data = NULL;
-		recv_values[i].header.count = 0;
-		recv_values[i].header.buf_size = 0;
-	    }
+	/*Merge complete, free non merged buffers*/
+	for ( int i=0; i < last_merge_item_index+1; i++ ){
+	    FreeBufferData(&recv_keys[i]);
+	    FreeBufferData(&recv_values[i]);
 	}
 	/**********************/
 
+	/*combine data every time while it receives from map nodes*/
 	if ( userif->Combine ){
 	    WRITE_FMT_LOG( "keys count before Combine: %d\n", (int)merged_keys.header.count );
 	    userif->Combine( &merged_keys, &merged_values, &all_keys, &all_values );
@@ -774,10 +759,8 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterfac
 
     /*free intermediate keys,values buffers*/
     for(int i=0; i < merge_count; i++){
-	if ( recv_keys[i].data )
-	    free( recv_keys[i].data );
-	if ( recv_values[i].data )
-	    free( recv_values[i].data );
+	FreeBufferData(&recv_keys[i]);
+	FreeBufferData(&recv_values[i]);
     }
 
     if( userif->Reduce ){
@@ -786,6 +769,9 @@ int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterfac
     }
 
     free(map_nodes_list);
+    FreeBufferData(&all_keys);
+    FreeBufferData(&all_values);
+
     WRITE_LOG("ReduceNodeMain Complete\n");
     return 0;
 }

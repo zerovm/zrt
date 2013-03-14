@@ -4,6 +4,12 @@
 
 #include "buffer.h"
 
+/*mapper sending to reducer empty data set*/
+//#define FAKE_REDUCER 1
+
+/*Reducer: combine data only for last data*/
+#define REDUCER_COMBINE_ONCE
+
 //forward decl
 struct ChannelsConfigInterface;
 

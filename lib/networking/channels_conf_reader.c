@@ -65,6 +65,10 @@ int AddAllChannelsRelatedToNodeTypeFromDir( struct ChannelsConfigInterface *chan
     ZRT_LOG(L_SHORT, "Add directory=%s content items matched by pattern=%s", 
 	    dirpath, nodename_text);
     DIR *dp = opendir( dirpath );
+    if ( dp == NULL ){
+	/*dir open error, no has network configuration*/
+	return res;
+    }
     while ( (readdir_get_name=listdir(dp)) && !res ){
         /*fetch node type name and node identifier*/
         extracted_nodeid = ExtractNodeNameId( readdir_get_name, &extracted_len );

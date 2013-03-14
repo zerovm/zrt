@@ -5,8 +5,10 @@
  *      Author: yaroslav
  */
 
+#include <unistd.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stddef.h> //size_t
 #include <stdio.h> //printf
 #include <assert.h>
@@ -30,6 +32,37 @@ uint32_t HashForUserString( const char *str, int size )
     }
     return hash;
 }
+
+/******************************************************************************
+ * Buferrized Write*/
+#define BUFFER_IO_SIZE 0x100000
+#define IF_BUFFER_WRITE(data,size)				\
+    if ( size < BUFFER_IO_SIZE - s_buffer_io_cursor ){		\
+	/*buffer is enough to write data*/			\
+	memcpy(s_buffer_io+s_buffer_io_cursor, data, size );	\
+	s_buffer_io_cursor += size;				\
+    }
+
+static int  s_buffer_io_cursor=0;
+static char s_buffer_io[BUFFER_IO_SIZE];
+void buf_flush(int fd){
+    write(fd, s_buffer_io, s_buffer_io_cursor);
+    s_buffer_io_cursor=0;
+}
+void buf_write(int fd, const char* data, size_t size){
+    IF_BUFFER_WRITE(data,size)
+    else{
+	buf_flush(fd);
+	IF_BUFFER_WRITE(data,size)
+	else{
+	    /*write direct to fd, buffer is too small*/  
+	    write(fd, data, size);	    
+	}
+    }
+}
+
+/*******************************************************************************/
+
 /*******************************************************************************/
 
 /*******************************************************************************
@@ -111,16 +144,36 @@ int Combine( const Buffer *keys, const Buffer *values, Buffer *reduced_keys, Buf
 	return 0;
 }
 
+#define STDOUT 1
+#define SPRINTF_BUFFER_SIZE 50
+static char s_sprintf_buffer[SPRINTF_BUFFER_SIZE];
 int Reduce( const Buffer *keys, const Buffer *values ){
 	uint32_t key;
 	uint32_t val;
+	uint32_t prev_key=0;
+	uint32_t prev_val=0;
 
+
+	int print;
 	for ( int i=0; i < keys->header.count; i++ ){
-		GetBufferItem( keys, i, &key );
-		GetBufferItem( values, i, &val );
-
-		printf( "[#%d]%u=%u\n", i, (uint32_t)key, (uint32_t)val );
+	    GetBufferItem( keys, i, &key );
+	    GetBufferItem( values, i, &val );
+	    
+	    print = snprintf( s_sprintf_buffer, SPRINTF_BUFFER_SIZE, 
+			      "[#%d]%u=%u\n", i, (uint32_t)key, (uint32_t)val );
+	    buf_write(STDOUT, s_sprintf_buffer, print);
+	    
+	    if ( i>0 && prev_key >= key ){
+		buf_flush(STDOUT);
+		printf("test error prev_key=%u, key=%u\n", prev_key, key);
+		fflush(0);
+		exit(-1);
+	    }
+		
+	    prev_key = key;
+	    prev_val = val;
 	}
+	buf_flush(STDOUT);
 	return 0;
 }
 
