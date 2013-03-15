@@ -21,20 +21,24 @@ typedef int exclude_flag_t;
 
 struct MapReduceUserIf *__userif = NULL;
 
-#ifdef DEBUG
-void PrintBuffers( const Buffer *keys, const Buffer *values ){
-    if ( !keys->data || !values->data ) return;
-    uint32_t key;
-    uint32_t value;
-    for (int i=0; i < keys->header.count; i++){
-	GetBufferItem(keys, i, &key);
-	GetBufferItem(values, i, &value);
-	//WRITE_FMT_LOG( "%u = %u \n", key, value );
-    }
-    fflush(0);
-}
+/*this option disables macros WRITE_LOG_BUFFERS */
+#define DISABLE_WRITE_LOG_BUFFERS
 
-#endif //DEBUG
+#if defined(DEBUG) && !defined(DISABLE_WRITE_LOG_BUFFERS)
+#  define WRITE_LOG_BUFFERS( keys, values)		\
+    if ( (keys).data && (values).data ){		\
+	uint32_t key;					\
+	uint32_t value;					\
+	for (int i=0; i < (keys).header.count; i++){	\
+	    GetBufferItem(&(keys), i, &key);		\
+	    GetBufferItem(&(values), i, &value);	\
+	    WRITE_FMT_LOG( "%u = %u \n", key, value );	\
+	}						\
+	fflush(0);					\
+    }
+#else
+#  define WRITE_LOG_BUFFERS(keys, values)
+#endif
 
 /*****************************************************************************
  * local sort of mapped keys and values*/
@@ -49,7 +53,11 @@ static int KeyComparatorUint32(const void *p1, const void *p2){
 
 
 
-size_t MapInputDataProvider( int fd, char **input_buffer, size_t requested_buf_size, int unhandled_data_pos ){
+size_t 
+MapInputDataProvider( int fd, 
+		      char **input_buffer, 
+		      size_t requested_buf_size, 
+		      int unhandled_data_pos ){
     WRITE_FMT_LOG("MapInputDataProvider *input_buffer=%p, fd=%d, requested_buf_size=%u, unhandled_data_pos=%d\n",
 		  *input_buffer, fd, (uint32_t)requested_buf_size, unhandled_data_pos );
     size_t rest_data_in_buffer = requested_buf_size - unhandled_data_pos;
@@ -92,7 +100,11 @@ size_t MapInputDataProvider( int fd, char **input_buffer, size_t requested_buf_s
 }
 
 
-void LocalSort(const Buffer *keys, const Buffer *values, Buffer *sorted_keys, Buffer *sorted_values){
+void 
+LocalSort( const Buffer *keys, 
+	   const Buffer *values, 
+	   Buffer *sorted_keys, 
+	   Buffer *sorted_values){
     /*read keys buffer and create sortable array*/
     struct 	SortableKeyVal *sort_array = malloc( sizeof(struct SortableKeyVal) * keys->header.count );
     for ( int i=0; i < keys->header.count; i++ ){
@@ -123,8 +135,10 @@ void LocalSort(const Buffer *keys, const Buffer *values, Buffer *sorted_keys, Bu
 
 
 size_t
-AllocHistogram(
-	       const KeyType *array, const int array_len, int step, Histogram *histogram ){
+AllocHistogram( const KeyType *array, 
+		const int array_len, 
+		int step, 
+		Histogram *histogram ){
     memset(histogram, '\0', sizeof(*histogram));
     if ( !array_len ) return 0;
     if ( !step ){
@@ -150,7 +164,11 @@ AllocHistogram(
 /************************************************************************
  * EachToOtherPattern callback.
  * Every map node read histograms from another nodes*/
-void ReadHistogramFromNode( struct EachToOtherPattern *p_this, int nodetype, int index, int fdr ){
+void 
+ReadHistogramFromNode( struct EachToOtherPattern *p_this, 
+		       int nodetype, 
+		       int index, 
+		       int fdr ){
     WRITE_FMT_LOG( "eachtoother:read( from:index=%d, from:fdr=%d)\n", index, fdr );
     /*read histogram data from another nodes*/
     struct MapReduceData *mapred_data = (struct MapReduceData *)p_this->data;
@@ -169,7 +187,11 @@ void ReadHistogramFromNode( struct EachToOtherPattern *p_this, int nodetype, int
 /************************************************************************
  * EachToOtherPattern callbacks.
  * Every map node write histograms to another nodes*/
-void WriteHistogramToNode( struct EachToOtherPattern *p_this, int nodetype, int index, int fdw ){
+void 
+WriteHistogramToNode( struct EachToOtherPattern *p_this, 
+		      int nodetype, 
+		      int index, 
+		      int fdw ){
     WRITE_FMT_LOG( "eachtoother:write( to:index=%d, to:fdw=%d)\n", index, fdw );
     /*write own data histogram to another nodes*/
     struct MapReduceData *mapred_data = (struct MapReduceData *)p_this->data;
@@ -189,7 +211,11 @@ void WriteHistogramToNode( struct EachToOtherPattern *p_this, int nodetype, int 
 
 /*******************************************************************************
  * Summarize Histograms, shrink histogram and get as dividers array*/
-void SummarizeHistograms( Histogram *histograms, int histograms_count, int dividers_count, KeyType *divider_array ){
+void 
+SummarizeHistograms( Histogram *histograms, 
+		     int histograms_count, 
+		     int dividers_count, 
+		     KeyType *divider_array ){
     assert(divider_array);
     /*dividers_count is the same as reduce nodes count, it is can't be equal to 0*/
     assert(dividers_count != 0);
@@ -266,7 +292,12 @@ void SummarizeHistograms( Histogram *histograms, int histograms_count, int divid
 }
 
 
-size_t MapInputDataLocalProcessing( const char *buf, size_t buf_size, int last_chunk, Buffer*result_keys, Buffer *result_values ){
+size_t 
+MapInputDataLocalProcessing( const char *buf, 
+			     size_t buf_size, 
+			     int last_chunk, 
+			     Buffer*result_keys, 
+			     Buffer *result_values ){
     size_t unhandled_data_pos = 0;
     WRITE_FMT_LOG("sbrk()=%p\n", sbrk(0) );
     WRITE_FMT_LOG("======= new portion of data read: input buffer=%p, buf_size=%u\n", buf, (uint32_t)buf_size );
@@ -279,9 +310,7 @@ size_t MapInputDataLocalProcessing( const char *buf, size_t buf_size, int last_c
 		  (uint32_t)keys.header.count, (uint32_t)values.header.count, (uint32_t)unhandled_data_pos );
     assert( keys.header.count == values.header.count );
 
-#ifdef DEBUG
-    PrintBuffers( &keys, &values );
-#endif //DEBUG
+    WRITE_LOG_BUFFERS( keys, values );
     Buffer sorted_keys;
     Buffer sorted_values;
     LocalSort( &keys, &values, &sorted_keys, &sorted_values);
@@ -290,9 +319,7 @@ size_t MapInputDataLocalProcessing( const char *buf, size_t buf_size, int last_c
     FreeBufferData(&values);
 
     WRITE_FMT_LOG("MapCallEvent:sorted map, count=%u\n", (uint32_t)sorted_keys.header.count);
-#ifdef DEBUG
-    PrintBuffers( &sorted_keys, &sorted_values );
-#endif //DEBUG
+    WRITE_LOG_BUFFERS( sorted_keys, sorted_values );
 
     if ( __userif->Combine ){
 	__userif->Combine( &sorted_keys, &sorted_values, result_keys, result_values );
@@ -309,15 +336,15 @@ size_t MapInputDataLocalProcessing( const char *buf, size_t buf_size, int last_c
     FreeBufferData(&sorted_values);
 
     WRITE_FMT_LOG("MapCallEvent: combined keys, count=%u\n", (uint32_t)result_keys->header.count);
-#ifdef DEBUG
-    PrintBuffers( result_keys, result_values );
-#endif //DEBUG
+    WRITE_LOG_BUFFERS( *result_keys, *result_values );
     return unhandled_data_pos;
 }
 
 
-void MapCreateHistogramSendEachToOtherCreateDividersList(
-							 struct ChannelsConfigInterface *ch_if, struct MapReduceData *data, const Buffer *input_keys ){
+void 
+MapCreateHistogramSendEachToOtherCreateDividersList( struct ChannelsConfigInterface *ch_if, 
+						     struct MapReduceData *data, 
+						     const Buffer *input_keys ){
     /*For first call need to create histogram and send to all map nodes
      * To finally get dividers list which helps distribute of data to Reducers*/
 
@@ -374,8 +401,13 @@ void MapCreateHistogramSendEachToOtherCreateDividersList(
 }
 
 
-void WriteDataToReduce(int fdw, const Buffer *keys, const Buffer *values, int data_start_index, int items_count,
-		       int last_data_flag ){
+void 
+WriteDataToReduce( int fdw, 
+		   const Buffer *keys, 
+		   const Buffer *values, 
+		   int data_start_index, 
+		   int items_count,
+		   int last_data_flag ){
     /*send to reducer with current_divider_index index*/
     struct BufferHeader divider_keys_header = {
 	.buf_size = items_count * keys->header.item_size,
@@ -419,7 +451,11 @@ void WriteDataToReduce(int fdw, const Buffer *keys, const Buffer *values, int da
 }
 
 
-void MapSendKeysValuesToAllReducers(struct ChannelsConfigInterface *ch_if, int last_data, Buffer *keys, Buffer *values){
+void 
+MapSendKeysValuesToAllReducers( struct ChannelsConfigInterface *ch_if, 
+				int last_data, 
+				Buffer *keys, 
+				Buffer *values){
     /*get reducer count, this is same as dividers count for us, reducers list is not needed now*/
     int *reduce_nodes_list = NULL;
     int dividers_count  = ch_if->GetNodesListByType( ch_if, EReduceNode, &reduce_nodes_list );
@@ -489,7 +525,10 @@ void MapSendKeysValuesToAllReducers(struct ChannelsConfigInterface *ch_if, int l
     }
 }
 
-void InitMapInternals(struct MapReduceUserIf *userif, const struct ChannelsConfigInterface *chif, struct MapNodeEvents* ev){
+void 
+InitMapInternals( struct MapReduceUserIf *userif, 
+		  const struct ChannelsConfigInterface *chif, 
+		  struct MapNodeEvents* ev){
     /*get histograms count for MapReduceData*/
     int *nodes_list_unwanted = NULL;
     userif->data.histograms_count = chif->GetNodesListByType(chif, EMapNode, &nodes_list_unwanted );
@@ -503,7 +542,9 @@ void InitMapInternals(struct MapReduceUserIf *userif, const struct ChannelsConfi
 }
 
 
-int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *chif ){
+int 
+MapNodeMain( struct MapReduceUserIf *userif, 
+	     struct ChannelsConfigInterface *chif ){
     WRITE_LOG("MapNodeMain\n");
     assert(userif);
     __userif = userif;
@@ -581,8 +622,12 @@ int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *
 }
 
 
-void MergeBuffersToNew( Buffer *newkeys, Buffer *newvalues,
-			const Buffer *merge_buffers_keys, const Buffer *merge_buffers_values, int merge_count ){
+void 
+MergeBuffersToNew( Buffer *newkeys, 
+		   Buffer *newvalues,
+		   const Buffer *merge_buffers_keys, 
+		   const Buffer *merge_buffers_values, 
+		   int merge_count ){
     int merge_pos[merge_count];
     memset(merge_pos, '\0', sizeof(merge_pos) );
     int all_merged_condition = 0;
@@ -624,7 +669,9 @@ void MergeBuffersToNew( Buffer *newkeys, Buffer *newvalues,
 
 
 static exclude_flag_t
-RecvDataFromSingleMap(int fdr, Buffer *keys, Buffer *values) {
+RecvDataFromSingleMap( int fdr,
+		       Buffer *keys, 
+		       Buffer *values) {
     exclude_flag_t excl_flag;
     int bytes;
 
@@ -659,7 +706,9 @@ RecvDataFromSingleMap(int fdr, Buffer *keys, Buffer *values) {
 }
 
 
-int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *chif ){
+int 
+ReduceNodeMain( struct MapReduceUserIf *userif, 
+		struct ChannelsConfigInterface *chif ){
     WRITE_LOG("ReduceNodeMain\n");
     assert(userif);
     __userif = userif;

@@ -35,7 +35,12 @@ uint32_t HashForUserString( const char *str, int size )
 
 /******************************************************************************
  * Buferrized Write*/
+#define SPRINTF_BUFFER_SIZE 50
 #define BUFFER_IO_SIZE 0x100000
+static char s_sprintf_buffer[SPRINTF_BUFFER_SIZE];
+static int  s_buffer_io_cursor=0;
+static char s_buffer_io[BUFFER_IO_SIZE];
+
 #define IF_BUFFER_WRITE(data,size)				\
     if ( size < BUFFER_IO_SIZE - s_buffer_io_cursor ){		\
 	/*buffer is enough to write data*/			\
@@ -43,8 +48,6 @@ uint32_t HashForUserString( const char *str, int size )
 	s_buffer_io_cursor += size;				\
     }
 
-static int  s_buffer_io_cursor=0;
-static char s_buffer_io[BUFFER_IO_SIZE];
 void buf_flush(int fd){
     write(fd, s_buffer_io, s_buffer_io_cursor);
     s_buffer_io_cursor=0;
@@ -72,7 +75,8 @@ int Map(const char *data, size_t size, int last_chunk, Buffer *keys, Buffer *val
 	assert( !AllocBuffer( keys, EUint32, allocated_items_count ) );
 	assert( !AllocBuffer( values, EUint32, allocated_items_count ) );
 
-	char buf_temp[50];
+	int print;
+	char buf_temp[40]; /*max word screen representation length*/
 	uint32_t keyvalue = 1;
 	int max_count = keys->header.buf_size / keys->header.item_size;
 	int current_pos = 0;
@@ -96,9 +100,13 @@ int Map(const char *data, size_t size, int last_chunk, Buffer *keys, Buffer *val
 				++keys->header.count;
 				++values->header.count;
 
-				memset( buf_temp, '\0', sizeof(buf_temp) );
+#ifdef OUTPUT_HASH_KEYS
+				memset( buf_temp, '\0', MIN(str_length, sizeof(buf_temp)) +1 );
 				memcpy( buf_temp, &data[current_pos], MIN(str_length, sizeof(buf_temp)) );
-				printf( "%u=[%d]%s\n", hash, str_length, buf_temp );
+				print = snprintf( s_sprintf_buffer, SPRINTF_BUFFER_SIZE, 
+						  "%u=[%d]%s\n", hash, str_length, buf_temp );
+				buf_write(STDOUT, s_sprintf_buffer, print);
+#endif
 			}
 
 			current_pos = search_result - data + 1; //pos pointed to space just after ' '
@@ -109,6 +117,9 @@ int Map(const char *data, size_t size, int last_chunk, Buffer *keys, Buffer *val
 		}
 		/*do while search_result ponts to the end of data*/
 	}while( search_result-data < size && current_pos < size );
+#ifdef OUTPUT_HASH_KEYS
+	buf_flush(STDOUT);
+#endif
 	/*should return real handled data pos, as in code line below*/
 	//return MIN(current_pos, size );
 	/*WRONG : always return that all data handled, but for some tests*/
@@ -144,9 +155,6 @@ int Combine( const Buffer *keys, const Buffer *values, Buffer *reduced_keys, Buf
 	return 0;
 }
 
-#define STDOUT 1
-#define SPRINTF_BUFFER_SIZE 50
-static char s_sprintf_buffer[SPRINTF_BUFFER_SIZE];
 int Reduce( const Buffer *keys, const Buffer *values ){
 	uint32_t key;
 	uint32_t val;

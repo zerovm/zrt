@@ -14,6 +14,10 @@
 #define STDIN  0
 #define STDOUT 1 //fd
 
+/*use OUTPUT_HASH_KEYS option only for debugging purposes, output file contains 
+ *values and hashes and their size even bigger than input data size */
+/*#define OUTPUT_HASH_KEYS*/
+
 struct MapReduceUserIf;
 
 void InitInterface( struct MapReduceUserIf* mr_if );

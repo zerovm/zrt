@@ -9,8 +9,8 @@
 #define MR_DEFINES_H_
 
 #ifdef DEBUG
-#  define WRITE_FMT_LOG(fmt, args...) fprintf(stderr, fmt, args)
-#  define WRITE_LOG(str) fprintf(stderr, "%s\n", str)
+#  define WRITE_FMT_LOG(fmt, args...) {fprintf(stderr, fmt, args); fflush(0);}
+#  define WRITE_LOG(str) {fprintf(stderr, "%s\n", str); fflush(0);}
 #else
 #  define WRITE_FMT_LOG(fmt, args...)
 #  define WRITE_LOG(str)
