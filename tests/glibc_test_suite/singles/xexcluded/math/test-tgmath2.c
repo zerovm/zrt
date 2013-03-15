@@ -27,8 +27,6 @@
 #include <string.h>
 #include <tgmath.h>
 
-#include "zrt.h"
-
 //#define DEBUG
 
 typedef complex float cfloat;

@@ -129,8 +129,6 @@
 #include <string.h>
 #include <argp.h>
 
-#include "zrt.h"
-
 /* Possible exceptions */
 #define NO_EXCEPTION			0x0
 #define INVALID_EXCEPTION		0x1

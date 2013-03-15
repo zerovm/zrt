@@ -4,7 +4,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "zrt.h"
 #include "ztests64_compatibility.h"
 
 #define THE_COOKIE ((void *) 0xdeadbeeful)

@@ -12,8 +12,6 @@
 #include <string.h>
 #include <wchar.h>
 
-#include "zrt.h"
-
 #define FAIL() \
   do {							\
     result = 1;						\

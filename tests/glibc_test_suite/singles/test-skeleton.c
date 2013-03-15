@@ -34,7 +34,6 @@
 #include <sys/wait.h>
 #include <sys/param.h>
 #include <time.h>
-#include "zrt.h"
 
 #ifdef __native_client__
 # define fork(...) (-1)
@@ -140,9 +139,7 @@ create_temp_file (const char *base, char **filename)
 int
 main (int argc, char **argv)
 {
-  int status;
   int opt;
-  unsigned int timeoutfactor = 1;
 
   /* Make uses of freed and uninitialized memory known.  */
   mallopt (M_PERTURB, 42);
