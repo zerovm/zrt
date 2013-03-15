@@ -1,0 +1,34 @@
+Description: Tweak config.guess/sub to use the autotools-dev version 
+ Tweak config.guess/sub to use the autotools-dev version if available.
+Author: Bill Allombert <ballombe@debian.org>
+Origin: Debian
+Forwarded: not-needed
+Last-Update: 2010-01-07
+Index: libjpeg6b-6b1/config.sub
+===================================================================
+--- libjpeg6b-6b1.orig/config.sub	2010-05-15 21:30:43.000000000 +0200
++++ libjpeg6b-6b1/config.sub	2010-06-03 19:18:14.000000000 +0200
+@@ -1,4 +1,9 @@
+ #! /bin/sh
++# autotools-dev hack (<ballombe@debian.org>, Wed, 14 Nov 2001 10:13:10 +0100)
++if [ -x /usr/share/misc/config.sub ]; then
++   exec /usr/share/misc/config.sub "$@"
++fi
++
+ # Configuration validation subroutine script.
+ #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ #   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+Index: libjpeg6b-6b1/config.guess
+===================================================================
+--- libjpeg6b-6b1.orig/config.guess	2010-06-03 18:52:21.000000000 +0200
++++ libjpeg6b-6b1/config.guess	2010-06-03 19:18:14.000000000 +0200
+@@ -1,4 +1,9 @@
+ #! /bin/sh
++# autotools-dev hack (<ballombe@debian.org>, Wed, 14 Nov 2001 10:13:10 +0100)
++if [ -x /usr/share/misc/config.guess ]; then
++   exec /usr/share/misc/config.guess "$@"
++fi
++
+ # Attempt to guess a canonical system name.
+ #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ #   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009

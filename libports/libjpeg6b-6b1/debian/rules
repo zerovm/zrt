@@ -1,0 +1,82 @@
+#!/usr/bin/make -f
+# Made with the aid of debmake, by Christoph Lameter,
+# based on the sample debian/rules file for GNU hello by Ian Jackson.
+
+package=libjpeg
+
+export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+export DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+export CFLAGS=-D_REENTRANT -g -Wall -Wno-main
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS += -O0
+else
+CFLAGS += -O2
+endif
+
+#export DH_VERBOSE=1
+
+build: build-stamp 
+build-stamp:
+	dh_testdir
+	LDFLAGS= ./configure --prefix=/usr --mandir=/usr/share/man \
+	 --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
+	 --enable-static --enable-shared --enable-maxmem=1024 \
+	 --disable-silent-rules \
+	 --build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE) 
+	$(MAKE) DESTDIR=debian/tmp
+ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
+	$(MAKE) test
+endif
+	touch build-stamp
+
+clean: 
+	dh_testdir
+	dh_testroot
+	-rm -f build-stamp
+	if [ -f Makefile ]; then $(MAKE) clean; fi
+	-rm -f Makefile jconfig.h config.log config.status  libtool
+	dh_clean
+
+binary-indep: 
+
+binary-arch: build
+	dh_testdir 
+	dh_testroot 
+	dh_clean -k
+	dh_installdirs 
+	mkdir --parents debian/tmp/usr/bin \
+	                debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH) \
+			debian/tmp/usr/include \
+			debian/tmp/usr/share/man/man1
+	$(MAKE) install \
+		prefix=`pwd`/debian/tmp/usr \
+		mandir=`pwd`/debian/tmp/usr/share/man/man1
+#<ballombe@debian.org>:mjpegtools require this file to build and header say:
+# * These declarations are considered internal to the JPEG library; most
+# * applications using the library shouldn't need to include this file.
+# So it is not forbidden to use it, therefore it must be installed.
+	install -m644 jpegint.h debian/tmp/usr/include
+	# fix jconfig.h 
+	rm debian/tmp/usr/include/jconfig.h
+	sed -e "s/#\(undef\|define\) HAVE_STD\(DEF\|LIB\)_H 1//g" \
+		jconfig.h > debian/tmp/usr/include/jconfig.h
+	# separate out lib package
+	dh_movefiles
+	# Finish it off with debhelper
+	dh_installdocs README
+	dh_installexamples 
+	dh_installchangelogs change.log
+	dh_strip --dbg-package=libjpeg62-dbg
+	dh_compress 
+	dh_fixperms 
+	dh_installdeb 
+	dh_shlibdeps -l`pwd`/debian/libjpeg6b/usr/lib 
+	dh_gencontrol 
+	dh_md5sums 
+	dh_builddeb 
+
+binary:	binary-indep binary-arch
+
+.PHONY: clean binary-indep binary-arch binary build

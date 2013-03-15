@@ -1,0 +1,44 @@
+Source: libjpeg6b
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Bill Allombert <ballombe@debian.org>
+Section: graphics
+Priority: optional
+Build-Depends: debhelper (>= 8.1.2ubuntu2), autotools-dev
+Standards-Version: 3.9.2
+
+Package: libjpeg62
+Architecture: any
+Multi-Arch: same
+Section: libs
+Description: Independent JPEG Group's JPEG runtime library (version 6.2)
+ The Independent JPEG Group's JPEG library is a library for handling
+ JPEG files.
+ .
+ This package contains the shared library for version 6.2.
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
+
+Package: libjpeg62-dev
+Architecture: any
+Section: libdevel
+Priority: extra
+Description: Development files for the IJG JPEG library (version 6.2)
+ The Independent JPEG Group's JPEG library is a library for handling
+ JPEG files.
+ .
+ This package contains the static library, headers and documentation
+ for version 6.2.
+Depends: libjpeg62 (=${binary:Version}), libc-dev, ${misc:Depends}
+
+Package: libjpeg62-dbg
+Architecture: any
+Multi-Arch: same
+Section: debug
+Priority: extra
+Description: Development files for the IJG JPEG library (version 6.2)
+ The Independent JPEG Group's JPEG library is a library for handling
+ JPEG files.
+ .
+ This package contains the debugging symbols for libjpeg for version 6.2.
+Provides: libjpeg-dbg
+Depends: libjpeg62 (=${binary:Version}), ${misc:Depends}
