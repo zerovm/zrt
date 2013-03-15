@@ -1,0 +1,51 @@
+Source: jasper
+Priority: optional
+Section: graphics
+Maintainer: Roland Stigge <stigge@antcom.de>
+Build-Depends: debhelper (>= 8.1.3~), freeglut3-dev, libjpeg8-dev, libxi-dev, libxmu-dev, libxt-dev, autotools-dev
+Standards-Version: 3.9.2
+
+Package: libjasper1
+Section: libs
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: libjasper-1.700-2
+Replaces: libjasper-1.700-2
+Suggests: libjasper-runtime
+Description: JasPer JPEG-2000 runtime library
+ JasPer is a collection of software (i.e., a library and application programs)
+ for the coding and manipulation of images.  This software can handle image
+ data in a variety of formats.  One such format supported by JasPer is the
+ JPEG-2000 format defined in ISO/IEC 15444-1:2000.
+ .
+ This package contains the shared library. 
+
+Package: libjasper-dev
+Section: libdevel
+Architecture: any
+Depends: libjasper1 (= ${binary:Version}), ${misc:Depends}
+Conflicts: libjasper-1.700-2-dev
+Replaces: libjasper-1.700-2-dev
+Description: Development files for the JasPer JPEG-2000 library
+ JasPer is a collection of software (i.e., a library and application programs)
+ for the coding and manipulation of images.  This software can handle image
+ data in a variety of formats.  One such format supported by JasPer is the
+ JPEG-2000 format defined in ISO/IEC 15444-1:2000.
+ .
+ This package contains the static library and headers.
+
+Package: libjasper-runtime
+Section: graphics
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: libjasper-progs
+Replaces: libjasper-progs
+Description: Programs for manipulating JPEG-2000 files
+ JasPer is a collection of software (i.e., a library and application programs)
+ for the coding and manipulation of images.  This software can handle image
+ data in a variety of formats.  One such format supported by JasPer is the
+ JPEG-2000 format defined in ISO/IEC 15444-1:2000.
+ .
+ This package contains programs for manipulating JPEG-2000 files.

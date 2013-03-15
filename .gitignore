@@ -4,3 +4,5 @@
 *.a
 *.manifest
 tests/zrt_test_suite/autotests/channels/forwriting
+*.Po
+*.Plo
