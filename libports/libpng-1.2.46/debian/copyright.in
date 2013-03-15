@@ -1,0 +1,14 @@
+This is the pre-packaged Debian Linux version of the libpng graphics
+library. It was packaged by Philippe Troin <phil@fifi.org>
+from sources originally retrieved from ftp://swrinde.nde.swri.edu/pub/png/src/
+
+The packaging itself is
+copyright (C) 2001 Philippe Troin <phil@fifi.org>,
+copyright 2002 Junichi Uekawa <dancer@debian.org>,
+copyright 2003 Josselin Mouette <joss@debian.org> and
+copyright 2006 Anibal Monsalve Salazar <anibal@debian.org>.
+It is licensed under the GNU General Public License. On
+Debian systems, the GPL is in /usr/share/common-licenses/GPL.
+
+Here is the copyright and license for libpng:
+

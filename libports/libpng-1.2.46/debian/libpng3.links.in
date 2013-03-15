@@ -1,0 +1,2 @@
+/lib/${DEB_HOST_MULTIARCH}/libpng12.so.0 /usr/lib/${DEB_HOST_MULTIARCH}/libpng.so.3
+/usr/share/doc/libpng12-0 /usr/share/doc/libpng3

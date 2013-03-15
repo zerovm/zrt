@@ -21,9 +21,12 @@ while (( $# )); do
 	if [[ "${1:0:1}" == "@" ]]; then
 		FPATH="${1:1}"
 		FNAME=$(basename "$FPATH")
+		if [[ "$FPATH" == "$FNAME" ]] || [[ "$FPATH" == "./${FNAME}" ]]; then
+			FPATH="$(pwd)/$FPATH"
+		fi
 		FNAME=$(mktemp -u "$FNAME".XXXXXX)
-		echo "Channel = $FPATH, $FNAME, 3, 419430400, 419430400, 419430400, 419430400" >> "$MANIFEST"
-		ZVMARGS="$ZVMARGS $FNAME"
+		echo "Channel = $FPATH, /dev/$FNAME, 3, 419430400, 419430400, 419430400, 419430400" >> "$MANIFEST"
+		ZVMARGS="$ZVMARGS /dev/$FNAME"
 	else
 		ZVMARGS="$ZVMARGS $1"
 	fi

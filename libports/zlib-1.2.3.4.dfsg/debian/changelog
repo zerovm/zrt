@@ -1,0 +1,1086 @@
+zlib (1:1.2.3.4.dfsg-3ubuntu4) precise; urgency=low
+
+  * Mark zlib1g-dev Multi-Arch: same as well, having confirmed that the
+    contents are compatible.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 10 Nov 2011 09:07:10 -0800
+
+zlib (1:1.2.3.4.dfsg-3ubuntu3) natty; urgency=low
+
+  * No-change rebuild against fixed pkgbinarymangler, to get correct
+    multiarch-safe changelogs
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 21 Mar 2011 01:20:48 -0700
+
+zlib (1:1.2.3.4.dfsg-3ubuntu2) natty; urgency=low
+
+  * Build for multiarch and pre-depend on multiarch-support.
+  * Install udeb contents to lib, not to the multiarch path.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 16 Mar 2011 15:32:41 -0700
+
+zlib (1:1.2.3.4.dfsg-3ubuntu1) maverick; urgency=low
+
+  * Merge from debian testing.  Remaining changes:
+    - zlib.h: add z_off64_t and ensure that its mapped to the correct
+      off_t or off64_t (fixes FTBFS in vips, gtk)
+    - drop Conflicts on libc6-i386 (<= 2.9-18) because we do not have
+      to do a /emul/ia32-linux -> /usr/lib32 transition
+
+ -- Didier Roche <didrocks@ubuntu.com>  Mon, 17 May 2010 18:06:51 +0200
+
+zlib (1:1.2.3.4.dfsg-3) unstable; urgency=low
+
+  * Only check for EOF on transparent streams if we have done a zero
+    byte read to avoid reporting EOF early to applications.  This was
+    breaking R.
+
+ -- Mark Brown <broonie@debian.org>  Mon, 28 Dec 2009 19:00:35 +0000
+
+zlib (1:1.2.3.4.dfsg-2) unstable; urgency=low
+
+  * Revert explict EOF indication to avoid triggering an infinite loop
+    in man-db while rebuilding the caches (closes: #562518).
+
+ -- Mark Brown <broonie@debian.org>  Fri, 25 Dec 2009 15:02:23 +0000
+
+zlib (1:1.2.3.4.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * This release contains refactored handling of 64 bit types which should
+    stop warnings being generated in some configurations (closes: #439980).
+  * This release also fixes handling of EOF in gzio (closes: #301283).
+  * Fix symbol version for inflateUndermine.
+  * Move -dbg to debug section.
+  * Add upstream home page. 
+  * Policy 3.8.3.
+
+ -- Mark Brown <broonie@debian.org>  Thu, 24 Dec 2009 17:35:16 +0000
+
+zlib (1:1.2.3.3.dfsg-16) unstable; urgency=low
+
+  * Concert to 3.0 (quilt) format.
+
+ -- Mark Brown <broonie@debian.org>  Tue, 08 Dec 2009 20:43:49 +0000
+
+zlib (1:1.2.3.3.dfsg-15ubuntu1) lucid; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - zlib.h: add z_off64_t and ensure that its mapped to the correct
+      off_t or off64_t (fixes FTBFS in vips, gtk)
+    - Move zlib.so.* to /lib.
+    - drop Conflicts on libc6-i386 (<= 2.9-18) because we do not have
+      to do a /emul/ia32-linux -> /usr/lib32 transition
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 09 Nov 2009 13:22:10 +0100
+
+zlib (1:1.2.3.3.dfsg-15) unstable; urgency=low
+
+  * Using Conflicts instead of Replaces for the amd64 lib32 transition
+    since that's the latest idea for making it work (closes: #539278).
+
+ -- Mark Brown <broonie@debian.org>  Tue, 04 Aug 2009 19:34:11 +0100
+
+zlib (1:1.2.3.3.dfsg-14) unstable; urgency=low
+
+  * amd64 has finally abandoned /emul/ia32-linux so install the 32 bit
+    binaries in lib32 as for other architectures (closes: #533015).
+
+ -- Mark Brown <broonie@debian.org>  Thu, 25 Jun 2009 12:49:05 +0100
+
+zlib (1:1.2.3.3.dfsg-13ubuntu3) karmic; urgency=low
+
+  * zlib.h:
+    - add z_off64_t and ensure that its mapped to the correct
+      off_t or off64_t (fixes FTBFS in vips, gtk)
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Tue, 08 Sep 2009 10:39:15 +0200
+
+zlib (1:1.2.3.3.dfsg-13ubuntu2) karmic; urgency=low
+
+  * zlib.h:
+    - add prototypes for the 64 bit functions if  
+      _FILE_OFFSET_BITS=64 is defined (LP: #402178)
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 24 Aug 2009 08:34:59 +0200
+
+zlib (1:1.2.3.3.dfsg-13ubuntu1) karmic; urgency=low
+
+  * Resynchronise with Debian. Remaining changes:
+    - Do not move from /usr/lib32 to /emul/ia32-linux/ in lib32z1.
+    - Move zlib.so.* to /lib.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 06 May 2009 15:05:27 +0100
+
+zlib (1:1.2.3.3.dfsg-13) unstable; urgency=low
+
+  * Add LPIA to the list of unaligned architectures to reduce the Ubuntu
+    diff a little (closes: #517403).
+
+ -- Mark Brown <broonie@debian.org>  Sun, 01 Mar 2009 20:43:18 +0000
+
+zlib (1:1.2.3.3.dfsg-12ubuntu2) jaunty; urgency=low
+
+  * Move zlib.so.* to /lib (LP: #44194).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 18 Mar 2009 16:28:00 +0000
+
+zlib (1:1.2.3.3.dfsg-12ubuntu1) intrepid; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - Add lpia to the list of UNALIGNED_OK architectures.
+    - Do not move from /usr/lib32 to /emul/ia32-linux/ in lib32z1
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Tue, 06 May 2008 12:02:39 +0200
+
+zlib (1:1.2.3.3.dfsg-12) unstable; urgency=low
+
+  * Apply patch from Arthur Loiret <arthur.loiret@u-psud.fr> implementing
+    triarch support for MIPS (closes: #474097).
+
+ -- Mark Brown <broonie@debian.org>  Sun, 06 Apr 2008 19:09:18 +0100
+
+zlib (1:1.2.3.3.dfsg-11) unstable; urgency=low
+
+  * Correct library names for cross libraries.
+  * Turns out all our 64 bit architectures do off64_t.
+
+ -- Mark Brown <broonie@debian.org>  Sat, 19 Jan 2008 22:33:06 +0000
+
+zlib (1:1.2.3.3.dfsg-10) unstable; urgency=low
+
+  * dpkg-shlibdeps doesn't deal well with unbuilt packages (closes: 461474).
+  * Support packages using 64 bit cross symbols even when off_t is 64
+    bits.
+
+ -- Mark Brown <broonie@debian.org>  Fri, 18 Jan 2008 22:56:48 +0000
+
+zlib (1:1.2.3.3.dfsg-9) unstable; urgency=low
+
+  * Remove Debian revisions from symbol files.
+
+ -- Mark Brown <broonie@debian.org>  Wed, 16 Jan 2008 10:53:27 +0000
+
+zlib (1:1.2.3.3.dfsg-8) unstable; urgency=low
+
+  * Add symbols files.  Version information is provided by the upstream
+    map file.  Architecture lists may need some adjustment.
+  * Fix udeb contents.
+  * Policy 3.7.3 (no changes).
+
+ -- Mark Brown <broonie@debian.org>  Sun, 16 Dec 2007 14:38:47 +0000
+
+zlib (1:1.2.3.3.dfsg-7ubuntu1) hardy; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - Add lpia to the list of UNALIGNED_OK architectures.
+    - Do not move from /usr/lib32 to /emul/ia32-linux/ in lib32z1
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Thu, 15 Nov 2007 11:25:43 +0100
+
+zlib (1:1.2.3.3.dfsg-7) unstable; urgency=low
+
+  * Hard code uname to GNU so configure script can cope with non-Linux 
+    ports (closes: #448651).
+
+ -- Mark Brown <broonie@debian.org>  Tue, 30 Oct 2007 22:01:55 +0000
+
+zlib (1:1.2.3.3.dfsg-6) unstable; urgency=low
+
+  * Configure the compiler and linker to use for the vanilla build too so that
+    cross compilation works (closes: #444727).
+
+ -- Mark Brown <broonie@debian.org>  Sun, 30 Sep 2007 23:34:54 +0100
+
+zlib (1:1.2.3.3.dfsg-5ubuntu2) gutsy; urgency=low
+
+  * Add lpia to the list of UNALIGNED_OK architectures.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Mon, 30 Jul 2007 11:39:40 +1000
+
+zlib (1:1.2.3.3.dfsg-5ubuntu1) gutsy; urgency=low
+
+  * Merge with Debian; remaining changes:
+    - Install multilib into /usr/lib32 on amd64.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon,  9 Jul 2007 17:25:35 +0200
+
+zlib (1:1.2.3.3.dfsg-5) unstable; urgency=low
+
+  * x86_64 uses a non-standard directory for the 32 bit runtime so we need
+    to do something completely different there (closes: #432262).
+
+ -- Mark Brown <broonie@debian.org>  Mon, 09 Jul 2007 09:30:52 +0100
+
+zlib (1:1.2.3.3.dfsg-4) unstable; urgency=low
+
+  * dh_makeshlibs needs to be handheld when building multiple library
+    packages (closes: #431873).
+
+ -- Mark Brown <broonie@debian.org>  Fri, 06 Jul 2007 19:26:23 +0100
+
+zlib (1:1.2.3.3.dfsg-3) unstable; urgency=low
+
+  * Support building with UNALIGNED_OK and enable it on i386 and amd64.
+    This seems to provide a small speedup in my tests (closes: #386357).
+  * Build 32 bit version on KFreeBSD-amd64 (closes: #406018).
+  * Provide versioned dependency shlibs (closes: #431124).
+
+ -- Mark Brown <broonie@debian.org>  Sat, 30 Jun 2007 11:49:23 +0100
+
+zlib (1:1.2.3.3.dfsg-2) unstable; urgency=low
+
+  * Add XS-VCS-Bzr.
+
+ -- Mark Brown <broonie@debian.org>  Fri, 22 Jun 2007 13:36:26 +0100
+
+zlib (1:1.2.3.3.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * Repackage without DBS, use quilt to manage patches instead.
+  * Drop checks for epoch support in dpkg.
+  * Upstream now supports _FILE_OFFSET_BITS (closes: #234237).
+  * Remove Provides: zlib1g from udeb (closes: #419603).
+  * Add -dbg packages.
+
+ -- Mark Brown <broonie@debian.org>  Tue, 19 Jun 2007 10:40:29 +0100
+
+zlib (1:1.2.3-15ubuntu1) gutsy; urgency=low
+
+  * Merge with Debian; remaining changes:
+    - Install multilib into /usr/lib32 on amd64.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 11 Jun 2007 18:48:29 +0200
+
+zlib (1:1.2.3-15) unstable; urgency=low
+
+  * Apparently gcc-multilib is actually a replacement for the arch-specific
+    GCCs (closes: #424657).
+
+ -- Mark Brown <broonie@debian.org>  Wed, 16 May 2007 20:56:52 +0100
+
+zlib (1:1.2.3-14ubuntu1) gutsy; urgency=low
+
+  * Merge from Debian, remaining changes:
+    - Drop b-d's on libc*-dev-* packages.
+    - Install multilib into /usr/lib32 on amd64.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 16 May 2007 18:22:57 +0200
+
+zlib (1:1.2.3-14) unstable; urgency=low
+
+  * The vibrations tell me that cross builds need to build depend on
+    gcc-multilib.
+  * Remove Provides: zlib1g from udeb (closes: #419603).
+
+ -- Mark Brown <broonie@debian.org>  Sat, 12 May 2007 11:10:32 +0100
+
+zlib (1:1.2.3-13ubuntu4) feisty; urgency=low
+
+  * Rebuild for changes in the amd64 toolchain.
+  * Set Ubuntu maintainer address.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon,  5 Mar 2007 01:28:16 +0000
+
+zlib (1:1.2.3-13ubuntu3) feisty; urgency=low
+
+  * Don't conflicts/replaces zlib1g-udeb in zlib1g; this makes d-i
+    unnecessarily difficult to build.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 30 Nov 2006 10:19:07 +0000
+
+zlib (1:1.2.3-13ubuntu2) edgy; urgency=low
+
+  * Don't use -march/-mtune for the i386/64bit build; obsoleted by the
+    -mtune=generic backport.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 12 Oct 2006 08:06:38 +0000
+
+zlib (1:1.2.3-13ubuntu1) edgy; urgency=low
+
+  * Synchronize with unstable.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 10 Jul 2006 08:16:43 +0000
+
+zlib (1:1.2.3-13) unstable; urgency=low
+
+  * Add dependency from lib32z1-dev to lib32c-dev (closes: #376854).
+
+ -- Mark Brown <broonie@debian.org>  Sat,  8 Jul 2006 10:02:32 +0100
+
+zlib (1:1.2.3-12ubuntu1) edgy; urgency=low
+
+  * Synchronize with unstable.
+  * lib32z1-dev: Depend on lib32c-dev.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed,  5 Jul 2006 13:32:26 +0000
+
+zlib (1:1.2.3-12) unstable; urgency=low
+
+  * Apply patch from Volker Grabsch <vog@notjusthosting.com> fixing cross
+    compilation.
+
+ -- Mark Brown <broonie@debian.org>  Wed, 21 Jun 2006 10:23:18 +0100
+
+zlib (1:1.2.3-11) unstable; urgency=low
+
+  * Add udeb line to shlibs (closes: #355293).
+
+ -- Mark Brown <broonie@debian.org>  Mon,  6 Mar 2006 22:14:08 +0000
+
+zlib (1:1.2.3-10) unstable; urgency=low
+
+  * Add a note to the gzerror() documentation specifying the rules for access
+    to the returned string (closes: #353407).
+  * Add a note to the gzclose() documentation pointing out that since the
+    function will always free the stream gzerror() can't be used to translate
+    the error message into plain text (closes: #354310).
+  * Change build dep to libc6-dev-i386 on amd64 (closes: #355170).
+
+ -- Mark Brown <broonie@debian.org>  Fri,  3 Mar 2006 19:27:26 +0000
+
+zlib (1:1.2.3-9) unstable; urgency=low
+
+  * Remove build dep on amd64-libs (closes: #344009).
+
+ -- Mark Brown <broonie@debian.org>  Tue, 20 Dec 2005 14:12:58 +0000
+
+zlib (1:1.2.3-8) unstable; urgency=low
+
+  * Replace old ia32-libs (closes: #339105).
+
+ -- Mark Brown <broonie@debian.org>  Tue, 15 Nov 2005 21:20:31 +0000
+
+zlib (1:1.2.3-7) unstable; urgency=low
+
+  * Check for EOF properly in gzio (closes: #130557).
+
+ -- Mark Brown <broonie@debian.org>  Sun, 30 Oct 2005 11:02:24 +0000
+
+zlib (1:1.2.3-6ubuntu4) dapper; urgency=low
+
+  * Replace (build-)dependency ia32-libs-dev [amd64] -> libc6-dev-i386 [amd64]
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 13 Jan 2006 20:16:00 +0000
+
+zlib (1:1.2.3-6ubuntu3) dapper; urgency=low
+
+  * Add dependencies to the biarch packages.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 16 Nov 2005 04:57:09 +0100
+
+zlib (1:1.2.3-6ubuntu2) dapper; urgency=low
+
+  * Fix typo in lib64z1-dev dependency.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 16 Nov 2005 04:40:44 +0100
+
+zlib (1:1.2.3-6ubuntu1) dapper; urgency=low
+
+  * Synchronize with unstable.
+
+ -- Matthias Klose <doko@ubuntu.com>  Tue, 18 Oct 2005 00:58:59 +0200
+
+zlib (1:1.2.3-6) unstable; urgency=low
+
+  * Most of the changes in this version are based heavily on work done for
+    Ubuntu by Matthias Klose <doko@cs.tu-berlin.de>.  Thanks!
+  * Build biarch packages on PowerPC (closes: #325560).
+  * Build biarch packages on i386, replacing amd64-libs prior to 1.4 which
+    included its own copy and adding a theoretically spurious build dep
+    on amd64-libs to work around binutils troubles (closes: #334013).
+  * Drop build dep on GCC 3.4 on amd64 - we already stopped using it.
+  * Update all the lib64 development dependencies to use lib64c-dev rather
+    than the specific libc-${ARCH}-dev package.
+  * Don't test lib64 builds - there's a good chance they'll fail due to the
+    system not being able to execute 64 bit code.  Similarly, don't worry if
+    dh_shlibdeps fails and hard code an unversioned dependency on the
+    appropriate libc.
+
+ -- Mark Brown <broonie@debian.org>  Sun, 16 Oct 2005 19:38:11 +0100
+
+zlib (1:1.2.3-5) unstable; urgency=low
+
+  * Since GCC no longer ICEs at -O3 on m68k revert to using -O3 there like
+    we do elsewhere.
+
+ -- Mark Brown <broonie@debian.org>  Wed, 28 Sep 2005 23:00:52 +0100
+
+zlib (1:1.2.3-4) unstable; urgency=low
+
+  * Add ppc64 biarch support using patch included in the report by Andreas
+    Jochens <aj@andaco.de> (closes: #323591).
+
+ -- Mark Brown <broonie@debian.org>  Mon, 29 Aug 2005 12:30:04 +0100
+
+zlib (1:1.2.3-3ubuntu4) breezy; urgency=low
+
+  * Fix lib32z1-dev dependency.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat,  3 Sep 2005 07:44:54 +0200
+
+zlib (1:1.2.3-3ubuntu3) breezy; urgency=low
+
+  * Explicitely set -march/-mtune options for 64bit i386 build.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 22 Aug 2005 14:28:12 +0200
+
+zlib (1:1.2.3-3ubuntu2) breezy; urgency=low
+
+  * Fix typo in build dependencies.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 22 Aug 2005 11:53:18 +0200
+
+zlib (1:1.2.3-3ubuntu1) breezy; urgency=low
+
+  * Synchronize with Debian.
+  * Build lib64z1 for i386 and powerpc, conflicts/replaces amd64-libs.
+  * Ignore dh_shlibdeps failures, trying to run 32bit ldd on 64bit
+    binaries.
+  * lib64z1-dev: Depend on the needed libc6-dev package.
+  * debian/*dirs: Replace /emul/* with /usr/lib32.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 12 Aug 2005 09:55:10 +0200
+
+zlib (1:1.2.3-3) unstable; urgency=low
+
+  * Fix minizip build (closes: #321355).
+
+ -- Mark Brown <broonie@debian.org>  Fri,  5 Aug 2005 18:52:09 +0100
+
+zlib (1:1.2.3-2) unstable; urgency=low
+
+  * Fix noopt (closes: #320999).
+  * Apply CFLAGS to minizip too.
+  * Policy 3.6.2 (no changes).
+
+ -- Mark Brown <broonie@debian.org>  Wed,  3 Aug 2005 23:31:47 +0100
+
+zlib (1:1.2.3-1ubuntu3) breezy; urgency=low
+
+  * Put the libraries into /usr/lib32 on amd64.
+
+ -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue,  9 Aug 2005 12:55:50 +0200
+
+zlib (1:1.2.3-1ubuntu2) breezy; urgency=low
+
+  * Stop calling dh_shlibdeps when building lib32z1 on amd64.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Fri, 22 Jul 2005 00:59:11 +0000
+
+zlib (1:1.2.3-1ubuntu1) breezy; urgency=low
+
+  * Resynchronise with Debian, resolving conflicts (Ubuntu #12391).
+    - Drop patches incorporated upstream.
+    - Drop most of our changes in favour of Debian's to minimize our diff.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 21 Jul 2005 23:28:00 +0000
+
+zlib (1:1.2.3-1) unstable; urgency=high
+
+  * New upstream release.
+  * This release includes a fix for CAN-2005-1849.
+
+ -- Mark Brown <broonie@debian.org>  Mon, 18 Jul 2005 23:02:31 +0100
+
+zlib (1:1.2.2-9) unstable; urgency=low
+
+  * Work around an ICE on m68k by building at -O2 there.
+  * Implement noopt support while we're at it.
+
+ -- Mark Brown <broonie@debian.org>  Thu, 14 Jul 2005 18:06:21 +0300
+
+zlib (1:1.2.2-8) unstable; urgency=low
+
+  * Remove GCC 3.4 hack for amd64 since the default compiler is now supposed
+    to be able to do biarch.
+
+ -- Mark Brown <broonie@debian.org>  Sun, 10 Jul 2005 13:10:15 +0300
+
+zlib (1:1.2.2-7) unstable; urgency=high
+
+  * Add patch fixing CAN-2005-2096 in inflate.
+
+ -- Mark Brown <broonie@debian.org>  Mon,  4 Jul 2005 23:58:05 +0100
+
+zlib (1:1.2.2-6) unstable; urgency=low
+
+  * Fix some build failures on amd64 (closes: #316779).  The package still
+    fails to build but this appears to be due to toolchain issues.
+
+ -- Mark Brown <broonie@debian.org>  Mon,  4 Jul 2005 21:49:55 +0100
+
+zlib (1:1.2.2-5) unstable; urgency=low
+
+  * Build a 32 bit copy on amd64 (closes: #311618).
+  * Hack build with GCC 3.4 on amd64 since the default 3.3 is broken for
+    biarch builds.  This should be removed once the default compiler does
+    this properly.
+  * Remove libc5 support and therefore revert to using plain gcc when not
+    cross-compiling.
+  * Upgrade to Debhelper interface 4.
+
+ -- Mark Brown <broonie@debian.org>  Tue, 21 Jun 2005 09:52:45 +0100
+
+zlib (1:1.2.2-4ubuntu6) breezy; urgency=low
+
+  * SECURITY UPDATE: Fix another buffer overflow on invalid data streams.
+  * Add debian/patches/020_CAN-2005-1849:
+    - inftrees.h: Raise ENOUGH and MAXD to be big enough.
+    - Patch from zlib upstream author.
+    - CAN-2005-1849
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Thu, 21 Jul 2005 10:44:32 +0200
+
+zlib (1:1.2.2-4ubuntu5) breezy; urgency=low
+
+  * SECURITY UPDATE: Fix buffer overflow on invalid data streams.
+  * Add debian/patches/019_CAN-2005-2096.patch:
+    - Permit incomplete codes only if they consist of a single code of length
+      1, as described in the spec. Longer codes overflowed various buffers.
+    - Patch from zlib upstream author.
+    - CAN-2005-2096
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Mon,  4 Jul 2005 08:39:33 +0200
+
+zlib (1:1.2.2-4ubuntu4) breezy; urgency=low
+
+  * Add a (temporary) build dependency on lib32gcc1.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu,  2 Jun 2005 21:33:16 +0200
+
+zlib (1:1.2.2-4ubuntu3) breezy; urgency=low
+
+  * Fix build failure with dpkg 1.13.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu,  2 Jun 2005 18:19:38 +0000
+
+zlib (1:1.2.2-4ubuntu2) breezy; urgency=low
+
+  * Build 32bit packages for amd64.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 21 May 2005 11:59:48 +0000
+
+zlib (1:1.2.2-4ubuntu1) hoary; urgency=low
+
+  * Resynchronise with Debian.
+
+ -- Scott James Remnant <scott@canonical.com>  Fri, 10 Dec 2004 13:00:13 +0000
+
+zlib (1:1.2.2-4) unstable; urgency=low
+
+  * Run dh_installdeb before dh_shlibdeps (closes: #282882).
+  * Specify the shlibs for the library directly to dpkg-shlibs.
+
+ -- Mark Brown <broonie@debian.org>  Tue,  7 Dec 2004 14:37:32 +0000
+
+zlib (1:1.2.2-3ubuntu1) hoary; urgency=low
+
+  * Resynchronise with Debian.
+
+ -- LaMont Jones <lamont@canonical.com>  Thu, 11 Nov 2004 17:15:32 -0700
+
+zlib (1:1.2.2-3) unstable; urgency=low
+
+  * Generate shared libraries sensibly for zlib-bin (closes: #278977).
+
+ -- Mark Brown <broonie@debian.org>  Sat, 30 Oct 2004 19:40:57 +0100
+
+zlib (1:1.2.2-2) unstable; urgency=low
+
+  * Remove shlibs from udeb.
+
+ -- Mark Brown <broonie@debian.org>  Sat,  9 Oct 2004 19:06:41 +0100
+
+zlib (1:1.2.2-1ubuntu1) hoary; urgency=low
+
+  * Resynchronise with Debian.
+
+ -- Scott James Remnant <scott@canonical.com>  Wed, 27 Oct 2004 15:34:11 +0100
+
+zlib (1:1.2.2-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Mark Brown <broonie@debian.org>  Wed,  6 Oct 2004 20:10:10 +0100
+
+zlib (1:1.2.1.2-1) unstable; urgency=low
+
+  * New upstream release.
+  * Upstream now includes patch improving error reporting when gzio is used on
+    empty files (closes: #258087).
+  * Upstream have fixed a valgrind warning.  Other valgrind warnings remain
+    but have been analysed and found safe - uninitialised memory is read from
+    a buffer allocated by zlib during deflate but bounds checking is
+    subsequently performed and the output unaffected (closes: #270070).
+
+ -- Mark Brown <broonie@debian.org>  Sat, 11 Sep 2004 10:59:41 +0100
+
+zlib (1:1.2.1.1-7) unstable; urgency=high
+
+  * Once more, with feeling.
+
+ -- Mark Brown <broonie@debian.org>  Thu, 26 Aug 2004 20:49:42 +0100
+
+zlib (1:1.2.1.1-6) testing; urgency=high
+
+  * Fix the error handling in the new inflate implementation to avoid
+    incorrectly continuing to process in the error state.  Thanks to Johan
+    Thelmén <johan.thelmen@cygate.se> for his help in finding and fixing this
+    bug.  This is CAN-2004-0797 (closes: #252253).
+
+ -- Mark Brown <broonie@debian.org>  Sat, 21 Aug 2004 23:30:57 +0100
+
+zlib (1:1.2.1.1-5) unstable; urgency=low
+
+  * Build a 64 bit libz on s390 and sparc.  Original patch provided by Bastian
+    Blank <waldi@debian.org> but since modified (closes: #257940).
+  * Mark the udeb as such for Debhelper but note that the udeb support appears
+    not to cope with epochs so leave the code to build it.
+  * Apply patch from David Weinehall <tao@debian.org> avoiding some XSIisms in
+    the package scripts (closes: #256363).
+  * Policy 3.6.1 (no changes).
+
+ -- Mark Brown <broonie@debian.org>  Sun, 11 Jul 2004 20:47:25 +0100
+
+zlib (1:1.2.1.1-4) unstable; urgency=low
+
+  * Incorporate current upstream patch to minizip.  This supercedes most of
+    the current Debian patches (8,14,15 and 17) and has some additional
+    bugfixes.
+
+ -- Mark Brown <broonie@debian.org>  Sat, 12 Jun 2004 10:31:57 +0100
+
+zlib (1:1.2.1.1-3ubuntu1) warty; urgency=high
+
+  * Backport from 1:1.2.1.1-6 [debian/patches/018_CAN-2004-0797]
+    Fix the error handling in the new inflate implementation to avoid
+    incorrectly continuing to process in the error state.  Thanks to Johan
+    Thelm<C3><A9>n <johan.thelmen@cygate.se> for his help in finding and fixing this
+    bug.  This is CAN-2004-0797 (closes: #252253).
+
+ -- Matt Zimmerman <mdz@canonical.com>  Fri, 10 Sep 2004 12:36:00 -0700
+
+zlib (1:1.2.1.1-3) unstable; urgency=low
+
+  * Fix -fPIC provision for HPPA (closes: #249289).
+  * Provide -D_REENTRANT while we're at it.
+
+ -- Mark Brown <broonie@debian.org>  Sun, 16 May 2004 18:54:08 +0100
+
+zlib (1:1.2.1.1-2) unstable; urgency=low
+
+  * Build with debug symbols.
+  * Revert partially done 64 bit support.
+
+ -- Mark Brown <broonie@debian.org>  Sun, 16 May 2004 12:22:14 +0100
+
+zlib (1:1.2.1.1-1) unstable; urgency=low
+
+  * New upstream release with bugfix for inflate (closes: #221590).
+
+ -- Mark Brown <broonie@debian.org>  Sat,  8 May 2004 11:27:44 +0100
+
+zlib (1:1.2.1-5) unstable; urgency=low
+
+  * Apparently udebs shouldn't call ldconfig (closes: #237345).
+
+ -- Mark Brown <broonie@debian.org>  Thu, 11 Mar 2004 21:27:09 +0000
+
+zlib (1:1.2.1-4) unstable; urgency=low
+
+  * Make checks when minizip is skipping arguments less likely to generate
+    false positives (closes: #231036).
+
+ -- Mark Brown <broonie@debian.org>  Sat,  7 Feb 2004 18:48:41 +0000
+
+zlib (1:1.2.1-3) unstable; urgency=low
+
+  * Use dpkg-architecture to get the target architecture and use the compiler
+    it tells us to.
+  * Don't run the testsuite when we're cross-compiling.
+
+ -- Mark Brown <broonie@debian.org>  Sat,  6 Dec 2003 14:49:48 +0000
+
+zlib (1:1.2.1-2) unstable; urgency=low
+
+  * Version build dependency on the DBS package (closes: #221599).
+
+ -- Mark Brown <broonie@debian.org>  Fri, 21 Nov 2003 14:13:40 +0000
+
+zlib (1:1.2.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * The override fie tells me zlib1g is now required.
+  * Use dbs package to build rather than carting around our own copy.
+  * Many patches have been incorporated upstream.
+  * Upstream no longer has a readme.txt for zlib-bin.
+  * Check the return value of scanf() in miniunzip.
+
+ -- Mark Brown <broonie@debian.org>  Mon, 17 Nov 2003 23:49:22 +0000
+
+zlib (1:1.1.4-17) unstable; urgency=low
+
+  * Support GNU/KFreeBSD (closes: #220844).
+
+ -- Mark Brown <broonie@debian.org>  Sat, 15 Nov 2003 12:00:24 +0000
+
+zlib (1:1.1.4-16) unstable; urgency=low
+
+  * Check the return value of scanf in minizip (closes: #215658).
+  * Issue a diagnostic if minizip has no ZIP file to work on (closes: #215657).
+
+ -- Mark Brown <broonie@debian.org>  Thu, 16 Oct 2003 19:02:39 +0100
+
+zlib (1:1.1.4-15) unstable; urgency=low
+
+  * Replace "udeb" with "for Debian installer" in the short description for
+    the udeb (closes: #211019).
+  * Fix conflicts between real binary package and udeb.
+
+ -- Mark Brown <broonie@debian.org>  Tue, 16 Sep 2003 07:38:47 +0100
+
+zlib (1:1.1.4-14) unstable; urgency=low
+
+  * Remove the libc5 libraries from the control file.  Apparently the archive
+    software isn't too keen on having packages built for the null set of
+    architectures.
+
+ -- Mark Brown <broonie@debian.org>  Sat, 12 Jul 2003 09:02:39 +0100
+
+zlib (1:1.1.4-13) unstable; urgency=low
+
+  * Nothing's actually appeared that uses the fact that zlib is in /lib so
+    move it back to /usr/lib.
+  * Drop libc5 support since it's breaking builds.  The infrastructure is
+    still there so if we do decided to continue building libc5 stuff after all
+    it can be added back.
+
+ -- Mark Brown <broonie@debian.org>  Sat, 21 Jun 2003 14:07:39 +0100
+
+zlib (1:1.1.4-12) unstable; urgency=low
+
+  * Change section of zlib1g-dev to libdevel.
+  * GCC has now complains about improper usage of functions even without
+    prototypes so fix vsnprintf() test to call vsnprintf() with the
+    correct arguments (closes: #194828).
+
+ -- Mark Brown <broonie@debian.org>  Tue, 27 May 2003 08:32:02 +0100
+
+zlib (1:1.1.4-11) unstable; urgency=low
+
+  * The "Premature implementation is the root of all evil" release.
+  * Change udeb name to zlib1g-udeb (closes: #183296).
+  * Make the udeb provide zlib1g.
+
+ -- Mark Brown <broonie@debian.org>  Mon,  3 Mar 2003 22:00:21 +0000
+
+zlib (1:1.1.4-10) unstable; urgency=low
+
+  * Fix buffer overflow in gzprintf() by adding configure test for
+    vsnprintf() and failing the build out if it's not used.
+  * Use snprintf() for printing file descriptor name in gzdopen().
+  * Remove Emacs variables from changelog.
+
+ -- Mark Brown <broonie@debian.org>  Sun, 23 Feb 2003 17:37:38 +0000
+
+zlib (1:1.1.4-9) unstable; urgency=low
+
+  * Build a zlib-udeb package.  The changes are a modified version of some
+    provided by Sebastian Ley <sebastian.ley@mmweg.rwth-aachen.de>.
+  * Updated Standards-Version to 3.5.8 (no changes).
+  * Don't check for the preprocessor constant i386 in zconf.h, use the
+    better namespaced __i386__ instead.
+
+ -- Mark Brown <broonie@debian.org>  Mon, 30 Dec 2002 20:54:25 +0000
+
+zlib (1:1.1.4-8) unstable; urgency=low
+
+  * Leave libz.so in /usr/lib (closes: #169924).
+
+ -- Mark Brown <broonie@debian.org>  Wed, 20 Nov 2002 21:04:58 +0000
+
+zlib (1:1.1.4-7) unstable; urgency=low
+
+  * Install libz.so in /lib rather than /usr/lib (closes: #168797).
+
+ -- Mark Brown <broonie@debian.org>  Tue, 19 Nov 2002 00:01:34 +0000
+
+zlib (1:1.1.4-6) unstable; urgency=low
+
+  * Depend on libc-dev rather than libc6-dev (closes: #164649).
+
+ -- Mark Brown <broonie@debian.org>  Mon, 14 Oct 2002 11:35:09 +0100
+
+zlib (1:1.1.4-5) unstable; urgency=low
+
+  * Include patch from Joel Baker <lucifer@lightbearer.com> forcing -Dunix
+    when building minizip for NetBSD (closes: #164060).
+  * Don't set /usr/doc link in zlib1-altdev.
+
+ -- Mark Brown <broonie@debian.org>  Sat, 12 Oct 2002 19:32:25 +0100
+
+zlib (1:1.1.4-4) unstable; urgency=low
+
+  * Complete sentance in minzip.1 (closes: #160929).
+
+ -- Mark Brown <broonie@debian.org>  Sun, 15 Sep 2002 15:02:06 +0100
+
+zlib (1:1.1.4-3) unstable; urgency=low
+
+  * Update upstream URL in copyright file (closes: #154940).
+
+ -- Mark Brown <broonie@debian.org>  Wed, 31 Jul 2002 12:26:13 +0100
+
+zlib (1:1.1.4-2) unstable; urgency=low
+
+  * Build glibc static library without PIC (closes: #149939).
+
+ -- Mark Brown <broonie@debian.org>  Wed, 17 Jul 2002 20:37:50 +0100
+
+zlib (1:1.1.4-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Mark Brown <broonie@debian.org>  Mon, 11 Mar 2002 21:44:13 +0000
+
+zlib (1:1.1.3-19.1) unstable; urgency=high
+
+  * Non-maintainer upload
+  * Apply patch for double-free bug
+
+ -- Matt Zimmerman <mdz@debian.org>  Sun, 10 Mar 2002 23:52:20 -0500
+
+zlib (1:1.1.3-19) unstable; urgency=low
+
+  * Include patch to minizip from Steve Kemp <skx@tardis.ed.ac.uk>
+    fixing various stability issues with minizip.
+
+ -- Mark Brown <broonie@debian.org>  Sat, 19 Jan 2002 13:19:22 +0000
+
+zlib (1:1.1.3-18) unstable; urgency=low
+
+  * Fix -d option support so that archives can be extracted without 
+    using -d (closes: #119898).
+  * s/pkzip/PKZIP/ in control file.
+
+ -- Mark Brown <broonie@debian.org>  Sat, 17 Nov 2001 13:42:23 +0000
+
+zlib (1:1.1.3-17) unstable; urgency=low
+
+  * Add patch from Dirk Eddelbuettel <edd@debian.org> supporting an
+    additional "-d extractdir" option and correcting the miniunzip
+    manual page (closes: #118658).
+
+ -- Mark Brown <broonie@debian.org>  Wed,  7 Nov 2001 23:00:03 +0000
+
+zlib (1:1.1.3-16) unstable; urgency=low
+
+  * Add to LD_LIBRARY_PATH rather than setting it since fakeroot now
+    relies on setting it (closes: #108553).
+
+ -- Mark Brown <broonie@debian.org>  Mon, 27 Aug 2001 13:52:57 +0100
+
+zlib (1:1.1.3-15) unstable; urgency=low
+
+  * Call tar with --force-local in debian/rules to force it to interpret
+    filenames as filenames (closes: #96078).
+  * Supply manual pages for minizip and miniunzip.
+  * Update description of libc5 packages to mention that they are
+    libc5 variants.
+
+ -- Mark Brown <broonie@debian.org>  Wed,  2 May 2001 23:28:54 +0100
+
+zlib (1:1.1.3-14) unstable; urgency=low
+
+  * Update debian/rules for m68k again (closes: #91863).
+  * Upgrade priority of zlib1g to standard.
+  * Update to policy 3.5.2 (no changes).
+
+ -- Mark Brown <broonie@debian.org>  Thu, 22 Mar 2001 20:54:11 +0000
+
+zlib (1:1.1.3-13) unstable; urgency=low
+
+  * Don't build libc5 packages on m68k any more (closes: #90639).
+
+ -- Mark Brown <broonie@debian.org>  Thu, 22 Mar 2001 10:49:32 +0000
+
+zlib (1:1.1.3-12) unstable; urgency=low
+
+  * Install zlib.3 in zlib1g-dev (closes: #78122).
+  * Update to policy 3.2.1 (no changes).
+
+ -- Mark Brown <broonie@debian.org>  Mon,  1 Jan 2001 15:52:58 +0000
+
+zlib (1:1.1.3-11) unstable; urgency=low
+
+  * Build-depends on debhelper (closes: #72400).
+
+ -- Mark Brown <broonie@debian.org>  Mon, 25 Sep 2000 14:17:46 +0100
+
+zlib (1:1.1.3-10) unstable; urgency=low
+
+  * Fix bashism in build.vars (closes: #71756).
+
+ -- Mark Brown <broonie@debian.org>  Fri, 22 Sep 2000 14:04:10 +0100
+
+zlib (1:1.1.3-9) unstable; urgency=low
+
+  * Fix source dependancies (closes: #68469).
+
+ -- Mark Brown <broonie@debian.org>  Fri,  4 Aug 2000 01:24:49 +0100
+
+zlib (1:1.1.3-8) unstable; urgency=low
+
+  * New maintainer.
+  * Initialise DH_OPTIONS in debian/rules (closes: #67113).
+  * Add source dependancies.
+  * Update copyright information.
+
+ -- Mark Brown <broonie@debian.org>  Wed,  2 Aug 2000 18:05:16 +0100
+
+zlib (1:1.1.3-7) unstable; urgency=low
+
+  * Fixed zlib1g shlibs.  Closes: #67164.
+
+ -- Adam Heath <doogie@debian.org>  Fri, 14 Jul 2000 11:06:06 -0500
+
+zlib (1:1.1.3-6) unstable; urgency=low
+
+  * Joel is taking a leave of absence(indefinate).  He has given the package
+    to me.
+  * Ported to dbs, an enhanced source management system.
+  * Ported to debhelper.
+  * Fix broken libz.so link in -altdev.  Closes: #54573.
+  * Incorrect shlibs file on hurd.  Fixed in -5.  Closes: #56125.
+
+ -- Adam Heath <doogie@debian.org>  Mon, 10 Jul 2000 16:38:02 -0500
+
+zlib (1:1.1.3-5) unstable; urgency=low
+
+  * Remove sparc from libc5-compat architectures.
+  * control: zlib1g: Provide libz1.
+    zlib1g-dev: Provide libz-dev.
+  * shlibs-libc6: Use libz1.
+  * /usr/doc symlinks.
+  * Correct zlib-bin description in debian/control.
+  * Only call ldconfig when configuring (closes:Bug#42518).
+  * Add hurd configure patch (closes:Bug#46899).
+  * Ensure contrib.tar.gz is really tarred *and* gzipped (closes:Bug#30367,#32001).
+  * zlib1g-dev has had the man page since 1.1.3-1 (closes:Bug#23802).
+  * Fix URL in minizip (closes:Bug#43888).
+  * Install example.c and minigzip.c in zlib1g-dev examples (closes:Bug#32002).
+
+ -- Joel Klecker <espy@debian.org>  Sat, 30 Oct 1999 12:25:25 -0700
+
+zlib (1:1.1.3-4) unstable; urgency=low
+
+  * Policy 3.0.1.
+  * dpkg-architecture variables.
+  * zlib-bin: `miniunz' -> `miniunzip'.
+  * Source package is zlib again.
+
+ -- Joel Klecker <espy@debian.org>  Sat, 31 Jul 1999 21:01:58 -0700
+
+zlib1 (1:1.1.3-3) unstable; urgency=low
+
+  * Made zlib-bin package containing `minizip' and `miniunz'.
+
+ -- Joel Klecker <espy@debian.org>  Thu, 11 Mar 1999 13:16:58 -0800
+
+zlib1 (1:1.1.3-2) unstable; urgency=low
+  
+  * Fix incorrect dependency in shlibs files (Bug:#28083).
+
+ -- Joel Klecker <espy@debian.org>  Fri, 16 Oct 1998 23:58:41 -0700
+
+zlib1 (1:1.1.3-1) unstable; urgency=low
+
+  * New maintainer (hijacking the package due to non-response of
+                    active maintainer to repeated queries).
+  * New upstream release.
+  * (shlibs-libc6): Paranoia: depend on >= 1:1.1.3.
+    (shlibs-libc5): likewise.
+  * (debian/control): changed source package to 'zlib1'.
+  * Fix /usr/doc/libz*
+  * Add contrib directory as .tar.gz in zlib1g-dev.
+  * Add man page.
+  * Add README, FAQ and algorithm.txt.
+  * lintian clean.
+  * Added sparc to libc5-compat architectures.
+
+ -- Joel Klecker <espy@debian.org>  Tue, 13 Oct 1998 19:30:29 -0700
+
+zlib (1:1.1.2-0.1) unstable; urgency=low
+  
+  * New upstream bugfix release.
+  * libc5 compat packages are now built on only i386 and m68k.
+  
+ -- Joel Klecker <jk@espy.org>  Mon, 11 May 1998 18:33:46 -0700
+
+zlib (1:1.1.1-0.1) unstable; urgency=low
+
+  * Non maintainer release.
+  * New upstream release.
+  * Made symlink in zlib1-altdev relative (fixes lintian warning).
+  * Removed executable bit on shared libs (fixes several lintian warnings).
+
+ -- Joel Klecker <jk@espy.org>  Fri, 13 Mar 1998 20:19:15 -0800
+
+zlib (1:1.0.4-7.1) unstable; urgency=low
+
+  * Updated for libc6
+  * Compiled with -D_REENTRANT.
+  * Non mantainer release.
+
+ -- Enrique Zanardi <ezanardi@molec1.dfis.ull.es>  Wed, 17 Sep 1997 01:28:05 +0100
+
+zlib (1:1.0.4-7) stable unstable; urgency=low
+
+  * Include --assert-working-epoch so people can't try to install with
+    bogus dpkg. (Bug#6848)
+  * Correct zlib1-dev description. (Bug#6061).
+
+ -- Michael Alan Dorman <mdorman@debian.org>  Sun, 26 Jan 1997 16:49:19 -0500
+
+zlib (1:1.0.4-6) stable unstable; urgency=high
+
+  * Recompile with correct libc requirement.
+  * Correct zlib1-dev deps to include zlib1.
+
+ -- Michael Alan Dorman <mdorman@debian.org>  Tue, 21 Jan 1997 17:57:22 -0500
+
+zlib (1:1.0.4-5) stable; urgency=low
+
+  * Add epoch, to make dselect happier
+
+ -- Michael Alan Dorman <mdorman@debian.org>  Sat, 28 Dec 1996 11:02:43 -0500
+
+zlib (1.0.4-4) stable; urgency=high
+
+  * Remember to copy shlibs file to DEBIAN directory (thanks to Christoph
+    Lameter
+
+ -- Michael Alan Dorman <mdorman@debian.org>  Sun, 15 Dec 1996 10:12:44 -0500
+
+zlib (1.0.4-3) unstable; urgency=low
+
+  * Added shlibs file
+  * Insured that shared library was stripped (Bug#5316)
+
+ -- Michael Alan Dorman <mdorman@debian.org>  Sat, 23 Nov 1996 16:52:19 -0500
+
+zlib (1.0.4-2) unstable; urgency=low
+
+  * Accomodate the fact that dpkg-source doesn't properly preserve
+    permissions on scripts when extracting package.
+
+ -- Michael Alan Dorman <mdorman@calder.med.miami.edu>  Mon, 23 Sep 1996 09:17:57 -0400
+
+zlib (1.0.4-1) unstable; urgency=low
+
+  * New upstream version.
+  * Moved to new source packaging format.
+
+ -- Michael Alan Dorman <mdorman@calder.med.miami.edu>  Thu, 12 Sep 1996 15:19:35 -0400
+
