@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+if [ "x$1" = "xupgrade" -a \
+     -d /usr/share/doc/PKG -a ! -h /usr/share/doc/PKG ]; then
+  rm -rf /usr/share/doc/PKG
+fi

@@ -1,0 +1,7 @@
+debian/man/jpegicc.1
+debian/man/tifficc.1
+debian/man/tiffdiff.1
+debian/man/icc2ps.1
+debian/man/icclink.1
+debian/man/icctrans.1
+debian/man/wtpt.1

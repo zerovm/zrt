@@ -1,0 +1,45 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_HARDENING=1
+
+# Variables used by cdbs
+VERSION := $(shell dpkg-parsechangelog | \
+             awk '/Version:/ {print $$2}' | cut -d- -f 1)
+DEB_TAR_SRCDIR = tiff-$(VERSION)
+DEB_COMPRESS_EXCLUDE = html
+export CPPFLAGS = -D_REENTRANT
+export DEB_BUILD_HARDENING=1
+
+# Include cdbs rules files.
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+
+DEB_CONFIGURE_USER_FLAGS = --with-docdir="\$${prefix}/share/doc/libtiff-doc" \
+	--libdir="\$${prefix}/lib/$(DEB_HOST_MULTIARCH)"
+
+# As 0.4.21, cdbs creates but doesn't remove debian/compat.  It
+# creates it conditionally, so this doesn't have a trivial fix.
+clean::
+	$(RM) debian/compat *.cdbs-config_list
+	$(RM) debian/*.preinst
+
+# tiffgt is in libtiff-opengl so libtiff-tools doesn't have to have
+# all the X and opengl dependencies.
+binary-post-install/libtiff-tools::
+	$(RM) debian/libtiff-tools/usr/bin/tiffgt
+	$(RM) debian/libtiff-tools/usr/share/man/man1/tiffgt.1*
+
+# Empty dependency_libs from all .la files
+binary-post-install/libtiff4-dev::
+	sed -i "s,^dependency_libs=.*,dependency_libs=''," \
+	   debian/libtiff4-dev/usr/lib/*/*.la
+
+# Install lintian override files and create preinst
+binary-post-install/%::
+	if [ -f debian/$*.lintian ]; then \
+	    mkdir -p debian/$*/usr/share/lintian/overrides && \
+	    cp -p debian/$*.lintian debian/$*/usr/share/lintian/overrides/$*; \
+	fi
+	if [ "$*" != "libtiff4" ]; then \
+	    sed -e s/PKG/$*/g < debian/all-preinst > debian/$*.preinst; \
+	fi

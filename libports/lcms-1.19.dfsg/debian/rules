@@ -1,0 +1,83 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+ARCH = $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+ifeq ($(ARCH),alpha)
+  export CFLAGS="-O0 -mieee -fPIC -I../include -fno-exceptions -fomit-frame-pointer -Wall"
+else
+  export CFLAGS="-O2 -fPIC -I../include -fno-exceptions -fomit-frame-pointer -Wall"
+endif
+
+PYVER=`pyversions -d`
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+ifeq ($(ARCH),alpha)
+	echo "#define USE_BIG_ENDIAN" >include/lcms-endian.h
+endif
+ifeq ($(ARCH),hppa)
+	echo "#define USE_BIG_ENDIAN" >include/lcms-endian.h
+endif
+ifeq ($(ARCH),sparc)
+	echo "#define USE_BIG_ENDIAN" >include/lcms-endian.h
+endif
+ifeq ($(ARCH),sparc64)
+	echo "#define USE_BIG_ENDIAN" >include/lcms-endian.h
+endif
+ifeq ($(ARCH),powerpc)
+	echo "#define USE_BIG_ENDIAN" >include/lcms-endian.h
+endif
+	CFLAGS=$(CFLAGS) ./configure --prefix=/usr --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) --with-python
+	cd python && ./swig_lcms && cd ..
+	make CFLAGS=$(CFLAGS)
+	touch build-stamp
+
+clean: 
+	dh_testdir
+	rm -f build-stamp configure-stamp
+	[ ! -f Makefile ] || $(MAKE) distclean
+	echo "#undef USE_BIG_ENDIAN" >include/lcms-endian.h
+	rm -f include/lcms-endian.h
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	make DESTDIR=`pwd`/debian/tmp install
+	rm -rf `pwd`/debian/tmp/usr/lib/python*/site-packages/*.a \
+	`pwd`/debian/tmp/usr/lib/python*/site-packages/*.la
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_install
+	dh_installman
+	dh_installdocs
+	dh_installchangelogs
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs -V
+	dh_perl
+	dh_python2 --no-guessing-versions
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
