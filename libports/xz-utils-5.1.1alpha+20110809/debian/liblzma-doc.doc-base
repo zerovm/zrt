@@ -1,0 +1,12 @@
+Document: liblzma-doc
+Title: liblzma API Documentation
+Author: Lasse Collin
+Abstract: liblzma is a compression library supporting the .xz and .lzma
+ formats, among others. This Doxygen-generated reference manual
+ describes the data structures and functions making up its public
+ interface.
+Section: Programming/C
+
+Format: HTML
+Index: /usr/share/doc/liblzma-doc/html/index.html
+Files: /usr/share/doc/liblzma-doc/html/*

@@ -1,0 +1,31 @@
+xz-utils (4.999.9beta+20100212-2) unstable; urgency=low
+
+  The tiny xzdec and lzmadec decompressors have been moved to the new
+  xzdec package.  One can use xzcat (which is an abbreviation for
+  “xz --decompress --stdout”) to replace them where space is not a
+  premium.
+
+ -- Jonathan Nieder <jrnieder@gmail.com>  Tue, 23 Feb 2010 08:24:10 -0600
+
+xz-utils (4.999.9beta+20100117-1) unstable; urgency=low
+
+  From this version on, xz produces sparse files by default when
+  decompressing.  This saves disk space when reproducing files with long
+  runs of zero bytes, such as file system images.  Implementing this
+  feature requires seeking forward beyond the end of a file so that the
+  operating system knows where to put in a hole.
+
+  If you use xz --decompress to write to end of a file that is appended
+  to at the same time by another process, this could cause concurrent
+  output from the other command to be overwritten.  This is a rare and
+  quite weird thing to do.  If you really want to do it, note that xz’s
+  buffering strategy is not part of its documented interface; to safely
+  interleave concurrent output from xz and another command, a
+  construction such as
+
+  	xz --decompress input.xz | dd ibs=1k obs=1k >> log
+
+  would be needed to avoid unpredictable results.
+
+ -- Jonathan Nieder <jrnieder@gmail.com>  Tue, 02 Feb 2010 15:51:37 -0600
+

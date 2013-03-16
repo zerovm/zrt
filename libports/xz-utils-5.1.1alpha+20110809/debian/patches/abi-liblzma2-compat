@@ -1,0 +1,169 @@
+From: Jonathan Nieder <jrnieder@gmail.com>
+Date: Fri, 14 Oct 2011 23:05:35 -0500
+Subject: liblzma: define a base version of lzma_code for ABI-compatibility
+
+It is almost safe for liblzma2 and liblzma5 to share a process image,
+since the only changes in ABI were to introduce symbol versioning, to
+remove a function, and to rearrange reserved fields which are not used
+by most functions.
+
+There is one function that differs between the two ABIs, though.
+lzma_code() checks that the reserved fields at the end of an
+lzma_stream structure pointed to by its "strm" argument are 0 before
+proceeding.  If code built using the liblzma2 headers calls
+lzma_code() from liblzma5, the result is a segfault or error:
+
+	$ LD_PRELOAD=/usr/lib/x86_64-linux-gnu/liblzma.so.5 xz README
+	xz: README: Unsupported options
+
+This happens when a library built against liblzma2 (think
+libkdecore5/squeeze) is used to satisfy a dependency of an app built
+against liblzma5.  Instead of the intended mixture of implementations
+(KDE using liblzma2 routines, app using liblzma5 routines), we get
+liblzma5 providing lzma_code() for all callers, resulting in the error
+described above.
+
+Fortunately the fix is clear: if we additionally bind a compatibility
+version of lzma_code() to the unspecified base version of lzma_code,
+it will be used to resolve references from code built against liblzma2
+in this case.  Do so.
+
+Caveat: libbfd-based binutils handles this well (and it is documented
+to work), but GNU gold 2.21.90.20111004 errors out with
+
+	/usr/bin/ld: error: symbol lzma_code has undefined version
+
+When liblzma2 provides lzma_code() for a library built against
+liblzma5 (think: libkdecore5/wheezy satisfying a dependency by
+demo-app/squeeze), there's nothing liblzma5 can do to improve matters.
+Routines from liblzma2 work just fine as implementations of the
+liblzma5 ABI, since the only relevant ABI mismatch is the added
+padding at the end of the lzma_stream struct, which liblzma2 happily
+ignores.  So in that case, we were already safe. *phew*
+
+Thanks to Jakub Wilk for catching some serious errors in a previous
+version of this explanation.
+
+Signed-off-by: Jonathan Nieder <jrnieder@gmail.com>
+---
+ src/liblzma/common/common.c |   96 +++++++++++++++++++++++++++++++-----------
+ 1 files changed, 71 insertions(+), 25 deletions(-)
+
+diff --git a/src/liblzma/common/common.c b/src/liblzma/common/common.c
+index 50c984c..924b0a1 100644
+--- a/src/liblzma/common/common.c
++++ b/src/liblzma/common/common.c
+@@ -168,32 +168,9 @@ lzma_strm_init(lzma_stream *strm)
+ }
+ 
+ 
+-extern LZMA_API(lzma_ret)
+-lzma_code(lzma_stream *strm, lzma_action action)
++static lzma_ret
++lzma_code_unchecked(lzma_stream *strm, lzma_action action)
+ {
+-	// Sanity checks
+-	if ((strm->next_in == NULL && strm->avail_in != 0)
+-			|| (strm->next_out == NULL && strm->avail_out != 0)
+-			|| strm->internal == NULL
+-			|| strm->internal->next.code == NULL
+-			|| (unsigned int)(action) > LZMA_FINISH
+-			|| !strm->internal->supported_actions[action])
+-		return LZMA_PROG_ERROR;
+-
+-	// Check if unsupported members have been set to non-zero or non-NULL,
+-	// which would indicate that some new feature is wanted.
+-	if (strm->reserved_ptr1 != NULL
+-			|| strm->reserved_ptr2 != NULL
+-			|| strm->reserved_ptr3 != NULL
+-			|| strm->reserved_ptr4 != NULL
+-			|| strm->reserved_int1 != 0
+-			|| strm->reserved_int2 != 0
+-			|| strm->reserved_int3 != 0
+-			|| strm->reserved_int4 != 0
+-			|| strm->reserved_enum1 != LZMA_RESERVED_ENUM
+-			|| strm->reserved_enum2 != LZMA_RESERVED_ENUM)
+-		return LZMA_OPTIONS_ERROR;
+-
+ 	switch (strm->internal->sequence) {
+ 	case ISEQ_RUN:
+ 		switch (action) {
+@@ -307,6 +284,75 @@ lzma_code(lzma_stream *strm, lzma_action action)
+ 	return ret;
+ }
+ 
++extern LZMA_API(lzma_ret)
++lzma_code_standard(lzma_stream *strm, lzma_action action)
++{
++	// Sanity checks
++	if ((strm->next_in == NULL && strm->avail_in != 0)
++			|| (strm->next_out == NULL && strm->avail_out != 0)
++			|| strm->internal == NULL
++			|| strm->internal->next.code == NULL
++			|| (unsigned int)(action) > LZMA_FINISH
++			|| !strm->internal->supported_actions[action])
++		return LZMA_PROG_ERROR;
++
++	// Check if unsupported members have been set to non-zero or non-NULL,
++	// which would indicate that some new feature is wanted.
++	if (strm->reserved_ptr1 != NULL
++			|| strm->reserved_ptr2 != NULL
++			|| strm->reserved_ptr3 != NULL
++			|| strm->reserved_ptr4 != NULL
++			|| strm->reserved_int1 != 0
++			|| strm->reserved_int2 != 0
++			|| strm->reserved_int3 != 0
++			|| strm->reserved_int4 != 0
++			|| strm->reserved_enum1 != LZMA_RESERVED_ENUM
++			|| strm->reserved_enum2 != LZMA_RESERVED_ENUM)
++		return LZMA_OPTIONS_ERROR;
++
++	return lzma_code_unchecked(strm, action);
++}
++__asm__(".symver lzma_code_standard,lzma_code@@XZ_5.0");
++
++// Before v5.0.0~6 (liblzma: A few ABI tweaks to reserve space in
++// structures, 2010-10-23), the reserved fields in lzma_stream were:
++//
++//	void *reserved_ptr1;
++//	void *reserved_ptr2;
++//	uint64_t reserved_int1;
++//	uint64_t reserved_int2;
++//	lzma_reserved_enum reserved_enum1;
++//	lzma_reserved_enum reserved_enum2;
++//
++// Nowadays there are two more pointers between reserved_ptr2 and
++// reserved_int1 and two size_t’s between reserved_int2 and
++// reserved_enum1.
++//
++// This version of the lzma_code symbol is used by apps built before
++// symbol versioning was introduced.  It limits the checks of reserved
++// fields to fields that were present in the old ABI, to avoid segfaults
++// and spurious "Unsupported options" errors.
++extern LZMA_API(lzma_ret)
++lzma_code_compat(lzma_stream *strm, lzma_action action)
++{
++	if ((strm->next_in == NULL && strm->avail_in != 0)
++			|| (strm->next_out == NULL && strm->avail_out != 0)
++			|| strm->internal == NULL
++			|| strm->internal->next.code == NULL
++			|| (unsigned int)(action) > LZMA_FINISH
++			|| !strm->internal->supported_actions[action])
++		return LZMA_PROG_ERROR;
++
++	if (strm->reserved_ptr1 != NULL
++			|| strm->reserved_ptr2 != NULL
++			|| strm->reserved_ptr3 != NULL
++			|| strm->reserved_ptr4 != NULL)
++		return LZMA_OPTIONS_ERROR;
++
++	return lzma_code_unchecked(strm, action);
++}
++__asm__(".symver lzma_code_compat,lzma_code@");
++
+ 
+ extern LZMA_API(void)
+ lzma_end(lzma_stream *strm)
+-- 
+1.7.7
+

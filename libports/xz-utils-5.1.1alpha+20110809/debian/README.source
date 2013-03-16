@@ -1,0 +1,16 @@
+XZ Utils sources for Debian
+---------------------------
+
+This Debian package is developed in a public Git repository (see the Vcs-Git
+field of debian/control) based on XZ Utils’s repository on tukaani.org.
+To build from a git checkout:
+
+	debian/rules get-orig-source
+	mv xz-utils_*.tar.gz ..
+	debian/autogen.sh
+	debuild
+
+To build a released version, no special instructions apply.
+“dpkg-buildpackage” and “apt-get -b xz-utils” should work as usual.
+
+ -- Jonathan Nieder <jrnieder@gmail.com>  Mon, 08 Feb 2010 17:30:00 -0600

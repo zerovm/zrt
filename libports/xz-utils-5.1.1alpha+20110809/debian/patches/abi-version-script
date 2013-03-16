@@ -1,0 +1,44 @@
+From: Jonathan Nieder <jrnieder@gmail.com>
+Date: Sat, 11 Jun 2011 23:33:43 -0500
+Subject: liblzma: Remove XZ_5.1.1alpha version symbol
+
+Now that the lzma_stream_encoder_mt{,_memusage} symbols are gone on
+this branch, liblzma should stop pretending to satisfy dependencies on
+XZ_5.1.1alpha.
+
+After this change, programs relying on those symbols will error out
+immediately at startup like they are supposed to:
+
+	app: liblzma.so.5: version `XZ_5.1.1alpha' not found (required by app)
+
+And your scripts that look for version definition entries with
+readelf -s (like RPM’s find-provides) can tell that this copy of
+liblzma lacks support for multithreaded encoding.
+
+Signed-off-by: Jonathan Nieder <jrnieder@gmail.com>
+---
+ src/liblzma/liblzma.map |    8 +-------
+ 1 files changed, 1 insertions(+), 7 deletions(-)
+
+diff --git a/src/liblzma/liblzma.map b/src/liblzma/liblzma.map
+index 835eb26..47a7c22 100644
+--- a/src/liblzma/liblzma.map
++++ b/src/liblzma/liblzma.map
+@@ -93,13 +93,7 @@ global:
+ 	lzma_vli_decode;
+ 	lzma_vli_encode;
+ 	lzma_vli_size;
+-};
+-
+-XZ_5.1.1alpha {
+-global:
+-	lzma_stream_encoder_mt;
+-	lzma_stream_encoder_mt_memusage;
+ 
+ local:
+ 	*;
+-} XZ_5.0;
++};
+-- 
+1.7.7
+

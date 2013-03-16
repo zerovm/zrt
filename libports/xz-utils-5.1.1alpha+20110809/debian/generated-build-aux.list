@@ -1,0 +1,8 @@
+compile
+config.guess
+config.rpath
+config.sub
+depcomp
+install-sh
+ltmain.sh
+missing

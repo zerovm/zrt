@@ -1,0 +1,143 @@
+#!/usr/bin/make -f
+
+build clean install binary-arch binary-indep binary:
+	+dh $@ --parallel $(opt_no_act)
+
+build-arch: build-plain build-small
+	$(MAKE) -f debian/rules $(test_targets)
+
+build-indep: debian/normal-build/Makefile
+	: 'Work around bug #478524'
+	set -e; if type doxygen >/dev/null 2>/dev/null; \
+	then \
+		cd debian/normal-build; \
+		doxygen Doxyfile; \
+	fi
+
+override_dh_auto_clean:
+	rm -f debian/*-stamp
+	dh_auto_clean --builddirectory debian/xzdec-build
+	dh_auto_clean --builddirectory debian/normal-build
+	sh debian/clean.sh
+
+override_dh_auto_install:
+	dh_auto_install --builddirectory debian/normal-build
+	dh_auto_install --builddirectory debian/xzdec-build
+
+override_dh_installchangelogs:
+	dh_installchangelogs debian/changelog.upstream
+
+build-plain: debian/normal-build/Makefile
+	dh_auto_build --builddirectory debian/normal-build
+
+build-small: debian/xzdec-build/Makefile
+	dh_auto_build --builddirectory debian/xzdec-build
+
+debian/test-plain-stamp: | build-plain
+	dh_auto_test --builddirectory debian/normal-build
+	>$@
+
+debian/test-xzdec-stamp: | build-small
+	$(MAKE) -C debian/xzdec-build/tests create_compress_files
+	$(MAKE) -C debian/xzdec-build/tests \
+		TESTS="test_check test_files.sh test_compress.sh" \
+		check-TESTS
+	>$@
+
+# There are more, but these will do.
+autoreconf_products := $(wildcard Makefile.in */Makefile.in */*/Makefile.in)
+autoreconf_products += configure
+
+autoreconf_sources := $(wildcard Makefile.am */Makefile.am */*/Makefile.am)
+autoreconf_sources += configure.ac
+
+configure_input := $(autoreconf_products)
+configure_input += Doxyfile.in
+configure_input += src/liblzma/liblzma.pc.in
+configure_input += $(wildcard src/scripts/*.in)
+
+debian/normal-build/Makefile debian/normal-build/Doxyfile: $(configure_input)
+	dh_auto_configure --builddirectory debian/normal-build -- \
+		$(opt_optimize) $(opt_quiet) \
+		--disable-xzdec --disable-lzmadec
+
+debian/xzdec-build/Makefile: $(configure_input)
+	dh_auto_configure --builddirectory debian/xzdec-build -- \
+		--disable-shared --disable-nls --disable-encoders \
+		--enable-small --disable-threads \
+		$(opt_optimize_small) $(opt_quiet) \
+		--disable-lzmainfo --disable-scripts \
+		--disable-xz --disable-lzma-links
+
+$(autoreconf_products): $(autoreconf_sources)
+	autoreconf -is
+
+noop: ;
+
+opt_optimize = CFLAGS="-g -O2"
+opt_optimize_small = CFLAGS="-g -Os"
+opt_no_act =
+opt_quiet =
+test_targets =
+test_targets += debian/test-plain-stamp
+test_targets += debian/test-xzdec-stamp
+
+# Unless noopt is set, use optimized CRC32 routine on the Hurd.
+ifeq (hurd,$(shell dpkg-architecture -qDEB_HOST_ARCH_OS))
+    cputype := $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
+    ifeq (i386,$(cputype))
+        opt_optimize += --enable-assembler=x86
+        opt_optimize_small += --enable-assembler=x86
+    endif
+    ifeq (amd64,$(cputype))
+        opt_optimize += --enable-assembler=x86_64
+        opt_optimize_small += --enable-assembler=x86_64
+    endif
+endif
+
+ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
+    opt_optimize = --disable-assembler CFLAGS="-g -O0"
+    opt_optimize_small = --disable-assembler CFLAGS="-g -O0"
+endif
+
+ifneq (,$(findstring n,$(MAKEFLAGS)))
+    opt_no_act = --no-act
+endif
+
+ifneq (,$(filter quiet,$(DEB_BUILD_OPTIONS)))
+    opt_quiet = --quiet
+    MAKEFLAGS += --quiet
+endif
+
+ifneq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+    test_targets = noop
+endif
+
+# Build a tarball with the latest upstream version.
+# This is made complicated by the need to choose a nice version number.
+REPO = http://git.tukaani.org/xz.git
+BRANCH = master
+get-orig-source:
+	mkdir debian-orig-source
+	-set -e; cd debian-orig-source; \
+	: Fetch latest upstream version.; \
+		git init -q; \
+		git fetch -q --tags $(REPO); \
+		git fetch -q $(REPO) $(BRANCH); \
+	: Determine version number.; \
+		commit_name=$$(git describe FETCH_HEAD); \
+		release=$${commit_name%%-*}; \
+		date=$$(date --utc --date="$$( \
+			git log -1 --pretty=format:%cD "$$commit_name" \
+			)" "+%Y%m%d"); \
+		if test "$$commit_name" = "$$release"; \
+		then upstream_version=$${commit_name#v}; \
+		else upstream_version="$${release#v}+$${date}"; \
+		fi; \
+	: Generate tarball.; \
+		echo "packaging $$commit_name"; \
+		git archive --format=tar "$$commit_name" \
+			--prefix="xz-utils-$$upstream_version/" | \
+		gzip -n --rsyncable -9 \
+			> "../xz-utils_$$upstream_version.orig.tar.gz"
+	rm -fr debian-orig-source

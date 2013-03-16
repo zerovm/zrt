@@ -1,0 +1,5 @@
+liblzma.so.5 liblzma5 #MINVER#
+| liblzma_private_symbols
+* Build-Depends-Package: liblzma-dev
+ (symver)XZ_5.0 5.1.1alpha+20110809
+ lzma_code@Base 4.999.9beta 1

@@ -1,0 +1,24 @@
+xz-utils (4.999.9beta+20100527-1) unstable; urgency=low
+
+  Starting with this version, the declarations needed to use the Subblock
+  filter are not present in the liblzma headers.  liblzma never supported
+  the Subblock filter, so compiled applications should not be affected by
+  this change.
+
+  The lzma_restrict macro has been removed from the liblzma headers.  This
+  only affects the declarations contained there; the semantics are still the
+  same.
+
+ -- Jonathan Nieder <jrnieder@gmail.com>  Thu, 27 May 2010 15:52:28 -0500
+
+xz-utils (4.999.9beta+20100212-1) unstable; urgency=low
+  
+  Starting with this version, the lzma_block_header_decode() function
+  is advertised to require its block->version parameter to be initialized.
+  Future versions of liblzma may use an alternate version of the Block
+  options if the application declares it supports it.  Existing applications
+  will continue to work for now because the only supported Block format
+  version is zero.
+
+ -- Jonathan Nieder <jrnieder@gmail.com>  Mon, 15 Feb 2010 23:59:21 -0600
+
