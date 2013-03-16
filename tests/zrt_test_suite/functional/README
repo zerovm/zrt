@@ -1,4 +1,11 @@
-This directory contains some functional tests for ZRT library
+
+--------------------------------------------
+ZRT test suite
+--------------------------------------------
+{DOCPATH}
+
+This directory contains some functional tests for ZRT library and
+autotests that running at every zrt build.
 
 file_stat/
   demonstrates stat() / fstat() for various channels. Also it uses assertions to test expecting stat data; 

@@ -1,9 +1,17 @@
-Some changes was made in pjd-fstests engine to support zerovm filesystem testing.
-fstest every time invoked by prove just send command line into background process
-fstest.nexe test via zerovm stdin channel, result of every test are retrieved by
-fstest script and returned into test suite.
-every invocation of run_test.sh run all pointed tests in the same background process,
-after completion of all tests background process fstest.nexe is closing by kill_ftest.sh  
+
+--------------------------------------------
+PJD - Filesystem tests
+--------------------------------------------
+{DOCPATH}
+
+Some changes was made in pjd-fstests engine to support zerovm
+filesystem testing.  fstest every time invoked by prove just send
+command line into background process fstest.nexe test via zerovm stdin
+channel, result of every test are retrieved by fstest script and
+returned into test suite.
+every invocation of run_test.sh run all pointed tests in the same
+background process, after completion of all tests background process
+fstest.nexe is closing by kill_ftest.sh
 
 Run all zrtfs tests:
     #./run_zrtfs_tests.sh

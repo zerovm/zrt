@@ -1,25 +1,31 @@
-=========================== Project info ============================
-ZeroVM messaging application that implements Distributed Sort example;
-Networking IO is represented by files IO layer on user side (ZeroVM client in untrusted code section)
-it's used to communicate nodes with each other
-Simplified networking data flow is in here:
-https://github.com/YaroslavLitvinov/Distributed-Sort/blob/master/zeromq-diagram.pdf
 
-=========================== Required Packages =========================
-Should be configured zerovm 
+--------------------------------------------
+Distributed Sort
+--------------------------------------------
+{DOCPATH}
 
-============================= Run Distributed Sort =========================
-Currently by default you can build and run sorting with 10 source and 10 destination nodes;
-You can run Distributed sort folowing this, in terminal >
+1. Currently by default you can build and run sorting with 10 source and
+10 destination nodes; You can run Distributed sort folowing this, in
+terminal >
 cd $(ZRT_ROOT)/samples/disort
 make
 ./disort.sh
 
- ============================ Brief info of project contents ============================
+2. Nodes type of disort cluster
+2.1main_node - Client of distributed sort that acts as single manager
+node, and one instance is required;
+2.2src_node - Client of distributed sort that acts as source node, Number
+of src nodes can be configured
+by SRC_NODES_COUNT from defines.h, at least 3 nodes should be set;
+2.3dst_nodes - Same as src_node, but act as destination node with
+predefined instances number;
+
+3. Brief info of project contents
  ./disort.sh distributed sort executer
  [disort/manager] Files related to manager node
  [disort/manager/main_man.c] entry point to manager node
- [disort/histanlz.c] it contains functions related to histograms analizing
+ [disort/histanlz.c] it contains functions related to histograms
+ analizing
  [disort/comm_man.c] file IO related code  
  
  [disort/source] Source node code files
@@ -35,10 +41,9 @@ make
  [manifest/sortdst.manifest.template] is template and used by genmanifest.sh script to generate manifests for nodes
  [manifest/sortman.manifest] Manager node manifest
  
-main_node - Client of distributed sort that acts as single manager node, and one instance is required;
-src_node - Client of distributed sort that acts as source node, Number of src nodes can be configured
-by SRC_NODES_COUNT from defines.h, at least 3 nodes should be set;
-dst_nodes - Same as src_node, but act as destination node with predefined instances number;
-============================= Logging ==================================
+4. Logging & Diagramm
 Every node doing logging, logs are located in log/ dir.
+Simplified networking data flow is in here:
+https://github.com/YaroslavLitvinov/Distributed-Sort/blob/master/zeromq-diagram.pdf
+
 

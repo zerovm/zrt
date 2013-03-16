@@ -6,9 +6,27 @@ Map-Reduce Library
 
 1.Data flow description for MapReduce 32/128.
 Every Map node has input file, every Reduce node has output file;
-Input file with data for every Map node reading by blocks of configured size in bytes and default size is 1MB. Block size can be overrided by environment variable MAP_CHUNK_SIZE. Read chunk of data is passed into user defined Map function, that parses it and create HASHes for input keys and return key and value buffers. Size of key/value are configurable and can be vary up to 16bytes for current implementation;
-At the next stage map node is sorting data by key and applying for sorted data user defined Combine function that reduces data. This step can optionally skipped if Combine function not defined. At the next stage MapReduce library for every map node creating histogram and send it each to other map nodes; Based on resulted histogram data from Map nodes are distributing to reducers;
-Reducers are receiving sorted data from 'leave' map nodes and then doing merge for every portion of received data and applying Combine function if it's defined. Some words about 'leave' map nodes - they are staying leave for Reducer node while it has not received MAP_EXCLUDE packet data.In case if Reducer recevied MAP_EXCLUDE packet it break waiting loop and calling Reduce() function that finilize result and exiting job;
-2.Object files belongs to this library are resides in libmapreduce.a and also MapReduce uses Networking Library to get cluster distributed configuration; In order to link it use folowing:
+Input file with data for every Map node reading by blocks of
+configured size in bytes and default size is 1MB. Block size can be
+overrided by environment variable MAP_CHUNK_SIZE. Read chunk of data
+is passed into user defined Map function, that parses it and create
+HASHes for input keys and return key and value buffers. Size of
+key/value are configurable and can be vary up to 16bytes for current
+implementation;
+At the next stage map node is sorting data by key and applying for
+sorted data user defined Combine function that reduces data. This step
+can optionally skipped if Combine function not defined. At the next
+stage MapReduce library for every map node creating histogram and send
+it each to other map nodes; Based on resulted histogram data from Map
+nodes are distributing to reducers; Reducers are receiving sorted data
+from 'leave' map nodes and then doing merge for every portion of
+received data and applying Combine function if it's defined. Some
+words about 'leave' map nodes - they are staying leave for Reducer
+node while it has not received MAP_EXCLUDE packet data.In case if
+Reducer recevied MAP_EXCLUDE packet it break waiting loop and calling
+Reduce() function that finilize result and exiting job;
+2.Object files belongs to this library are resides in libmapreduce.a
+and also MapReduce uses Networking Library to get cluster distributed
+configuration; In order to link it use folowing:
 LDFLAGS=-lmapreduce -lnetworking
 3. Examples of usage: samples/wordcount

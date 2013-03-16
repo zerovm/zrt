@@ -1,13 +1,21 @@
-Wordcount example for mapreduce library.
-Every map node gets source file as an input via stdin.
-Every reduce node gets mapped key/values from map nodes, reduces it and outputs to stdout.
-Both types of nodes are logging into stderr.
-The mapreduce library is configured in runtime to use key size=4byte and value size=4byte. 
-Value can be set up to 128 bytes then configuring mapreduce library.
-User Map function parses every chunk of input data provided by MapReduce library as words delimeted by
-space and '\0' (null terminated) characters and adds them to the map(keys buffer, values buffer) as a pair.
-The result is a count for each hash key.
 
-to launch in zerovm
+--------------------------------------------
+Samples
+--------------------------------------------
+{DOCPATH}
+
+Wordcount example for mapreduce library.  Every map node gets source
+file as an input via stdin.  Every reduce node gets mapped key/values
+from map nodes, reduces it and outputs to stdout.  Both types of nodes
+are logging into stderr.
+The mapreduce library is configured in runtime to use key size=4byte
+and value size=4byte.  Value can be set up to 128 bytes then
+configuring mapreduce library.  User Map function parses every chunk
+of input data provided by MapReduce library as words delimeted by
+space and '\0' (null terminated) characters and adds them to the
+map(keys buffer, values buffer) as a pair.  The result is a count for
+each hash key.
+
+use folowing to run:
 ./mr_start.sh
 
