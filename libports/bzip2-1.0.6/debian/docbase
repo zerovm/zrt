@@ -1,0 +1,20 @@
+Document: bzip2
+Title: bzip2 and libbzip2: a program and library for data compression
+Author: Julian Seward <jseward@acm.org>
+Abstract: bzip2 compresses files using the Burrows-Wheeler block-sorting
+ text compression algorithm, and Huffman coding.  Compression is generally
+ considerably better than that achieved by more conventional
+ LZ77/LZ78-based compressors, and approaches the performance of the PPM
+ family of statistical compressors.
+Section: File Management
+
+Format: HTML
+Index: /usr/share/doc/bzip2/manual.html
+Files: /usr/share/doc/bzip2/manual.html
+
+Format: PostScript
+Files: /usr/share/doc/bzip2/manual.ps.gz
+
+Format: Info
+Index: /usr/share/doc/bzip2/manual.texi.gz
+Files: /usr/share/doc/bzip2/manual.texi.gz

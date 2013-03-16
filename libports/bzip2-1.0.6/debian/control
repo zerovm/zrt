@@ -1,0 +1,132 @@
+Source: bzip2
+Section: utils
+Priority: important
+Maintainer: Anibal Monsalve Salazar <anibal@debian.org>
+Uploaders: Santiago Ruano Rincón <santiago@debian.org>, Jorge Ernesto Guevara Cuenca <jguevara@debiancolombia.org>
+Standards-Version: 3.9.2
+Build-depends: texinfo, gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc] | gcc-4.1 (<< 4.1.2) [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc], dpkg-dev (>= 1.16.0)
+Homepage: http://www.bzip.org/
+Vcs-Git: git://git.debian.org/collab-maint/bzip2.git
+Vcs-Browser: http://git.debian.org/?p=collab-maint/bzip2.git
+
+Package: libbz2-1.0
+Priority: important
+Section: libs
+Multi-Arch: same
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Pre-Depends: multiarch-support
+Description: high-quality block-sorting file compressor library - runtime
+ This package contains libbzip2 which is used by the bzip2 compressor.
+ .
+ bzip2 is a freely available, patent free, high-quality data compressor. 
+ It typically compresses files to within 10% to 15% of the best available
+ techniques, whilst being around twice as fast at compression and six
+ times faster at decompression.
+ .
+ bzip2 compresses files using the Burrows-Wheeler block-sorting text
+ compression algorithm, and Huffman coding. Compression is generally
+ considerably better than that achieved by more conventional
+ LZ77/LZ78-based compressors, and approaches the performance of the PPM
+ family of statistical compressors.
+ .
+ The archive file format of bzip2 (.bz2) is incompatible with that of its
+ predecessor, bzip (.bz).
+
+Package: libbz2-dev
+Priority: optional
+Section: libdevel
+Multi-Arch: same
+Architecture: any
+Depends: libbz2-1.0 (=${binary:Version}), libc6-dev | libc-dev
+Replaces: bzip2 (<<0.9.5d-3)
+Description: high-quality block-sorting file compressor library - development
+ Static libraries and include files for the bzip2 compressor library.
+ .
+ bzip2 is a freely available, patent free, high-quality data compressor. 
+ It typically compresses files to within 10% to 15% of the best available
+ techniques, whilst being around twice as fast at compression and six
+ times faster at decompression.
+ .
+ bzip2 compresses files using the Burrows-Wheeler block-sorting text
+ compression algorithm, and Huffman coding.  Compression is generally
+ considerably better than that achieved by more conventional
+ LZ77/LZ78-based compressors, and approaches the performance of the PPM
+ family of statistical compressors.
+ .
+ The archive file format of bzip2 (.bz2) is incompatible with that of its
+ predecessor, bzip (.bz).
+
+Package: bzip2
+Priority: optional
+Section: utils
+Architecture: any
+Multi-Arch: foreign
+Depends: libbz2-1.0 (=${binary:Version}), ${shlibs:Depends}
+Suggests: bzip2-doc
+Replaces: libbz2 (<<0.9.5d-3)
+Description: high-quality block-sorting file compressor - utilities
+ bzip2 is a freely available, patent free, high-quality data compressor. 
+ It typically compresses files to within 10% to 15% of the best available
+ techniques, whilst being around twice as fast at compression and six
+ times faster at decompression.
+ .
+ bzip2 compresses files using the Burrows-Wheeler block-sorting text
+ compression algorithm, and Huffman coding.  Compression is generally
+ considerably better than that achieved by more conventional
+ LZ77/LZ78-based compressors, and approaches the performance of the PPM
+ family of statistical compressors.
+ .
+ The archive file format of bzip2 (.bz2) is incompatible with that of its
+ predecessor, bzip (.bz).
+
+Package: lib64bz2-1.0
+Priority: optional
+Section: libs
+Architecture: i386 powerpc sparc s390
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: amd64-libs (<< 1.5)
+Description: high-quality block-sorting file compressor library - 64bit runtime
+ This package contains the libbzip2 64bit runtime library.
+
+Package: lib64bz2-dev
+Priority: optional
+Section: libdevel
+Replaces: amd64-libs-dev (<< 1.5)
+Architecture: i386 powerpc sparc s390
+Depends: lib64bz2-1.0 (=${binary:Version}), libbz2-dev (=${binary:Version}), ${dev:Depends}
+Description: high-quality block-sorting file compressor library - 64bit development
+ Static libraries and include files for the bzip2 compressor library (64bit).
+
+Package: lib32bz2-1.0
+Priority: optional
+Section: libs
+Architecture: amd64 ppc64
+Pre-Depends: libc6-i386 (>= 2.9-18) [amd64]
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: ia32-libs
+Description: high-quality block-sorting file compressor library - 32bit runtime
+ This package contains the libbzip2 32bit runtime library.
+
+Package: lib32bz2-dev
+Priority: optional
+Section: libdevel
+Architecture: amd64 ppc64
+Depends: lib32bz2-1.0 (=${binary:Version}), libbz2-dev (=${binary:Version}), ${dev:Depends}
+Replaces: ia32-libs-dev
+Description: high-quality block-sorting file compressor library - 32bit development
+ Static libraries and include files for the bzip2 compressor library (32bit).
+
+Package: bzip2-doc
+Priority: optional
+Section: doc
+Architecture: all
+Depends: dpkg (>= 1.15.4) | install-info
+Replaces: bzip2 (<< 1.0.4-0ubuntu2)
+Description: high-quality block-sorting file compressor - documentation
+ bzip2 is a freely available, patent free, high-quality data compressor. 
+ It typically compresses files to within 10% to 15% of the best available
+ techniques, whilst being around twice as fast at compression and six
+ times faster at decompression.
+ .
+ This package contains the bzip2 user manual.

@@ -1,0 +1,410 @@
+#!/usr/bin/make -f
+# debian/rules file for building the Debian GNU/Linux package bzip2.
+# Copyright (C) 1999, 2000, 2001, 2002 Philippe Troin
+# Copyright (C) 2004-2007 Anibal Monsalve Salazar <anibal@debian.org>
+
+SHELL = /bin/bash
+package = bzip2
+
+testdir=test -x debian/rules && test -f bzip2.c
+testroot=test "`id -nu`" = root
+
+DEB_BUILD_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_HOST_ARCH		:= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_HOST_ARCH_OS	:= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+DEB_HOST_MULTIARCH      ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
+        CROSS=CC=$(DEB_HOST_GNU_TYPE)-gcc
+        CC=$(DEB_HOST_GNU_TYPE)-gcc
+        DEBSTRIP=$(DEB_HOST_GNU_TYPE)-strip
+else
+        CROSS=CC=gcc
+        CC=gcc
+        DEBSTRIP=strip
+endif
+
+DEBCFLAGS:=
+WGET=wget
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+DEBCFLAGS += -g
+endif
+ifneq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+DEBSTRIP:=:
+endif
+
+gen_md5sums = cd debian/tmp-$(1)/ && find -type f \! -regex '.*/DEBIAN/.*' -printf '%P\0' | xargs -r0 md5sum >DEBIAN/md5sums
+
+DEBVERSION:=$(shell head -n 1 debian/changelog \
+		    | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
+UPVERSION:=$(shell echo $(DEBVERSION) | sed -e 's/-[0-9.]*$$//')
+
+ifneq (,$(findstring /$(DEB_HOST_ARCH)/,/i386/powerpc/sparc/s390/))
+	build64-stamp := build64-stamp
+	CC64=$(CC) -m64
+endif
+ifeq ($(DEB_HOST_ARCH),i386)
+	CC64 += -march=x86-64 -mtune=x86-64
+endif
+
+ifneq (,$(findstring /$(DEB_HOST_ARCH)/,/amd64/ppc64/))
+	build32-stamp := build32-stamp
+	lib32 := usr/lib32
+endif
+
+build-arch: build
+build-indep: build
+build: build-stamp $(build32-stamp) $(build64-stamp)
+build-stamp:
+	$(testdir)
+	# Add here commands to compile the package.
+	$(MAKE) $(CROSS) DEBCFLAGS="$(DEBCFLAGS)"
+ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
+	$(MAKE) DEBCFLAGS="$(DEBCFLAGS)" test
+endif
+	makeinfo -o bzip2.info manual.texi
+	cat debian/copyright.in LICENSE > debian/copyright
+	touch build-stamp
+
+# requires: docbook-xml docbook2x
+manual.texi: manual.xml
+	docbook2x-texi --to-stdout manual.xml | \
+	awk '/^@direntry/,/^@end direntry/ {if ($$0 !~ /@/) {print "* Bzip2: (bzip2).               A program and library for data compression."; next}} {print}' > manual.texi
+
+build32: build32-stamp
+build32-stamp:
+	$(testdir)
+	rm -rf 32
+	mkdir 32
+	cp -p *.h *.c Makefile 32/
+	$(MAKE) -C 32 "$(CROSS) -m32" DEBCFLAGS="$(DEBCFLAGS)"
+	touch build32-stamp
+
+build64: build64-stamp
+build64-stamp:
+	$(testdir)
+	rm -rf 64
+	mkdir 64
+	cp -p *.h *.c Makefile 64/
+	$(MAKE) -C 64 CC="$(CC64)" DEBCFLAGS="$(DEBCFLAGS)"
+	touch build64-stamp
+
+
+clean:
+	$(testdir)
+	rm -f build*-stamp
+	[ ! -f Makefile ] || $(MAKE) distclean
+	rm -rf 32 64
+	rm -f debian/substvars debian/files bzip2.info*
+	rm -fr debian/tmp*
+	find . -name "*~" -print0 | xargs -r0 rm -f
+
+# Build architecture-independent files here.
+binary-indep: build
+	$(testdir)
+	$(testroot)
+
+	# Info
+	install -d debian/tmp-doc/usr/share/info
+	cp bzip2.info* debian/tmp-doc/usr/share/info/
+	gzip -v9 debian/tmp-doc/usr/share/info/*
+
+	install -d debian/tmp-doc/usr/share/doc/bzip2
+	install -d debian/tmp-doc/usr/share/doc/bzip2-doc
+	cp *.ps *.html *.texi debian/tmp-doc/usr/share/doc/bzip2
+	gzip -v9 debian/tmp-doc/usr/share/doc/bzip2/*.{ps,texi}
+	for i in debian/tmp-doc/usr/share/doc/bzip2/*.{ps.gz,texi.gz,html}; do \
+	  b=$$(basename $$i); \
+	  ln -sf ../bzip2/$$b debian/tmp-doc/usr/share/doc/bzip2-doc/$$b; \
+	done
+
+	cp debian/changelog \
+	  debian/tmp-doc/usr/share/doc/bzip2-doc/changelog.Debian
+	gzip -v9 -n debian/tmp-doc/usr/share/doc/bzip2-doc/changelog*
+	cp debian/copyright debian/tmp-doc/usr/share/doc/bzip2-doc/
+
+	# Doc-base support
+	install -d debian/tmp-doc/usr/share/doc-base
+	cp debian/docbase debian/tmp-doc/usr/share/doc-base/bzip2
+
+	# Control files
+	install -d debian/tmp-doc/DEBIAN
+
+	dpkg-gencontrol -isp -Pdebian/tmp-doc -pbzip2-doc
+
+	# Add md5sums
+	$(call gen_md5sums,doc)
+
+	# Fix perms
+	chown -R root.root debian/tmp-doc
+	chmod -R a+rX-wts,u+w debian/tmp-doc
+
+	# Buildit
+	dpkg --build debian/tmp-doc ..
+
+# Build architecture-dependent files here.
+binary-arch: build
+	$(testdir)
+	$(testroot)
+	rm -fr debian/tmp*
+	install -d debian/tmp/usr
+
+	$(MAKE) PREFIX=`pwd`/debian/tmp install
+
+	### Split
+
+	# Development package
+	install -d debian/tmp-dev/usr/lib/$(DEB_HOST_MULTIARCH)
+	rm debian/tmp/lib/libbz2.so
+	ln -s /lib/$(DEB_HOST_MULTIARCH)/libbz2.so.1.0 debian/tmp-dev/usr/lib/$(DEB_HOST_MULTIARCH)/libbz2.so
+	mv debian/tmp/lib/libbz2.a debian/tmp-dev/usr/lib/$(DEB_HOST_MULTIARCH)/
+	mv debian/tmp/include debian/tmp-dev/usr/include
+	
+
+	# Library package
+	install -d debian/tmp-lib/lib/$(DEB_HOST_MULTIARCH)
+	for i in $$(ls debian/tmp/lib/libbz2.so*); do \
+	  (set -x; echo $$i; mv $$i debian/tmp-lib/lib/$(DEB_HOST_MULTIARCH)/); \
+	done
+	ln -s libbz2.so.1.0.4 debian/tmp-lib/lib/$(DEB_HOST_MULTIARCH)/libbz2.so.1
+	chmod -x debian/tmp-lib/lib/$(DEB_HOST_MULTIARCH)/*
+
+	# Binary package
+	install -d debian/tmp-run
+	mv debian/tmp/bin debian/tmp-run/bin
+	ln -sf bzdiff debian/tmp-run/bin/bzcmp
+	ln -sf bzgrep debian/tmp-run/bin/bzegrep
+	ln -sf bzgrep debian/tmp-run/bin/bzfgrep
+	ln -sf bzmore debian/tmp-run/bin/bzless
+	install -d debian/tmp-run/usr/share
+	mv debian/tmp/man debian/tmp-run/usr/share/man
+
+	### Check the install
+	test "$$(find debian/tmp ! -type d -print | wc -l)" -eq 0
+	rm -fr debian/tmp
+
+	### Finalize documentation
+
+	# Man pages
+	gzip -v9 debian/tmp-run/usr/share/man/man1/*.1
+	( cd debian/tmp-run/usr/share/man/man1 && \
+	  for i in bunzip2 bzcat bzip2recover; do \
+	    ln -s bzip2.1.gz $$i.1.gz; \
+	  done )
+
+	# Other docs in lib package
+	install -d debian/tmp-run/usr/share/doc/bzip2
+	cp CHANGES debian/tmp-run/usr/share/doc/bzip2/changelog
+	cp debian/changelog \
+	  debian/tmp-run/usr/share/doc/bzip2/changelog.Debian
+	gzip -v9 -n debian/tmp-run/usr/share/doc/bzip2/changelog*
+	cp debian/copyright debian/tmp-run/usr/share/doc/bzip2/
+
+	# Library package
+	install -d debian/tmp-lib/usr/share/doc/libbz2-1.0
+	cp debian/copyright debian/tmp-lib/usr/share/doc/libbz2-1.0/
+	cp CHANGES debian/tmp-lib/usr/share/doc/libbz2-1.0/changelog
+	cp debian/changelog \
+	  debian/tmp-lib/usr/share/doc/libbz2-1.0/changelog.Debian
+	gzip -v9 -n debian/tmp-lib/usr/share/doc/libbz2-1.0/changelog*
+
+	# Other packages point to libbz2-1.0
+	install -d debian/tmp-dev/usr/share/doc
+	ln -s libbz2-1.0 debian/tmp-dev/usr/share/doc/libbz2-dev
+
+	### Package finalize
+
+	# Stripping
+	for i in debian/tmp-run/bin/*; \
+	do \
+	  if [ ! -h $$i ] && head -n 1 $$i | grep -vq '^#!'; \
+	  then \
+	    (set -x; $(DEBSTRIP) -R .note -R .comment $$i); \
+	  fi; \
+	done
+	$(DEBSTRIP) --strip-unneeded -R .note -R .comment \
+	  debian/tmp-lib/lib/$(DEB_HOST_MULTIARCH)/*.so*
+	$(DEBSTRIP) --strip-debug debian/tmp-dev/usr/lib/$(DEB_HOST_MULTIARCH)/*.a
+
+	# Control files
+	install -d debian/tmp-{lib,dev,run}/DEBIAN
+	cp debian/shlibs debian/tmp-lib/DEBIAN/shlibs
+
+	dpkg-shlibdeps debian/tmp-lib/lib/$(DEB_HOST_MULTIARCH)/*.so*
+	dpkg-gencontrol -isp -Pdebian/tmp-lib -plibbz2-1.0
+	rm debian/substvars
+	dpkg-gencontrol -isp -Pdebian/tmp-dev -plibbz2-dev
+	dpkg-shlibdeps debian/tmp-run/bin/*
+	dpkg-gencontrol -isp -Pdebian/tmp-run -pbzip2
+
+	for i in run dev lib; do \
+	  cp debian/postinst-$$i debian/tmp-$$i/DEBIAN/postinst; \
+	  chmod +x debian/tmp-$$i/DEBIAN/postinst; \
+	done
+	cp debian/preinst-run debian/tmp-run/DEBIAN/preinst
+	cp debian/postrm-lib debian/tmp-lib/DEBIAN/postrm
+	chmod +x debian/tmp-run/DEBIAN/preinst debian/tmp-lib/DEBIAN/postrm
+
+	# Add md5sums
+	$(call gen_md5sums,run)
+	$(call gen_md5sums,lib)
+	$(call gen_md5sums,dev)
+
+	# Fix perms
+	chown -R root.root debian/tmp*
+	chmod -R a+rX-wts,u+w debian/tmp*
+
+	# Buildit
+	dpkg --build debian/tmp-run ..
+	dpkg --build debian/tmp-lib ..
+	dpkg --build debian/tmp-dev ..
+
+ifneq (,$(build64-stamp))
+	rm -rf debian/tmp-lib64
+	rm -rf debian/tmp-dev64
+
+	install -d debian/tmp-lib64/usr/lib64
+	cp -a 64/libbz2.so.* debian/tmp-lib64/usr/lib64/
+	ln -s libbz2.so.1.0.4 debian/tmp-lib64/usr/lib64/libbz2.so.1
+	chmod -x debian/tmp-lib64/usr/lib64/*
+
+	install -d debian/tmp-dev64/usr/lib64
+	cp -a 64/libbz2.so 64/libbz2.a debian/tmp-dev64/usr/lib64/
+	chmod -x debian/tmp-dev64/usr/lib64/*.a
+
+	install -d debian/tmp-lib64/usr/share/doc/lib64bz2-1.0
+	cp debian/copyright debian/tmp-lib64/usr/share/doc/lib64bz2-1.0/
+	cp debian/changelog \
+	  debian/tmp-lib64/usr/share/doc/lib64bz2-1.0/changelog.Debian
+	gzip -v9 -n debian/tmp-lib64/usr/share/doc/lib64bz2-1.0/changelog*
+
+	install -d debian/tmp-dev64/usr/share/doc
+	ln -s lib64bz2-1.0 debian/tmp-dev64/usr/share/doc/lib64bz2-dev
+
+	$(DEBSTRIP) --strip-unneeded -R .note -R .comment \
+	  debian/tmp-lib64/usr/lib64/*.so*
+	$(DEBSTRIP) --strip-debug debian/tmp-dev64/usr/lib64/*.a
+
+	install -d debian/tmp-{lib,dev}64/DEBIAN
+	/bin/echo -e 'libbz2\t1.0\tlib64bz2-1.0' > debian/tmp-lib64/DEBIAN/shlibs
+
+	-dpkg-shlibdeps debian/tmp-lib/usr/lib64/*.so*
+ifeq ($(DEB_HOST_ARCH),i386)
+	echo 'shlibs:Depends=libc6-amd64' > debian/substvars
+endif
+ifeq ($(DEB_HOST_ARCH),powerpc)
+	echo 'shlibs:Depends=libc6-ppc64' > debian/substvars
+endif
+#ifeq ($(DEB_HOST_ARCH),s390)
+#	echo 'shlibs:Depends=libc6-s390x' > debian/substvars
+#endif
+#ifeq ($(DEB_HOST_ARCH),sparc)
+#	echo 'shlibs:Depends=libc6-sparc64' > debian/substvars
+#endif
+	dpkg-gencontrol -isp -Pdebian/tmp-lib64 -plib64bz2-1.0
+	rm -f debian/substvars
+
+ifeq ($(DEB_HOST_ARCH),i386)
+	echo 'dev:Depends=libc6-dev-amd64' > debian/substvars
+endif
+ifeq ($(DEB_HOST_ARCH),powerpc)
+	echo 'dev:Depends=libc6-dev-ppc64' > debian/substvars
+endif
+ifeq ($(DEB_HOST_ARCH),s390)
+	echo 'dev:Depends=libc6-dev-s390x' > debian/substvars
+endif
+ifeq ($(DEB_HOST_ARCH),sparc)
+	echo 'dev:Depends=libc6-dev-sparc64' > debian/substvars
+endif
+	dpkg-gencontrol -isp -Pdebian/tmp-dev64 -plib64bz2-dev
+
+	for i in dev lib; do \
+	  cp debian/postinst-$$i debian/tmp-$${i}64/DEBIAN/postinst; \
+	  chmod +x debian/tmp-$${i}64/DEBIAN/postinst; \
+	done
+
+	$(call gen_md5sums,lib64)
+	$(call gen_md5sums,dev64)
+
+	chown -R root.root debian/tmp*64
+	chmod -R a+rX-wts,u+w debian/tmp*64
+
+	dpkg --build debian/tmp-lib64 ..
+	dpkg --build debian/tmp-dev64 ..
+endif
+
+ifneq (,$(build32-stamp))
+	rm -rf debian/tmp-lib32
+	rm -rf debian/tmp-dev32
+
+	install -d debian/tmp-lib32/$(lib32)
+	cp -a 32/libbz2.so.* debian/tmp-lib32/$(lib32)/
+	ln -s libbz2.so.1.0.4 debian/tmp-lib32/$(lib32)/libbz2.so.1
+	chmod -x debian/tmp-lib32/$(lib32)/*
+
+	install -d debian/tmp-dev32/$(lib32)
+	cp -a 32/libbz2.so 32/libbz2.a debian/tmp-dev32/$(lib32)/
+	chmod -x debian/tmp-dev32/$(lib32)/*.a
+
+	install -d debian/tmp-lib32/usr/share/doc/lib32bz2-1.0
+	cp debian/copyright debian/tmp-lib32/usr/share/doc/lib32bz2-1.0/
+	cp debian/changelog \
+	  debian/tmp-lib32/usr/share/doc/lib32bz2-1.0/changelog.Debian
+	gzip -v9 -n debian/tmp-lib32/usr/share/doc/lib32bz2-1.0/changelog*
+
+	install -d debian/tmp-dev32/usr/share/doc
+	ln -s lib32bz2-1.0 debian/tmp-dev32/usr/share/doc/lib32bz2-dev
+
+	$(DEBSTRIP) --strip-unneeded -R .note -R .comment \
+	  debian/tmp-lib32/$(lib32)/*.so*
+	$(DEBSTRIP) --strip-debug debian/tmp-dev32/$(lib32)/*.a
+
+	install -d debian/tmp-{lib,dev}32/DEBIAN
+	/bin/echo -e 'libbz2\t1.0\tlib32bz2-1.0' > debian/tmp-lib32/DEBIAN/shlibs
+
+	-dpkg-shlibdeps debian/tmp-lib/$(lib32)/*.so*
+ifeq ($(DEB_HOST_ARCH),amd64)
+	echo 'shlibs:Depends=libc6-i386' > debian/substvars
+endif
+ifeq ($(DEB_HOST_ARCH),ppc64)
+	echo 'shlibs:Depends=libc6-powerpc' > debian/substvars
+endif
+	dpkg-gencontrol -isp -Pdebian/tmp-lib32 -plib32bz2-1.0
+	rm -f debian/substvars
+
+ifeq ($(DEB_HOST_ARCH),amd64)
+	echo 'dev:Depends=libc6-dev-i386' > debian/substvars
+endif
+ifeq ($(DEB_HOST_ARCH),ppc64)
+	echo 'shlibs:Depends=libc6-dev-powerpc' > debian/substvars
+endif
+	dpkg-gencontrol -isp -Pdebian/tmp-dev32 -plib32bz2-dev
+
+	for i in dev lib; do \
+	  cp debian/postinst-$$i debian/tmp-$${i}32/DEBIAN/postinst; \
+	  chmod +x debian/tmp-$${i}32/DEBIAN/postinst; \
+	done
+
+	$(call gen_md5sums,lib32)
+	$(call gen_md5sums,dev32)
+
+	chown -R root.root debian/tmp*32
+	chmod -R a+rX-wts,u+w debian/tmp*32
+
+	dpkg --build debian/tmp-lib32 ..
+	dpkg --build debian/tmp-dev32 ..
+endif
+
+print-version:
+	@@echo "Debian version:          $(DEBVERSION)"
+	@@echo "Upstream version:        $(UPVERSION)"
+
+get-orig-source:
+	$(WGET) -O bzip2_$(UPVERSION).orig.tar.gz \
+	  ftp://sourceware.cygnus.com/pub/bzip2/v100/bzip2-$(UPVERSION).tar.gz
+
+binary: binary-indep binary-arch
+
+.PHONY: build clean binary-indep binary-arch binary print-version \
+	get-orig-source
