@@ -1,0 +1,37 @@
+Description: Upstream changes introduced in version 1:1.2.3.4.dfsg-3
+ This patch has been created by dpkg-source during the package build.
+ Here's the last changelog entry, hopefully it gives details on why
+ those changes were made:
+ .
+ zlib (1:1.2.3.4.dfsg-3) unstable; urgency=low
+ .
+   * Only check for EOF on transparent streams if we have done a zero
+     byte read to avoid reporting EOF early to applications.  This was
+     breaking R.
+ .
+ The person named in the Author field signed this changelog entry.
+Author: Mark Brown <broonie@debian.org>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- zlib-1.2.3.4.dfsg.orig/Makefile
++++ zlib-1.2.3.4.dfsg/Makefile
+@@ -34,7 +34,7 @@ STATICLIB=libz.a
+ SHAREDLIB=libz.so
+ SHAREDLIBV=libz.so.1.2.3.4
+ SHAREDLIBM=libz.so.1
+-LIBS=$(STATICLIB) $(SHAREDLIB)
++LIBS=$(STATICLIB) $(SHAREDLIB) $(SHAREDLIBV)
+ 
+ AR=ar rc
+ RANLIB=ranlib

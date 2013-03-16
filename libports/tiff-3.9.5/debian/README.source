@@ -1,0 +1,35 @@
+
+INFORMATION SPECIFIC TO THE TIFF PACKAGE
+========================================
+
+The tiff upstream maintainers have a tendency to make mistakes that
+introduce binary incompatibility between one version of tiff and
+another.  In order to verify binary compatibility, it is strongly
+recommended to build a new library and install the new library without
+installing the new tools.  Then test the tools with the test images
+provided by upstream.
+
+Additionally, when checking the sources to look for ABI changes, you
+must check both the public header files (tiff.h and tiffio.h) and the
+source file libtiff/tif_dirinfo.c which maps tag names to types.
+Changes in the tag name to type mapping also result in binary
+incompatibility because of the field setting and getting functions
+using variable arguments.
+
+Until tiff4 is released, debian's soname is out of step with
+upstreams.  For each new release, it will be necessary to update
+soname.patch.
+
+The tiff packages get a fair number of security-related bug reports.
+In the interest of keeping the quality of the tiff software as high as
+possible, it's good for the debian and Red Hat maintainers to be in
+touch.  As of this writing, the Red Hat maintaner, Tom Lane, agrees.
+The latest Red Hat package can be found here:
+
+http://download.fedora.redhat.com/pub/fedora/linux/development/source/SRPMS/
+
+You can also see their CVS:
+
+http://cvs.fedoraproject.org/viewvc/rpms/libtiff/
+
+ -- Jay Berkenbilt <qjb@debian.org>, Fri, 18 Jun 2010 21:33:28 -0400

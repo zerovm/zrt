@@ -1,0 +1,47 @@
+Description: Upstream changes introduced in version 6b1-1
+ This patch has been created by dpkg-source during the package build.
+ Here's the last changelog entry, hopefully it gives details on why
+ those changes were made:
+ .
+ libjpeg6b (6b1-1) unstable; urgency=low
+ .
+   * New upstream release
+     - libjpeg62 has now versionned symbols.
+     - Updated build system that use current libtool.
+     - Full source code for the build system.
+   * debian/copyright: add 6b1 upstream download URL.
+   * debian/control:
+     - libjpeg62-dev: Provides libjpeg-dev since the transition has been
+       postponed.
+     - Remove now useless dependency on libtool and sharutils
+     - Bump Standards-Version to 3.9.0.
+   * Get rid of dpatch system. Patches were only relevant to libjpeg-progs
+     which is not build from this package anymore.
+   * Move to new source format 3.0 (quilt). Patches applied:
+     - use-autotools-dev: Use autotools-dev version of config.sub/.guess.
+     - extern_C-jpeglib.h: Wrap jpeglib.h with extern "C" {} if __cplusplus
+       is defined.
+   * debian/rules:
+     - Adjust for new build system and new patch system.
+   * debian/shlibs: add (>=6b1) to avoid linker warnings with libjpeg6b.
+ .
+ The person named in the Author field signed this changelog entry.
+Author: Bill Allombert <ballombe@debian.org>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- /dev/null
++++ libjpeg6b-6b1/stamp-h1
+@@ -0,0 +1 @@
++timestamp for jconfig.h

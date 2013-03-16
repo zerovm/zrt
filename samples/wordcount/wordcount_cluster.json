@@ -1,31 +1,40 @@
-{ "wordcount" :
 [
 	{
 		"name" : "map",
-		"exec" : "map.nexe",
-		"connect" : [ {"name" : "map"}, {"name" : "red"} ],
-		"filelist" : 
-		[ 
+		"exec" : {
+            "path": "/wordcount/bin/map.nexe",
+            "env" : {
+                "MAP_NAME" : "map",
+                "REDUCE_NAME" : "red",
+                "MAP_CHUNK_SIZE": "536870912"
+            }
+        },
+		"connect" : [ "red" ],
+		"file_list" : [
 		{
-			"access" : "sr",
 			"device" : "stdin",
-			"path"   : "url/container1/object*.data"
-		} 
-		],
-		"env" : [ {"MAP_NAME" : "map"}, {"REDUCE_NAME" : "red"} ]
+			"path"   : "/wordcount/wiki/input_wiki.2"
+		}
+		]
 	},
 	{
 		"name" : "red",
-		"exec" : "red.nexe",
-		"connect" : [ {"name" : "map"} ],
-		"filelist" : 
-		[ 
+		"exec" : {
+            "path": "/wordcount/bin/reduce.nexe",
+            "env" : {
+                "MAP_NAME" : "map",
+                "REDUCE_NAME" : "red"
+            }
+        },
+		"connect" : [ "map" ],
+		"file_list" :
+		[
 		{
-			"access" : "sw",
 			"device" : "stdout",
-			"path"   : "url/container1/object*.result"
-		} 
+			"path"   : "/wordcount/wiki/output_wiki.*.txt",
+            "content_type": "text/plain"
+		}
 		],
-		"env" : [ {"MAP_NAME" : "map"}, {"REDUCE_NAME" : "red"} ]
+        "count": 1
 	}
-}
+]

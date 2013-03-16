@@ -1,0 +1,9 @@
+Document: libtiff-doc
+Title: TIFF Software
+Author: Sam Leffler
+Abstract: Support for the Tag Image File Format (TIFF) for storing image data.
+Section: Graphics
+
+Format: HTML
+Index: /usr/share/doc/libtiff-doc/html/index.html
+Files: /usr/share/doc/libtiff-doc/html/*.html

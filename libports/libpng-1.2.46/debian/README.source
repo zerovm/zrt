@@ -1,0 +1,5 @@
+Before editing the source package, apply the patches in
+debian/patches.
+
+For information about the patch system used for the Debian source
+package refer to /usr/share/doc/quilt/README.source
