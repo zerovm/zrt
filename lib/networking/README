@@ -1,9 +1,10 @@
+
 --------------------------------------------
 Networking Library
 --------------------------------------------
+{DOCPATH}
 
-1. Networking Library is provide access to simple channels configuration related to distributed applications, 
-that is based on channel aliases configured once in manifest file and accessible runtime via readir;
-Using of networking library allow to setup networking channels set just use dynamical 
-channel aliases from configuration, that way eliminates most of hardcoded data;
-2. In order link that static library add the folowing flags: -L{YOUR_ZRT_ROOT}/lib -lzrt -lnetworking;
+1. Networking Library allows to setup network channels using channels configuration from manifest file and it's based on channel alias names accessible runtime via readir function; Using of networking library allows to setup networking channels set just use dynamical channel aliases from configuration, that way eliminates most of hardcoded data;
+2. Object files belongs to this library are resides on libnetworking.a, so use:
+LDFLAGS+=-lnetworking
+3. Examples of usage by samples: disort, reqrep, wordcount

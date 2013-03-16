@@ -173,5 +173,9 @@ ${TESTS_CLEAN}:
 	@make -Ctests/$(basename $@) clean
 
 ################ "make doc" Generate doc file concatenating all READMEs
-doc:
-	@find -name "README" | xargs cat > README.gen
+README_GEN=README.gen
+doc:	
+	@rm -f ${README_GEN}
+	@echo "Auto created from READMEs located in ZRT project\n" > ${README_GEN}
+	@find ./lib ./tests ./samples -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
+	@chmod 0444 ${README_GEN}

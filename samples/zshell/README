@@ -1,6 +1,10 @@
-zshell
-run LUA, SQLITE, PYTHON scripts
 
-python scripts required:
+--------------------------------------------
+Zshell
+--------------------------------------------
+{DOCPATH}
+
+run LUA, SQLITE, PYTHON scripts from single application, first line of script must contains char #lua / #sqlite / #python identifier.
+Also required:
 1. ZPYTHON_ROOT environment variable pointing to root folder of zpython;
 2. compiled zpython;
