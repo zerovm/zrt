@@ -1,11 +1,17 @@
+
+--------------------------------------------
+Libc test suite
+--------------------------------------------
+{DOCPATH}
+
 Run glibc tests for zerovm using only one thing:
 sh run_tests.sh
 
-Some tests are using filesystem and to get it worked is used
-tarball archive ./singles/archive/glibc-fs.tar added to manifest
-file of every test, to be injected into nexes filesystem in memory;
-The main interesting part of that archive are full list of localisation 
-files that used by glibc when nexe tries to setlocale;
+Some tests are using filesystem and to get it worked is used tarball
+archive ./singles/archive/glibc-fs.tar added to manifest file of every
+test, to be injected into nexes filesystem in memory; The main
+interesting part of that archive are full list of localisation files
+that used by glibc when nexe tries to setlocale;
 
 Sections of tests which don't want be run:
 ./todo: 

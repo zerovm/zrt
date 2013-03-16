@@ -1,41 +1,38 @@
-Just samples demonstrates samples using ZRT and running on ZeroVM.
 
-tarimage/
-  User application specifies tarball archive that accessible through zerovm channel in read-only mode;
-  loaded filesystem contents can be used in read/write modes but all changes made will be lost at exit. 
-  TODO: Add filesystem tests.
+--------------------------------------------
+Samples
+--------------------------------------------
+{DOCPATH}
 
-zshell/
-  run lua scripts and sql queries via single zerovm executable and various manifest files.
-  also available python scripting; 
-  
-wordcount/
-  distributed application that uses mapreduce, networking library that part of zrt. 
-  It calculates count of words in loaded input files; One file per one map node;
-
-disort/
-  distributed sorting, contains 3 types of applications that interacts as nodes, that implements networking communication; 
-  it uses files as one-to-one network channels. For local sort it uses bitonic sort for sse41 instructions set or 
-  qsort from c std library for another cpu instructions set. Currently network organized by 
-  10 source, 10 destination and one manager nodes. Count of nodes and amount of sorting data are possible to configurate;
-  Source data for source nodes generates by generators nexe, that should be run separately from sorting job;   
-  
-reqrep/
-  example uses network facility, it's emulate simple network, where two nodes is communicating one to one. 
-  Can work in two modes. mode 1 - Single node sending N MB and recevies the same from another node.
-  mode 2- one node sends and another node receives data in cycle; 
-  Now it's get cluster configuration via readdir. No direct file path using.
-  
-hello/
-  simple example how to write a program for zerovm using zerovm api.
-  
-sort_paging/
-  contains 3 programs which allows to create random data, sort it and test sort order. from this example you can
-  see how to use intrinsics in nacl modules - absolutely same as usual. also this is another example of pagination
-  mechanism usage. Doing check for sse41. 
-  same "sort/" with i/o via zerovm api. also this example doesn't use mapped channels (except stderr)
-  
-time/
-  via zerovm api user program can get date/time specified in manifest by "TimeStamp" keyword. if there is no such keyword in
-  manifest user program will get -1 (1969-12-31 time = 23:59:59 UTC)
-
+Folowing samples demonstrates of usage and building for ZRT:
+1.samples/tarimage - Nvram usage demo. User specifying tarball archive
+and using nvram mechanism image contents are injecting into user file
+system and listing it by readdir;
+2.samples/zshell - run lua scripts and sql queries via single zerovm
+executable and various manifest files. also available python
+scripting;
+3.samples/wordcount - distributed application that uses mapreduce and
+networking libraries. It calculates count of words in provided input
+files; One file per one map node using by design; 3.samples/disort -
+distributed sort, 3 kind of applications source,destination, manager
+that interacts as nodes, and implements networking communication;
+Local sort uses high performance bitonic sort for sse41 instructions
+set, or qsort from c std library for another cpu instructions
+set. Currently network organized by 10 source, 10 destination and one
+manager nodes. Count of nodes and amount of sorting data are possible
+to config. Source data generates by generator application, and should
+be run separatedly from sorting job;
+4.samples/reqrep - this example uses network facility, it's emulate
+simple network, where two nodes is communicating one to one. Can work
+in two modes. mode 1 - Single node sending N MB and recevies the same
+from another node. mode 2- one node sends and another node receives
+data in cycle;
+5.samples/hello - simple example how to write a program for zerovm.
+6.samples/sort_paging - high performance sort contains 3 programs
+which allows to create random data, sort it and test sort order. from
+this example you can see how to use intrinsics under zerovm -
+absolutely same as usual. also this is another example of pagination
+mechanism usage. Doing check for sse41.
+7.samples/time - via zerovm api user program can get date/time
+specified in environment variable"TimeStamp". If there is no such env
+var then user program will get -1 (1969-12-31 time = 23:59:59 UTC)

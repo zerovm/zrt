@@ -1,23 +1,23 @@
+
 ---------------------------------------------------
 Lua Unit tests, based on Test suite for Lua 5.2.1
 source: www.lua.org
 ---------------------------------------------------
+{DOCPATH}
 
 1.Lua test suite short brief.
   This suite contains nexe executable and test lua files:
-  a) executable is used to load all tests at startup and just run lua 
-     script passed into command line of nexe; nexe executable is based 
-     on source file zrt/lib/lua-5.2.1/src/not_for_lib/lua.c that is part
-     of original lua package ported to zerovm;
-  b) test lua files are used inside of filesystem contains lua files and 
-     /tmp directory, and all of this are injected as tar archive via 
-     /dev/tarimage channel;
+  a) executable is used to load all tests at startup and just run lua
+  script passed into command line of nexe; nexe executable is based on
+  source file zrt/lib/lua-5.2.1/src/not_for_lib/lua.c that is part of
+  original lua package ported to zerovm;
+  b) test lua files are used inside of filesystem contains lua files
+  and /tmp directory, and all of this are injected as tar archive via
+  /dev/tarimage channel;
 2.Build and run from command line:
 cd zrt/tests/lua_test/suite
 make
 run_tests.sh
-3.Known issues: files.lua was changed, and now it's not testing tmpfile
-  feature, that currently not supported;
   
 
 

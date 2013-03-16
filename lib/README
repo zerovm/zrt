@@ -1,97 +1,49 @@
+---------------------------------------------------------------
 ZRT - ZeroVM runtime library
-
-It's contains:
-- Simple OS implementation. Described in more details in the folowing section 
-- Mapreduce32/128 Library, see here: zrt\lib\mapreduce\README 
-- Networking Library, see here: zrt\lib\networking\README
-- Rewritable filesystem in memory - MemMount taken from nacl-mounts
-- Read only filesystem loaded from channel, now tarball format supported
-
 ---------------------------------------------------------------
-1.Simple OS implementation
----------------------------------------------------------------
+{DOCPATH}
 
-Terms:
-untrusted (application) - user executable running inside ZeroVM
-trusted (application) - ZeroVM itself or a part of it
-
-1.1. 
-In order to use zrt you can just include "zrt.h" and set appropriate include path in Makefile.
-Many syscalls have real implementation to provide required abstraction level for untrusted application.
-Untrusted code can recieve system calls back into user code if it has a proper callback setup.
-Since user code must be compiled by nacl-gcc or nacl-g++ it supports only NACL syscalls
-If untrusted code will try to call real Linux syscall it will fail. 
-ZRT has complete implementation (with error handling) for the folowing syscalls: 
-stat(), fstat(), seek(), open(), close(), getdents(). The rest of syscalls have only a stub implementation
-
-1.2 
-Syscalls:
-tls_get() syscall implemented by ZRT side is executing directly NACL_tls_get syscall implemted on trusted side at least once. (it's uses "syscallback" feature, see ZeroVM docs). 
-
----------------------------------------------------------------
-2. Channels I/O
----------------------------------------------------------------
-
-Channels input/output operations are available, they can be configured as follows:  
-
-2.1. 
+1. ZRT is a part of libc, implementing syscalls and has own
+filesystem. Direct syscalls from user code to host system are not
+allowed, and such unsecure applications should not be validated by
+ZeroVM, see ZeroVM docs.
+2. Currently ZRT own 2 filesystems:
+2.1 Rewritable filesystem, available in user space as mounted on "/"
+root. ZRT creates it at runtime in memory, and injects it by real
+directories/files if nvram feature used during startup before main()
+entry point.  All changes made in this filesystem will lost at nexe
+exit.
+2.2 Channels mount filesystem - it is wrapper around zerovm channels,
+it's mounted into "/dev" folder. It has static structure based on
+channels aliases list, and interpret channels as devices. All channels
+aliases listed in zerovm manifest file should be started with /dev/
+alias, that represents their belonging to /dev/ mount. Channels whose
+aliases not started with /dev/ will not be accessible by channels
+filesystem. Functions like stat, readdir are supported also;
+2.2.1 Channels representation by stat function. Sequential access
+channels are represented as character devices; Random access channels
+are represented as block devices;
+2.2.2 Channels I/O. For channels described in manifest - input/output
+operations are available, and folowing allowed :
 Channel type SGetSPut=0, sequential  get / sequential_put
 RDONLY     Seek pos —     get
 WRONLY     Seek pos —     get
 RDWR       Seek pos —     get
-2.2. 
 Channel type RGetSPut=1, Random get / sequential put
 RDONLY     Seek pos — set get 
 WRONLY     Seek pos —     get
 RDWR       Write pos unavailable; Read Seek pos - set get;
-2.3.
 Channel type SGetRPut=2, Sequential get / Random put
 RDONLY     Seek pos —     get
 WRONLY     Seek pos — set get
 RDWR       Read pos unavailable; Write Seek pos - set get;
-2.4. 
 Channel type RGetRPut=3, Random get / Random put
 RDONLY     Seek pos — set get
 WRONLY     Seek pos —     get
 RDWR       Seek pos — set get
-
----------------------------------------------------------------
-3. File system
----------------------------------------------------------------
-Currently ZRT has 2 filesystems:
-
-3.1. Channels mount - it is wrapper around zerovm channels, it's mounted into /dev/ folder.
-It has statically structure based on channels list, it's include channels as devices and
-appropriate folders structure based on channels aliases.
-All channels aliases listed in zerovm manifest file should be started with /dev/ alias, 
-that represents their belonging to /dev/ mount. Channels which aliases not started with /dev/
-will not be accessible by channels filesystem at whole.
-3.1.1. Folders
-internal folders structure accessible by stat functions and also readdir available;
-3.1.2. character and block device files
-Sequential access channels are  represented by stat functions as character devices;
-Random access channels are represented by stat functions as block devices;
-
-3.2. Mem Mount - it's fully virtual filesystem hosted in memory, and mounted into '/' root.
-It's like generic filesystem which alllows read-write access, but it not support uid/gid/chown 
-functions; All changes made in filesystem will lost at nexe exit.
-Files can be injected into FS at nexe startup but before zmain() from tar archive by using
-/dev/fstab.
-
----------------------------------------------------------------
-4. ZRT Debugging
----------------------------------------------------------------
-ZRT has its own debugging channel associated with alias name "/dev/debug"
-If this channel is defined then all debugging ZRT information will go into the debug channel
-If debug channel is not defined no debug info will available (apart from system logs)
-TODO: Add remote debugging, to get debug info if executable was launched on cluster 
-
----------------------------------------------------------------
-5. Known issues
----------------------------------------------------------------
-1. fseek( file, 0, SEEK_END ) declared as: int fseek (FILE *stream, long int offset, int whence)
-fseek doesn't working properly if called with whence=SEEK_END and offset=0, so seeked file pos
-will not point to end of file, but it will point to start of file, this is because ZRT recevies
-NACL syscall where whence=SEEK_SET instead of SEEK_END.
-
- 
+2.2.3 Debugging channel. ZRT has its own debugging channel associated
+with alias name "/dev/debug". If this channel is defined then all
+debugging ZRT information will go into the debug channel If debug
+channel is not defined no debug info will available (apart from system
+logs). Debugging level are regulated by VERBOSITY environment
+variables and support 1,2,3 values.
