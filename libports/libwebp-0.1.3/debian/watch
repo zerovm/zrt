@@ -1,0 +1,4 @@
+version=3
+http://code.google.com/p/webp/downloads/list libwebp-(.*)\.tar\.gz
+
+

@@ -1,0 +1,257 @@
+#
+# Stem for static libs and DLLs
+#
+LIB_NAME       = libwebp_a
+LIB_NAME_DEBUG = libwebp_a_debug
+
+#
+# Stem for DLL import libs
+#
+IMPLIB_NAME       = libwebp_dll
+IMPLIB_NAME_DEBUG = libwebp_dll_debug
+
+!IFNDEF DEP_PATH
+DEPS_PATH   = ../../deps
+!ENDIF
+
+!IFNDEF ARCH
+!IF ! [ cl 2>&1 | find "x86" > NUL ]
+ARCH = x86
+!ELSE IF ! [ cl 2>&1 | find "x64" > NUL ]
+ARCH = x64
+!ELSE
+!ERROR Unable to auto-detect toolchain architecture! \
+If cl.exe is in your PATH rerun nmake with ARCH=<arch>.
+!ENDIF
+!ENDIF
+
+!IF "$(ARCH)" == "x86"
+PLATFORM_LDFLAGS = /SAFESEH
+!ENDIF
+
+#############################################################
+## Nothing more to do below this line!
+
+MT         = mt.exe
+CCNODBG    = cl.exe /nologo /O2 /DNDEBUG
+CCDEBUG    = cl.exe /nologo /Od /Gm /Zi /D_DEBUG /RTC1
+CFLAGS     = /Isrc /nologo /W3 /EHsc /FD /c /GS
+CFLAGS     = $(CFLAGS) /DWIN32 /D_CRT_SECURE_NO_WARNINGS /DWIN32_LEAN_AND_MEAN
+CFLAGS     = $(CFLAGS) /DHAVE_WINCODEC_H /DWEBP_USE_THREAD
+LDFLAGS    = /LARGEADDRESSAWARE /MANIFEST /NXCOMPAT /DYNAMICBASE $(PLATFORM_LDFLAGS)
+LNKDLL     = link.exe /DLL
+LNKLIB     = link.exe /lib
+LNKEXE     = link.exe
+LFLAGS     = /nologo /machine:$(ARCH)
+
+CFGSET     = FALSE
+!IF "$(OBJDIR)" == ""
+OUTDIR = ..\obj\
+!ELSE
+OUTDIR = $(OBJDIR)
+!ENDIF
+
+##############################################################
+# Runtime library configuration
+!IF "$(RTLIBCFG)" == "static"
+RTLIB  = /MT
+RTLIBD = /MTd
+!ELSE
+RTLIB   = /MD
+RTLIBD  = /MDd
+!ENDIF
+DIRBASE = $(OUTDIR)\$(CFG)\$(ARCH)
+DIROBJ = $(DIRBASE)\obj
+DIRLIB = $(DIRBASE)\lib
+DIRINC = $(DIRBASE)\include
+DIRBIN = $(DIRBASE)\bin
+
+# Target configuration
+!IF "$(CFG)" == "release-static"
+TARGET         = $(LIB_NAME).lib
+CC             = $(CCNODBG)
+STATICLIBBUILD = TRUE
+!ELSE IF "$(CFG)" == "debug-static"
+TARGET         = $(LIB_NAME_DEBUG).lib
+CC             = $(CCDEBUG)
+STATICLIBBUILD = TRUE
+!ELSE IF "$(CFG)" == "release-dynamic"
+TARGETDLL = $(LIB_NAME).dll
+TARGET    = $(IMPLIB_NAME).lib
+CC        = $(CCNODBG)
+DLLBUILD  = TRUE
+!ELSE IF "$(CFG)" == "debug-dynamic"
+TARGETDLL = $(LIB_NAME_DEBUG).dll
+TARGET    = $(IMPLIB_NAME_DEBUG).lib
+CC        = $(CCDEBUG)
+DLLBUILD  = TRUE
+!ENDIF
+
+!IF "$(STATICLIBBUILD)" == "TRUE"
+CC     = $(CC) $(RTLIB)
+LNK    = $(LNKLIB) /out:$(DIRLIB)\$(TARGET)
+CFGSET = TRUE
+!ELSE IF "$(DLLBUILD)" == "TRUE"
+DLLINC = webp_dll.h
+CC     = $(CC) /I$(DIROBJ) /FI$(DLLINC) $(RTLIB) /DWEBP_DLL
+LNK    = $(LNKDLL) /out:$(DIRBIN)\$(TARGETDLL) /implib:$(DIRLIB)\$(TARGET)
+CFGSET = TRUE
+!ENDIF
+
+#######################
+# Usage
+#
+!IF "$(CFGSET)" == "FALSE"
+!MESSAGE Usage: nmake /f Makefile.vc [CFG=<config>] [OBJDIR=<path>] [RTLIBCFG=<rtlib>] [<target>]
+!MESSAGE where <config> is one of:
+!MESSAGE -  release-static                - release static library
+!MESSAGE -  debug-static                  - debug static library
+!MESSAGE -  release-dynamic               - release dynamic link library (DLL)
+!MESSAGE -  debug-dynamic                 - debug dynamic link library (DLL)
+!MESSAGE <target> may be:
+!MESSAGE -  clean                         - perform a clean for CFG
+!MESSAGE -  experimental                  - build CFG with experimental
+!MESSAGE .                                  features enabled. Requires zlib.
+!MESSAGE
+!MESSAGE <rtlibcfg> controls the runtime library linkage - can be 'static' or 'dynamic'.
+!MESSAGE <target> can be left blank in which case all is assumed
+!MESSAGE <path> is the path where you like to build (obj, bins, etc.)
+!MESSAGE   default to ..\obj\
+
+!IF "$(CFG)" != ""
+!MESSAGE
+!ERROR please choose a valid configuration instead of "$(CFG)"
+!ENDIF
+!ENDIF
+
+#######################
+# Rules
+#
+!IF "$(CFGSET)" == "TRUE"
+# A config was provided, so the library can be built.
+#
+
+X_OBJS= \
+	$(DIROBJ)\dec\frame.obj \
+	$(DIROBJ)\dec\quant.obj \
+	$(DIROBJ)\dec\tree.obj \
+	$(DIROBJ)\dec\vp8.obj \
+	$(DIROBJ)\dec\webp.obj \
+	$(DIROBJ)\dec\io.obj \
+	$(DIROBJ)\dec\buffer.obj \
+	$(DIROBJ)\dec\idec.obj \
+	$(DIROBJ)\dec\alpha.obj \
+	$(DIROBJ)\dec\layer.obj \
+	$(DIROBJ)\enc\analysis.obj \
+	$(DIROBJ)\enc\config.obj \
+	$(DIROBJ)\enc\cost.obj \
+	$(DIROBJ)\enc\frame.obj \
+	$(DIROBJ)\enc\filter.obj \
+	$(DIROBJ)\enc\iterator.obj \
+	$(DIROBJ)\enc\picture.obj \
+	$(DIROBJ)\enc\quant.obj \
+	$(DIROBJ)\enc\syntax.obj \
+	$(DIROBJ)\enc\tree.obj \
+	$(DIROBJ)\enc\webpenc.obj \
+	$(DIROBJ)\enc\alpha.obj \
+	$(DIROBJ)\enc\layer.obj \
+	$(DIROBJ)\dsp\enc.obj \
+	$(DIROBJ)\dsp\enc_sse2.obj \
+	$(DIROBJ)\dsp\upsampling.obj \
+	$(DIROBJ)\dsp\upsampling_sse2.obj \
+	$(DIROBJ)\dsp\dec.obj \
+	$(DIROBJ)\dsp\dec_sse2.obj \
+	$(DIROBJ)\dsp\cpu.obj \
+	$(DIROBJ)\dsp\yuv.obj \
+	$(DIROBJ)\utils\bit_reader.obj \
+	$(DIROBJ)\utils\bit_writer.obj \
+	$(DIROBJ)\utils\thread.obj \
+	$(RESOURCE)
+
+EXAMPLES_OBJS = \
+	$(DIROBJ)\examples\cwebp.obj \
+	$(DIROBJ)\examples\dwebp.obj
+
+all: $(DIRLIB)\$(TARGET) $(DIRBIN)\dwebp.exe $(DIRBIN)\cwebp.exe
+
+# Additional include and library paths (for zlib) can be passed via the CL and
+# LINK environment variables respectively:
+# > set CL=/I\zlib\include
+# > set LINK=\zlib\zlib.lib
+# > nmake /f Makefile.vc CFG=release-static experimental
+experimental:
+	$(MAKE) /f Makefile.vc \
+	    CFG=$(CFG) CFLAGS="$(CFLAGS) /DWEBP_EXPERIMENTAL_FEATURES" /$(MAKEFLAGS)
+
+$(DIRLIB)\$(TARGET): $(X_OBJS)
+	$(LNK) $(LFLAGS) $(X_OBJS)
+	-xcopy $(DIROBJ)\*.pdb $(DIRLIB) /y
+
+$(X_OBJS): $(DIROBJ)\enc $(DIROBJ)\dec $(DIROBJ)\dsp $(DIROBJ)\utils $(DIRLIB) $(DIRINC) $(DIRBIN)
+!IF "$(DLLBUILD)" == "TRUE"
+$(X_OBJS): $(DIROBJ)\$(DLLINC)
+clean::
+	@-erase /s $(DIROBJ)\$(DLLINC) 2> NUL
+!ENDIF
+
+$(EXAMPLES_OBJS): $(DIROBJ)\examples $(DIRLIB)\$(TARGET)
+
+$(DIROBJ)\enc:
+	@if not exist "$(DIROBJ)\enc" mkdir $(DIROBJ)\enc
+
+$(DIROBJ)\examples:
+	@if not exist "$(DIROBJ)\examples" mkdir $(DIROBJ)\examples
+
+$(DIROBJ)\dec:
+	@if not exist "$(DIROBJ)\dec" mkdir $(DIROBJ)\dec
+
+$(DIROBJ)\dsp:
+	@if not exist "$(DIROBJ)\dsp" mkdir $(DIROBJ)\dsp
+
+$(DIROBJ)\utils:
+	@if not exist "$(DIROBJ)\utils" mkdir $(DIROBJ)\utils
+
+$(DIRLIB):
+	@if not exist "$(DIRLIB)" mkdir $(DIRLIB)
+
+$(DIRINC):
+	@if not exist "$(DIRINC)" mkdir $(DIRINC)
+
+$(DIRBIN):
+	@if not exist "$(DIRBIN)" mkdir $(DIRBIN)
+
+# generate a helper include to define WEBP_EXTERN suitable for the DLL build
+$(DIROBJ)\$(DLLINC):
+	@echo #ifndef WEBP_DLL_H_ > $@
+	@echo #define WEBP_DLL_H_ >> $@
+	@echo #define WEBP_EXTERN(type) __declspec(dllexport) type >> $@
+	@echo #endif  /* WEBP_DLL_H_ */ >> $@
+
+.SUFFIXES: .c .obj .res .exe
+{examples}.c{$(DIROBJ)\examples}.obj:
+	$(CC) $(CFLAGS) /Fo"$@"  $<
+{src\dec}.c{$(DIROBJ)\dec}.obj:
+	$(CC) $(CFLAGS) /Fo"$@"  $<
+{src\enc}.c{$(DIROBJ)\enc}.obj:
+	$(CC) $(CFLAGS) /Fo"$@"  $<
+{src\dsp}.c{$(DIROBJ)\dsp}.obj:
+	$(CC) $(CFLAGS) /Fo"$@"  $<
+{src\utils}.c{$(DIROBJ)\utils}.obj:
+	$(CC) $(CFLAGS) /Fo"$@"  $<
+
+{$(DIROBJ)\examples}.obj{$(DIRBIN)}.exe:
+	$(LNKEXE) $(LDFLAGS) /OUT:"$@" $<  ole32.lib windowscodecs.lib shlwapi.lib $(DIRLIB)\$(TARGET)
+	$(MT) -manifest $@.manifest -outputresource:$@;1
+	del $@.manifest
+
+clean::
+	@-erase /s $(DIROBJ)\*.dll 2> NUL
+	@-erase /s $(DIROBJ)\*.exp 2> NUL
+	@-erase /s $(DIROBJ)\*.idb 2> NUL
+	@-erase /s $(DIROBJ)\*.lib 2> NUL
+	@-erase /s $(DIROBJ)\*.obj 2> NUL
+	@-erase /s $(DIROBJ)\*.pch 2> NUL
+	@-erase /s $(DIROBJ)\*.pdb 2> NUL
+	@-erase /s $(DIROBJ)\*.res 2> NUL
+
+!ENDIF  # End of case where a config was provided.

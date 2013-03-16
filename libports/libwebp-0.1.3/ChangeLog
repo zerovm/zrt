@@ -1,0 +1,235 @@
+dfc9c1e Harmonize the dates
+28ad70c Fix PNG decoding bug
+846e93c Update AUTHORS & add .mailmap
+563e52d cosmetics after '76036f5 Refactor decoder library'
+76036f5 Refactor decoder library
+377ef43 configure.ac: update AC_INIT params
+7a8d876 use a user-visible MACRO for max width/height.
+d4e9f55 NEON decode support in WebP
+0ee683b update libtool version-info
+fdbe02c windows: match _cond_destroy logic w/return variable name
+206b686 README: correct advanced decode api pseudo-code
+6a32a0f make VP8BitReader a typedef, for better re-use
+b112e83 create a libwebputils under src/utils
+ee697d9 harmonize the include guards and #endif comments
+a1ec07a Fixing compiler error in non x86 arch.
+dcfa509 Fixed recursive inclusion of bit_writer.h and vp8enci.h.
+e06ac08 create a separate libwebpdsp under src/dsp
+ebeb412 use unsigned int for bitfields
+341cc56 make kNewRange a static array
+227a91e README: minor wording update
+05bd8e6 add man pages to dist
+812dfa1 bump up versions in preparations for 0.1.3
+a5b78c8 wrap alpha-related options under WEBP_EXPERIMENTAL_FEATURES flag
+34dc790 regen ChangeLog for 0.1.3-rc2
+7c43663 Silence some (more) Visual Studio warnings.
+60306e8 add top-level gitattributes
+2aa6b80 Slience some Visual Studio warnings.
+4cbbb29 Merge "bump up version for next freeze"
+a329167 bump up version for next freeze
+c7e86ab cosmetics: fix comment line lengths
+c9e037a makefile.unix: add simple dist target
+87d58ce makefile.unix: rule maintenance
+d477de7 mend
+fac15ec Update NEWS & README for next release V0.1.3
+6215595 Merge "add a -partition_limit option to limit the number of bits used by intra4x4"
+3814b76 Merge "reorganize chunk-parsing code"
+900286e add a -partition_limit option to limit the number of bits used by intra4x4
+cd12b4b add the missing cost for I4/I16 mode selection
+dfcc213 reorganize chunk-parsing code
+3cf2030 initialize pointers to function within VP8DspInit()
+d21b479 Merge "windows: add decode threading support"
+473ae95 fix hang on thread creation failure
+fccca42 windows: add decode threading support
+a31f843 Use the exact PNG_INCLUDES/PNG_LIBS when testing for -lpng
+ad9b45f Merge "Makefile.vc: rule maintenance"
+565a2ca Makefile.vc: rule maintenance
+2d0da68 makefile.unix: disable Wvla by default
+fc7815d multi-thread decoding: ~25-30% faster
+acd8ba4 io->teardown() was not always called upon error
+c85527b Merge "Makefile.vc: add DLL configs"
+e1e9be3 cosmetics: spelling/grammar in README and lib headers
+b4d0ef8 Makefile.vc: add DLL configs
+998754a remove unused nb_i4_ and nb_i16_ fields.
+9f01ce3 rename WebPDecBuffer::memory -> private_memory
+fb5d659 fix an overflow bug in LUT calculation
+d646d5c swig: add WebPDecodeARGB
+78aeed4 add missing WebPDecodeARGBInto() and switch ARGB4444 to RGBA4444 as was intended
+cd7c529 explicitly mark library functions as extern
+19db59f add support for RGB565, ARGB4444 and ARGB colorspace (decoder)
+c915fb2 encoder speed-up: hardcode special level values
+c558bda Rename and improve the API to retrieve decoded area
+bf599d7 Merge "makefile.unix: disable -Wvla by default"
+c9ea03d SSE2 version of strong filtering
+993af3e makefile.unix: disable -Wvla by default
+3827e1b Merge "examples: (windows/WIC) add alpha support"
+e291fae SSE2 functions for the fancy upsampler.
+a06bbe2 add WebPISetIOHooks() to set some custom hooks on the incremental decoder object.
+7643a6f Merge "makefile.unix: use uname to detect OSX environment"
+5142a0b export alpha channel (if present) when dumping to PGM format
+14d5731 makefile.unix: use uname to detect OSX environment
+0805706 examples: quiet warnings
+3cfe088 examples: (windows/WIC) add alpha support
+13ed94b add compile warning for variable-length-array
+5a18eb1 Merge "add Advanced Decoding Interface"
+5c4f27f add missing \n
+f4c4e41 80 cols fix
+d260310 add Advanced Decoding Interface
+bd2f65f sse2 version of the complex filter
+96ed9ce perform two idct transforms at a time when possible
+01af7b6 use aligned stored
+0e1d1fd Merge "Makefile.vc: add experimental target"
+2a1292a Makefile.vc: add experimental target
+23bf351 Enable decode SSE2 for Visual Studio
+131a4b7 dec/dsp_sse2: fix visual studio compile
+00d9d68 swig: file reorganization
+7fc7e0d Merge "swig/java: basic encode support"
+3be57b1 fix MSVC compile for WEBP_EXPERIMENTAL_FEATURES
+40a7e34 dec/dsp: disable sse2 for Visual Studio builds
+e4d540c add SSE2 code for transform
+54f2170 swig/java: basic encode support
+c5d4584 call function pointers instead of C-version
+ea43f04 Merge "configure: mingw32 targets: test for WIC support"
+a11009d SSE2 version of simple in-loop filtering
+42548da shave one unneeded filter-cache line
+31f9dc6 configure: mingw32 targets: test for WIC support
+1955969 Merge "split expression in two."
+415dbe4 split expression in two.
+e29072a configure: test for zlib only w/--enable-experimental
+b2b0090 Simplify Visual Studio ifdefs
+ca7a2fd Add error reporting from encoding failures.
+6c9405d Merge "Makefile.vc: require CFG with clean target"
+0424ecd Makefile.vc: require CFG with clean target
+003417c Enable SSE2 for Visual Studio builds
+af10db4 little speed up for VP8BitUpdate()
+e71418f more MSVC files to ignore
+46d9036 cosmetics
+edf59ab typo fix
+72229f5 Add support for x64 and SSE2 builds under Windows.
+92e5c6e VP8GetInfo() + WebPResetDecParams()
+416b7a6 raise the fixed-point precision for the rescaler
+aa87e4e fix alignment
+eb66670 disable WEBP_EXPERIMENTAL_FEATURES
+c5ae7f6 typo fix: USE_ => WEBP_
+d041efa swig: add libwebp.jar/libwebp_java_wrap.c
+f6fb387 add swig interface
+e927390 align buffer for double too
+842c009 fix -strong option
+d0a7038 Merge "cosmetics"
+fc0a02e fix the dichotomy loop
+38369c0 cosmetics
+8dfc4c6 factorize and unify GetAlpha() between the C and SSE2 version
+6d0e66c prepare experimentation with yuv444 / 422
+79cc49f add a --enable-experimental option to './configure'
+d757523 sse2 version of CollectHistogram()
+c1c728d add an extra #ifdef WEBP_EXPERIMENTAL_FEATURES to avoid 'unused variable' warning
+60c61d2 always call VP*EncDeleteAlpha() unconditionnally, for simplicity
+0f8c638 simply don't call WriteExtensions() if WEBP_EXPERIMENTAL_FEATURES is not defined
+47c661d rename swap -> swap_rb
+10d55bb move chunk[] declaration out of the for() loop
+517cec2 fix indentation
+f7d9e26 fix merge problems
+8fd42b3 add a stride 'a_stride' for the alpha plane
+b8dcbf2 fix alpha-plane copy and crop methods
+cdef89d fix some 'unused variable' warning
+fb29c26 SSE2 version of the fwd transform and the squared sum metric
+2ab4b72 EXPERIMENTAL: add support for alpha channel
+cfbf88a add SSE2 functions. ~2x faster encoding on average.
+e7ff3f9 merge two ITransforms together when applicable and change the TTransform to return the sum directly.
+ca55413 fix WebPIDecGetRGB() to accept any RGB(A) mode, not just MODE_RGB
+8aa50ef fix some 'man' typos
+d3f3bdd update ChangeLog (v0.1.2)
+d7e9a69 update contributor list
+261abb8 add a 'superclean' section
+276ae82 Remove files not mean to be in git, and update .gitignore
+2486845 build: prepare libwebp.pc
+14ceb6e add "-version" description to man pages
+b247a3b Create the m4 directory, and also place .gitignore in there for libtool.
+cdd734c Resolve automake warnings
+c5fa726 build: add pkgconfig files
+b20aaca build: just use autoreconf, avoid calling tools manually
+4b0b0d6 cwebp: use modern functions
+efbc6c4 update Android.mk
+7777570 better version of ChangeLog
+fa70d2b update version number in the DOC
+f8db5d5 more C89-fixes
+0de013b fix typos
+650ffa3 add version getters for decoder and encoder
+be4867d doc for incremental decoding
+56732a1 add idec.obj in MSVC makefile
+208afb5 add c++ guards
+8bf76fe add incremental decoding
+1f28832 'inline' isn't defined in strict ansi c89
+8b77c63 move the quantization function to dsp.c
+b2c3575 add a 'last_y' field to WebPDecParams
+2654c3d correctly pass along the exact same status returned from ParsePartitions
+4704146 add missing precision in the man
+6d978a6 add error messages
+6463e6a add some install instructions, and fix intel-mac flags
+05fb7bf Merge ".gitignore: initial version"
+c33f019 .gitignore: initial version
+e532b9a Makefile: allow out of tree builds
+4c0da7a enable sparse dc/ac transforms
+07dbb8d clarify the return logic
+5c69e1b fix bigger-by-1 array
+7c5267e fix a (harmless) typo: non_zero_ -> non_zero_ac_
+bc75213 fix missing free()
+af3e2aa remove trailing spaces
+13e50da make the bitreader preload at least 8bits, instead of post-load them (this makes initialization easier and will be helpful for incremental decoding). Modify ParsePartitions() to accommodate for truncated input.
+f4888f7 emit 9 - nb_bits trailing zeros instead of 8
+3db6525 separate block-parsing into a visible VP8DecodeMB()
+a871de0 add missing extern "C"
+b3ce8c5 remove a gcc warning about type pun by using a proper union'd type
+e186371 update after addition of webpi.h
+3e856e2 Extract some useful functions around decoding buffer WebPDecParams.
+d5bc05a make the filtering process match libvpx and ffvp8
+dd60138 add man pages for cwebp(1) and dwebp(1)
+c4fa364 fix header
+5b70b37 * add an option to bypass_filtering in VP8Io.
+b97a400 simplify QuantizeBlock code a bit
+84b58eb add more checks around picture allocation
+b65a3e1     remove absolute_delta_ field and syntax code
+0744e84 Dont' open output file until we're sure the input file is valid
+d5bd54c fix typo and buggy line
+f7a9549 Add a simple top-level makefile.unix for quick & easy build.
+5f36b94 update the doc for the -f option
+f61d14a a WebP encoder converts PNG & JPEG to WebP
+81c9662 oops: forgotten call to Initialize() + move the error message to a more useful place
+87ffa00 typo: fix a missing 'R', was confusing.
+b04b857 * add decoding measurement using stopwatch.h (use -v option) * support PNG output through WIC on Win32
+746a482 * make (*put)() hook return a bool for abort request. * add an enum for VP8Status() to make things clearer
+73c973e * strengthen riff/chunk size checks * don't consider odd-sized chunks being an error
+1dc4611 add support for PNG output (default) regularize include guards
+860641d fix a typo: sizeof(kYModeProbaInter0) => sizeof(kUVModeProbaInter0)
+3254fc5 fix some petty constness fix the ./configure file too
+504d339 fix eof_ mis-initialization
+2bc0778 leftover Makefile.* from previous commit
+d2cf04e move Makefile.am one level below, to src/dec fix typos here and there dwebp is now an installed program
+ade92de typo: vp8.h -> decode_vp8.h
+d724124 forgot to declare types.h to be installed
+6421a7a move the decoder sourcetree to a sub-location src/dec to make room for future libs sources
+a9b3eab correct layout name is IMC4.
+2330522 handle corner case of zero-dimensions
+280c365 make VP8Init() handle short buffers (< 2 bytes) correctly
+b1c9e8b handle error cases more robustly
+0e94935 Merge "table-less version of clip_8b()"
+1e0a2d2 table-less version of clip_8b()
+e12109e dwebp: change -yuv option to -raw change the layout to IMC2
+d72180a speed-up fancy upscaler
+9145f3b reset eof_ at construction time
+a7ee055 simplify the logic of GetCoeffs()
+f67b593 lot of cosmetics
+ea27d7c fix endian problem on PowerPC
+beb0a1b fix signature of VP8StoreBlock
+b128c5e Merge "fancy chroma upscaling"
+6a37a2a fancy chroma upscaling
+ff565ed fix two numeric typos
+5a936a0 use uintptr_t for casting pointers to ints
+e14a030 for cross_compiling=yes to prevent executing any binary
+83b545e add vc9+ makefile
+296f691 fix output loop for small height
+cbfbb5c convert to plain-C
+f09f96e Fix declaration after statement warning
+5981ee5 Fix UV plane ac/dc quantizer transposition
+c8d15ef convert to ANSI-C
+c3f41cb Initial commit

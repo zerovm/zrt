@@ -1,0 +1,135 @@
+# This makefile is a simpler alternative to the autoconf-based build
+# system, for simple local building of the libraries and tools.
+# It will not install the libraries system-wide, but just create the 'cwebp'
+# and 'dwebp' tools in the examples/ directory, along with the static
+# library 'src/libwebp.a'.
+#
+# To build the library and examples, use:
+#    make -f makefile.unix
+# from this top directory.
+
+#### Customizable part ####
+
+# These flag assume you have libpng and libjpeg installed. If not, either
+# follow below install instructions or just comment out the next lines.
+EXTRA_FLAGS= -DWEBP_HAVE_PNG -DWEBP_HAVE_JPEG
+EXTRA_LIBS= -lpng -ljpeg -lz
+ifeq ($(strip $(shell uname)), Darwin)
+  EXTRA_FLAGS += -I/opt/local/include
+  EXTRA_LIBS  += -L/opt/local/lib
+endif
+
+# To install libraries on Mac OS X:
+# 1. Install MacPorts (http://www.macports.org/install.php)
+# 2. Run "sudo port install jpeg"
+# 3. Run "sudo port install libpng"
+
+# To install libraries on Linux:
+# 1. Run "sudo apt-get install libjpeg62-dev"
+# 2. Run "sudo apt-get install libpng12-dev"
+
+# Uncomment for build for 32bit platform
+# Alternatively, you can just use the command
+# 'make -f makefile.unix EXTRA_FLAGS=-m32' to that effect.
+# EXTRA_FLAGS += -m32
+
+# Extra flags to enable experimental features and code
+# EXTRA_FLAGS += -DWEBP_EXPERIMENTAL_FEATURES
+
+# Extra flags to enable multi-threading
+EXTRA_FLAGS += -DWEBP_USE_THREAD
+EXTRA_LIBS += -lpthread
+
+# Extra flags to emulate C89 strictness with the full ANSI
+EXTRA_FLAGS += -Wextra -Wold-style-definition
+EXTRA_FLAGS += -Wmissing-prototypes
+EXTRA_FLAGS += -Wmissing-declarations
+EXTRA_FLAGS += -Wdeclaration-after-statement
+# EXTRA_FLAGS += -Wvla
+
+#### Nothing should normally be changed below this line ####
+
+AR = ar
+ARFLAGS = r
+CC = gcc -Isrc/ -Iexamples/ -Wall
+CFLAGS = -O3 -DNDEBUG $(EXTRA_FLAGS)
+INSTALL = install
+LDFLAGS = $(EXTRA_LIBS) -lm
+
+DEC_OBJS = src/dec/frame.o src/dec/webp.o src/dec/quant.o src/dec/tree.o \
+           src/dec/vp8.o src/dec/idec.o src/dec/alpha.o src/dec/layer.o \
+           src/dec/io.o src/dec/buffer.o
+ENC_OBJS = src/enc/webpenc.o src/enc/syntax.o \
+           src/enc/alpha.o src/enc/layer.o \
+           src/enc/tree.o src/enc/config.o src/enc/frame.o \
+           src/enc/quant.o src/enc/iterator.o src/enc/analysis.o \
+           src/enc/cost.o src/enc/picture.o src/enc/filter.o
+DSP_OBJS = src/dsp/cpu.o src/dsp/enc.o \
+           src/dsp/enc_sse2.o src/dsp/dec.o src/dsp/dec_sse2.o \
+           src/dsp/dec_neon.o src/dsp/upsampling.o src/dsp/upsampling_sse2.o \
+           src/dsp/yuv.o
+UTILS_OBJS = src/utils/bit_reader.o src/utils/bit_writer.o src/utils/thread.o
+
+OBJS = $(DEC_OBJS) $(ENC_OBJS) $(DSP_OBJS) $(UTILS_OBJS)
+
+HDRS = src/webp/encode.h src/enc/vp8enci.h src/enc/cost.h \
+       src/dec/vp8i.h  \
+       src/dsp/yuv.h src/dsp/dsp.h \
+       src/utils/bit_writer.h src/utils/bit_reader.h src/utils/thread.h
+
+OUTPUT = examples/cwebp examples/dwebp src/libwebp.a
+
+all:ex
+
+%.o: %.c $(HDRS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+src/libwebp.a:  $(OBJS)
+	$(AR) $(ARFLAGS) $@ $^
+
+ex: examples/cwebp examples/dwebp
+
+examples/cwebp: examples/cwebp.o src/libwebp.a
+examples/dwebp: examples/dwebp.o src/libwebp.a
+examples/cwebp examples/dwebp:
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+dist: DESTDIR := dist
+dist: all
+	$(INSTALL) -m755 -d $(DESTDIR)/include/webp \
+	    $(DESTDIR)/doc $(DESTDIR)/lib
+	$(INSTALL) -m755 -s examples/cwebp examples/dwebp $(DESTDIR)
+	$(INSTALL) -m644 src/webp/*.h $(DESTDIR)/include/webp
+	$(INSTALL) -m644 src/libwebp.a $(DESTDIR)/lib
+	umask 022; \
+	for m in man/[cd]webp.1; do \
+	  basenam=$$(basename $$m .1); \
+	  /usr/bin/groff -t -e -man -T utf8 $$m \
+	    | col -bx >$(DESTDIR)/doc/$${basenam}.txt; \
+	  /usr/bin/groff -t -e -man -T html $$m \
+	    | col -bx >$(DESTDIR)/doc/$${basenam}.html; \
+	done
+
+clean:
+	$(RM) ${OUTPUT} *~ \
+              src/enc/*.o src/enc/*~ \
+              src/dec/*.o src/dec/*~ \
+              src/dsp/*.o src/dsp/*~ \
+              src/utils/*.o src/utils/*~ \
+              examples/*.o examples/*~
+
+superclean: clean
+	$(RM) -r .git *.log *.cache *~
+	$(RM) -r .deps */.deps */*/.deps
+	$(RM) -r .libs */.libs */*/.libs
+	$(RM) */*.lo */*/*.lo
+	$(RM) */*.la */*/*.la
+	$(RM) Makefile */Makefile */*/Makefile
+	$(RM) Makefile.in */Makefile.in */*/Makefile.in
+	$(RM) config.log autom4te.cache libtool config.h stamp-h1
+	$(RM) aclocal.m4 compile config.guess config.h.in config.sub config.status
+	$(RM) configure depcomp install-sh ltmain.sh missing src/libwebp.pc
+	$(RM) m4/*
+
+.PHONY: all clean dist ex superclean
+.SUFFIXES:
