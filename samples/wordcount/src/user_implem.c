@@ -75,8 +75,10 @@ int Map(const char *data, size_t size, int last_chunk, Buffer *keys, Buffer *val
 	assert( !AllocBuffer( keys, EUint32, allocated_items_count ) );
 	assert( !AllocBuffer( values, EUint32, allocated_items_count ) );
 
+#ifdef OUTPUT_HASH_KEYS
 	int print;
 	char buf_temp[40]; /*max word screen representation length*/
+#endif
 	uint32_t keyvalue = 1;
 	int max_count = keys->header.buf_size / keys->header.item_size;
 	int current_pos = 0;
