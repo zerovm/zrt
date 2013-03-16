@@ -1,0 +1,85 @@
+From: Jinkyu Yi <jincreator@jincreator.net>
+Description: add Nanum fonts, fix Baekmuk missing, fix monospace priority
+Bug: https://bugs.freedesktop/org/42423
+Bug-Ubuntu: https://launchpad.net/bugs/792471
+Origin: https://bugs.freedesktop.org/attachment.cgi?id=56872
+Author: Jinkyu Yi <jincreator@jincreator.net>
+
+diff --git a/conf.d/40-nonlatin.conf b/conf.d/40-nonlatin.conf
+index a875db0..b359f4c 100644
+--- a/conf.d/40-nonlatin.conf
++++ b/conf.d/40-nonlatin.conf
+@@ -22,6 +22,7 @@
+ 		<family>AR PL SungtiL GB</family>
+ 		<family>AR PL Mingti2L Big5</family>
+ 		<family>ＭＳ 明朝</family>
++		<family>NanumMyeongjo</family>
+ 		<family>UnBatang</family>
+ 		<family>Baekmuk Batang</family>
+ 		<family>MgOpen Canonica</family>
+@@ -47,8 +48,10 @@
+ 		<family>AR PL KaitiM GB</family>
+ 		<family>AR PL KaitiM Big5</family>
+ 		<family>ＭＳ ゴシック</family>
++		<family>NanumGothic</family>
+ 		<family>UnDotum</family>
+ 		<family>Baekmuk Dotum</family>
++		<family>Baekmuk Gulim</family>
+ 		<family>SimSun</family>
+ 		<family>MgOpen Modata</family>
+ 		<family>Sazanami Gothic</family>
+@@ -61,6 +64,7 @@
+   Monospace faces
+  -->
+  	<alias>
++		<family>NanumGothicCoding</family>
+ 		<family>NSimSun</family>
+ 		<family>ZYSong18030</family>
+ 		<family>FreeMono</family>
+diff --git a/conf.d/65-nonlatin.conf b/conf.d/65-nonlatin.conf
+index 53ac064..5944c5d 100644
+--- a/conf.d/65-nonlatin.conf
++++ b/conf.d/65-nonlatin.conf
+@@ -43,8 +43,9 @@
+  			<family>AR PL Zenkai Uni</family>
+ 			<family>ＭＳ 明朝</family>
+  			<family>ZYSong18030</family>
+-			<family>UnBatang</family>
+-			<family>Baekmuk Batang</family>
++			<family>NanumMyeongjo</family> <!-- hangul (ko) -->
++			<family>UnBatang</family> <!-- hangul (ko) -->
++			<family>Baekmuk Batang</family> <!-- hangul (ko) -->
+  			<family>KacstQura</family>
+  			<family>Frank Ruehl CLM</family>
+ 			<family>Lohit Bengali</family>
+@@ -117,9 +118,10 @@
+ 			<family>ＭＳ ゴシック</family>
+ 			<family>ZYSong18030</family> <!-- han (zh-cn,zh-tw) -->
+ 			<family>TSCu_Paranar</family> <!-- tamil -->
+-			<family>UnDotum</family>
+-			<family>Baekmuk Dotum</family>
+- 			<family>Baekmuk Gulim</family>
++			<family>NanumGothic</family> <!-- hangul (ko) -->
++			<family>UnDotum</family> <!-- hangul (ko) -->
++			<family>Baekmuk Dotum</family> <!-- hangul (ko) -->
++ 			<family>Baekmuk Gulim</family> <!-- hangul (ko) -->
+  			<family>KacstQura</family>
+ 			<family>Lohit Bengali</family>
+  			<family>Lohit Gujarati</family>
+@@ -160,11 +162,11 @@
+ 			<family>AR PL SungtiL GB</family>
+ 			<family>AR PL Mingti2L Big5</family>
+ 			<family>ZYSong18030</family> <!-- han (zh-cn,zh-tw) -->
+-			<family>UnBatang</family>
+-			<family>UnDotum</family>
+-			<family>Baekmuk Batang</family> <!-- hangul -->
+-			<family>Baekmuk Dotum</family>
+-			<family>Baekmuk Gulim</family>
++			<family>NanumGothicCoding</family> <!-- hangul (ko) -->
++			<family>NanumGothic</family> <!-- hangul (ko) -->
++			<family>UnDotum</family> <!-- hangul (ko) -->
++			<family>Baekmuk Dotum</family> <!-- hangul (ko) -->
++			<family>Baekmuk Gulim</family> <!-- hangul (ko) -->
+ 			<family>TlwgTypo</family> <!-- thai -->
+ 			<family>TlwgTypist</family> <!-- thai -->
+ 			<family>TlwgTypewriter</family> <!-- thai -->

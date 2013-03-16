@@ -1,0 +1,22 @@
+diff -Nur -x '*.orig' -x '*~' fontconfig-2.8.0/conf.d/Makefile.am fontconfig-2.8.0.new/conf.d/Makefile.am
+--- fontconfig-2.8.0/conf.d/Makefile.am	2010-01-13 19:21:19.379494731 -0500
++++ fontconfig-2.8.0.new/conf.d/Makefile.am	2010-01-13 19:21:20.331482412 -0500
+@@ -79,6 +79,7 @@
+ 	65-fonts-persian.conf \
+ 	65-nonlatin.conf \
+ 	69-unifont.conf \
++	70-no-bitmaps.conf \
+ 	80-delicious.conf \
+ 	90-synthetic.conf
+ 
+diff -Nur -x '*.orig' -x '*~' fontconfig-2.8.0/conf.d/Makefile.in fontconfig-2.8.0.new/conf.d/Makefile.in
+--- fontconfig-2.8.0/conf.d/Makefile.in	2010-01-13 19:21:19.383482947 -0500
++++ fontconfig-2.8.0.new/conf.d/Makefile.in	2010-01-13 19:22:25.718516776 -0500
+@@ -305,6 +305,7 @@
+ 	65-fonts-persian.conf \
+ 	65-nonlatin.conf \
+ 	69-unifont.conf \
++	70-no-bitmaps.conf \
+ 	80-delicious.conf \
+ 	90-synthetic.conf
+ 

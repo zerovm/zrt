@@ -1,0 +1,108 @@
+#!/bin/sh
+
+set -e
+
+rm_conffile() {
+    PKGNAME="$1"
+    CONFFILE="$2"
+    if [ -e "$CONFFILE" ]; then
+        md5sum="`md5sum \"$CONFFILE\" | sed -e \"s/ .*//\"`"
+        old_md5sum="`dpkg-query -W -f='${Conffiles}' $PKGNAME | sed -n -e \"\\\\' $CONFFILE '{s/ obsolete$//;s/.* //p}\"`"
+        if [ "$md5sum" != "$old_md5sum" ]; then
+            echo "Obsolete conffile $CONFFILE has been modified by you."
+            echo "Saving as $CONFFILE.dpkg-bak ..."
+            mv -f "$CONFFILE" "$CONFFILE".dpkg-bak
+        else
+            echo "Removing obsolete conffile $CONFFILE ..."
+            rm -f "$CONFFILE"
+        fi
+    fi
+}
+
+# Remove old ucf stuff
+rm -rf /var/lib/fontconfig
+
+CONFAVAIL=/etc/fonts/conf.avail
+CONFDIR=/etc/fonts/conf.d
+
+# Remove old defoma stuff
+if [ -x "`which defoma-app 2>/dev/null`" ]; then
+    defoma-app purge fontconfig >/dev/null || true
+fi
+DEFOMA=/var/lib/defoma/fontconfig.d/
+if [ -d $DEFOMA ]; then
+    rm -f $DEFOMA/fonts.conf
+    rmdir --ignore-fail-on-non-empty $DEFOMA
+fi
+rm -f /etc/defoma/fontconfig.subst-rule
+
+unhinted="10-unhinted.conf"
+autohint="10-autohint.conf"
+
+# (mathieu-tl): purge the debconf database from our stuff, since we opted not
+#               to use debconf for fontconfig after all
+if dpkg --compare-versions "$2" lt "2.8.0-2ubuntu1~"; then
+  . /usr/share/debconf/confmodule
+  db_purge
+fi
+
+# (asac): cleanup old conf.d links transition - remove ancient left-over confs
+if dpkg --compare-versions "$2" lt "2.6.0-1ubuntu11~"; then
+  lp332992_ancient_conf_leftover="autohint.conf no-bitmaps.conf no-sub-pixel.conf sub-pixel.conf unhinted.conf yes-bitmaps.conf"
+  for f in $lp332992_ancient_conf_leftover; do
+    if [ -h $CONFDIR/$f ]; then
+	rm $CONFDIR/$f
+    fi
+    if [ -e $CONFDIR/$f ]; then
+	rm_conffile fontconfig-config $CONFDIR/$f
+    fi
+  done
+fi
+ 
+# (asac): drop debconf transition - remove old hinting confs
+if dpkg --compare-versions "$2" lt "2.6.0-1ubuntu12~"; then
+  if [ -h $CONFDIR/$unhinted ]; then
+	rm $CONFDIR/$unhinted
+  fi
+  if [ -h $CONFDIR/$autohint ]; then
+	rm $CONFDIR/$autohint
+  fi
+fi
+	
+subpixel="10-sub-pixel-rgb.conf"
+no_subpixel="10-no-sub-pixel.conf"
+
+# (asac): drop debconf transition - remove old subpixel configs once
+if dpkg --compare-versions "$2" lt "2.6.0-1ubuntu12~"; then
+  if [ -h $CONFDIR/$subpixel ]; then
+	rm $CONFDIR/$subpixel
+  fi
+  if [ -h $CONFDIR/$no_subpixel ]; then
+	rm $CONFDIR/$no_subpixel
+  fi
+fi
+
+yes_bitmaps="70-yes-bitmaps.conf"
+#no_bitmaps="70-no-bitmaps.conf"
+
+# (asac): drop debconf transition - remove old bitmap confs
+if dpkg --compare-versions "$2" lt "2.6.0-1ubuntu12~"; then
+  if [ -h $CONFDIR/$yes_bitmaps ]; then
+	rm $CONFDIR/$yes_bitmaps
+  fi
+
+#  if [ -h $CONFDIR/$no_bitmaps ]; then
+#	rm $CONFDIR/$no_bitmaps
+#  fi
+fi
+
+# Create /usr/local/share/fonts
+LOCALDIR=/usr/local/share/fonts
+if [ ! -d $LOCALDIR ]; then
+  if mkdir $LOCALDIR 2>/dev/null ; then
+    chmod 2775 $LOCALDIR
+    chown root:staff $LOCALDIR
+  fi
+fi
+
+#DEBHELPER#

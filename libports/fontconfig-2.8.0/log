@@ -1,0 +1,174 @@
+execve("/usr/bin/make", ["make", "all"], [/* 42 vars */]) = 0
+brk(0)                                  = 0x2121000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f1a43817000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=124315, ...}) = 0
+mmap(NULL, 124315, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f1a437f8000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/x86_64-linux-gnu/librt.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\340!\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0644, st_size=31752, ...}) = 0
+mmap(NULL, 2128984, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f1a433ef000
+mprotect(0x7f1a433f6000, 2093056, PROT_NONE) = 0
+mmap(0x7f1a435f5000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x6000) = 0x7f1a435f5000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\200\30\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=1811128, ...}) = 0
+mmap(NULL, 3925208, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f1a43030000
+mprotect(0x7f1a431e5000, 2093056, PROT_NONE) = 0
+mmap(0x7f1a433e4000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b4000) = 0x7f1a433e4000
+mmap(0x7f1a433ea000, 17624, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f1a433ea000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/x86_64-linux-gnu/libpthread.so.0", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\200l\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=135366, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f1a437f7000
+mmap(NULL, 2212904, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f1a42e13000
+mprotect(0x7f1a42e2b000, 2093056, PROT_NONE) = 0
+mmap(0x7f1a4302a000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x17000) = 0x7f1a4302a000
+mmap(0x7f1a4302c000, 13352, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f1a4302c000
+close(3)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f1a437f6000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f1a437f5000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f1a437f4000
+arch_prctl(ARCH_SET_FS, 0x7f1a437f5700) = 0
+mprotect(0x7f1a433e4000, 16384, PROT_READ) = 0
+mprotect(0x7f1a4302a000, 4096, PROT_READ) = 0
+mprotect(0x7f1a435f5000, 4096, PROT_READ) = 0
+mprotect(0x627000, 4096, PROT_READ)     = 0
+mprotect(0x7f1a43819000, 4096, PROT_READ) = 0
+munmap(0x7f1a437f8000, 124315)          = 0
+set_tid_address(0x7f1a437f59d0)         = 9205
+set_robust_list(0x7f1a437f59e0, 0x18)   = 0
+futex(0x7fff76356c7c, FUTEX_WAIT_BITSET_PRIVATE|FUTEX_CLOCK_REALTIME, 1, NULL, 7f1a437f5700) = -1 EAGAIN (Resource temporarily unavailable)
+rt_sigaction(SIGRTMIN, {0x7f1a42e19750, [], SA_RESTORER|SA_SIGINFO, 0x7f1a42e22cb0}, NULL, 8) = 0
+rt_sigaction(SIGRT_1, {0x7f1a42e197e0, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f1a42e22cb0}, NULL, 8) = 0
+rt_sigprocmask(SIG_UNBLOCK, [RTMIN RT_1], NULL, 8) = 0
+getrlimit(RLIMIT_STACK, {rlim_cur=8192*1024, rlim_max=RLIM_INFINITY}) = 0
+getrlimit(RLIMIT_STACK, {rlim_cur=8192*1024, rlim_max=RLIM_INFINITY}) = 0
+setrlimit(RLIMIT_STACK, {rlim_cur=RLIM_INFINITY, rlim_max=RLIM_INFINITY}) = 0
+brk(0)                                  = 0x2121000
+brk(0x2142000)                          = 0x2142000
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=7220736, ...}) = 0
+mmap(NULL, 7220736, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f1a42730000
+close(3)                                = 0
+rt_sigaction(SIGHUP, {0x4059e0, [HUP], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGQUIT, {0x4059e0, [QUIT], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGINT, {0x4059e0, [INT], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGTERM, {0x4059e0, [TERM], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGXCPU, {0x4059e0, [XCPU], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGXFSZ, {0x4059e0, [XFSZ], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [CHLD], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [], 0}, 8) = 0
+getcwd("/home/kit/git/zrt/libports/fontconfig-2.8.0", 4096) = 44
+stat("/usr/include", {st_mode=S_IFDIR|0755, st_size=20480, ...}) = 0
+stat("/usr/gnu/include", 0x7fff763552d0) = -1 ENOENT (No such file or directory)
+stat("/usr/local/include", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/usr/include", {st_mode=S_IFDIR|0755, st_size=20480, ...}) = 0
+rt_sigaction(SIGCHLD, {0x40ea60, [CHLD], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [CHLD], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, 8) = 0
+rt_sigaction(SIGUSR1, {0x410550, [USR1], SA_RESTORER|SA_RESTART, 0x7f1a430664a0}, {SIG_DFL, [], 0}, 8) = 0
+stat(".", {st_mode=S_IFDIR|0775, st_size=4096, ...}) = 0
+openat(AT_FDCWD, ".", O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) = 3
+getdents(3, /* 54 entries */, 32768)    = 1736
+getdents(3, /* 0 entries */, 32768)     = 0
+close(3)                                = 0
+open("Makefile", O_RDONLY)              = 3
+fstat(3, {st_mode=S_IFREG|0664, st_size=35999, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f1a43816000
+read(3, "# Makefile.in generated by autom"..., 4096) = 4096
+read(3, ";\nam__install_max = 40\nam__nobas"..., 4096) = 4096
+read(3, "onfigFiles.3 FcConfigGetCache.3 "..., 4096) = 4096
+read(3, "nfig\nRANLIB = x86_64-nacl-ranlib"..., 4096) = 4096
+read(3, "tatus\n\t@rm -f stamp-h1\n\tcd $(top"..., 4096) = 4096
+read(3, "arget\"; \\\n\t  fi; \\\n\t  ($(am__cd)"..., 4096) = 4096
+brk(0x2163000)                          = 0x2163000
+read(3, "   || exit 1; \\\n\t  fi; \\\n\tdone\n\t"..., 4096) = 4096
+read(3, "__remove_distdir)\n\t@(echo \"$(dis"..., 4096) = 4096
+read(3, "-info-am install-man install-pdf"..., 4096) = 3231
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0x7f1a43816000, 4096)            = 0
+stat("RCS", 0x7fff76355200)             = -1 ENOENT (No such file or directory)
+stat("SCCS", 0x7fff76355200)            = -1 ENOENT (No such file or directory)
+stat("Makefile", {st_mode=S_IFREG|0664, st_size=35999, ...}) = 0
+stat("Makefile.in", {st_mode=S_IFREG|0664, st_size=32109, ...}) = 0
+stat("config.status", {st_mode=S_IFREG|0775, st_size=67431, ...}) = 0
+stat("configure", {st_mode=S_IFREG|0775, st_size=499314, ...}) = 0
+stat("config.h", {st_mode=S_IFREG|0664, st_size=5567, ...}) = 0
+stat("stamp-h1", {st_mode=S_IFREG|0664, st_size=23, ...}) = 0
+stat("config.h.in", {st_mode=S_IFREG|0664, st_size=5192, ...}) = 0
+pipe([3, 4])                            = 0
+close(4)                                = 0
+fcntl(3, F_SETFD, FD_CLOEXEC)           = 0
+rt_sigprocmask(SIG_BLOCK, [HUP INT QUIT TERM XCPU XFSZ], NULL, 8) = 0
+vfork()                                 = 9206
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 9206
+--- SIGCHLD (Child exited) @ 0 (0) ---
+rt_sigreturn(0xffffffff)                = 9206
+rt_sigprocmask(SIG_BLOCK, [HUP INT QUIT TERM XCPU XFSZ], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+stat("config.h", {st_mode=S_IFREG|0664, st_size=5567, ...}) = 0
+fstat(1, {st_mode=S_IFREG|0664, st_size=8131, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f1a43816000
+write(1, "make  all-recursive\n", 20make  all-recursive
+)   = 20
+rt_sigprocmask(SIG_BLOCK, [HUP INT QUIT TERM XCPU XFSZ], NULL, 8) = 0
+vfork()                                 = 9207
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+wait4(-1, make[1]: Entering directory `/home/kit/git/zrt/libports/fontconfig-2.8.0'
+Making all in fontconfig
+make[2]: Entering directory `/home/kit/git/zrt/libports/fontconfig-2.8.0/fontconfig'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/kit/git/zrt/libports/fontconfig-2.8.0/fontconfig'
+Making all in fc-case
+make[2]: Entering directory `/home/kit/git/zrt/libports/fontconfig-2.8.0/fc-case'
+make  all-am
+make[3]: Entering directory `/home/kit/git/zrt/libports/fontconfig-2.8.0/fc-case'
+  CCLD   fc-case
+/usr/bin/ld: target elf64-nacl not found
+collect2: ld returned 1 exit status
+make[3]: *** [fc-case] Error 1
+make[3]: Leaving directory `/home/kit/git/zrt/libports/fontconfig-2.8.0/fc-case'
+make[2]: *** [all] Error 2
+make[2]: Leaving directory `/home/kit/git/zrt/libports/fontconfig-2.8.0/fc-case'
+make[1]: *** [all-recursive] Error 1
+make[1]: Leaving directory `/home/kit/git/zrt/libports/fontconfig-2.8.0'
+[{WIFEXITED(s) && WEXITSTATUS(s) == 2}], 0, NULL) = 9207
+--- SIGCHLD (Child exited) @ 0 (0) ---
+rt_sigreturn(0xffffffff)                = 9207
+open("/usr/share/locale/locale.alias", O_RDONLY|O_CLOEXEC) = 4
+fstat(4, {st_mode=S_IFREG|0644, st_size=2570, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f1a43815000
+read(4, "# Locale name alias data base.\n#"..., 4096) = 2570
+read(4, "", 4096)                       = 0
+close(4)                                = 0
+munmap(0x7f1a43815000, 4096)            = 0
+open("/usr/share/locale/en_US.UTF-8/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale/en_US.utf8/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale/en_US/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale/en.UTF-8/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale/en.utf8/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale/en/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale-langpack/en_US.UTF-8/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale-langpack/en_US.utf8/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale-langpack/en_US/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale-langpack/en.UTF-8/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale-langpack/en.utf8/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/share/locale-langpack/en/LC_MESSAGES/make.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+write(2, "make: ", 6make: )                   = 6
+write(2, "*** [all] Error 2", 17*** [all] Error 2)       = 17
+write(2, "\n", 1
+)                       = 1
+rt_sigprocmask(SIG_BLOCK, [HUP INT QUIT TERM XCPU XFSZ], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+chdir("/home/kit/git/zrt/libports/fontconfig-2.8.0") = 0
+close(1)                                = 0
+munmap(0x7f1a43816000, 4096)            = 0
+exit_group(2)                           = ?

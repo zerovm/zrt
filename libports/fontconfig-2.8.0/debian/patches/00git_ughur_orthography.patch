@@ -1,0 +1,55 @@
+From ccc239b3865dd8d83026ae59b89de965e948120a Mon Sep 17 00:00:00 2001
+From: Behdad Esfahbod <behdad@behdad.org>
+Date: Mon, 14 Mar 2011 20:28:53 +0000
+Subject: Bug 20113 - Uighur (ug) orthography incomplete
+
+---
+Index: fontconfig-2.8.0/fc-lang/ug.orth
+===================================================================
+--- fontconfig-2.8.0.orig/fc-lang/ug.orth	2009-11-16 18:24:52.000000000 +0100
++++ fontconfig-2.8.0/fc-lang/ug.orth	2012-03-06 15:48:01.959422822 +0100
+@@ -1,7 +1,11 @@
+ #
+ # fontconfig/fc-lang/ug.orth
+ #
+-# Copyright © 2002 Keith Packard
++# Copyright © 2010
++# UKIJ - Uyghur Computer Science Association (http://www.ukij.org/)
++# Ubuntu Uyghur Translation Team (https://launchpad.net/~ubuntu-l10n-ug)
++# Kenjisoft (http://kenjisoft.homelinux.com/)
++# Bilik (http://www.bilik.cn/)
+ #
+ # Permission to use, copy, modify, distribute, and sell this software and its
+ # documentation for any purpose is hereby granted without fee, provided that
+@@ -21,9 +25,26 @@
+ # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ # PERFORMANCE OF THIS SOFTWARE.
+ #
+-# Uighur (UG)
++# Uyghur (UG)
+ #
+-# Uighur is written in a varient of Perso-Arabic, but I haven't found
+-# any references which define the variations.  So, for now we'll use Arabic
+-# fonts
+-include ar.orth
++# Uyghur is written in a modified Persian-Arabic script. For detailed
++# information, refer to http://en.wikipedia.org/wiki/Uyghur_language
++#
++0626-0628
++062A
++062C
++062E-062F
++0631-0634
++063A
++0641-0646
++0648-064A
++067E
++0686
++0698
++06AD
++06AF
++06BE
++06C6-06C8
++06CB
++06D0
++06D5

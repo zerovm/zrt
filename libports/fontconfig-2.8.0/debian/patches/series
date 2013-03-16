@@ -1,0 +1,8 @@
+00git_ughur_orthography.patch
+00_old_diff_gz.patch
+01_fonts_nanum.patch
+04_ubuntu_monospace_lcd_filter_conf.patch
+05_lcdfilterlegacy.patch
+05_ubuntu_add_hinting_and_antialiasing_confs.patch
+06_ubuntu_lcddefault.patch
+07_no_bitmaps.patch

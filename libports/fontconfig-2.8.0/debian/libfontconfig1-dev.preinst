@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+# this can be dropped after the oneiric release
+# remove bogus symlinks introduced with upgrades to 2.8.0-3 which should never
+# have reached oneiric
+pkg=libfontconfig1-dev
+doc="/usr/share/doc/$pkg"
+if [ -L "$doc" ]; then
+    rm -f "$doc"
+fi
+
+#DEBHELPER#
+
