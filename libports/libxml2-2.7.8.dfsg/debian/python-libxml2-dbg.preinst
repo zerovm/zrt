@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+[ "$1" = "upgrade" ] &&
+[ -L /usr/share/doc/python-libxml2-dbg ] &&
+rm -f /usr/share/doc/python-libxml2-dbg
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,1603 @@
+libxml2 (2.7.8.dfsg-5.1ubuntu4.3) precise-security; urgency=low
+
+  * SECURITY UPDATE: buffer underflow in xmlParseAttValueComplex()
+    - debian/patches/CVE-2012-5134.patch: add array bounds checking in
+      parser.c, thanks to Daniel Veillard
+    - http://git.gnome.org/browse/libxml2/commit/?id=6a36fbe3b3e001a8a840b5c1fdd81cefc9947f0d
+    - CVE-2012-5134
+
+ -- Seth Arnold <seth.arnold@canonical.com>  Tue, 04 Dec 2012 11:39:55 -0800
+
+libxml2 (2.7.8.dfsg-5.1ubuntu4.2) precise-security; urgency=low
+
+  * SECURITY UPDATE: denial of service and possible code execution via
+    incorrect buffer sizes.
+    - http://git.gnome.org/browse/libxml2/commit/?id=459eeb9dc752d5185f57ff6b135027f11981a626
+    - http://git.gnome.org/browse/libxml2/commit/?id=4f9fdc709c4861c390cd84e2ed1fd878b3442e28
+    - http://git.gnome.org/browse/libxml2/commit/?id=baaf03f80f817bb34c421421e6cb4d68c353ac9a
+    - CVE-2012-2807
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 26 Sep 2012 13:10:43 -0400
+
+libxml2 (2.7.8.dfsg-5.1ubuntu4.1) precise-security; urgency=low
+
+  * SECURITY UPDATE: Fix an off by one pointer access in xpointer.c
+    - d8e1faeaa99c7a7c07af01c1c72de352eb590a3e
+    - CVE-2011-3102
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Fri, 18 May 2012 08:55:39 -0500
+
+libxml2 (2.7.8.dfsg-5.1ubuntu4) precise; urgency=low
+
+  * SECURITY UPDATE: add randomization to dictionaries with hash tables
+    help prevent denial of service via hash algorithm collision
+    - configure.in: lookup for rand, srand and time
+    - dict.c: add randomization to dictionaries hash tables
+    - hash.c: add randomization to normal hash tables
+    - 8973d58b7498fa5100a876815476b81fd1a2412a
+    - CVE-2012-0841
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Tue, 28 Feb 2012 07:20:11 -0600
+
+libxml2 (2.7.8.dfsg-5.1ubuntu3) precise; urgency=low
+
+  * various fixes for __xmlRaiseError (LP: #686363). This can be dropped in
+    2.7.8.dfsg-6
+    - 111d705c282e03e7202723c6c7e4499f8582bd4f
+    - 1b9128bae737fa559f5e2c191d6679a856efbad9
+    - 241d4a1069e6bedd0ee2295d7b43858109c1c6d1
+    - c2a0fdc4e6d106690d7fd8fa1677e133c94e155d
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Thu, 19 Jan 2012 11:59:30 -0600
+
+libxml2 (2.7.8.dfsg-5.1ubuntu2) precise; urgency=low
+
+  * SECURITY UPDATE: denial of service via buffer overflow
+    - parser.c: fix an allocation error when copying entities
+    - 5bd3c061823a8499b27422aee04ea20aae24f03e
+    - CVE-2011-3919
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Wed, 18 Jan 2012 13:03:04 -0600
+
+libxml2 (2.7.8.dfsg-5.1ubuntu1) precise; urgency=low
+
+  * Merge from Debian testing, remaining changes:
+    - Build for multiarch.
+    - Use debhelper compat 9 instead of hardcoding --libdir.
+    - Move the udeb contents back into /usr/lib.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 12 Jan 2012 09:18:30 +0100
+
+libxml2 (2.7.8.dfsg-5.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * encoding.c: Fix off by one error. CVE-2011-0216.
+  * parser.c: Make sure parser returns when getting a Stop order.
+    CVE-2011-3905.
+  * Both closes: #652352.
+
+ -- Luk Claes <luk@debian.org>  Fri, 30 Dec 2011 18:31:13 +0100
+
+libxml2 (2.7.8.dfsg-5ubuntu1) precise; urgency=low
+
+  * Build for multiarch; thanks to Riku Voipio for the patch.
+    Closes: #643026.
+  * Use debhelper compat 9 instead of hardcoding --libdir.
+  * Move the udeb contents back into /usr/lib.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 19 Oct 2011 22:00:20 -0700
+
+libxml2 (2.7.8.dfsg-5) unstable; urgency=low
+
+  * xpath.c, xpointer.c, include/libxml/xpath.h: Hardening of XPath evaluation.
+    CVE-2011-2821.
+  * xpath.c: Fix for undefined namespaces. CVE-2011-2834.
+  * Both closes: #643648.
+
+ -- Mike Hommey <glandium@debian.org>  Fri, 07 Oct 2011 09:31:14 +0200
+
+libxml2 (2.7.8.dfsg-4) unstable; urgency=low
+
+  * debian/rules: Add --with python2 to dh call.
+  * debian/control:
+    - Remove build dependency on python-support.
+    - Build depend on python-all-dev >= 2.6.6-3~.
+    - Remove XB-Python-Version header.
+    - Bump Standards-Version to 3.9.2.0. No changes required.
+  * debian/pycompat: Removed. With the above changes, closes: #631416.
+    Thanks Colin Watson.
+
+ -- Mike Hommey <glandium@debian.org>  Fri, 29 Jul 2011 12:33:08 +0200
+
+libxml2 (2.7.8.dfsg-3) unstable; urgency=low
+
+  * xpath.c: Fix some potential problems on reallocation failures.
+    Closes: #628537.
+
+ -- Mike Hommey <glandium@debian.org>  Sat, 04 Jun 2011 10:40:39 +0900
+
+libxml2 (2.7.8.dfsg-2) unstable; urgency=low
+
+  * xpath.c: Fix a double-freeing error in XPath processing code.
+    (CVE-2010-4494). Closes: #607922.
+
+ -- Mike Hommey <glandium@debian.org>  Sat, 25 Dec 2010 10:48:27 +0100
+
+libxml2 (2.7.8.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * configure.in: Applied upstream fix to reactivate symbol versioning script.
+
+ -- Mike Hommey <glandium@debian.org>  Fri, 05 Nov 2010 08:23:58 +0100
+
+libxml2 (2.7.7.dfsg-4) unstable; urgency=low
+
+  * debian/rules:
+    - Use a variable to express which sub-targets to invoke for
+      configure/build/install.
+    - Refactor configure-% and build-% rules.
+    - Avoid possible renaming of _d.so files to _d_d.so files in the
+      install-python%-dbg rules.
+  * debian/control, debian/control.udeb, debian/libxml2-udeb.install,
+    debian/rules: Add an udeb package when building for Ubuntu.
+    Closes: #583767.
+  * debian/control:
+    - Remove old Conflicts/Replaces for packages that have disappeared before
+      etch.
+    - Bump Standards-Version to 3.9.0.0.
+
+ -- Mike Hommey <glandium@debian.org>  Tue, 29 Jun 2010 12:42:35 +0200
+
+libxml2 (2.7.7.dfsg-3) unstable; urgency=low
+
+  * debian/rules: Use build_python* instead of build-python* as build
+    directory when configuring python modules. build-python$* would get
+    matched by make as an existing file and would prevent evaluation of the
+    corresponding build rule. Thanks Loïc Minier.
+  * debian/python-libxml2.install: Don't hardcode site-/dist-packages in
+    .install. Cope with builds which don't have any dist-packages (or
+    site-packages) based python versions. Thanks Loïc Minier.
+  * debian/rules, debian/python-libxml2-dbg.install, debian/control:
+    Add a python-libxml2-dbg package. Closes: #583582.
+  * debian/rules: Don't link against libpython.
+  * python-libxml2-dbg.preinst: Remove /usr/share/doc/python-libxml2-dbg
+    symlink when it exists (which is the case with older Ubuntu packages).
+
+ -- Mike Hommey <glandium@debian.org>  Wed, 23 Jun 2010 18:52:51 +0200
+
+libxml2 (2.7.7.dfsg-2) unstable; urgency=low
+
+  * debian/libxml2-dbg.preinst, debian/libxml2-dev.preinst,
+    debian/libxml2-utils.preinst: Remove /usr/share/doc symbolic links on
+    upgrade. They will then be replaced by directories by dpkg.
+    Closes: #577025.
+
+ -- Mike Hommey <glandium@debian.org>  Fri, 09 Apr 2010 10:21:02 +0200
+
+libxml2 (2.7.7.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/control:
+    + Bump Standards-Version to 3.8.4.0.
+    + Depend on a version of debhelper that provides dh and supports
+      overrides.
+  * debian/compat: Bump to 7.
+  * debian/rules:
+    + Don't avoid to build in example/. There is no reason to do so anymore.
+    + Remove remains of WORKAROUND_MODIFIED_FILES, that was removed 2 years
+      ago.
+    + Change the way python libs are built. We now use configure to set
+      different environment with and without python, and arrange things so
+      that we don't have to build the base libxml2 library several times.
+    + Deduplicate in /usr/lib/pyshared, not
+      /usr/lib/python-support/python-libxml2.
+    + Remove old source and diff rules that only displayed a message
+      inviting to use dpkg-source -b.
+    + Force -Wl,--as-needed at the beginning of the gcc command line.
+    + Simplify rules by switching to dh.
+    + Don't refresh COPYING during clean target, it appears not to be
+      necessary anymore.
+    + Use a common cache for main and python configure passes.
+  * debian/python-libxml2.install: Install python files from
+    /usr/lib/python*/dist-packages.
+  * python/generator.py: Sort python generated stubs so that libxml2.py
+    doesn't differ between python 2.5 and 2.6.
+  * doc/devhelp/Makefile.{am,in}: Properly install devhelp files when
+    builddir != srcdir.
+
+ -- Mike Hommey <glandium@debian.org>  Sun, 21 Mar 2010 09:51:17 +0100
+
+libxml2 (2.7.6.dfsg-2) unstable; urgency=low
+
+  * Cherry-picks from upstream git:
+    + globals.c: fix the initialization of the mutex.
+    + xmlIO.c: remove an abuse of zlib API and use a clean interface
+      available in zlib >= 1.2.3. Closes: #565683, #565823.
+  * debian/control:
+    + Put libreadline-dev before libreadline5-dev in Build-Deps.
+      Closes: #553803.
+    + Add misc:Depends dependencies where they are missing.
+
+ -- Mike Hommey <glandium@debian.org>  Tue, 19 Jan 2010 18:41:49 +0100
+
+libxml2 (2.7.6.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/control:
+    + Bump Standards-Version to 3.8.3.0.
+    + Set libxml2 package priority to standard to match override.
+
+ -- Mike Hommey <glandium@debian.org>  Sat, 10 Oct 2009 23:55:41 +0200
+
+libxml2 (2.7.5.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+    + Fixed a RelaxNG bug introduced in 2.7.4. Closes: #546442.
+
+ -- Mike Hommey <glandium@debian.org>  Fri, 25 Sep 2009 22:28:53 +0200
+
+libxml2 (2.7.4.dfsg-2) unstable; urgency=low
+
+  * debian/libxml2.symbols: Force binaries that use versioned symbols to
+    depend on version 2.7.4 at least.
+  * parser.c: Fix a parsing problem with little data at startup.
+    Cherry-picked from upstream git. Closes: #546254, #546488.
+
+ -- Mike Hommey <glandium@debian.org>  Wed, 16 Sep 2009 00:12:50 +0200
+
+libxml2 (2.7.4.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * Revert old change to entities.c.
+  * debian/copyright: Change upstream url. Closes: #541082.
+  * debian/libxml2.symbols: Change symbols file to use newly introduced
+    symbol versioning
+  * debian/rules: bump shlibs to current version.
+
+ -- Mike Hommey <glandium@debian.org>  Thu, 10 Sep 2009 23:04:35 +0200
+
+libxml2 (2.7.3.dfsg-2.1) unstable; urgency=high
+
+  * Non-maintainer upload by the Security Team (Closes: #540865).
+  * Fix multiple use-after-free flaws when parsing notation and
+    enumeration attribute types (CVE-2009-2416).
+  * Fix stack overflow when parsing root XML document element DTD
+    definition (CVE-2009-2414).
+
+ -- Nico Golde <nion@debian.org>  Sun, 16 Aug 2009 17:45:17 +0200
+
+libxml2 (2.7.3.dfsg-2) unstable; urgency=low
+
+  * debian/no-upstream-changelog: Removed.
+  * debian/rules: Don't use symlinks in /usr/share/doc anymore, and only
+    install the upstream changelog in the libxml2 package. Considering
+    its size, we don't need it everywhere. Closes: #496959.
+  * include/libxml/*.h: change ATTRIBUTE_PRINTF into LIBXML_ATTR_FORMAT
+    to avoid macro name. Cherry-pick upstream f076f34. Closes: #521994.
+  * error.c: fix structured error handling problems. Cherry-pick upstream
+    719f397. Closes: #522669.
+  * debian/control:
+    + Change libxml2-dbg's section to "debug".
+    + Bump Standards-Version to 3.8.2.0.
+    + Add Homepage, Vcs-Git and Vcs-Browser fields.
+
+ -- Mike Hommey <glandium@debian.org>  Mon, 13 Jul 2009 08:56:37 +0200
+
+libxml2 (2.7.3.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * parser.c: Remove useless nbParse* variables and avoid exporting them as
+    symbols.
+  * debian/libxml2.symbols: Reference the new symbols.
+  * debian/rules: bump shlibs to current version.
+
+ -- Mike Hommey <glandium@debian.org>  Sun, 01 Mar 2009 11:57:55 +0100
+
+libxml2 (2.6.32.dfsg-5) unstable; urgency=high
+
+  * parserInternals.c: apply patch from upstream revision 3741 to avoid
+    double-free in some situations. This fixes a crash while running the
+    W3C/OASIS XML conformance test.
+  * tree.c: Fix infinite loop. Fixes: CVE-2008-4225.
+  * SAX2.c: Fix integer overflow. Fixes: CVE-2008-4226.
+
+ -- Mike Hommey <glandium@debian.org>  Tue, 18 Nov 2008 08:08:34 +0100
+
+libxml2 (2.6.32.dfsg-4) unstable; urgency=high
+
+  * Fix regressions due to previous security fixes. Fixes: CVE-2008-3529.
+    Closes: #498768.
+
+ -- Mike Hommey <glandium@debian.org>  Fri, 19 Sep 2008 21:26:19 +0200
+
+libxml2 (2.6.32.dfsg-3) unstable; urgency=high
+
+  * Fix DoS which leads to recursive evaluation of entities.
+    Fixes: CVE-2008-3281, without breaking librsvg and others. Closes: #496125.
+
+ -- Mike Hommey <glandium@debian.org>  Mon, 25 Aug 2008 22:01:17 +0200
+
+libxml2 (2.6.32.dfsg-2) unstable; urgency=low
+
+   * debian/control:
+     + Use ${binary:Version} instead of ${Source-Version}.
+     + Fixed spelling error for "Python".
+   * debian/rules: Don't ignore make distclean errors.
+   * debian/libxml2-doc.doc-base: Changed section to fit doc-base sections
+     changes.
+  * xml2-config.1: Remove unknown groff command.
+
+ -- Mike Hommey <glandium@debian.org>  Sat, 19 Apr 2008 20:38:50 +0200
+
+libxml2 (2.6.32.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/control: Bumped Standards-Version to 3.7.3.0. No changes.
+  * debian/rules:
+    + Make dpkg-shlibdeps fail when symbols are missing.
+    + Removed the workaround for removed and modified files during build. The
+      former was for svn-buildpackage that I don't use anymore, and the latter
+      for a file that isn't in the .orig.tar.gz anymore.
+    + Bump shlibs to current version, since a new symbol was added.
+  * debian/libxml2.symbols: Reference the new symbol.
+
+ -- Mike Hommey <glandium@debian.org>  Wed, 09 Apr 2008 11:25:18 +0200
+
+libxml2 (2.6.31.dfsg-2) unstable; urgency=low
+
+  * debian/rules: Brown paper bag: uncomment $(MAKE) distclean.
+    Closes: #442656.
+  * xstc/Makefile.am, xstc/Makefile.in: Properly clean generated files.
+  * nanohttp.c: Apply fix from svn revision 3685 to allocate enough memory
+    for the Host HTTP header when containing a port number. Closes: #464173.
+  * error.c: Don't grow error buffer indefinitely when vsnprintf returns -1,
+    which, if it happens, on glibc-based systems, will happen indefinitely.
+    Closes: #456653.
+
+ -- Mike Hommey <glandium@debian.org>  Wed, 05 Mar 2008 23:42:37 +0100
+
+libxml2 (2.6.31.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * Acknowledged NMU.
+  * testModule.c: Revert our change to add PATH_MAX for the Hurd, since we now
+    don't even build this file.
+  * debian/rules: bump shlibs to current version, since a new symbol was added.
+  * debian/libxml2.symbols: Reference the new symbol.
+  * autogen.sh: Switch to automake1.10 to follow upstream.
+
+ -- Mike Hommey <glandium@debian.org>  Sat, 19 Jan 2008 18:46:41 +0100
+
+libxml2 (2.6.30.dfsg-3.1) unstable; urgency=high
+
+  * Non-maintainer upload by security team.
+  * This update addresses the following security issue:
+    - CVE-2007-6284: The xmlCurrentChar function allows context-dependent
+      attackers to cause a denial of service (infinite loop) via XML
+      containing invalid UTF-8 sequences (Closes: #460292).
+
+ -- Nico Golde <nion@debian.org>  Sun, 13 Jan 2008 15:15:04 +0100
+
+libxml2 (2.6.30.dfsg-3) unstable; urgency=low
+
+  * debian/libxml2.symbols: Add a symbols file to benefit from the new
+    features in dpkg-shlibdeps.
+  * debian/control: Build depend on debhelper (>= 5.0.61) and dpkg-dev (>=
+    1.14.9), accordingly.
+  * debian/rules:
+    + Apply rules suggested in autotools-dev documentation.
+    + Add -Wl,--as-needed to LDFLAGS so that useless dependencies are not
+    added.
+  * Makefile.am, Makefile.in: Don't build noinst targets.
+
+ -- Mike Hommey <glandium@debian.org>  Wed, 21 Nov 2007 19:22:51 +0100
+
+libxml2 (2.6.30.dfsg-2) unstable; urgency=low
+
+  * libxml.h: define _LARGEFILE64_SOURCE to properly get gzopen64 defines in
+    zlib.h. Closes: #439843. Thanks Dann Frazier.
+
+ -- Mike Hommey <glandium@debian.org>  Tue, 28 Aug 2007 21:52:30 +0200
+
+libxml2 (2.6.30.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Mike Hommey <glandium@debian.org>  Sun, 26 Aug 2007 10:52:39 +0200
+
+libxml2 (2.6.29.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/rules: bump shlibs to current version, since new symbols were added.
+
+ -- Mike Hommey <glandium@debian.org>  Wed, 13 Jun 2007 20:52:41 +0200
+
+libxml2 (2.6.28.dfsg-1) unstable; urgency=low
+
+  * New upstream release:
+    + Provides doc/html/index.html. Closes: #405802.
+    + Fixed infinite loop with invalid characters in Xincluded files.
+      Closes: #410762.
+  * debian/rules: bump shlibs to current version, since new symbols were added.
+
+ -- Mike Hommey <glandium@debian.org>  Wed, 18 Apr 2007 08:09:16 +0200
+
+libxml2 (2.6.27.dfsg-1) unstable; urgency=low
+
+  * New "huge bug fixes list" upstream release.
+  * autogen.sh: Updated so that doc/examples/index.html gets updated
+    correctly.
+  * debian/control: Bumped Standards-Version to 3.7.2.2. No changes required.
+  * debian/rules: bump shlibs to current version, since new symbols were added.
+
+ -- Mike Hommey <glandium@debian.org>  Thu, 26 Oct 2006 23:15:00 +0200
+
+libxml2 (2.6.26.dfsg-4) unstable; urgency=low
+
+  * debian/control:
+    + Bumped Standards-Version to 3.7.2.1. No changes required.
+    + Added a conflict to the sarge version of libxslt1.1 to avoid upgrade
+      problems. Closes: #390733.
+  * debian/watch: Updated to mangle the Debian version.
+
+ -- Mike Hommey <glandium@debian.org>  Wed,  4 Oct 2006 16:51:29 +0200
+
+libxml2 (2.6.26.dfsg-3) unstable; urgency=medium
+
+  * debian/rules, debian/libxml2-dev.install: Don't install libxml2.la
+    directly and sed it to remove the dependency_libs. Note that will break
+    linking statically libxml2 with libtool, we recommend to use pkg-config
+    --static --libs libxml-2.0 instead of relying on libtool.
+    Closes: #379807, #378511.
+  * xml2-config.in: Fixed usage alignment of the new option introduced in
+    previous upload.
+
+ -- Mike Hommey <glandium@debian.org>  Thu, 27 Jul 2006 19:40:27 +0200
+
+libxml2 (2.6.26.dfsg-2) unstable; urgency=low
+
+  * The slithering release.
+
+  * debian/python-libxml2.examples.in: Renamed to
+    debian/python-libxml2.examples
+  * debian/python-libxml2.install.in: Renamed to
+    debian/python-libxml2.install, and replaced PYVERS by a wildcard.
+  * debian/control:
+    + Adapted dependencies to fit all changes.
+    + Added fields required by new Python policy.
+    + Added fields necessary for flawless transition.
+    + Replaced dummy python-libxml2 package by a full real package which
+      itself replaces python2.x-libxml2 packages.
+  * debian/rules:
+    + Changed rules to get the python versions we want to build for and
+      adapted some rules to fit with the new setting.
+    + Changed shell loops to make loops.
+    + In case python binary modules are identical (and they are, but they
+      may not be with future versions of the python headers), replace some
+      of them with symbolic links.
+    + Adapted rules to the fact we're installing in only one python package
+      instead of several.
+  * debian/pycompat: Set to 2, for new Python policy. Closes: #373456.
+  * Switching to the new policy avoids necessity to conflict with very old
+    versions of the python bindings packages. Closes: #365057.
+
+  * debian/libxml2-doc.install: Added the /usr/share/gtk-doc directory.
+    Closes: #375113.
+  * debian/control: Made libxml2-doc suggest devhelper.
+  * libxml-2.0.pc.in, libxml-2.0-uninstalled.pc.in: Split Libs in Libs and
+    Libs.private.
+  * configure.in, configure: Adapted to fill the variables correctly for
+    libraries.
+  * xml2-config.in, xml2-config.1: Added a --static option to add to --libs
+    so that we can split what is needed when building statically and what is
+    needed when building dynamically. Closes: #374017.
+  * libxml-2.0.pc.in, libxml-2.0-uninstalled.pc.in, xml2-config.in: Added
+    BASE_THREADS_LIBS to the static link information so that -lpthread would
+    appear. Closes: #372945.
+  * debian/control: Removed dependency on zlib-dev for libxml2-dev.
+  * debian/rules: Add the NEWS file to dh_install calls. Closes: #365596.
+  * debian/watch: Updated.
+  * NEWS: Updated.
+
+ -- Mike Hommey <glandium@debian.org>  Sat,  1 Jul 2006 10:45:02 +0200
+
+libxml2 (2.6.26.dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/rules:
+    + Added -fno-strict-aliasing to the CFLAGS.
+    + Use dpkg-architecture to feed configure.
+    + Bumped shlibs to current version, since new symbol for XPath cache has
+      been added.
+  * debian/control: Bumped Standards-Version to 3.7.2.0. No changes required.
+
+ -- Mike Hommey <glandium@debian.org>  Thu,  8 Jun 2006 21:39:55 +0200
+
+libxml2 (2.6.24.dfsg-1) unstable; urgency=low
+
+  * New upstream release. Closes: #365246.
+  * debian/control:
+    + Changed libxml2-dbg's priority to extra.
+    + Bumped Standards-Version to 3.7.0.0. No changes required.
+  * debian/rules: bump shlibs to current version, since new symbols were added.
+
+ -- Mike Hommey <glandium@debian.org>  Sat, 29 Apr 2006 22:18:14 +0200
+
+libxml2 (2.6.23.dfsg.2-3) unstable; urgency=low
+
+  * debian/rules: Correctly strip python modules.
+
+ -- Mike Hommey <glandium@debian.org>  Sat, 18 Mar 2006 19:15:53 +0100
+
+libxml2 (2.6.23.dfsg.2-2) unstable; urgency=low
+
+  * debian/control: Removed python2.2-libxml2 and build-dep on python2.2-dev.
+    Closes: #351125.
+  * doc/xmllint.xml, doc/xmllint.1: Applied patch from upstream cvs.  That
+    improves the manual page by many ways.
+  * doc/xmllint.html: Manually updated with changes from the .xml file.
+  * xmllint.c: Don't throw error when failed to load an entity through --path
+    option of xmllint (patch from upstream cvs). Closes: #352634.
+    Thanks Daniel Leidert.
+
+ -- Mike Hommey <glandium@debian.org>  Mon, 20 Feb 2006 10:52:46 +0100
+
+libxml2 (2.6.23.dfsg.2-1) unstable; urgency=low
+
+  * result/, test/: Totally removed. There is more suspicious content than
+    what has been removed in previous upload, so I'm just dropping the
+    regression tests from the archive until all files are investigated.
+    Closes: #331534.
+  * debian/control, debian/rules: Added a libxml2-dbg package containing
+    debug symlbols for the library and the utilities. We don't provide the
+    symbols for the python modules, though. Closes: #296299.
+  * debian/control, debian/compat: Adjust build dependencies and debhelper
+    compatibility accordingly.
+  * debian/libxml2-dbg.dirs: Add /usr/share/doc in the new libxml2-dbg
+    package.
+
+ -- Mike Hommey <glandium@debian.org>  Tue, 31 Jan 2006 20:17:37 +0100
+
+libxml2 (2.6.23.dfsg.1-0.1) unstable; urgency=medium
+
+  * NMU.
+  * Medium urgency due to RC bugfix.
+  * Removed non-free test files from upstream tarball. Closes: #331534.
+
+ -- Per Olofsson <pelle@debian.org>  Sun, 15 Jan 2006 23:02:12 +0100
+
+libxml2 (2.6.23-1.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * Fix XML parser to unbreak xsltproc (Closes: #346594).
+
+ -- Luk Claes <luk@debian.org>  Thu, 12 Jan 2006 15:25:42 +0100
+
+libxml2 (2.6.23-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/control:
+    + Added | libreadline-dev for readline dependency.
+    + Bumped Standards-Version to 3.6.2.1. No changes needed.
+  * debian/rules: bump shlibs to current version, since new symbols were added.
+
+ -- Mike Hommey <glandium@debian.org>  Fri,  6 Jan 2006 19:03:57 +0100
+
+libxml2 (2.6.22-2) unstable; urgency=low
+
+  * autogen.sh: Changed the way we rebuild the examples.
+  * debian/rules: Added history support in xmllint. Closes: #318083.
+  * debian/control: Added build dependency upon libreadline5-dev for history
+    support in xmllint.
+  * xmllint.c: Added some spaces in usage(). Closes: #335015.
+  * testModule.c: Added PATH_MAX definition for the Hurd. Closes: #333623.
+
+ -- Mike Hommey <glandium@debian.org>  Wed,  2 Nov 2005 19:22:41 +0100
+
+libxml2 (2.6.22-1) unstable; urgency=low
+
+  * New upstream release
+  * error.c: Reenable support of validation errors in structured error
+    handler.
+  * autogen.sh: Use automake1.9, as upstream does, and run it.
+
+ -- Mike Hommey <glandium@debian.org>  Tue, 13 Sep 2005 18:04:10 +0200
+
+libxml2 (2.6.21-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/control, debian/rules: Removed dummy package. Closes: #322052.
+  * debian/rules: bump shlibs to current version.
+
+ -- Mike Hommey <glandium@debian.org>  Wed,  7 Sep 2005 19:11:32 +0200
+
+libxml2 (2.6.20-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules: bump shlibs to current version.
+
+ -- Mike Hommey <glandium@debian.org>  Thu, 14 Jul 2005 09:42:27 +0200
+
+libxml2 (2.6.19-1) unstable; urgency=low
+
+  * The "Sarge got released but I was offline, so couldn't upload" release.
+  * New upstream release.
+  * debian/rules: bump shlibs to current version.
+
+ -- Mike Hommey <glandium@debian.org>  Fri,  8 Jul 2005 19:29:29 +0200
+
+libxml2 (2.6.16-7) unstable; urgency=low
+
+  * The "dummy packages are arch: all, dammit" release.
+  * debian/control: Changed to Architecture: all for dummy package.
+
+ -- Mike Hommey <glandium@debian.org>  Sat,  9 Apr 2005 11:57:29 +0200
+
+libxml2 (2.6.16-6) unstable; urgency=low
+
+  * The "Let's do it cleaner" release.
+  * debian/rules: fix installation of python files and make proper use of
+    DESTDIR at install time.
+
+ -- Mike Hommey <glandium@debian.org>  Mon, 28 Mar 2005 18:12:15 +0200
+
+libxml2 (2.6.16-5) unstable; urgency=low
+
+  * debian/watch: use svn-upgrade instead of uupdate.
+  * debian/control, debian/rules, debian/python-libxml2.*.in:
+    Added support for several python bindings packages. Currently for python
+    2.2, 2.3 and 2.4.
+  * debian/python2.3-libxml2.*: Removed.
+
+ -- Mike Hommey <glandium@debian.org>  Sun, 27 Mar 2005 21:36:53 +0200
+
+libxml2 (2.6.16-4) unstable; urgency=high
+
+  * Urgency set to high because we avoid breaking packages depending on us
+    when we don't properly bytecompile our python bindings.
+  * debian/rules: Call dh_python. We now get proper maintainer scripts for
+    bytecompiling files at install time and removing them at removal time.
+    Closes: #300834.
+  * debian/control: Adjust build dependencies accordingly.
+
+ -- Mike Hommey <glandium@debian.org>  Tue, 22 Mar 2005 21:56:50 +0100
+
+libxml2 (2.6.16-3) unstable; urgency=low
+
+  * tree.c: Avoid adding namespaced attributes to other elements than element
+    nodes. Closes: #293592.
+  * encoding.c: Fix the comments to describe the real return values of
+    UTF8Toisolat1 and isolat1ToUTF8.
+  * doc/: Regenerate API documentation.
+
+ -- Mike Hommey <glandium@debian.org>  Wed, 16 Feb 2005 20:31:17 +0100
+
+libxml2 (2.6.17-1) experimental; urgency=low
+
+  * New upstream release.
+
+ -- Mike Hommey <glandium@debian.org>  Sat,  5 Feb 2005 13:10:13 +0100
+
+libxml2 (2.6.16-2) unstable; urgency=low
+
+  * Upload to unstable, targetted for sarge.
+  * Changed my maintainer address to the fresh new Debian one.
+  * debian/rules: Added changelog and copyright files in dummy package.
+  * debian/libxml2-doc.doc-base: Fixed files sections. Closes: #281242.
+
+ -- Mike Hommey <glandium@debian.org>  Fri,  4 Feb 2005 20:45:48 +0100
+
+libxml2 (2.6.16-1) experimental; urgency=low
+
+  * New upstream release
+  * debian/control, debian/rules: Changed libxml2-python2.3's name to
+    python2.3-libxml2. Added a dummy package for smooth transition.
+  * debian/libxml2-python2.3.*: Renamed to python2.3-libxml2.*.
+    Closes: #279343.
+  * debian/rules:
+    - Don't install files in the dummy libxml2-python2.3 package.
+    - Bump shlibs to current version.
+
+ -- Mike Hommey <mh@glandium.org>  Sat, 13 Nov 2004 16:38:37 +0900
+
+libxml2 (2.6.15-2) experimental; urgency=low
+
+  * error.c: Removed support of validation errors in structured error handler.
+    That avoids it to crash when a validation error happens. (That was a
+    broken feature added in 2.6.15. This will get properly fixed in 2.6.16).
+    Closes: #279040.
+
+ -- Mike Hommey <mh@glandium.org>  Mon,  8 Nov 2004 22:16:00 +0900
+
+libxml2 (2.6.15-1) experimental; urgency=low
+
+  * New upstream release
+  * debian/rules: Use "dh_makeshlibs -V 'libxml2 (>= 2.6.15)'", since version
+    2.6.16 introduces some new symbols.
+
+ -- Mike Hommey <mh@glandium.org>  Thu, 28 Oct 2004 19:08:20 +0900
+
+libxml2 (2.6.11-5) unstable; urgency=high
+
+  * Backport patch from libxml2-2.6.15 to fix buffer overflows [nanohttp.c,
+    nanoftp.c, CAN-2004-0989]
+
+ -- Mike Hommey <mh@glandium.org>  Thu, 28 Oct 2004 17:34:54 +0900
+
+
+libxml2 (2.6.14-1) experimental; urgency=low
+
+  * New upstream release. Closes: #273961.
+  * debian/rules: Use "dh_makeshlibs -V 'libxml2 (>= 2.6.14)'", since version
+    2.6.14 introduces some new symbols.
+  * debian/shlibs.local: Removed, since it is not useful any more.
+
+ -- Mike Hommey <mh@glandium.org>  Sat, 16 Oct 2004 16:29:06 +0900
+
+libxml2 (2.6.11-4) unstable; urgency=low
+
+  * The "let's do some clean up for sarge" release.
+  * debian/libxml2-python2.3.install: don't install .a and .la files.
+  * debian/rules: Avoid compression of both python examples and documentation.
+  * Reorganization in documentation:
+    + debian/libxml2-doc.examples: removed, they will get installed by
+      libxml2-doc.install, and we don't ship gjob* examples anymore, they
+      have been superseded by a lot of better examples.
+    + debian/libxml2-doc.install, debian/rules: changed the way files are
+      installed in the libxml2-doc package, and their location.
+    + debian/libxml2-doc.doc-base: changed the location of the documentation
+      base to fit the new one.
+    + doc/examples/index.html: generated this file from examples.x?l by
+      hand. It would otherwise require a build dependency on xsltproc, itself
+      depending upon libxml2... wouldn't be very reasonnable.
+  * debian/no-upstream-changelog, debian/rules, debian/libxml2-dev.dirs,
+    debian/libxml2-utils.dirs: /usr/share/doc directories have been replaced
+    by a symbolic link in packages libxml2-utils and libxml2-dev.
+    In libxml2-python2.3, all files but TODO are symlinks to the corresponding
+    file from libxml2. The one from libxml2-doc is replaced by an explicative
+    text saying where to find it and why it has been (re)moved.
+    That will save some space in the archive, especially considering this
+    file is constantly growing.
+  * debian/README.Debian: Added a recommentation to upgrade package if user
+    needs heavy standards compliance.
+  * debian/shlibs.local: Added to tighten dependencies between libxml2-*
+    packages.
+  * xmlIO.c: Fixed typo (Closes: #265740).
+  * nanohttp.c, nanoftp.c: no_proxy environment variable doesn't disable proxy
+    anymore. (Closes: #266430)
+  * debian/rules, debian/control: Removed the workaround to compile with
+    gcc-3.2 on hppa, since $254549 is closed.
+
+ -- Mike Hommey <mh@glandium.org>  Sat, 16 Oct 2004 16:20:54 +0900
+
+libxml2 (2.6.11-3) unstable; urgency=low
+
+  * debian/control: add a space between gcc-3.2 and [hppa]. Closes: #262101.
+  * python/drv_libxml2.py: add encoding declaration. Closes: #259526.
+  * debian/rules: Backup files that are removed or modified by upstream build
+    system and restore them so that calling the clean target actually gives
+    the same tree as before a build.
+
+ -- Mike Hommey <mh@glandium.org>  Sun,  1 Aug 2004 05:02:14 +0900
+
+libxml2 (2.6.11-2) unstable; urgency=medium
+
+  * Thanks to Andreas Metzler:
+  + Hotfix for toolchain breakage (#254549), because libxml2 blocks lots of
+    packages from propagating to testing. Compile with gcc-3.2 on hppa.
+
+ -- Mike Hommey <mh@glandium.org>  Wed, 21 Jul 2004 23:37:22 +0900
+
+libxml2 (2.6.11-1) unstable; urgency=low
+
+  * New upstream release
+  * libxml.m4: removed debian changes which have been incorporated upstream.
+  * debian/rules: Use "dh_makeshlibs -V 'libxml2 (>= 2.6.11)'", since
+    version 2.6.11 introduces some new functions.
+
+ -- Mike Hommey <mh@glandium.org>  Wed,  7 Jul 2004 00:54:50 +0900
+
+libxml2 (2.6.10-3) unstable; urgency=low
+
+  * debian/control: changed deps on libz-dev to zlib1g-dev | libz-dev.
+  * debian/rules: made binary-indep target actually build the libxml2-doc
+    package which is Arch: all. Closes: #251971.
+
+ -- Mike Hommey <mh@glandium.org>  Wed,  2 Jun 2004 15:57:21 +0900
+
+libxml2 (2.6.10-2) unstable; urgency=low
+
+  * debian/watch: updated the watch file to exclude the cvs-snapshot from
+    the scope. Closes: #250177.
+  * debian/rules: rename libxml.m4 to libxml2.m4 in the /usr/share/aclocal
+    directory.
+  * libxml.m4: removed the AM_PATH_XML macro which is a macro for checking
+    libxml, not libxml2. Changed CFLAGS to CPPFLAGS from test compiles so
+    that using C++ also works. Closes: #249033.
+
+ -- Mike Hommey <mh@glandium.org>  Wed, 26 May 2004 21:28:54 +0900
+
+libxml2 (2.6.10-1) unstable; urgency=low
+
+  * New upstream release:
+    + Fixes xincludes fallback issues. Closes: #243580.
+    + Fixes output formatting issues. Closes: #246181.
+  * debian/rules: Use "dh_makeshlibs -V 'libxml2 (>= 2.6.10)'", since
+    version 2.6.10 introduces some few new functions.
+
+ -- Mike Hommey <mh@glandium.org>  Mon, 17 May 2004 17:16:44 +0900
+
+libxml2 (2.6.9-2) unstable; urgency=low
+
+  * Enable AM_MAINTAINER_MODE and re-run the autotools suite.
+    Closes: #245990.
+
+ -- Mike Hommey <mh@glandium.org>  Tue, 27 Apr 2004 16:31:21 +0900
+
+libxml2 (2.6.9-1) unstable; urgency=high
+
+  * New upstream release:
+    + xincludes fallbacks fixed. Closes: #243580.
+  * Urgency set to high because of RC bug fixed and it's been too long
+    libxml2 has been stucking packages in sid.
+  * Ran all the autotools suite, especially the latest libtool.
+    Closes: #244557.
+  * debian/rules:
+    + Removed all python file removals since these files get now
+      correctly removed upstream.
+    + Changed once more the python/libxml2-py.c workaround to finally
+      work really properly.
+
+ -- Mike Hommey <mh@glandium.org>  Mon, 19 Apr 2004 17:58:56 +0900
+
+libxml2 (2.6.8-2) unstable; urgency=high
+
+  * Urgency set to high because of the FTBFS RC bug fixed.
+  * debian/changelog:
+    + Added missing changes for release 2.6.8-1.
+    + Converted changelog file to UTF-8.
+  * debian/rules: Changed the python/libxml2-py.c workaround stuff to
+    actually work properly
+
+ -- Mike Hommey <mh@glandium.org>  Sat, 17 Apr 2004 16:59:01 +0000
+
+libxml2 (2.6.8-1.1) unstable; urgency=high
+
+  * NMU. Urgency set to high as libxml2 has been preventing too many packages
+    from entering testing for too long.
+  * Grabbed from SVN:
+    Mike Hommey <mh@glandium.org>  Sat, 10 Apr 2004 12:42:03 +0900
+    * debian/control:
+      + Updated section for libxml2-doc package.
+      + Added dependency on libz-dev for libxml2-dev. (Closes: #242683)
+
+ -- J.H.M. Dassen (Ray) <jdassen@debian.org>  Fri, 16 Apr 2004 22:37:08 +0200
+
+libxml2 (2.6.8-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules:
+    + Use "dh_makeshlibs -V 'libxml2 (>= 2.6.8)'", since version 2.6.8
+      introduces some few new functions.
+    + Try to circumvent new troubles with the python/libxml2-py.c with
+      svn-buildpackage not wanting to make the build (the file used to
+      be removed because it was modified by the build).
+  * Removed changes about XML_CATALOG_FILES in manual pages, since it has
+    been incorporated upstream.
+
+ -- Mike Hommey <mh@glandium.org>  Thu, 25 Mar 2004 14:57:44 +0900
+
+libxml2 (2.6.7-2) unstable; urgency=low
+
+  * debian/control: Changed Maintainer to Debian SGML/XML Group and
+    put myself into Uploaders.
+  * Merged back libxml2-headers into libxml2-dev. That was too much of
+    a split. Closes: #238109.
+
+ -- Mike Hommey <mh@glandium.org>  Mon, 22 Mar 2004 15:41:30 +0900
+
+libxml2 (2.6.7-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules: Use "dh_makeshlibs -V 'libxml2 (>= 2.6.7)'", since
+    version 2.6.7 introduces some few new functions.
+
+ -- Mike Hommey <mh@glandium.org>  Wed, 25 Feb 2004 15:43:11 +0900
+
+libxml2 (2.6.6-2) unstable; urgency=low
+
+  * debian/control:
+    + Added a Recommends: xml-core to libxml2 package.
+    + Added a libxml2-headers and a libxml2-docs packages to split
+      arch-dependent and arch-independent files. These files used to be
+      in the libxml2-dev package. Note that the new libxml2-dev package
+      depends on libxml2-headers, so that upgrade will keep the header
+      files on the system, but libxml2-headers only suggests libxml2-doc,
+      while libxml2-dev doesn't say anything about it, which means that
+      the documentation files won't be automagically installed on your
+      system.  Closes: #233405.
+    + Added the adequate dependencies between new and old packages.
+    + Uniformized short descriptions.
+    + Slightly modified long descriptions.
+  * debian/rules:
+    + Externalized all dh_* calls with arguments. (i.e. created
+      corresponding debian/package.dh_stuff files)
+    + Moved installation of some doc files to the install target.
+  * Removed un-needed debian/libxml2-python2.3.docs.
+  * Moved libxml manpage from libxml2 to libxml2-dev.
+  * doc/xmlcatalog_man.xml: Added a note about the incompatibility between
+    xmlcatalog and update-catalog from xml-core in the man page.
+  * doc/xmllint.xml, doc/xmlcatalog_man.xml: Added a note about the
+    XML_CATALOG_FILES environment variable. Closes: #232728.
+
+ -- Mike Hommey <mh@glandium.org>  Wed, 18 Feb 2004 21:29:58 +0900
+
+libxml2 (2.6.6-1) unstable; urgency=high
+
+  * New upstream release
+  * Set urgency to high, since this new upstream fixes buffer overflows.
+    Closes: #232447.
+  * debian/rules: Use "dh_makeshlibs -V 'libxml2 (>= 2.6.6)'", since
+    version 2.6.6 introduces some new functions.
+
+ -- Mike Hommey <mh@glandium.org>  Mon, 16 Feb 2004 16:56:57 +0900
+
+libxml2 (2.6.5-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules:
+    - Made better use of CFLAGS.
+    - Replaced an mv by cp -r. Closes: #227392.
+    - Use "dh_makeshlibs -V 'libxml2 (>= 2.6.5)'", since version 2.6.5
+      introduced some new functions.
+    - Make some clean-up in the example directory.
+
+ -- Mike Hommey <mh@glandium.org>  Fri, 30 Jan 2004 15:14:02 +0900
+
+libxml2 (2.6.4-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mike Hommey <mh@glandium.org>  Sat, 27 Dec 2003 18:25:17 +0900
+
+libxml2 (2.6.3-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules:
+    - Use "dh_makeshlibs -V 'libxml2 (>= 2.6.3)'", since versions 2.6.3
+      introduced some new functions.
+    - Put more examples in /usr/share/doc/libxml2-dev/examples.
+
+ -- Mike Hommey <mh@glandium.org>  Fri, 12 Dec 2003 14:45:24 +0900
+
+libxml2 (2.6.2-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules:
+    - Use "dh_makeshlibs -V 'libxml2 (>= 2.6.2)'", since versions 2.6.2
+      introduced some new functions.
+    - Put the API docs back in /usr/share/doc/libxml2-dev/libxml-dev.html.
+
+ -- Mike Hommey <mh@glandium.org>  Mon, 10 Nov 2003 22:20:33 +0900
+
+libxml2 (2.6.1-1) experimental; urgency=low
+
+  * New upstream release
+
+ -- Mike Hommey <mh@glandium.org>  Wed, 29 Oct 2003 14:07:11 +0900
+
+libxml2 (2.6.0-1) experimental; urgency=low
+
+  * New upstream release: should be API and ABI compatible but got a lot
+    of changes.
+  * debian/rules:
+    - Use "dh_makeshlibs -V 'libxml2 (>= 2.6.0)'", since applications
+      using the new API won't work on previous versions.
+      Note that this doesn't prevent applications built with older versions
+      to work properly with newer releases, since it is not supposed to be
+       any API/ABI breakage.
+    - Don't remove non-existant python/test/tmp.xml file on clean rule.
+    - Remove python/libxml2-py.c file on clean rule, to avoid its changes
+      made during build to be stored in the diff file.
+    - Added handling of the nostrip DEB_BUILD_OPTIONS.
+    - Changed old fashion dh_movefiles to dh_install --sourcedir=debian/tmp.
+    - Added installation of the python/TODO file in the libxml2-python2.3
+      package.
+    - Now take what is installed in debian/tmp/usr/share/doc/... for
+      documentation.
+    - Copy Copyright file into COPYING file in clean rule to avoid
+      unrepresentable changes to source.
+  * debian/*.files: renamed to debian/*.install.
+  * debian/libxml2.install: removed reference to non-existant
+    usr/lib/libxml.so.*
+  * Removed unneeded debian/libxml2-dev.dirs file.
+
+ -- Mike Hommey <mh@glandium.org>  Tue, 21 Oct 2003 14:07:04 +0900
+
+libxml2 (2.5.11-2) unstable; urgency=low
+
+  * debian/rules: Use "dh_makeshlibs -V 'libxml2 (>= 2.5.9)'", since
+    versions 2.5.8 and 2.5.9 introduced some changes in API.
+    Closes: #212819, #211318.
+
+ -- Mike Hommey <mh@glandium.org>  Sun, 28 Sep 2003 21:57:32 +0200
+
+libxml2 (2.5.11-1) unstable; urgency=low
+
+  * New upstream release.
+  * New maintainer.
+  * Bumped Standards-Version to 3.6.1 (no changes needed).
+  * Removed garbage debian/libxml-utils.
+  * moved debhelper compatibility to debian/compat.
+
+ -- Mike Hommey <mh@glandium.org>  Sun, 14 Sep 2003 16:03:46 +0200
+
+libxml2 (2.5.10-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 26 Aug 2003 20:08:31 +0200
+
+libxml2 (2.5.8-2) unstable; urgency=low
+
+  * Use python 2.3 (closes: #205145)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Wed, 13 Aug 2003 21:28:14 +0200
+
+libxml2 (2.5.8-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu,  7 Aug 2003 20:08:23 +0200
+
+libxml2 (2.5.7-1) unstable; urgency=low
+
+  * New upstream release (closes: #194757)
+  * Updated shlibs file (closes: #191022)
+  * Put xmllint and xmlcatalog in new package (closes: #174823)
+  
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon, 26 May 2003 20:16:01 +0200
+
+libxml2 (2.5.6-2) unstable; urgency=low
+
+  * Update libtool (closes: #188967)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon, 14 Apr 2003 20:52:45 +0200
+
+libxml2 (2.5.6-1) unstable; urgency=low
+
+  * New upstream release (closes: #188004)
+  * Applied patch from Graham Wilson <bob@decoy.wox.org> to handle
+    noopt build option. (closes: #171782)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 12 Apr 2003 20:54:13 +0200
+
+libxml2 (2.5.4-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Fri, 14 Mar 2003 18:40:08 +0100
+
+libxml2 (2.5.3-1.1) unstable; urgency=high
+
+  * Applied patch by Paul Hampson <Paul.Hampson@anu.edu.au> to correct
+    licensing information in debian/copyright which Colin Watson reported
+    as incorrect. (Addresses #178060 for sid)
+
+ -- J.H.M. Dassen (Ray) <jdassen@debian.org>  Sun, 16 Mar 2003 09:55:59 +0100
+
+libxml2 (2.5.3-1) unstable; urgency=low
+
+  * New upstream release
+  * xml2-config --libs should be correct (closes: #155312)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 22 Feb 2003 17:34:23 +0100
+
+libxml2 (2.5.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 18 Jan 2003 10:52:56 +0100
+
+libxml2 (2.5.0-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue,  7 Jan 2003 19:02:10 +0100
+
+libxml2 (2.4.30-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 14 Dec 2002 16:55:13 +0100
+
+libxml2 (2.4.28-2) unstable; urgency=low
+
+  * Upgraded libtool (closes: #172418)
+  
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun,  1 Dec 2002 15:59:49 +0100
+
+libxml2 (2.4.28-1) unstable; urgency=low
+
+  * New upstream release
+  * Added patch from CVS to fix KDE problems.
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 26 Nov 2002 19:58:54 +0100
+
+libxml2 (2.4.27-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon, 18 Nov 2002 21:05:07 +0100
+
+libxml2 (2.4.26-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Fri, 15 Nov 2002 17:29:30 +0100
+
+libxml2 (2.4.24-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 24 Aug 2002 22:28:24 +0200
+
+libxml2 (2.4.23-2) unstable; urgency=low
+
+  * Created new libxml2-python package
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 30 Jul 2002 20:16:17 +0200
+
+libxml2 (2.4.23-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon,  8 Jul 2002 00:20:43 +0200
+
+libxml2 (2.4.22-1) unstable; urgency=low
+
+  * New upstream release (closes: #149287)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Fri,  7 Jun 2002 19:43:21 +0200
+
+libxml2 (2.4.21-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Fri, 10 May 2002 18:40:02 +0200
+
+libxml2 (2.4.20-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 23 Apr 2002 22:13:37 +0200
+
+libxml2 (2.4.19-4) unstable; urgency=low
+
+  * Make libxml2-dev replace libxml2 <= 2.4.19-1 (closes: #142609, #142741)
+  * Update shlibs version to 2.4.19-4 (closes: #142806)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun, 14 Apr 2002 12:19:51 +0200
+
+libxml2 (2.4.19-3) unstable; urgency=low
+
+  * Dont use threads for now (closes: #142596)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 13 Apr 2002 15:53:04 +0200
+
+libxml2 (2.4.19-2) unstable; urgency=low
+
+  * Move pkgconfig stuff to -dev package (closes: #142171)
+  * Compile with thread support (closes: #141764)
+  * xml2-config --cflags will return same paths as previous versions
+    (closes: #142229)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Fri, 12 Apr 2002 18:21:48 +0200
+
+libxml2 (2.4.19-1) unstable; urgency=low
+
+  * New upstream release
+  * Fixed doc-base (closes: #141067)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Wed,  3 Apr 2002 19:45:33 +0200
+
+libxml2 (2.4.16-2) unstable; urgency=low
+
+  * New version as last version was built with broken debhelper.
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 26 Feb 2002 22:28:24 +0100
+
+libxml2 (2.4.16-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 23 Feb 2002 20:21:34 +0100
+
+libxml2 (2.4.13-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 15 Jan 2002 20:02:53 +0100
+
+libxml2 (2.4.12-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat,  8 Dec 2001 22:52:44 +0100
+
+libxml2 (2.4.10-1) unstable; urgency=low
+
+  * New upstream release
+  * Applied patch from LaMont Jones <lamont@smallone.fc.hp.com> to fix
+    gcc 3.0 build problem (closes: #120254)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 20 Nov 2001 18:02:29 +0100
+
+libxml2 (2.4.8-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon,  5 Nov 2001 19:49:26 +0100
+
+libxml2 (2.4.6-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu, 18 Oct 2001 19:48:07 +0200
+
+libxml2 (2.4.5-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 15 Sep 2001 23:11:11 +0200
+
+libxml2 (2.4.3-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon, 27 Aug 2001 20:32:21 +0200
+
+libxml2 (2.4.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 21 Aug 2001 20:39:44 +0200
+
+libxml2 (2.4.1-1) unstable; urgency=low
+
+  * New upstream release
+  * Added ncurses and readline build depends.
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 24 Jul 2001 21:08:16 +0200
+
+libxml2 (2.4.0-2) unstable; urgency=low
+
+  * xml2-config --libs only outputs -lxml2 (closes: #97739)
+  * Patched libxml.m4 to include string.h
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Wed, 18 Jul 2001 13:44:10 +0200
+
+libxml2 (2.4.0-1) unstable; urgency=low
+
+  * New upstream release (closes: #105568)
+  * Fixed xml2-config to not output -I/usr/include, -L/usr/lib 
+    (closes: #101390)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 17 Jul 2001 12:43:34 +0200
+
+libxml2 (2.3.13-3.1) unstable; urgency=low
+
+  * NMU (for porting)
+  * Change configure / configure.in to not specify -I/usr/include
+    (closes: #104603)
+
+ -- Matthew Wilcox <willy@debian.org>  Fri, 13 Jul 2001 17:08:36 -0600
+
+libxml2 (2.3.13-3) unstable; urgency=low
+
+  * Don't build example (closes: #103220, #103281)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue,  3 Jul 2001 16:13:31 +0200
+
+libxml2 (2.3.13-2) unstable; urgency=low
+
+  * xmllint is back
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon,  2 Jul 2001 21:05:25 +0200
+
+libxml2 (2.3.13-1) unstable; urgency=low
+
+  * New upstream release
+  * Use DH_COMPAT 3
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun,  1 Jul 2001 17:37:08 +0200
+
+libxml2 (2.3.11-1) unstable; urgency=low
+
+  * New upstream release
+  * Apparently builds on Alpha now (closes: #95938)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun, 17 Jun 2001 21:33:36 +0200
+
+libxml2 (2.3.10-2) unstable; urgency=low
+
+  * Quick hack to fix makefiles on m68k (closes: #99897)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon, 11 Jun 2001 14:51:14 +0200
+
+libxml2 (2.3.10-1) unstable; urgency=low
+
+  * New upstream release
+  * Leave pkgconfig as someone wants it (closes: #97621)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun,  3 Jun 2001 22:02:25 +0200
+
+libxml2 (2.3.9-1) unstable; urgency=low
+
+  * I am back. Some bugs closed by NMUs (closes: #96944, #86508)
+  * Updated libtool (closes: #98137)
+  * Fixed dependency (closes: #98323)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat,  2 Jun 2001 16:37:18 +0200
+
+libxml2 (2.3.9-0.1) unstable; urgency=low
+
+  * NMU of a new upstream release.
+  * Changed shlibs, they should change every time the API is augmented.
+  * Updated xmllint(1) manpage. Removed useless libxml(4) manpage.
+
+ -- Nicolás Lichtmaier <nick@debian.org>  Sun, 20 May 2001 20:25:02 -0300
+
+libxml2 (2.3.8-0.2) unstable; urgency=low
+
+  * Non-maintainer upload with permission from maintainer to fix the 
+    libxml-dev conflict. 
+  * The symbolic links to old, libxml-dev names introduced in 2.3.0-1 are 
+    now gone: programs wanting to link with libxml2 should explicity call 
+    the new libxml2-config (almost all the packages in debian are already 
+    doing that.) 
+  * Changed libxml-dev to libxml2-dev in debian/libxml2-dev.doc-base to
+    resolve libxml-dev conflict.
+  * Fixed shlibs problem introduced in previous NMU by wrong -V argument 
+    of dh_makeshlibs.
+
+ -- Federico Di Gregorio <fog@debian.org>  Thu, 10 May 2001 16:37:59 +0200
+
+libxml2 (2.3.8-0.1) unstable; urgency=low
+
+  * Non-maintainer upload with permission from maintainer
+  * New upstream release
+  * Fixes shlibs version info (closes: #96291)
+  * config.sub & config.guess updated (closes: #96100)
+
+ -- Jeremy T. Bouse <jbouse@debian.org>  Wed,  9 May 2001 22:57:28 -0700
+
+libxml2 (2.3.7-1) unstable; urgency=low
+
+  * New upstream release (closes: #95692)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun, 29 Apr 2001 11:42:54 +0200
+
+libxml2 (2.3.5-2) unstable; urgency=low
+
+  * Rebuild to avoid link problems (closes: #92721)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue,  3 Apr 2001 16:12:20 +0200
+
+libxml2 (2.3.5-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun, 25 Mar 2001 10:58:21 +0200
+
+libxml2 (2.3.4-1) unstable; urgency=low
+
+  * New upstream release
+  * Applied IBM S/390 patch on config.sub (closes: #88551)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu, 15 Mar 2001 19:49:17 +0100
+
+libxml2 (2.3.3-2) unstable; urgency=low
+
+  * Updated shlibs file with dependency (closes: #87337)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu,  8 Mar 2001 10:26:46 +0100
+
+libxml2 (2.3.3-1) unstable; urgency=low
+
+  * New upstream release
+  * Fixed xml2Conf.sh so gnome-config works (closes: #88341)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat,  3 Mar 2001 16:53:05 +0100
+
+libxml2 (2.3.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu,  1 Mar 2001 09:46:37 +0100
+
+libxml2 (2.3.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 20 Feb 2001 09:44:04 +0100
+
+libxml2 (2.3.0-1) unstable; urgency=low
+
+  * New upstream release (closes: #86379) 
+    For some reason the library has changed name from libxml to libxml2 and
+    the config script from libxml-config to libxml2-config. I am providing
+    symbolic links to the old names, hopefully this will prevent stuff from
+    breaking.
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 17 Feb 2001 23:25:43 +0100
+
+libxml2 (2.2.8-1) unstable; urgency=low
+
+  * New upstream release
+  * Probably a bad idea to remove -lz so put it back and add dependency on
+    libz-dev in dev-package.
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon, 20 Nov 2000 14:03:34 +0100
+
+libxml2 (2.2.6-1) unstable; urgency=low
+
+  * New upstream release
+  * Removed -lz from xml-config --libs (closes: #74709)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Fri, 27 Oct 2000 12:47:57 +0200
+
+libxml2 (2.2.4-1) unstable; urgency=low
+
+  * New upstream release (closes: #74488, #70051)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Wed, 11 Oct 2000 07:26:31 +0200
+
+libxml2 (2.2.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 29 Aug 2000 22:55:43 +0200
+
+libxml2 (2.2.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu,  3 Aug 2000 21:28:29 +0200
+
+libxml2 (2.0.0-3) unstable; urgency=low
+
+  * Doc-base now uses correct directory
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Mon,  3 Jul 2000 09:20:23 +0200
+
+libxml2 (2.0.0-2) unstable; urgency=low
+
+  * Renamed dev-package to libxml2-dev
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Wed, 28 Jun 2000 10:48:48 +0200
+
+libxml2 (2.0.0-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 20 Jun 2000 11:36:12 +0200
+
+libxml (1.8.7-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 11 Mar 2000 20:33:28 +0100
+
+libxml (1.8.6-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat,  5 Feb 2000 15:01:51 +0100
+
+libxml (1.8.5-1) unstable; urgency=low
+
+  * New upstream release (closes: #56172)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 25 Jan 2000 14:57:12 +0100
+
+libxml (1.8.4-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun, 16 Jan 2000 13:01:14 +0100
+
+libxml (1.8.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu, 30 Dec 1999 11:38:47 +0100
+
+libxml (1.7.3-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Wed, 29 Sep 1999 23:33:28 +0200
+
+libxml (1.4.0-4) unstable; urgency=low
+
+  * Oops, must of course replace old libxml0 package. (closes: #43519)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu, 26 Aug 1999 09:37:18 +0200
+
+libxml (1.4.0-3) unstable; urgency=low
+
+  * Provide libxml.so.0 (which is binary compatible with libxml1)
+    (closes: #43385)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 24 Aug 1999 09:31:15 +0200
+
+libxml (1.4.0-2) unstable; urgency=low
+
+  * Include example in dev-package.
+  * Fixed postinst to only call ldconfig on configure.
+  * Let dh_installdocs handle doc-base.
+  
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat, 21 Aug 1999 14:44:52 +0200
+
+libxml (1.4.0-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu,  5 Aug 1999 16:05:26 +0200
+
+libxml (1.1.0-2) unstable; urgency=low
+
+  * Added man page for xml-config. (closes: #39471)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sat,  3 Jul 1999 14:55:55 +0200
+
+libxml (1.1.0-1) unstable; urgency=low
+
+  * New upstream release. (closes: #39791)
+  * Use install-docs on dev documents.
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun, 20 Jun 1999 10:20:53 +0200
+
+libxml (1.0.0-2) unstable; urgency=low
+
+  * Moved html-documentation to dev package. (closes: #39049)
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 15 Jun 1999 21:07:44 +0200
+
+libxml (1.0.0-1) unstable; urgency=low
+
+  * Patched xml-config.in. xml-config --version didn't work as expected. 
+    Fixes bug #34881.
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Tue, 16 Mar 1999 18:36:11 +0100
+
+libxml (0.99.8-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Thu, 18 Feb 1999 15:40:19 +0100
+
+libxml (0.99.3-2) unstable; urgency=low
+
+  * New maintainer.
+  * Some files were missing from the last release (xml-config, encoding.h,
+    debugXML.h)
+  * New rules file.
+
+ -- Fredrik Hallenberg <hallon@debian.org>  Sun, 14 Feb 1999 18:56:10 +0100
+
+libxml (0.99.3-1) unstable; urgency=low
+
+  * New upstream version.
+  * Recompile with lastest GNOME libs.
+  * Fix #28869.
+
+ -- Vincent Renardias <vincent@waw.com>  Wed, 20 Jan 1999 11:32:55 +0100
+
+libxml (0.30-1) unstable; urgency=low
+
+  * Initial debianization.
+
+ -- Vincent Renardias <vincent@waw.com>  Fri, 25 Sep 1998 19:16:53 +0200

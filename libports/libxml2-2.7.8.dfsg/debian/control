@@ -1,0 +1,145 @@
+Source: libxml2
+Priority: optional
+Section: libs
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Debian XML/SGML Group <debian-xml-sgml-pkgs@lists.alioth.debian.org>
+Uploaders: Mike Hommey <glandium@debian.org>
+Standards-Version: 3.9.2.0
+Build-Depends: debhelper (>= 8.1.3), zlib1g-dev | libz-dev, python-all-dev (>= 2.6.6-3~), python-all-dbg, autotools-dev, libreadline-dev | libreadline5-dev, binutils (>= 2.14.90.0.7), perl
+Homepage: http://xmlsoft.org/
+Vcs-Git: git://git.debian.org/debian-xml-sgml/libxml2.git
+Vcs-Browser: http://git.debian.org/?p=debian-xml-sgml/libxml2.git
+
+Package: libxml2
+Priority: standard
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: xml-core
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
+Description: GNOME XML library
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ This package provides a library providing an extensive API to handle
+ such XML data files.
+
+Package: libxml2-utils
+Architecture: any
+Section: text
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Multi-Arch: foreign
+Description: XML utilities
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ This package provides xmllint, a tool for validating and reformatting
+ XML documents, and xmlcatalog, a tool to parse and manipulate XML or
+ SGML catalog files.
+
+Package: libxml2-dev
+Architecture: any
+Section: libdevel
+Depends: libxml2 (= ${binary:Version}), ${misc:Depends}
+Multi-Arch: same
+Description: Development files for the GNOME XML library
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ Install this package if you wish to develop your own programs using
+ the GNOME XML library.
+
+Package: libxml2-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: libxml2 (= ${binary:Version}), ${misc:Depends}
+Description: Debugging symbols for the GNOME XML library
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ This package provides the debugging symbols for the library and for
+ the utilities provided by the libxml2-utils package.
+ Debugging symbols for the Python modules are not available.
+
+Package: libxml2-doc
+Architecture: all
+Section: doc
+Depends: ${misc:Depends}
+Suggests: devhelp
+Description: Documentation for the GNOME XML library
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ This package contains general information about the GNOME XML library
+ and more specific API references.
+
+Package: python-libxml2
+Architecture: any
+Section: python
+Provides: ${python:Provides}
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Description: Python bindings for the GNOME XML library
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ This package contains the files needed to use the GNOME XML library
+ in Python programs.
+
+Package: python-libxml2-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Provides: ${python:Provides}
+Depends: python-dbg, python-libxml2 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Python bindings for the GNOME XML library (debug extension)
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ This package contains the files needed to use the GNOME XML library
+ in Python programs for use with the Python debug interpreter.
+
+Package: libxml2-udeb
+XC-Package-Type: udeb
+Architecture: any
+Section: debian-installer
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: GNOME XML library - minimal runtime
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ This is a minimal package for use in debian-installer that yields a
+ library providing an extensive API to handle such XML data files.

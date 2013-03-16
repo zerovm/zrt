@@ -1,0 +1,125 @@
+#!/usr/bin/make -f
+
+# The versions of python currently supported
+PYVERS=$(shell pyversions -s)
+# The current default version of python
+PYVER=$(shell pyversions -d)
+
+CFLAGS = -Wall -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+      CFLAGS += -O0
+else
+      CFLAGS += -O2 -fno-strict-aliasing
+endif
+
+TARGETS := main $(PYVERS) $(PYVERS:%=%-dbg)
+
+WITH_UDEB := $(shell dpkg-vendor --derives-from Ubuntu && echo yes)
+
+ifdef WITH_UDEB
+$(if $(shell grep -q libxml2-udeb debian/control || echo yes),$(shell cat debian/control.udeb >> debian/control))
+TARGETS += udeb
+else
+$(if $(shell grep -q libxml2-udeb debian/control && echo yes),$(shell sed -i /libxml2-udeb/,\$$d debian/control))
+export DH_OPTIONS = -Nlibxml2-udeb
+endif
+
+CONFIGURE_FLAGS := --with-history CC="gcc -Wl,--as-needed" CFLAGS="$(CFLAGS)" --cache-file="$(CURDIR)/build/config.cache"
+
+override_dh_auto_configure: $(TARGETS:%=configure-%)
+
+configure-%:
+	dh_auto_configure --builddirectory=build/$* -- $(CONFIGURE_FLAGS)
+
+configure-main: CONFIGURE_FLAGS += --without-python
+configure-python%: CONFIGURE_FLAGS += --with-python=/usr/bin/$*
+configure-udeb: CONFIGURE_FLAGS += --without-history --with-minimum --with-tree --with-output
+
+override_dh_auto_build: $(TARGETS:%=build-%)
+
+build-%: BUILD_DIR=build/$*
+build-%:
+	$(if $(filter $(BUILD_DIR),build/$*),,[ -d $(BUILD_DIR) ] || mv build/$*/python $(BUILD_DIR))
+	dh_auto_build --builddirectory=$(BUILD_DIR) -- $(BUILD_FLAGS)
+
+build-python%: BUILD_DIR=build/main/$*
+build-python%: BUILD_FLAGS = libxml2mod_la_LIBADD='$$(mylibs)'
+build-python%-dbg: BUILD_FLAGS += PYTHON_INCLUDES=/usr/include/$(*:-dbg=_d) \
+ LDFLAGS="-L$(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)" CFLAGS="-Wall -g -O0"
+
+override_dh_auto_clean:
+	rm -rf build debian/tmp-dbg
+
+	-test -r /usr/share/misc/config.sub && \
+	cp -f /usr/share/misc/config.sub config.sub
+	-test -r /usr/share/misc/config.guess && \
+	cp -f /usr/share/misc/config.guess config.guess
+
+override_dh_auto_install: $(TARGETS:%=install-%)
+
+install-main:
+	dh_auto_install --builddirectory=build/main
+	mv debian/tmp/usr/share/aclocal/libxml.m4 debian/tmp/usr/share/aclocal/libxml2.m4
+
+	# Properly install documentation in /usr/share/doc/libxml2-doc
+	install -d debian/tmp/usr/share/doc/libxml2-doc/examples
+	install -m 644 \
+		doc/*.html \
+		doc/*.gif \
+		doc/*.png \
+		doc/libxml2-api.xml debian/tmp/usr/share/doc/libxml2-doc
+	install -m 644 \
+		doc/examples/*.c \
+		doc/examples/*.res \
+		doc/examples/index.html \
+		doc/examples/[tw]*.xml debian/tmp/usr/share/doc/libxml2-doc/examples
+	cp -a \
+		doc/html \
+		doc/tutorial debian/tmp/usr/share/doc/libxml2-doc
+
+install-python%-dbg:
+	$(MAKE) -C build/main/python$*-dbg DESTDIR=$(CURDIR)/debian/tmp-dbg install-pythonLTLIBRARIES
+	prename 's/(?<!_d)\.so$$/_d.so/' debian/tmp-dbg/usr/lib/python$*/*-packages/*.so
+
+install-python%:
+	dh_auto_install --builddirectory=build/main/python$*
+
+install-udeb:
+	dh_auto_install --builddirectory=build/udeb --destdir=debian/tmp-udeb
+
+override_dh_installdocs:
+	dh_installdocs -A AUTHORS TODO README NEWS
+	dh_installdocs -ppython-libxml2 python/TODO
+
+override_dh_compress:
+	dh_compress -Xexamples/ -Xtutorial/ -Xhtml/ -X.html
+
+override_dh_installchangelogs:
+	dh_installchangelogs -plibxml2 ChangeLog
+	dh_installchangelogs -Nlibxml2 -XChangeLog
+
+override_dh_install:
+	dh_install -Npython-libxml2-dbg -Nlibxml2-udeb
+	dh_install -ppython-libxml2-dbg --sourcedir=debian/tmp-dbg
+	dh_install -plibxml2-udeb --sourcedir=debian/tmp-udeb
+	sed "/dependency_libs/ s/'.*'/''/" debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libxml2.la > \
+	 debian/libxml2-dev/usr/lib/$(DEB_HOST_MULTIARCH)/libxml2.la
+	# for multiarch xml2-config needs to be identical on all archs
+	sed -i -e 's,/usr/lib/$(DEB_HOST_MULTIARCH),/usr/lib,' debian/libxml2-dev/usr/bin/xml2-config
+
+override_dh_strip:
+	dh_strip -a --dbg-package=libxml2-dbg -Npython-libxml2 -Npython-libxml2-dbg
+	dh_strip -ppython-libxml2 --dbg-package=python-libxml2-dbg
+	$(foreach python, $(filter-out $(PYVER), $(PYVERS)),\
+		cd $(CURDIR)/debian/python-libxml2/usr/lib/pyshared; \
+		if diff $(python)/libxml2mod.so $(PYVER)/libxml2mod.so > /dev/null 2>&1; then \
+			rm -f $(python)/libxml2mod.so; \
+			ln -s ../$(PYVER)/libxml2mod.so $(python)/libxml2mod.so; \
+		fi;)
+
+override_dh_makeshlibs:
+	dh_makeshlibs -a $(if $(WITH_UDEB),--add-udeb=libxml2-udeb )-V 'libxml2 (>= 2.7.4)' -- -c4
+
+%:
+	dh $@ --with python2

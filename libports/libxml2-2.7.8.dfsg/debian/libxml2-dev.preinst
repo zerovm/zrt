@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+[ "$1" = "upgrade" ] &&
+[ -L /usr/share/doc/libxml2-dev ] &&
+rm -f /usr/share/doc/libxml2-dev
+
+#DEBHELPER#
+
+exit 0

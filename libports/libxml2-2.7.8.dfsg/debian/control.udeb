@@ -1,0 +1,15 @@
+Package: libxml2-udeb
+XC-Package-Type: udeb
+Architecture: any
+Section: debian-installer
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: GNOME XML library - minimal runtime
+ XML is a metalanguage to let you design your own markup language.
+ A regular markup language defines a way to describe information in
+ a certain class of documents (eg HTML). XML lets you define your
+ own customized markup languages for many classes of document. It
+ can do this because it's written in SGML, the international standard
+ metalanguage for markup languages.
+ .
+ This is a minimal package for use in debian-installer that yields a
+ library providing an extensive API to handle such XML data files.
