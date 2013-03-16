@@ -9,7 +9,7 @@ export AR="x86_64-nacl-ar"
 export RANLIB="x86_64-nacl-ranlib"
 #export LD_LIBRARY_PATH=${ZVM_TOOLCHAIN}"/lib"
 export CFLAGS="-I${ZRT_ROOT}/include"
-export LDFLAGS="-static -Wl,-s,-T${ZVM_SDK_ROOT}/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static,\
+export LDFLAGS="-Xcompiler -static -Wl,-s,-T${ZVM_SDK_ROOT}/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static,\
 ${ZRT_ROOT}/lib/zrt.o,-L${ZRT_ROOT}/lib,-lzrt,-lfs,-lstdc++"
 export LIBC=""
 
