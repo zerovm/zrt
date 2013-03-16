@@ -1,0 +1,10 @@
+usr/bin/MagickWand-config
+usr/bin/Wand-config
+usr/include/ImageMagick/wand
+usr/lib/libMagickWand.a
+usr/lib/libMagickWand.la
+usr/lib/libMagickWand.so
+usr/lib/pkgconfig/MagickWand.pc
+usr/lib/pkgconfig/Wand.pc
+usr/share/man/man1/MagickWand-config.1
+usr/share/man/man1/Wand-config.1

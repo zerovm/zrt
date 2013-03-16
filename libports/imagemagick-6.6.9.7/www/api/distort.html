@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html version="-//W3C//DTD XHTML 1.1//EN"
+      xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.w3.org/1999/xhtml
+                          http://www.w3.org/MarkUp/SCHEMA/xhtml11.xsd">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="verify-v1" content="g222frIIxcQTrvDR3NBRUSKP3AnMNoqxOkIniCEkV7U="/>
+  <title>ImageMagick: MagickCore, C API for ImageMagick: Image Distortions</title>
+  <meta http-equiv="Content-Language" content="en-US"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta http-equiv="Reply-to" content="magick-users@imagemagick.org"/>
+  <meta name="Application-name" content="ImageMagick"/>
+  <meta name="Description" content="Use ImageMagick to convert, edit, or compose bitmap images in a variety of formats.  In addition resize, rotate, shear, distort and transform images."/>
+  <meta name="Application-url" content="http://www.imagemagick.org"/>
+  <meta name="Generator" content="PHP"/>
+  <meta name="Keywords" content="magickcore, c, api, for, imagemagick:, image, distortions, ImageMagick, ImageMagic, MagickCore, MagickWand, PerlMagick, Magick++, RMagick, PythonMagick, JMagick, TclMagick, Image, Magick, Magic, Wand, ImageMagickObject, Swiss, Army, Knife, Image, Processing"/>
+  <meta name="Rating" content="GENERAL"/>
+  <meta name="Robots" content="INDEX, FOLLOW"/>
+  <meta name="Generator" content="ImageMagick Studio LLC"/>
+  <meta name="Author" content="ImageMagick Studio LLC"/>
+  <meta name="Revisit-after" content="2 DAYS"/>
+  <meta name="Resource-type" content="document"/>
+  <meta name="Copyright" content="Copyright (c) 1999-2011 ImageMagick Studio LLC"/>
+  <meta name="Distribution" content="Global"/>
+  <link rel="icon" href="../../images/wand.png"/>
+  <link rel="shortcut icon" href="../../images/wand.ico"  type="images/x-icon"/>
+  <link rel="meta" type="application/rdf+xml" title="ICI" href="http://imagemagick.org/ici.rdf"/>
+  <link rel="stylesheet" href="http://www.google.com/cse/style/look/default.css" type="text/css" />
+  <style type="text/css" media="all">
+    @import url("../../www/magick.css");
+  </style>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+  <script type="text/javascript" src="../fancybox/jquery.fancybox-1.3.4.pack.js"></script>
+  <link rel="stylesheet" type="text/css" href="../fancybox/jquery.fancybox-1.3.4.css" media="screen" />
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $("a[href$=.jpg],a[href$=.png],a[href$=.gif]").fancybox({
+        'transitionIn'  : 'elastic',
+        'transitionOut' : 'elastic',
+        'overlayShow'   : false,
+        'opacity'       : true
+      });
+    });
+  </script>
+</head>
+
+<body id="www-imagemagick-org">
+<div class="titlebar">
+<div style="margin: 17px auto; float: left;">
+  <script type="text/javascript">
+  <!--
+    google_ad_client = "pub-3129977114552745";
+    google_ad_slot = "5439289906";
+    google_ad_width = 728;
+    google_ad_height = 90;
+  //-->
+  </script>
+  <script type="text/javascript"
+    src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+  </script>
+</div>
+<a href="http://www.imagemagick.org/discourse-server/">
+  <img src="../../images/logo.jpg"
+  alt="ImageMagick Logo"
+  style="width: 123px; height: 118px; border: 0px; float: right;" /></a>
+<a href="../../index.html">
+  <img src="../../images/sprite.jpg"
+  alt="ImageMagick Sprite"
+  style="width: 114px; height: 118px; border: 0px; float: right;" /></a>
+</div>
+
+<div class="westbar">
+
+<div class="menu">
+  <a title="About ImageMagick" href="../../index.html">About ImageMagick</a>
+</div>
+<div class="sep"></div>
+<div class="menu">
+  <a title="Binary Releases" href="../../www/binary-releases.html">Binary Releases</a>
+</div>
+<div class="sub">
+    <a title="Binary Release: Unix" href="../../www/binary-releases.html#unix">Unix</a>
+</div>
+<div class="sub">
+    <a title="Binary Release: MacOS X" href="../../www/binary-releases.html#macosx">Mac OS X</a>
+</div>
+<div class="sub">
+    <a title="Binary Release: iPhone" href="../../www/binary-releases.html#iPhone">iPhone</a>
+</div>
+<div class="sub">
+    <a title="Binary Release: Windows" href="../../www/binary-releases.html#windows">Windows</a>
+</div>
+<div class="sep"></div>
+<div class="menu">
+  <a title="Command-line Tools" href="../../www/command-line-tools.html">Command-line Tools</a>
+</div>
+<div class="sub">
+    <a title="Command-line Tools: Processing" href="../../www/command-line-processing.html">Processing</a>
+</div>
+<div class="sub">
+    <a title="Command-line Tools: Options" href="../../www/command-line-options.html">Options</a>
+</div>
+<div class="sub">
+    <a title="Command-line Tools: Usage" href="http://www.imagemagick.org/Usage/">Usage</a>
+</div>
+<div class="menu">
+  <a title="Program Interfaces" href="../../www/api.html">Program Interfaces</a>
+</div>
+<div class="sub">
+    <a title="Program Interface: MagickWand" href="../../www/magick-wand.html">MagickWand</a>
+</div>
+<div class="sub">
+    <a title="Program Interface: MagickCore" href="../../www/magick-core.html">MagickCore</a>
+</div>
+<div class="sub">
+    <a title="Program Interface: PerlMagick" href="../../www/perl-magick.html">PerlMagick</a>
+</div>
+<div class="sub">
+    <a title="Program Interface: Magick++" href="../../www/magick++.html">Magick++</a>
+</div>
+<div class="sep"></div>
+<div  class="menu">
+   <a title="Install from Source" href="../../www/install-source.html">Install from Source</a>
+</div>
+<div class="sub">
+    <a title="Install from Source: Unix" href="../../www/install-source.html#unix">Unix</a>
+</div>
+<div class="sub">
+    <a title="Install from Source: Windows" href="../../www/install-source.html#windows">Windows</a>
+ </div>
+<div class="menu">
+  <a title="Resources" href="../../www/resources.html">Resources</a>
+</div>
+<div class="menu">
+  <a title="Architecture" href="../../www/architecture.html">Architecture</a>
+</div>
+<div class="menu">
+  <a title="Download" href="../../www/download.html">Download</a>
+</div>
+<div class="sep"></div>
+<div class="menu">
+  <a title="Search" href="../../www/search.html">Search</a>
+</div>
+<div class="sep"></div>
+<div class="menu">
+  <a title="Site Map" href="../../www/sitemap.html">Site Map</a>
+</div>
+<div  class="sub">
+  <a title="Site Map: Links" href="../../www/links.html">Links</a>
+</div>
+<div class="sep"></div>
+<div  class="menu">
+  <a title="Sponsors" href="../../www/sponsors.html">Sponsors:</a>
+
+<a href="http://www.networkredux.com">
+  <img src="../../images/networkredux.png" alt="[sponsor]"
+  style="margin-top: 4px; margin-left: 4px; border: 0px; float: left;" /></a>
+<div class="sponsbox">
+<div  class="sponsor">
+  <a title="Sponsor: Website Hosting" href="http://www.hostreviewgeeks.com">Website Hosting</a><!-- 201108010090 alexanian media -->
+</div>
+<div  class="sponsor">
+  <a title="Sponsor: Druckerei" href="http://www.allesdruck.de">Druckerei</a><!-- 201303011500 r.leo -->
+</div>
+<div  class="sponsor">
+  <a title="Sponsor: Web Hosting Reviews" href="http://www.webhostingmasters.com">Web Hosting Reviews</a><!-- 201107011500 affliatelabel -->
+</div>
+<div  class="sponsor">
+  <a title="Sponsor: Hotel München" href="http://www.messehotel-erb-muenchen.de">Hotel München</a><!-- 201111010450 cerb -->
+</div>
+<div  class="sponsor">
+  <a title="Sponsor: Best Web Hosting" href="http://webhostinggeeks.com">Best Web Hosting</a><!-- 201110010720 -->
+</div>
+<div  class="sponsor">
+  <a title="Sponsor: Flyer drucken" href="http://www.online-druck.biz">Flyer drucken</a><!-- 201109010900 Floeter-->
+</div>
+<div  class="sponsor">
+  <a title="Sponsor: Web Hosting Ratings" href="http://webhostingrating.com">Web Hosting Ratings</a><!-- 201110010720 -->
+</div>
+<div  class="sponsor">
+  <a title="Sponsor: Druckerei" href="http://print24.com/de/">Druckerei</a><!-- 201110010720 -->
+</div>
+<div  class="sponsor">
+   <a title="Sponsor: Notebook Reparatur Berlin" href="http://www.notebook-reparaturen-berlin.de">Notebook Reparatur Berlin</a><!-- 2011060100025 gabi.schulze-->
+</div>
+</div>
+</div>
+</div>
+
+<div class="eastbar">
+
+</div>
+
+<div class="main">
+
+<h1>Module distort Methods</h1>
+<p class="navigation-index">[<a href="#DistortImage">DistortImage</a> &bull; <a href="#SparseColorImage">SparseColorImage</a>]</p>
+
+<h2><a href="http://www.imagemagick.org/api/MagickCore/distort_8c.html" id="DistortImage">DistortImage</a></h2>
+<div class="doc-section">
+
+<p>DistortImage() distorts an image using various distortion methods, by mapping color lookups of the source image to a new destination image usally of the same size as the source image, unless 'bestfit' is set to true.</p>
+
+<p>If 'bestfit' is enabled, and distortion allows it, the destination image is adjusted to ensure the whole source 'image' will just fit within the final destination image, which will be sized and offset accordingly.  Also in many cases the virtual offset of the source image will be taken into account in the mapping.</p>
+
+<p>If the '-verbose' control option has been set print to standard error the equicelent '-fx' formula with coefficients for the function, if practical.</p>
+
+<p>The format of the DistortImage() method is:</p>
+
+<pre class="code">
+  Image *DistortImage(const Image *image,const DistortImageMethod method,
+    const size_t number_arguments,const double *arguments,
+    MagickBooleanType bestfit, ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<h5>image</h5>
+<p>the image to be distorted.</p>
+
+<h5>method</h5>
+<p>the method of image distortion.</p>
+
+<p>ArcDistortion always ignores source image offset, and always 'bestfit' the destination image with the top left corner offset relative to the polar mapping center.</p>
+
+<p>Affine, Perspective, and Bilinear, do least squares fitting of the distrotion when more than the minimum number of control point pairs are provided.</p>
+
+<p>Perspective, and Bilinear, fall back to a Affine distortion when less than 4 control point pairs are provided.  While Affine distortions let you use any number of control point pairs, that is Zero pairs is a No-Op (viewport only) distortion, one pair is a translation and two pairs of control points do a scale-rotate-translate, without any shearing.</p>
+
+<h5>number_arguments</h5>
+<p>the number of arguments given.</p>
+
+<h5>arguments</h5>
+<p>an array of floating point arguments for this method.</p>
+
+<h5>bestfit</h5>
+<p>Attempt to 'bestfit' the size of the resulting image. This also forces the resulting image to be a 'layered' virtual canvas image.  Can be overridden using 'distort:viewport' setting.</p>
+
+<h5>exception</h5>
+<p>return any errors or warnings in this structure</p>
+
+<p>Extra Controls from Image meta-data (artifacts)...</p>
+
+<p>o "verbose" Output to stderr alternatives, internal coefficents, and FX equivelents for the distortion operation (if feasible). This forms an extra check of the distortion method, and allows users access to the internal constants IM calculates for the distortion.</p>
+
+<p>o "distort:viewport" Directly set the output image canvas area and offest to use for the resulting image, rather than use the original images canvas, or a calculated 'bestfit' canvas.</p>
+
+<p>o "distort:scale" Scale the size of the output canvas by this amount to provide a method of Zooming, and for super-sampling the results.</p>
+
+<p>Other settings that can effect results include</p>
+
+<p>o 'interpolate' For source image lookups (scale enlargements)</p>
+
+<p>o 'filter'      Set filter to use for area-resampling (scale shrinking). Set to 'point' to turn off and use 'interpolate' lookup instead</p>
+
+ </div>
+<h2><a href="http://www.imagemagick.org/api/MagickCore/distort_8c.html" id="SparseColorImage">SparseColorImage</a></h2>
+<div class="doc-section">
+
+<p>SparseColorImage(), given a set of coordinates, interpolates the colors found at those coordinates, across the whole image, using various methods.</p>
+
+<p>The format of the SparseColorImage() method is:</p>
+
+<pre class="code">
+  Image *SparseColorImage(const Image *image,const ChannelType channel,
+    const SparseColorMethod method,const size_t number_arguments,
+    const double *arguments,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<h5>image</h5>
+<p>the image to be filled in.</p>
+
+<h5>channel</h5>
+<p>Specify which color values (in RGBKA sequence) are being set. This also determines the number of color_values in above.</p>
+
+<h5>method</h5>
+<p>the method to fill in the gradient between the control points.</p>
+
+<p>The methods used for SparseColor() are often simular to methods used for DistortImage(), and even share the same code for determination of the function coefficents, though with more dimensions (or resulting values).</p>
+
+<h5>number_arguments</h5>
+<p>the number of arguments given.</p>
+
+<h5>arguments</h5>
+<p>array of floating point arguments for this method-- x,y,color_values-- with color_values given as normalized values.</p>
+
+<h5>exception</h5>
+<p>return any errors or warnings in this structure</p>
+
+ </div>
+
+</div>
+
+<div id="linkbar">
+    <span id="linkbar-west">&nbsp;</span>
+    <span id="linkbar-center">
+      <a href="http://www.imagemagick.org/discourse-server/">Discourse Server</a> &bull;
+      <a href="http://www.imagemagick.org/MagickStudio/scripts/MagickStudio.cgi">Studio</a>
+    </span>
+    <span id="linkbar-east">&nbsp;</span>
+  </div>
+  <div class="footer">
+    <span id="footer-west">&copy; 1999-2011 ImageMagick Studio LLC</span>
+    <span id="footer-east"> <a href="../http://www.imagemagick.org/script/contact.php">Contact the Wizards</a></span>
+  </div>
+  <div style="clear: both; margin: 0; width: 100%; "></div>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-17690367-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>

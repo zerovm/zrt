@@ -1,0 +1,39 @@
+From c0024a256711db247381c1f9acd70f7003aa1dc3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bastien=20ROUCARI=C3=88S?= <roucaries.bastien@gmail.com>
+Date: Sat, 11 Jun 2011 11:40:35 +0200
+Subject: [PATCH] Fix an off-by-1 in the option parsing code for long options
+
+$ export MAGICK_DEBUG=aa
+$ animate
+animate: unable to open X server `'.
+$ export MAGICK_DEBUG=$(perl -e 'print "A" x 10000')
+$ animate
+Segmentation fault
+
+It is due to an off by one error in option parsing code.
+
+Bug-Debian: http://bugs.debian.org/609177
+Forwarded:  http://www.imagemagick.org/discourse-server/viewtopic.php?f=3&t=18594
+Author: Silvio Cesare <silvio.cesare@gmail.com>
+Last-Update: 2011-04-22
+Applied-Upstream: 6.7.0-6
+---
+ magick/option.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/magick/option.c b/magick/option.c
+index e9a73e7..32336cf 100644
+--- a/magick/option.c
++++ b/magick/option.c
+@@ -1872,7 +1872,7 @@ MagickExport ssize_t GetCommandOptionFlags(const CommandOption option,
+     while (((isspace((int) ((unsigned char) *p)) == 0) && (*p != sentinel)) &&
+            (*p != '\0'))
+     {
+-      if ((q-token) >= MaxTextExtent)
++      if ((q-token) >= (MaxTextExtent - 1))
+         break;
+       *q++=(*p++);
+     }
+-- 
+1.7.5.3
+

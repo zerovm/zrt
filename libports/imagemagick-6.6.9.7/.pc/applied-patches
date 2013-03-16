@@ -1,0 +1,10 @@
+0001-Fix-a-FTBFS-on-i386-hurd.patch
+0002-Fix-an-off-by-1-in-the-option-parsing-code-for-long-.patch
+0003-Fixed-some-cut-and-paste-errors-in-new-PNG8-reductio.patch
+0004-Revised-PNG8-reduction-to-work-with-a-special-case.patch
+0005-Replace-a-memcpy-by-a-memmove.patch
+0006-rsvg-convert.patch
+CVE-2012-0247.patch
+CVE-2012-0259.patch
+CVE-2012-1610.patch
+CVE-2012-3437.patch

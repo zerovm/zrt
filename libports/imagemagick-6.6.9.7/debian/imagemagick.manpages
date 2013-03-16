@@ -1,0 +1,12 @@
+debian/tmp/usr/share/man/man1/animate.1
+debian/tmp/usr/share/man/man1/compare.1
+debian/tmp/usr/share/man/man1/composite.1
+debian/tmp/usr/share/man/man1/conjure.1
+debian/tmp/usr/share/man/man1/convert.1
+debian/tmp/usr/share/man/man1/display.1
+debian/tmp/usr/share/man/man1/identify.1
+debian/tmp/usr/share/man/man1/ImageMagick.1
+debian/tmp/usr/share/man/man1/import.1
+debian/tmp/usr/share/man/man1/mogrify.1
+debian/tmp/usr/share/man/man1/montage.1
+debian/tmp/usr/share/man/man1/stream.1

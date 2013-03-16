@@ -1,0 +1,10 @@
+usr/lib/ImageMagick-*/modules-Q16/coders/djvu.la
+usr/lib/ImageMagick-*/modules-Q16/coders/djvu.so
+usr/lib/ImageMagick-*/modules-Q16/coders/dot.la
+usr/lib/ImageMagick-*/modules-Q16/coders/dot.so
+usr/lib/ImageMagick-*/modules-Q16/coders/exr.la
+usr/lib/ImageMagick-*/modules-Q16/coders/exr.so
+usr/lib/ImageMagick-*/modules-Q16/coders/svg.la
+usr/lib/ImageMagick-*/modules-Q16/coders/svg.so
+usr/lib/ImageMagick-*/modules-Q16/coders/wmf.la
+usr/lib/ImageMagick-*/modules-Q16/coders/wmf.so
