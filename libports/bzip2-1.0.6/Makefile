@@ -18,22 +18,18 @@ SHELL=/bin/sh
 
 # To assist in cross-compiling
 ZVM_TOOLCHAIN=${ZVM_SDK_ROOT}
-PKG_CONFIG=${ZRT_ROOT}/bin/pkg-config
 
 CC=${ZVM_TOOLCHAIN}/bin/x86_64-nacl-gcc
 CXX=${ZVM_TOOLCHAIN}/bin/x86_64-nacl-g++
 AR=${ZVM_TOOLCHAIN}/bin/x86_64-nacl-ar
 RANLIB=${ZVM_TOOLCHAIN}/bin/x86_64-nacl-ranlib
-CPPFLAGS=-I${ZRT_ROOT}/include
-LDFLAGS=-static -s -T${ZVM_SDK_ROOT}/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static \
-${ZRT_ROOT}/lib/zrt.o -L${ZRT_ROOT}/lib -lzrt -lfs -lstdc++
 
 BIGFILES=-D_FILE_OFFSET_BITS=64
-CFLAGS=-I${ZRT_ROOT}/include -Wall -Winline -O2 -g $(BIGFILES) $(DEBCFLAGS)
+CFLAGS=-Wall -Winline -O2 -g $(BIGFILES) $(DEBCFLAGS)
 
 # Where you want it installed when you do 'make install'
-PREFIX=${ZRT_ROOT}
-
+PREFIX ?= ${PREFIX}
+PKG_CONFIG=${PREFIX}/bin/pkg-config
 
 OBJS= blocksort.o  \
       huffman.o    \

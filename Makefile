@@ -181,12 +181,32 @@ doc:
 	@find ./lib ./tests ./samples -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
 	@chmod 0444 ${README_GEN}
 
-
+LIB_DIR=${PREFIX}/lib
+INCLUDE_DIR=${PREFIX}/include
 install:
 	install -m 0644 lib/libzrt.a ${ZVM_SDK_ROOT}/${ARCH}/lib
 	install -m 0644 lib/libmapreduce.a ${ZVM_SDK_ROOT}/${ARCH}/lib
 	install -m 0644 lib/libnetworking.a ${ZVM_SDK_ROOT}/${ARCH}/lib
 	install -m 0644 lib/libfs.a ${ZVM_SDK_ROOT}/${ARCH}/lib
+	install -d $(INCLUDE_DIR)/sqlite3 $(INCLUDE_DIR)/lua $(INCLUDE_DIR)/helpers \
+		$(INCLUDE_DIR)/networking $(INCLUDE_DIR)/mapreduce $(LIB_DIR)
+	install -m 0644 libports/sqlite3/vfs_channel.h $(INCLUDE_DIR)/sqlite3
+	install -m 0644 libports/sqlite3/sqlite3.h $(INCLUDE_DIR)/sqlite3
+	install -m 0644 libports/sqlite3/sqlite3ext.h $(INCLUDE_DIR)/sqlite3
+	install -m 0644 lib/lua/lauxlib.h $(INCLUDE_DIR)/lua
+	install -m 0644 lib/lua/lualib.h $(INCLUDE_DIR)/lua
+	install -m 0644 lib/lua/lua.h $(INCLUDE_DIR)/lua
+	install -m 0644 lib/lua/luaconf.h $(INCLUDE_DIR)/lua
+	install -m 0644 lib/networking/channels_conf.h $(INCLUDE_DIR)/networking
+	install -m 0644 lib/networking/channels_conf_reader.h $(INCLUDE_DIR)/networking
+	install -m 0644 lib/networking/eachtoother_comm.h $(INCLUDE_DIR)/networking
+	install -m 0644 lib/mapreduce/map_reduce_lib.h $(INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/buffer.h $(INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
+	install -m 0644 lib/liblua.a $(LIB_DIR)
+	install -m 0644 lib/libgtest.a $(LIB_DIR)
+	install -m 0644 lib/libtar.a $(LIB_DIR)
+	install -m 0644 lib/libsqlite3.a $(LIB_DIR)
 
 .PHONY: install
 

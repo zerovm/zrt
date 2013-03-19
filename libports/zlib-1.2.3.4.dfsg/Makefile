@@ -31,10 +31,10 @@ LDSHARED=$(CC)
 CPP=$(CC) -E
 
 STATICLIB=libz.a
-SHAREDLIB=libz.so
-SHAREDLIBV=libz.so.1.2.3.4
-SHAREDLIBM=libz.so.1
-LIBS=$(STATICLIB) $(SHAREDLIB) $(SHAREDLIBV)
+#SHAREDLIB=libz.so
+#SHAREDLIBV=libz.so.1.2.3.4
+#SHAREDLIBM=libz.so.1
+LIBS=$(STATICLIB) #$(SHAREDLIB) $(SHAREDLIBV)
 
 AR=ar rc
 RANLIB=ranlib
@@ -136,12 +136,12 @@ minigzip64.o: minigzip.c zlib.h zconf.h zlibdefs.h
 	$(CC) $(SFLAGS) -DPIC -c -o objs/$*.o $<
 	-@mv objs/$*.o $@
 
-$(SHAREDLIBV): $(PIC_OBJS)
-	$(LDSHARED) $(SFLAGS) -o $@ $(PIC_OBJS) -lc
-	rm -f $(SHAREDLIB) $(SHAREDLIBM)
-	ln -s $@ $(SHAREDLIB)
-	ln -s $@ $(SHAREDLIBM)
-	-@rmdir objs
+#$(SHAREDLIBV): $(PIC_OBJS)
+#	$(LDSHARED) $(SFLAGS) -o $@ $(PIC_OBJS) -lc
+#	rm -f $(SHAREDLIB) $(SHAREDLIBM)
+#	ln -s $@ $(SHAREDLIB)
+#	ln -s $@ $(SHAREDLIBM)
+#	-@rmdir objs
 
 example$(EXE): example.o $(STATICLIB)
 	$(CC) $(CFLAGS) -o $@ example.o $(LDFLAGS)
@@ -149,11 +149,11 @@ example$(EXE): example.o $(STATICLIB)
 minigzip$(EXE): minigzip.o $(STATICLIB)
 	$(CC) $(CFLAGS) -o $@ minigzip.o $(LDFLAGS)
 
-examplesh$(EXE): example.o $(SHAREDLIBV)
-	$(CC) $(CFLAGS) -o $@ example.o -L. $(SHAREDLIBV)
+#examplesh$(EXE): example.o $(SHAREDLIBV)
+#	$(CC) $(CFLAGS) -o $@ example.o -L. $(SHAREDLIBV)
 
-minigzipsh$(EXE): minigzip.o $(SHAREDLIBV)
-	$(CC) $(CFLAGS) -o $@ minigzip.o -L. $(SHAREDLIBV)
+#minigzipsh$(EXE): minigzip.o $(SHAREDLIBV)
+#	$(CC) $(CFLAGS) -o $@ minigzip.o -L. $(SHAREDLIBV)
 
 example64$(EXE): example64.o $(STATICLIB)
 	$(CC) $(CFLAGS) -o $@ example64.o $(LDFLAGS)
@@ -169,12 +169,12 @@ install-libs: $(LIBS)
 	cp $(LIBS) $(DESTDIR)$(libdir)
 	cd $(DESTDIR)$(libdir); chmod 755 $(LIBS)
 	-@(cd $(DESTDIR)$(libdir); $(RANLIB) libz.a || true) >/dev/null 2>&1
-	cd $(DESTDIR)$(libdir); if test -f $(SHAREDLIBV); then \
-	  rm -f $(SHAREDLIB) $(SHAREDLIBM); \
-	  ln -s $(SHAREDLIBV) $(SHAREDLIB); \
-	  ln -s $(SHAREDLIBV) $(SHAREDLIBM); \
-	  (ldconfig || true)  >/dev/null 2>&1; \
-	fi
+#	cd $(DESTDIR)$(libdir); if test -f $(SHAREDLIBV); then \
+#	  rm -f $(SHAREDLIB) $(SHAREDLIBM); \
+#	  ln -s $(SHAREDLIBV) $(SHAREDLIB); \
+#	  ln -s $(SHAREDLIBV) $(SHAREDLIBM); \
+#	  (ldconfig || true)  >/dev/null 2>&1; \
+#	fi
 	cp zlib.3 $(DESTDIR)$(man3dir)
 	chmod 644 $(DESTDIR)$(man3dir)/zlib.3
 	cp zlib.pc $(DESTDIR)$(pkgconfigdir)
@@ -190,9 +190,9 @@ install: install-libs
 uninstall:
 	cd $(DESTDIR)$(includedir); rm -f zlib.h zconf.h zlibdefs.h
 	cd $(DESTDIR)$(libdir); rm -f libz.a; \
-	if test -f $(SHAREDLIBV); then \
-	  rm -f $(SHAREDLIBV) $(SHAREDLIB) $(SHAREDLIBM); \
-	fi
+	#if test -f $(SHAREDLIBV); then \
+	#  rm -f $(SHAREDLIBV) $(SHAREDLIB) $(SHAREDLIBM); \
+	#fi
 	cd $(DESTDIR)$(man3dir); rm -f zlib.3
 	cd $(DESTDIR)$(pkgconfigdir); rm -f zlib.pc
 
