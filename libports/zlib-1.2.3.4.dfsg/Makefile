@@ -16,19 +16,19 @@
 # To install in $HOME instead of /usr/local, use:
 #    make install prefix=$HOME
 
-CC=x86_64-nacl-gcc
+CC=cc
 
-CFLAGS=-I/home/kit/git/zrt/lib  -DUSE_MMAP
+CFLAGS=-O
 #CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
 #CFLAGS=-g -DDEBUG
 #CFLAGS=-O3 -Wall -Wwrite-strings -Wpointer-arith -Wconversion \
 #           -Wstrict-prototypes -Wmissing-prototypes
 
-SFLAGS=-I/home/kit/git/zrt/lib  -fPIC -DUSE_MMAP
+SFLAGS=-O
 
-LDFLAGS=-static -Wl,-s,-T/home/kit/zvm-sdk/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static,/home/kit/git/zrt/lib/zrt.o,-L/home/kit/git/zrt/lib,-lzrt,-lfs,-lstdc++ -L. libz.a
-LDSHARED=x86_64-nacl-gcc
-CPP=x86_64-nacl-gcc -E
+LDFLAGS=-L. libz.a
+LDSHARED=$(CC)
+CPP=$(CC) -E
 
 STATICLIB=libz.a
 SHAREDLIB=libz.so
@@ -36,17 +36,17 @@ SHAREDLIBV=libz.so.1.2.3.4
 SHAREDLIBM=libz.so.1
 LIBS=$(STATICLIB) $(SHAREDLIB) $(SHAREDLIBV)
 
-AR=x86_64-nacl-ar rc
-RANLIB=x86_64-nacl-ranlib
+AR=ar rc
+RANLIB=ranlib
 TAR=tar
 SHELL=/bin/sh
 EXE=
 
-prefix =/usr/local
-exec_prefix =${prefix}
-libdir =${exec_prefix}/lib
-includedir =${prefix}/include
-mandir =${prefix}/share/man
+prefix = /usr/local
+exec_prefix = ${prefix}
+libdir = ${exec_prefix}/lib
+includedir = ${prefix}/include
+mandir = ${prefix}/share/man
 man3dir = ${mandir}/man3
 pkgconfigdir = ${libdir}/pkgconfig
 
@@ -64,7 +64,7 @@ OBJS = $(OBJC) $(OBJA)
 
 PIC_OBJS = $(PIC_OBJC) $(PIC_OBJA)
 
-all: static
+all: static shared
 
 static: example$(EXE) minigzip$(EXE)
 
@@ -74,7 +74,7 @@ all64: example64$(EXE) minigzip64$(EXE)
 
 check: test
 
-test: all teststatic
+test: all teststatic testshared
 
 teststatic: static
 	@echo hello world | ./minigzip | ./minigzip -d || \

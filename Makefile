@@ -34,7 +34,8 @@ lib/fs/mem_mount_wraper.cc \
 lib/fs/unpack/stream_reader.c \
 lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
-lib/fs/unpack/parse_path.c
+lib/fs/unpack/parse_path.c \
+lib/zrt.c
 
 LIBDEP_OBJECTS=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
@@ -179,3 +180,13 @@ doc:
 	@echo "Auto created from READMEs located in ZRT project\n" > ${README_GEN}
 	@find ./lib ./tests ./samples -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
 	@chmod 0444 ${README_GEN}
+
+
+install:
+	install -m 0644 lib/libzrt.a ${ZVM_SDK_ROOT}/${ARCH}/lib
+	install -m 0644 lib/libmapreduce.a ${ZVM_SDK_ROOT}/${ARCH}/lib
+	install -m 0644 lib/libnetworking.a ${ZVM_SDK_ROOT}/${ARCH}/lib
+	install -m 0644 lib/libfs.a ${ZVM_SDK_ROOT}/${ARCH}/lib
+
+.PHONY: install
+
