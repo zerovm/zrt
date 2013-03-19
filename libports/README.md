@@ -157,7 +157,7 @@ imagemagick-6.6.9.7
     FONTCONFIG_LIBS="-L${PREFIX}/lib -lfontconfig" \
     PKG_CONFIG="${PREFIX}/bin/pkg-config" \
     ac_cv_prog_freetype_config="${PREFIX}/bin/freetype-config" \
-    
+    ac_cv_sys_file_offset_bits=64 \
     ./configure \
     --host=x86_64-nacl \
     --enable-static \
