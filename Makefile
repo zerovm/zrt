@@ -71,7 +71,7 @@ CFLAGS += -I. \
 	-Ilib/fs \
 	-Ilib/tar-1.11.8/src \
 	-Ilib/fs/unpack \
-	-I${ZEROVM_ROOT}/api
+	-I$(ZVM_PREFIX)/api
 CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 
@@ -181,13 +181,14 @@ doc:
 	@find ./lib ./tests ./samples -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
 	@chmod 0444 ${README_GEN}
 
-LIB_DIR=${PREFIX}/lib
-INCLUDE_DIR=${PREFIX}/include
+LIB_DIR=$(ZVM_PREFIX)/lib
+INCLUDE_DIR=$(ZVM_PREFIX)/include
+ARCH=x86_64-nacl
 install:
-	install -m 0644 lib/libzrt.a ${ZVM_SDK_ROOT}/${ARCH}/lib
-	install -m 0644 lib/libmapreduce.a ${ZVM_SDK_ROOT}/${ARCH}/lib
-	install -m 0644 lib/libnetworking.a ${ZVM_SDK_ROOT}/${ARCH}/lib
-	install -m 0644 lib/libfs.a ${ZVM_SDK_ROOT}/${ARCH}/lib
+	install -m 0644 lib/libzrt.a $(ZVM_PREFIX)/${ARCH}/lib
+	install -m 0644 lib/libmapreduce.a $(ZVM_PREFIX)/${ARCH}/lib
+	install -m 0644 lib/libnetworking.a $(ZVM_PREFIX)/${ARCH}/lib
+	install -m 0644 lib/libfs.a $(ZVM_PREFIX)/${ARCH}/lib
 	install -d $(INCLUDE_DIR)/sqlite3 $(INCLUDE_DIR)/lua $(INCLUDE_DIR)/helpers \
 		$(INCLUDE_DIR)/networking $(INCLUDE_DIR)/mapreduce $(LIB_DIR)
 	install -m 0644 libports/sqlite3/vfs_channel.h $(INCLUDE_DIR)/sqlite3
@@ -207,6 +208,7 @@ install:
 	install -m 0644 lib/libgtest.a $(LIB_DIR)
 	install -m 0644 lib/libtar.a $(LIB_DIR)
 	install -m 0644 lib/libsqlite3.a $(LIB_DIR)
+	install -m 0755 zvsh $(ZVM_PREFIX)
 
 .PHONY: install
 
