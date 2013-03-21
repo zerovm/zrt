@@ -181,9 +181,9 @@ doc:
 	@find ./lib ./tests ./samples -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
 	@chmod 0444 ${README_GEN}
 
-LIB_DIR=$(ZVM_PREFIX)/lib
 INCLUDE_DIR=$(ZVM_PREFIX)/include
 ARCH=x86_64-nacl
+LIB_DIR=$(ZVM_PREFIX)/${ARCH}lib
 install:
 	install -m 0644 lib/libzrt.a $(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libmapreduce.a $(ZVM_PREFIX)/${ARCH}/lib
