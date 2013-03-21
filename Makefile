@@ -71,7 +71,7 @@ CFLAGS += -I. \
 	-Ilib/fs \
 	-Ilib/tar-1.11.8/src \
 	-Ilib/fs/unpack \
-	-I$(ZVM_PREFIX)/api
+	-I$(ZEROVM_ROOT)/api
 CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 
