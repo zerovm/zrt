@@ -17,7 +17,7 @@ sominor=$(somajor).4
 SHELL=/bin/sh
 
 # To assist in cross-compiling
-ZVM_TOOLCHAIN=${ZVM_SDK_ROOT}
+ZVM_TOOLCHAIN=${ZVM_PREFIX}
 
 CC=${ZVM_TOOLCHAIN}/bin/x86_64-nacl-gcc
 CXX=${ZVM_TOOLCHAIN}/bin/x86_64-nacl-g++
