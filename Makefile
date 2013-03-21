@@ -209,6 +209,7 @@ install:
 	install -m 0644 lib/libtar.a $(LIB_DIR)
 	install -m 0644 lib/libsqlite3.a $(LIB_DIR)
 	install -m 0755 zvsh $(ZVM_PREFIX)
+	sed -i 's#$$ZEROVM_ROOT#$(ZVM_PREFIX)#' $(ZVM_PREFIX)/zvsh
 
 .PHONY: install
 
