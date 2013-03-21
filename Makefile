@@ -183,7 +183,7 @@ doc:
 
 INCLUDE_DIR=$(ZVM_PREFIX)/include
 ARCH=x86_64-nacl
-LIB_DIR=$(ZVM_PREFIX)/${ARCH}lib
+LIB_DIR=$(ZVM_PREFIX)/${ARCH}/lib
 install:
 	install -m 0644 lib/libzrt.a $(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libmapreduce.a $(ZVM_PREFIX)/${ARCH}/lib
