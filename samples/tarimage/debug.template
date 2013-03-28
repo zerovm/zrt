@@ -1,0 +1,20 @@
+define pint
+printf "%d", *((uint64_t)0x440a00000000+(uint64_t)&$arg0)
+end
+define phex
+printf "0x%X", *((uint64_t)0x440a00000000+(uint64_t)&$arg0)
+end
+define ppointer
+printf "0x%X", (uint64_t)0x440a00000000+(uint64_t)$arg0
+end
+define pstr
+printf "%s", (uint64_t)0x440a00000000+(uint64_t)$arg0
+end
+set confirm off
+set output-radix 16
+b NaClCreateMainThread
+r
+b main
+add-symbol-file {NEXE_PATH} 0x440a00020000
+c
+d br

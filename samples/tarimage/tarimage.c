@@ -67,42 +67,47 @@ int recursive_listdir( const char *path) {
 	    snprintf( compound_path, compound_path_len, "%s/%s", path, entry->d_name ); 
 	}
 
-	/*retrieve stat for to get file type and size, assert on error
-	 stat should not get fail for now*/
-	int err = stat( compound_path, &s_temp_stat );
-	assert( err == 0 ); 
-
-	if ( S_ISDIR(s_temp_stat.st_mode) ){
+	if ( entry->d_type != DT_DIR ){
 	    /*do notoutput directory because it's name will output 
 	      by next recursive call*/
-	}
-	else{
 	    ++files_count;
 	    print_prefix(path_deep_level(compound_path));
+	    /*retrieve stat for to get file size, assert on error
+	      stat should not get fail for now*/
+	    int err = stat( compound_path, &s_temp_stat );
+	    assert( err == 0 ); 
+
 	    printf( "%s, size=%u, ", 
 		    compound_path, (uint32_t)s_temp_stat.st_size );
-	    switch( s_temp_stat.st_mode&S_IFMT  ){
-	    case S_IFREG:
+	    switch( entry->d_type  ){
+	    case DT_REG:
 		printf("regular file");
 		break;
-	    case S_IFCHR:
+	    case DT_CHR:
 		printf("character device");
 		break;
-	    case S_IFBLK:
+	    case DT_FIFO:
+		printf("pipe");
+		break;
+	    case DT_BLK:
 		printf("block device");
 		break;
+	    case DT_LNK:
+		printf("link");
+		break;
+	    case DT_SOCK:
+		printf("socket");
+		break;
 	    default:
-		printf( "%s, %o", "unknown", s_temp_stat.st_mode&S_IFMT );
+		printf( "%s, (octal)%o", "unknown", s_temp_stat.st_mode&S_IFMT );
 		break;
 	    }
 	    printf( "\n" );	
 	}
-	
-	/*for non current directory do listdir*/
-	if ( S_ISDIR(s_temp_stat.st_mode) && strcmp(path, compound_path) != 0 ){
+	else if ( strcmp(path, compound_path) != 0 ){
+	    /*for non current directory do listdir*/
 	    files_count+=recursive_listdir(compound_path);
 	}
-	//printf("ok count=%d %s\n", ++i, compound_path);
 	free(compound_path);
     }
 
@@ -115,7 +120,8 @@ int main(int argc, char **argv)
 {
     /*recursively print filesystem contents*/
     int files = 0;
-    files += recursive_listdir("/");fflush(0);
+    files += recursive_listdir("/");
     printf("All files count is %d\n", files);
+    fflush(0);
     return 0;
 }

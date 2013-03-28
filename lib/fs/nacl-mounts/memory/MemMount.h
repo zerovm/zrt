@@ -14,14 +14,10 @@
 #include "../util/Path.h"
 #include "../util/SlotAllocator.h"
 #include "MemNode.h"
+#include "nacl_struct.h"
 
-#ifdef __native_client__
-    #include "../../../nacl_struct.h"
-    #define DIRENT struct nacl_abi_dirent
-#else
-    #define DIRENT struct dirent
-#endif
-
+//#define DIRENT struct nacl_abi_dirent
+#define DIRENT struct dirent
 
 // MemMount is a storage mount representing local memory.  The MemMount uses
 // the MemNode to represent an inode.

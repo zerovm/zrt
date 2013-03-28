@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 
 struct nacl_abi_dirent {
-
     unsigned long long   d_ino;     /*offsets NaCl 0 */
     unsigned long long  d_off;     /*offsets NaCl 8 */
     uint16_t  d_reclen;  /*offsets NaCl 16 */

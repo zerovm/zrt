@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <dirent.h>
 
 extern "C" {
 #include "zrtlog.h"
@@ -495,16 +496,19 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
         ++pos;
     }
 
+    struct stat st;
     for (; it != children->end() &&
 	     bytes_read + sizeof(DIRENT) <= buf_size;
 	 ++it) {
 	MemNode *node = slots_.At(*it);
+	node->stat(&st);
 	ZRT_LOG(L_SHORT, "getdents entity: %s", node->name().c_str());
 	/*format in buf dirent structure, of variable size, and save current file data;
 	  original MemMount implementation was used dirent as having constant size */
 	bytes_read += 
 	    put_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
-				 node->slot(), 0,
+				 node->slot(), 0, 
+				 d_type_from_mode(st.st_mode),
 				 node->name().c_str(), node->name().length() );
         ++pos;
     }

@@ -53,8 +53,14 @@ int get_sub_dir_index( struct manifest_loaded_directories_t *manifest_dirs,
 		       const char *dirpath, 
 		       int index );
 
-/*low level function, just fill derent structure by data and adjust structure size */
-size_t put_dirent_into_buf( char *buf, int buf_size, unsigned long d_ino, unsigned long d_off,
+/*@param mode same as return stat
+  @return d_type for dirent struct*/
+int d_type_from_mode(unsigned int mode);
+
+/*low level function, copy dirent args into buf*/
+size_t put_dirent_into_buf( char *buf, int buf_size, 
+			    unsigned long d_ino, unsigned long d_off, 
+			    unsigned char d_type,
 			    const char *d_name, int namelength );
 
 #endif /* CHANNELS_READDIR_H_ */
