@@ -257,7 +257,7 @@ static uint32_t channel_permissions(const struct ZVMChannel *channel){
 	 (channel->type == RGetSPut && (perm&S_IRWXU)==S_IWUSR ) ||
 	 (channel->type == SGetRPut && (perm&S_IRWXU)==S_IRUSR ) )
 	{
-	    perm |= S_IFCHR;
+	    perm |= S_IFIFO;
 	}
     else{
         perm |= S_IFBLK;
@@ -425,7 +425,7 @@ static void set_stat(struct stat *stat, int fd)
         /*channel handle*/
         CHANNEL_ASSERT_IF_FAIL( fd );
         permissions = channel_permissions( &s_channels_list[fd] );
-        if ( CHECK_FLAG( permissions, S_IFCHR) ) blksize = DEV_CHAR_DEVICE_BLK_SIZE;
+        if ( CHECK_FLAG( permissions, S_IFIFO) ) blksize = DEV_CHAR_DEVICE_BLK_SIZE;
         else                                     blksize = DEV_BLOCK_DEVICE_BLK_SIZE;
         ino = INODE_FROM_HANDLE( fd );
         size = CHANNEL_SIZE(fd);
@@ -711,6 +711,19 @@ static int channels_fstat(int fd, struct stat *buf){
 }
 
 static int channels_getdents(int fd, void *buf, unsigned int buf_size){
+#define ENTRY_MODE(fd, mode_p)						\
+    /*choose handle type: channel handle or dir handle */		\
+	if ( check_handle(fd) != 0 ){					\
+	    /*channel handle*/						\
+	    *(mode_p) = channel_permissions( &s_channels_list[fd] );	\
+	}								\
+	else{								\
+	    /*dir handle*/						\
+	    struct dir_data_t *d = match_handle_in_directory_list( &s_manifest_dirs, fd ); \
+	    assert(d);							\
+	    *(mode_p) = S_IRUSR | S_IFDIR;				\
+	}
+
     errno=0;
     ZRT_LOG( L_INFO, "fd=%d, buf_size=%d", fd, buf_size );
 
@@ -731,12 +744,15 @@ static int channels_getdents(int fd, void *buf, unsigned int buf_size){
     const char* iter_item_name = NULL;
     int iter_is_dir=0;
     int res=0;
+    uint32_t mode;
     while( !(res=iterate_dir_contents( fd, index, &iter_fd, &iter_item_name, &iter_is_dir )) ){
+	ENTRY_MODE(iter_fd, &mode);
 	/*format in buf dirent structure, of variable size, and save current file data;
 	  original MemMount implementation was used dirent as having constant size */
 	int ret = 
 	    put_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
 				 INODE_FROM_HANDLE(iter_fd), 0,
+				 d_type_from_mode(mode),
 				 iter_item_name, strlen(iter_item_name) );
 	/*if put into dirent was success*/
 	if ( ret > 0 ){
