@@ -14,9 +14,19 @@
 #define STDIN  0
 #define STDOUT 1 //fd
 
-/*use OUTPUT_HASH_KEYS option only for debugging purposes, output file contains 
- *values and hashes and their size even bigger than input data size */
-/*#define OUTPUT_HASH_KEYS*/
+#define HASH_TYPE         uint32_t
+#define HASH_SIZE         sizeof(uint32_t)
+#define HASH_STR_LEN      HASH_SIZE*2+1
+#define IO_BUF_SIZE       0x100000
+
+/* It's switching mapreduce library use cases for test purposes. 
+ * Set VALUE_ADDR_AS_DATA into 1 to get high performance wordcount, 
+ * or set into 0 to test key data with length upper than 4 bytes*/
+#define VALUE_ADDR_AS_DATA     1
+
+/*Default data value for new Map items*/
+#define DEFAULT_INT_VALUE 1
+#define DEFAULT_STR_VALUE "1"
 
 struct MapReduceUserIf;
 

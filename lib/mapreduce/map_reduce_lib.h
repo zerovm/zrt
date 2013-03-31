@@ -1,119 +1,95 @@
+/*
+ * map_reduce_lib.h
+ *
+ *      Author: yaroslav
+ */
 
-#include <stddef.h> //size_t
-#include <stdint.h> //uint32_t
+#ifndef __MAP_REDUCE_LIB_H__
+#define __MAP_REDUCE_LIB_H__
 
-#include "buffer.h"
-
-/*mapper sending to reducer empty data set*/
-//#define FAKE_REDUCER 1
-
-/*Reducer: combine data only for last data*/
-#define REDUCER_COMBINE_ONCE
+#include "map_reduce_datatypes.h"
 
 //forward decl
 struct ChannelsConfigInterface;
 
 enum { EMapNode=1, EReduceNode=2, EInputOutputNode=3 };
 
-typedef uint32_t KeyType;
 #define MIN(a,b) (a < b ? a : b )
 
-#define DEFAULT_MAP_CHUNK_SIZE_BYTES (1024*1024)
-#define MAP_CHUNK_SIZE_ENV "MAP_CHUNK_SIZE"
+#define TEMP_BUFFER_SIZE             0x1000000 //16MB
+#define DEFAULT_MAP_CHUNK_SIZE_BYTES 0x100000 //1MB
+#define MAP_CHUNK_SIZE_ENV           "MAP_CHUNK_SIZE"
 
-/*structure intended to wrap key data to get it sortable together with value, because
- * linked key, values data are hold by different buffers and can't be sorted in common way */
-struct SortableKeyVal{
-	uint32_t key;
-	int original_index;
-};
+/*Init MapReduceUserIf existing pointer object and get it ready to use
+ comparator_f - if user provides NULL then default comparator will used */
+#define PREPARE_MAPREDUCE(mr_if, map_f, combine_f, reduce_f, hashcomparator_f, \
+			  hashstr_f, val_is_data, item_size, h_size )	\
+    mr_if->Map = (map_f);         /*set user Map function*/		\
+    mr_if->Combine = (combine_f); /*set user Combine function */	\
+    mr_if->Reduce = (reduce_f);   /*set user Reduce function */		\
+    mr_if->HashComparator = (hashcomparator_f);				\
+    /*set user function convert hash to a string */			\
+    mr_if->HashAsString = (hashstr_f);					\
+    mr_if->data.value_is_data = (val_is_data);				\
+    mr_if->data.mr_item_size = item_size;				\
+    mr_if->data.hash_size = (h_size);
 
-
-/****************************************************
- Histogram related structures and functions */
-
-typedef struct Histogram{
-	int src_nodeid;
-	size_t array_len;
-	uint16_t step_hist_common;
-	uint16_t step_hist_last;
-	KeyType* array;
-} Histogram;
-
-
-struct MapReduceData{
-	DataType keytype;
-	DataType valuetype;
-	Histogram *histograms_list;
-	int  histograms_count; /*histograms count is equal to map nodes count*/
-	KeyType *dividers_list; /*divider list is used to divide map data to reducers*/
-	int dividers_count;
-};
 
 struct MapReduceUserIf{
-	/* read input buffer, allocate and fill keys & values arrays.
-	 * User is not responsible to free keys & values arrays;
-	 * @param last_chunk 1 if last chunk data provided, otherwise 0
-	 * @return handled data pos*/
-	int (*Map)(const char *data, size_t size, int last_chunk, Buffer *keys, Buffer *values );
-	/* Waiting sorted data by keys.
-	 * reduce and put reduced into reduced_keys, reduced_values*/
-	int (*Combine)( const Buffer *keys, const Buffer *values, Buffer *reduced_keys, Buffer *reduced_values );
-	/*reduce and output data into stdout*/
-	int (*Reduce)( const Buffer *keys, const Buffer *values );
-	/*data*/
-	struct MapReduceData data;
+    /* read input buffer, allocate and fill keys & values arrays.
+     * User is not responsible to free keys & values arrays;
+     * @param last_chunk 1 if last chunk data provided, otherwise 0
+     * @param mapped Result mapped hashes,keys and data, user is not 
+     * responsible to free it is
+     * @return handled data pos*/
+    int (*Map)(const char *data, 
+	       size_t size, 
+	       int last_chunk, 
+	       Buffer *map_buffer );
+    /* Waiting sorted data by keys.
+     * reduce and put reduced into reduced_keys, reduced_values*/
+    int (*Combine)( const Buffer *map_buffer, 
+		    Buffer *reduce_buffer );
+    /*reduce and output data into stdout*/
+    int (*Reduce)( const Buffer *reduce_buffer );
+    /*comparator can be overrided by user, otherwise library will use own*/
+    int (*HashComparator)(const void *p1, const void *p2);
+    /*function converts hash to a string can be overrided by user, otherwise library 
+      will use own. It's function used by library for test purposes*/
+    char* (*HashAsString)( char* str, const uint8_t* hash, int size);
+    /*data*/
+    struct MapReduceData data;
 };
 
 
-/*currently pointer functions not used, but real function exist in 'internals' section*/
-struct MapNodeEvents{
-	/*@return actual data size copied into input_buffer from input(file|stdin) */
-	size_t
-	(*MapInputDataProvider)( int fd, char **input_buffer, size_t requested_buf_size, int unhandled_data_pos );
-	/* @param buf input  buffer
-	 * @param buf_size  buffer size
-	 * @param result_keys Saving orocessed keys. should be valid pointer.
-	 * * @param result_values Save processed values. should be valid pointer.
-	 * @return unhandled data buffer pos*/
-	size_t
-	(*MapInputDataLocalProcessing)( const char *buf, size_t buf_size, int last_chunk, Buffer*result_keys, Buffer *result_values );
-	/**/
-	void
-	(*MapCreateHistogramSendEachToOtherCreateDividersList)(
-			struct ChannelsConfigInterface *ch_if, struct MapReduceData *data, const Buffer *input_keys );
-	/**/
-	void
-	(*MapSendKeysValuesToAllReducers)(struct ChannelsConfigInterface *ch_if, int last_data, Buffer *keys, Buffer *values);
-};
+int MapNodeMain(struct MapReduceUserIf *userif, 
+		struct ChannelsConfigInterface *ch_if );
+
+int ReduceNodeMain(struct MapReduceUserIf *userif, 
+		   struct ChannelsConfigInterface *ch_if );
 
 
+/*Functions related to implementation, moved into header to be tested in separate main*/
 
-/*Init MapReduceUserIf existing pointer object and get it ready to use*/
-#define PREPARE_MAPREDUCE(mr_if, map_f, combine_f, reduce_f, key_t, val_t) \
-    mr_if->Map = map_f;         /*set user Map function*/		\
-    mr_if->Combine = combine_f; /*set user Combine function */		\
-    mr_if->Reduce = reduce_f;   /*set user Reduce function */		\
-    mr_if->data.keytype = key_t;					\
-    mr_if->data.valuetype = val_t;					
+/*Read MR items from map buffer and pass every "step" item into histogram->buffer array
+ *histogram created histogram
+ *@return count of added items into histogram*/
+size_t
+GetHistogram( const Buffer* map,
+	      int step, 
+	      Histogram *histogram );
 
+/*Create resulted hash list, every hash in list is mean maximum hash value that 
+ *can be sent to reducer node which have the same index as item in array. Last divider
+ *item value must be maximum as possible, for example 0xffffff.
+ *@param histograms array of histograms
+ *@param histograms_count histograms in array
+ *@param divider_array Result of histograms summarization*/
+void 
+GetReducersDividerArrayBasedOnSummarizedHistograms( Histogram *histograms, 
+						    int histograms_count, 
+						    Buffer *divider_array );
 
-int MapNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *ch_if );
-int ReduceNodeMain(struct MapReduceUserIf *userif, struct ChannelsConfigInterface *ch_if );
-
-/****************************************************
- * Inernals**/
-void InitInternals(struct MapReduceUserIf *userif, const struct ChannelsConfigInterface *chif, struct MapNodeEvents* ev);
-/*sort by key keys and linked values*/
-void LocalSort( const Buffer *keys, const Buffer *values, Buffer *sorted_keys, Buffer *sorted_values);
-size_t MapInputDataProvider( int fd, char **input_buffer, size_t buf_size, int unhandled_data_pos );
-void SummarizeHistograms( Histogram *histograms, int histograms_count, int dividers_count, KeyType *divider_array );
-size_t AllocHistogram( const KeyType *array, const int array_len, int step, Histogram *histogram );
-
-
-//MapReduce library functions
-//Reduce
-//Comparator
-//Progress
+#endif //__MAP_REDUCE_LIB_H__
 
 

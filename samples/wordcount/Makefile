@@ -1,8 +1,10 @@
 include $(ZRT_ROOT)/Makefile.env
-CFLAGS+=-std=c99 -g -DDEBUG
+CFLAGS+=-std=c99 -g
 
 LDFLAGS+=-lmapreduce -lnetworking
+
 all: createdirs clean map.nexe reduce.nexe
+	./genmanifest.sh
 
 map.nexe: obj/map.o obj/user_implem.o
 	@$(CC) -o map.nexe obj/map.o obj/user_implem.o $(LDFLAGS)
@@ -20,7 +22,7 @@ obj/user_implem.o: src/user_implem.c src/user_implem.h
 	@$(CC) -c -o obj/user_implem.o ${CFLAGS} src/user_implem.c -D_GNU_SOURCE
 
 createdirs:
-	chmod u+rwx genmanifest.sh mapred_conf.sh mr_start.sh
+	chmod u+rwx genmanifest.sh mr_start.sh
 	@mkdir -p obj log
 
 clean: 
