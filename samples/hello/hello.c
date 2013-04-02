@@ -16,12 +16,5 @@ int main(int argc, char **argv)
   /* write to user log (stderr) */
   fprintf(stderr, "hello, world\n");
 
-  wint_t wc = btowc( EOF );
-  if ( wc == WEOF ){
-      printf("btowc WEOF\n");
-  }
-  else{
-      wprintf();
-  }
   return 0;
 }
