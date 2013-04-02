@@ -16,14 +16,13 @@ git clone https://github.com/zerovm/zrt.git
 
 4.Set environmant variables on ~/.bashrc
 
-ZVM_SDK_ROOT  -path to zvm sdk
-ZEROVM_ROOT   -path to ZeroVM
+ZVM_PREFIX    -path to zvm toolchain
+ZEROVM_ROOT   -path to ZEROVM folder, used for debugging with gdb
 ZRT_ROOT      -path to ZRT
 ZPYTHON_ROOT  -path to zpython port from cpython2 / cpython3
 
 For example:
 
-export ZVM_SDK_ROOT=${HOME}/zvm-sdk
 export ZEROVM_ROOT=${HOME}/zerovm
 export ZRT_ROOT=${HOME}/zrt
 export ZPYTHON_ROOT=${HOME}/zpython

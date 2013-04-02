@@ -6,8 +6,9 @@
 struct BufferedIOData{
     char* buf;
     int   bufmax;
-    int   datasize;
     int   cursor;
+    // for read
+    int   datasize;
 };
 
 typedef struct BufferedIOWrite{

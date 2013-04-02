@@ -187,13 +187,12 @@ ReadHistogramFromNode( struct EachToOtherPattern *p_this,
     WRITE_FMT_LOG("ReadHistogramFromNode index=%d\n", index);
     /*histogram array should be empty before reading*/
     assert( !histogram->buffer.header.count );
-    read(fdr, histogram, sizeof(Histogram)-sizeof(HashBuffer) );
-    size_t items_count;
-    read(fdr, &items_count, sizeof(size_t) );
-    if ( items_count ){
-	AllocBuffer( &histogram->buffer, HASH_SIZE, items_count );
-	read(fdr, histogram->buffer.data, histogram->buffer.header.buf_size );
-    }
+    read(fdr, histogram, sizeof(Histogram) );
+    /*alloc buffer and receive data*/
+    AllocBuffer( &histogram->buffer, 
+		 histogram->buffer.header.item_size, 
+		 histogram->buffer.header.count );
+    read(fdr, histogram->buffer.data, histogram->buffer.header.buf_size );
 }
 
 /************************************************************************
@@ -213,15 +212,9 @@ WriteHistogramToNode( struct EachToOtherPattern *p_this,
     Histogram *histogram = &mapred_data->histograms_list[own_histogram_index];
     WRITE_FMT_LOG("WriteHistogramToNode index=%d\n", index);
     /*write Histogram struct, array contains pointer it should be ignored by receiver */
-    write(fdw, histogram, sizeof(Histogram)-sizeof(HashBuffer));
-    /*write histogram data size*/
-    write(fdw, &histogram->buffer.header.buf_size, sizeof(size_t) );
-    /*write histogram data size*/
-    if ( histogram->buffer.header.buf_size ){
-	write(fdw, 
-	      histogram->buffer.data, 
-	      histogram->buffer.header.buf_size );
-    }
+    write(fdw, histogram, sizeof(Histogram));
+    /*write histogram data*/
+    write(fdw, histogram->buffer.data, histogram->buffer.header.buf_size );
 }
 
 
@@ -512,6 +505,38 @@ BufferedReadSingleMrItem( BufferedIORead* bio,
     return bytes;
 }
  
+
+static size_t
+CalculateSendingDataSize(const Buffer *map, 
+			 int data_start_index, 
+			 int items_count)
+{
+    /*calculate sending data of size */
+    size_t senddatasize= 0;
+    senddatasize += sizeof(int) + sizeof(int); //last_data_flag,items count
+    int loop_up_to_count = data_start_index+items_count;
+    const ElasticBufItemData* item;
+
+    for( int i=data_start_index; i < loop_up_to_count; i++ ){
+	item = (const ElasticBufItemData*)BufferItemPointer( map, i );
+	senddatasize+= item->key_data.size;     /*size of key data*/
+	if ( !__mrif->data.value_is_data )
+	    senddatasize+= item->value.size;    /*size of value data*/
+    }
+    /*size of value data / value size*/
+    //value data/size
+    if ( __mrif->data.value_is_data )
+	senddatasize+= items_count * sizeof(((struct BinaryData*)0)->addr);
+    else
+	senddatasize+= items_count * sizeof(((struct BinaryData*)0)->size);
+    /*size of hash*/
+    senddatasize+= items_count * HASH_SIZE;
+    /*size of key size*/
+    senddatasize+= items_count * sizeof(((struct BinaryData*)0)->size);
+    /*************************************/
+    WRITE_FMT_LOG( "senddatasize=%d\n", senddatasize );
+    return senddatasize;
+}
  
 void 
 WriteDataToReduce( BufferedIOWrite* bio, 
@@ -520,7 +545,12 @@ WriteDataToReduce( BufferedIOWrite* bio,
 		    int data_start_index, 
 		    int items_count,
 		    int last_data_flag ){
+    int bytes=0;
     ElasticBufItemData* current = alloca( MRITEM_SIZE );
+    int loop_up_to_count = data_start_index+items_count;
+    assert( loop_up_to_count <= map->header.count );
+
+    int senddatasize = CalculateSendingDataSize(map, data_start_index, items_count);
 
     /*log first and last hashes of range to send */
 #ifdef DEBUG
@@ -535,19 +565,21 @@ WriteDataToReduce( BufferedIOWrite* bio,
     WRITE_FMT_LOG( "fdw=%d, last_data_flag=%d, items_count=%d\n", 
 		   fdw, last_data_flag, items_count );
 #endif //DEBUG
+
+    bio->write( bio, fdw, &senddatasize, sizeof(int) );
+    
     /*write last data flag 0 | 1, if reducer receives 1 then it
       should exclude this map node from communications*/
-    bio->write( bio, fdw, &last_data_flag, sizeof(int) );
+    bytes+= bio->write( bio, fdw, &last_data_flag, sizeof(int) );
     /*items count we want send to a single reducer*/
-    bio->write( bio, fdw, &items_count, sizeof(int) );
+    bytes+= bio->write( bio, fdw, &items_count, sizeof(int) );
 
-    int loop_up_to_count = data_start_index+items_count;
-    assert( loop_up_to_count <= map->header.count );
     for( int i=data_start_index; i < loop_up_to_count; i++ ){
 	GetBufferItem( map, i, current );
-	BufferedWriteSingleMrItem( bio, fdw, current );
+	bytes+= BufferedWriteSingleMrItem( bio, fdw, current );
     }
     bio->flush_write(bio, fdw);
+    assert(bytes ==senddatasize);
 }
 
 
@@ -574,8 +606,8 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
 
     /*Declare pretty big buffer to provide efficient buffered IO, 
       free it at the function end*/
-    void *send_buffer = malloc(TEMP_BUFFER_SIZE);
-    BufferedIOWrite* bio = AllocBufferedIOWrite( send_buffer, TEMP_BUFFER_SIZE);
+    void *send_buffer = malloc(SEND_BUFFER_SIZE);
+    BufferedIOWrite* bio = AllocBufferedIOWrite( send_buffer, SEND_BUFFER_SIZE);
 
     /*loop for data*/
     for ( int j=0; j < map->header.count; j++ ){
@@ -837,26 +869,29 @@ SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( const Buffer* merge_buffers
 
 
 static exclude_flag_t
-RecvDataFromSingleMap( BufferedIORead* bio,
-		       int fdr,
-		       Buffer *map,
-		       void* tempbuf, 
-		       int tempbufsize) {
+RecvDataFromSingleMap( int fdr,
+		       Buffer *map) {
     exclude_flag_t excl_flag;
     int items_count;
-    int bytes=0;
-
+    char* recv_buffer;
+    int bytes;
+    /*read exact packet size and allocate buffer to read a whole data by single read i/o*/
+    read(fdr, &bytes, sizeof(int) );
+    recv_buffer = malloc(bytes);
+    BufferedIORead* bio = AllocBufferedIORead( recv_buffer, bytes);
     /*read last data flag 0 | 1, if reducer receives 1 then it should
-     * exclude sender map node from communications*/
+     * exclude sender map node from communications in further*/
+    bytes=0;
     bytes += bio->read( bio, fdr, &excl_flag, sizeof(int) );
     /*read items count*/
     bytes += bio->read( bio, fdr, &items_count, sizeof(int));
     WRITE_FMT_LOG( "readmap exclude flag=%d, items_count=%d\n", excl_flag, items_count );
 
-    if ( items_count > 0 ){
-	/*alloc memory for all array cells expected to receive*/
-	AllocBuffer(map, MRITEM_SIZE, items_count);
+    /*alloc memory for all array cells expected to receive, if no items will recevied
+     *initialize buffer anyway*/
+    AllocBuffer(map, MRITEM_SIZE, items_count);
 
+    if ( items_count > 0 ){
 	/*read items_count items*/
 	ElasticBufItemData* item;
 	for( int i=0; i < items_count; i++ ){
@@ -869,6 +904,8 @@ RecvDataFromSingleMap( BufferedIORead* bio,
     }
     WRITE_FMT_LOG( "readed %d bytes from Map node, fdr=%d, item count=%d\n", 
 		   bytes, fdr, map->header.count );
+    free(bio);
+    free(recv_buffer);
     return excl_flag;
 }
 
@@ -891,25 +928,18 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
     /*get map_nodes_count*/
     int *map_nodes_list = NULL;
     int map_nodes_count = chif->GetNodesListByType( chif, EMapNode, &map_nodes_list);
-    int merge_buffers_count = map_nodes_count+1;
 
+    /*buffers_for_merge is an arrays received from Mappers to be merged 
+     *it will grow runtime */
+    Buffer *merge_buffers = NULL;
+    int merge_buffers_count=0;
     /*Buffer for merge*/
     Buffer merged; memset( &merged, '\0', sizeof(merged) );
     /*Buffer for sorted*/
     Buffer all; memset( &all, '\0', sizeof(all) );
-    /*recv Buffers to store received data from Map nodes*/
-    Buffer recv[merge_buffers_count]; memset( recv, '\0', sizeof(recv) );
 
     int excluded_map_nodes[map_nodes_count];
     memset( excluded_map_nodes, '\0', sizeof(excluded_map_nodes) );
-
-    /*merge arrays of buffers*/
-    int last_merge_item_index = map_nodes_count;
-
-    /*Declare pretty big buffer to provide efficient buffered IO, 
-      free it at the function end*/
-    void *recv_buffer = malloc(TEMP_BUFFER_SIZE);
-    BufferedIORead* bio = AllocBufferedIORead( recv_buffer, TEMP_BUFFER_SIZE);
 
     /*read data from map nodes*/
     int leave_map_nodes; /*is used as condition for do while loop*/
@@ -924,33 +954,27 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
 		WRITE_FMT_LOG( "Read [%d]map#%d, fdr=%d\n", 
 			       i, map_nodes_list[i], channel->fd );
 
+		/*grow array of buffers, and always receive items into new buffer*/
+		merge_buffers = realloc( merge_buffers, 
+					 (++merge_buffers_count)*sizeof(Buffer) );
 		excluded_map_nodes[i] 
-		    = RecvDataFromSingleMap( bio,
-					     channel->fd, 
-					     &recv[i], 
-					     recv_buffer,
-					     TEMP_BUFFER_SIZE );
-
+		    = RecvDataFromSingleMap( channel->fd, 
+					     &merge_buffers[merge_buffers_count-1] );
+		
 		/*set next wait loop condition*/
 		if ( excluded_map_nodes[i] != MAP_NODE_EXCLUDE ){
 		    /* have mappers expected to send again*/
 		    leave_map_nodes = 1;
 		}
 	    }
-	    else{
-		/*current map node excluded, free memory and reset data for unused buffers*/
-		FreeBufferData(&recv[i]);
-	    }
 	}//for
 
-	/*portion of data received from map nodes; merge all received data stored in
-	 * recv_keys, recv_values arrays in positions range "[0, map_nodes_cunt-1]";
-	 * last_merge_item_index points to previous merge result stored in the same arrays */
-	WRITE_LOG( "Data received from mappers, merge it" );
+	/*grow array of buffers, and add previous merge result into merge array*/
+	merge_buffers = realloc( merge_buffers, 
+				 (++merge_buffers_count)*sizeof(Buffer) );
+	merge_buffers[merge_buffers_count-1] = all;
 
-	/*current result "all" always copying into last received data before 
-	 *next merge ownership is transfered  */
-	recv[last_merge_item_index] = all;
+	WRITE_LOG( "Data received from mappers, merge it" );
 
 	/*Alloc buffers for merge results, and merge previous and new data*/
 	int granularity = all.header.count>0? all.header.count/3 : 1000;
@@ -958,13 +982,17 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
 	assert(!ret);
 	ret = AllocBuffer( &all, MRITEM_SIZE, granularity );
 	assert(!ret);
-	MergeBuffersToNew( &merged, recv, merge_buffers_count );
+	MergeBuffersToNew( &merged, merge_buffers, merge_buffers_count );
 	WRITE_FMT_LOG( "merge complete, keys count %d\n", merged.header.count );
 
 	/*Merge complete, free source recv buffers*/
-	for ( int i=0; i < last_merge_item_index+1; i++ ){
-	    FreeBufferData(&recv[i]);
+	for ( int i=0; i < merge_buffers_count; i++ ){
+	    FreeBufferData(&merge_buffers[i]);
 	}
+	/*reset merge buffers*/
+	free(merge_buffers), merge_buffers = NULL;
+	merge_buffers_count=0;
+
 	/**********************************************************/
 	/*combine data every time while it receives from map nodes*/
 	if ( mrif->Combine ){
@@ -984,7 +1012,7 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
 
     /*free intermediate keys,values buffers*/
     for(int i=0; i < merge_buffers_count; i++){
-	FreeBufferData(&recv[i]);
+	FreeBufferData(&merge_buffers[i]);
     }
 
     if( mrif->Reduce ){
@@ -995,8 +1023,6 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
     }
 
     free(map_nodes_list);
-    free(bio);
-    free(recv_buffer);
     FreeBufferData(&all);
 
     WRITE_LOG("ReduceNodeMain Complete\n");

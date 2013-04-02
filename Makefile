@@ -55,7 +55,7 @@ libports/sqlite3/libsqlite3.a
 
 ################# samples to build
 UNSTABLE_SAMPLES=
-SAMPLES=hello tarimage readdir sort_paging reqrep disort wordcount zshell time
+SAMPLES=hello tarimage readdir sort_paging reqrep disort wordcount zshell time cgioutput
 TEST_SAMPLES=file_stat bigfile
 TEST_SUITES=lua_test_suite
 
@@ -71,7 +71,7 @@ CFLAGS += -I. \
 	-Ilib/fs \
 	-Ilib/tar-1.11.8/src \
 	-Ilib/fs/unpack \
-	-I$(ZEROVM_ROOT)/api
+	-I$(ZVM_PREFIX)/api
 CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 
@@ -83,9 +83,9 @@ CXXFLAGS = -I. -Ilib -Ilib/fs
 #debug: CFLAGS+=-Wdisabled-optimization -fprofile-arcs -ftest-coverage -fdump-rtl-all -fdump-ipa-all 
 #debug: prepare ${LIBS} ${LIBZRT} autotests
 
-all: 
-all: prepare doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} autotests
+all: notests autotests
 
+notests: prepare doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
 
 #build zrt0 to be used as stub inside of zlibc
 zlibc_dep: CFLAGS+=-DZLIBC_STUB
@@ -203,6 +203,8 @@ install:
 	install -m 0644 lib/networking/eachtoother_comm.h $(INCLUDE_DIR)/networking
 	install -m 0644 lib/mapreduce/map_reduce_lib.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/buffer.h $(INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/buffer.inl $(INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/buffered_io.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
 	install -m 0644 lib/liblua.a $(LIB_DIR)
 	install -m 0644 lib/libgtest.a $(LIB_DIR)

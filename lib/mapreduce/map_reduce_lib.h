@@ -16,7 +16,7 @@ enum { EMapNode=1, EReduceNode=2, EInputOutputNode=3 };
 
 #define MIN(a,b) (a < b ? a : b )
 
-#define TEMP_BUFFER_SIZE             0x1000000 //16MB
+#define SEND_BUFFER_SIZE             0x200000 //2MB
 #define DEFAULT_MAP_CHUNK_SIZE_BYTES 0x100000 //1MB
 #define MAP_CHUNK_SIZE_ENV           "MAP_CHUNK_SIZE"
 

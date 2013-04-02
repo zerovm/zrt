@@ -7,11 +7,7 @@
 
 #include "mr_defines.h"
 #include "buffered_io.h"
-
-//        WRITE_FMT_LOG( "WRITE_IF_BUFFER_ENOUGH data=%p, size=%d, "	
-//		       "cursor=%d, bufmax=%d  ", data, size,		
-//		       iowrite->data.cursor, iowrite->data.bufmax);	
-//WRITE_LOG( "OK" );						
+					
 
 #define WRITE_IF_BUFFER_ENOUGH(iowrite, data, size)			\
     if ( size <= iowrite->data.bufmax - iowrite->data.cursor ){		\
@@ -21,7 +17,7 @@
     }
 
 #define READ_IF_BUFFER_ENOUGH(ioread, data, size)			\
-    if ( size <= ioread->data.datasize - ioread->data.cursor ){		\
+    if ( size <= ioread->buffered(ioread) ){				\
 	/*buffer is enough to read data*/				\
 	memcpy( data, ioread->data.buf + ioread->data.cursor, size );	\
 	ioread->data.cursor += size;					\
@@ -70,15 +66,17 @@ int buf_read (BufferedIORead* self, int handle, void* data, size_t size){
 	    WRITE_FMT_LOG( "bufferedio moved %d bytes \n", sizeinuse );
 	}
 	self->data.cursor = 0;
-	/*read into buffer from handle, if buffer data is to small*/  
-	int bytes = read(handle, 
-			 self->data.buf + sizeinuse, 
-			 self->data.bufmax - sizeinuse );
+	/*read into buffer from file descriptor*/  
+	int bytes = read(handle, self->data.buf + sizeinuse, self->data.bufmax-sizeinuse );
 	self->data.datasize = sizeinuse+bytes;
 	WRITE_FMT_LOG( "read to buffer %d bytes \n", bytes );
 	READ_IF_BUFFER_ENOUGH(self, data, size)
 	else{
-	    bytes = read(handle, data, size);
+	    /*insufficient buffer space, so read part of data from buffer
+	     and rest of data directly from handle*/
+	    int cached = self->buffered(self);
+	    READ_IF_BUFFER_ENOUGH(self, data, cached );
+	    bytes = read(handle, data+cached, size-cached);
 	    WRITE_FMT_LOG( "direct read %d/%d bytes \n", bytes, size );
 	}
     }
@@ -87,6 +85,8 @@ int buf_read (BufferedIORead* self, int handle, void* data, size_t size){
 
 
 BufferedIOWrite* AllocBufferedIOWrite(void* buf, size_t size){
+    WRITE_FMT_LOG( "AllocBufferedIOWrite size=%d \n", size );
+    assert(buf);
     BufferedIOWrite* self = malloc( sizeof(BufferedIOWrite) );
     self->data.buf = buf;
     self->data.bufmax = size;
@@ -97,6 +97,8 @@ BufferedIOWrite* AllocBufferedIOWrite(void* buf, size_t size){
 }
 
 BufferedIORead* AllocBufferedIORead(void* buf, size_t size){
+    WRITE_FMT_LOG( "AllocBufferedIORead size=%d \n", size );
+    assert(buf);
     BufferedIORead* self = malloc( sizeof(BufferedIORead) );
     self->data.buf = buf;
     self->data.bufmax = size;

@@ -219,7 +219,7 @@ int  zrt_zcall_enhanced_read(int handle, void *buf, size_t count, size_t *nread)
 	*nread = bytes_read;
 	ret = 0;
     }
-    LOG_SHORT_SYSCALL_FINISH( ret, "bytes_read=%d, handle=%d", bytes_read, handle);
+    LOG_INFO_SYSCALL_FINISH( ret, "bytes_read=%d, handle=%d", bytes_read, handle);
     return ret;
 }
 
@@ -240,7 +240,7 @@ int  zrt_zcall_enhanced_write(int handle, const void *buf, size_t count, size_t 
 	*nwrote = bytes_wrote;
 	ret=0;
     }
-    LOG_SHORT_SYSCALL_FINISH( ret, "bytes_wrote=%d, handle=%d count=%u", 
+    LOG_INFO_SYSCALL_FINISH( ret, "bytes_wrote=%d, handle=%d count=%u", 
 			      bytes_wrote, handle, count);
     __zrt_log_enable(log_state); /*restore log state*/
     return ret;
