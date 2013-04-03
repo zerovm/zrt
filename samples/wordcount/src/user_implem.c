@@ -39,16 +39,18 @@ HASH_TYPE HashForUserString( const char *str, int size )
     return hash;
 }
 
-/*****************************************************************************
- * local sort of mapped keys and values*/
-
 static int 
-HashComparator(const void *h1, const void *h2){
+ComparatorHash(const void *h1, const void *h2){
     if      ( *(HASH_TYPE*)h1 < *(HASH_TYPE*)h2 ) return -1;
     else if ( *(HASH_TYPE*)h1 > *(HASH_TYPE*)h2 ) return 1;
     else return 0;
 }
 
+static int 
+ComparatorElasticBufItemByHashQSort(const void *p1, const void *p2){
+    return ComparatorHash( &((ElasticBufItemData*)p1)->key_hash,
+			   &((ElasticBufItemData*)p2)->key_hash );
+}
 
 static char* 
 PrintableHash( char* str, const uint8_t* hash, int size){
@@ -191,7 +193,7 @@ int Combine( const Buffer *map_buffer,
     /*declare buf item to use it as current loop item*/
     ElasticBufItemData* current_elasticdata;
     /*declare combine item and init it default by nearest value */
-    ElasticBufItemData* combine_elasticdata = alloca(s_mr_buffer_item_size);
+    ElasticBufItemData* combine_elasticdata = alloca(map_buffer->header.item_size);
     if ( map_buffer->header.count ){
 	GetBufferItem( map_buffer, 0, combine_elasticdata );
     }
@@ -208,7 +210,7 @@ int Combine( const Buffer *map_buffer,
  	    /*save previously combined item*/
 	    AddBufferItem( reduce_buffer, combine_elasticdata );
 	    /*set current item as next combine value */
-	    memcpy(combine_elasticdata, current_elasticdata, s_mr_buffer_item_size);
+	    GetBufferItem( map_buffer, i, combine_elasticdata );
 	    combined_count=1;
 	}
 	/*if previous item and new one has the same key then we need 
@@ -305,7 +307,8 @@ void InitInterface( struct MapReduceUserIf* mr_if ){
 		      Map, 
 		      Combine, 
 		      Reduce, 
-		      HashComparator,
+		      ComparatorElasticBufItemByHashQSort,
+		      ComparatorHash,
 		      PrintableHash,
 		      VALUE_ADDR_AS_DATA,
 		      s_mr_buffer_item_size,

@@ -23,58 +23,6 @@
 
 #include "buffer.h"
 
-/*this option disables macros WRITE_LOG_BUFFER */
-#define DISABLE_WRITE_LOG_BUFFER
-
-#define MAX_UINT32 4294967295
-#define HASH_SIZE(mif_p) (mif_p)->data.hash_size
-#define ALLOC_HASH_IN_STACK alloca(HASH_SIZE)
-
-typedef int exclude_flag_t;
-#define MAP_NODE_NO_EXCLUDE 0
-#define MAP_NODE_EXCLUDE 1
-
-/*MapReduceUserIf s_mif must be initialized in order to use user defined 
- comparator inside of qsort routine*/
-struct MapReduceUserIf *s_mif = NULL;
-
-
-#define PRINTABLE_HASH(mif_p, hash) \
-    ((mif_p)!=NULL && (mif_p)->HashAsString != NULL)?			\
-    (mif_p)->HashAsString( (char*)alloca((mif_p)->data.hash_size*2+1),	\
-			   (hash),					\
-			   (mif_p)->data.hash_size)			\
-    :""
-
-#define HASH_COPY(dest, src, size) memcpy((dest), (src), (size))
-#define HASH_CMP(mif_p, h1_p, h2_p) (mif_p)->HashComparator( (h1_p), (h2_p) )
-
-/*Buffer item size used by mapreduce library*/
-#define MRITEM_SIZE(mif_p) ((mif_p)->data.mr_item_size)
-
-#define BOUNDS_OK(item_index, items_count)  (item_index) < (items_count)
-
-#if defined(DEBUG) && !defined(DISABLE_WRITE_LOG_BUFFER)
-#  define WRITE_LOG_BUFFER( mif_p,map )					\
-    if ( (map).header.count ){						\
-	ElasticBufItemData *data;					\
-	for (int i_=0; i_ < (map).header.count; i_++){			\
-	    data = (ElasticBufItemData *)BufferItemPointer(&(map), i_);	\
-	    WRITE_FMT_LOG( "[%d] %s\n",					\
-			   i_, PRINTABLE_HASH(mif_p, &data->key_hash) ); \
-	}								\
-	fflush(0);							\
-    }
-#else
-#  define WRITE_LOG_BUFFER(map)
-#endif
-
-static int 
-ElasticBufItemHashQSortComparator(const void *p1, const void *p2){
-    return s_mif->HashComparator( &((ElasticBufItemData*)p1)->key_hash,
-				   &((ElasticBufItemData*)p2)->key_hash );
-}
-
 static size_t 
 MapInputDataProvider( int fd, 
 		      char **input_buffer, 
@@ -131,13 +79,13 @@ MapInputDataProvider( int fd,
 }
 
 
-static void 
-LocalSort( Buffer *sortable ){
+void 
+LocalSort( struct MapReduceUserIf *mif, Buffer *sortable ){
     /*sort created array*/
     qsort( sortable->data, 
 	   sortable->header.count, 
 	   sortable->header.item_size, 
-	   ElasticBufItemHashQSortComparator );
+	   mif->ComparatorMrItem );
 }
 
 
@@ -156,7 +104,7 @@ GetHistogram( struct MapReduceUserIf *mif,
 	histogram->step_hist_common = histogram->step_hist_last = map->header.count;
     }
     else{
-	histogram->step_hist_common = step;
+	histogram->step_hist_common = MIN( step, map->header.count );
 	int i = -1; /*array index*/
 	do{
 	    histogram->step_hist_last = MIN( step, map->header.count-i-1 );
@@ -167,8 +115,9 @@ GetHistogram( struct MapReduceUserIf *mif,
 
     }
 #ifdef DEBUG
-    if ( mif && mif->HashAsString ){
-	WRITE_LOG("\nHistogram=[");
+    if ( mif && mif->DebugHashAsString ){
+	WRITE_FMT_LOG("\nstep=%d/%d, Histogram=[ ", 
+		      histogram->step_hist_common, histogram->step_hist_last);
 	uint8_t* hash;
 	int i;
 	for( i=0; i < histogram->buffer.header.count ; i++ ){
@@ -234,7 +183,7 @@ WriteHistogramToNode( struct EachToOtherPattern *p_this,
 
 
 
-/*@param divider_array space must preallocated by exact items count to be added
+/*@param divider_array space must preallocated by exact items count to be added;
  it's maximum value will be used by algorithm*/
 void 
 GetReducersDividerArrayBasedOnSummarizedHistograms( struct MapReduceUserIf *mif,
@@ -296,7 +245,8 @@ int SearchMinimumHashAmongCurrentItemsOfAllHistograms( struct MapReduceUserIf *m
 	    AddBufferItem( divider_array, divider_hash );
 	    current_divider_block_size=0;
 
-	    WRITE_FMT_LOG( "histogram#=%d, item#=%d, hash=%s\n", 
+	    WRITE_FMT_LOG( "add divider item#%d from histogram#%d[%d], hashvalue=%s\n", 
+			   divider_array->header.count-1,
 			   histogram_index_with_minimal_hash, min_item_index,
 			   PRINTABLE_HASH(mif, divider_hash) );
 	    fflush(0);
@@ -390,11 +340,11 @@ MapInputDataLocalProcessing( struct MapReduceUserIf *mif,
     WRITE_FMT_LOG("User Map() function result : items count=%u, unhandled pos=%u\n",
 		  (uint32_t)sort.header.count, (uint32_t)unhandled_data_pos );
 
-    WRITE_LOG_BUFFER( sort );
-    LocalSort( &sort);
+    WRITE_LOG_BUFFER(mif, sort );
+    LocalSort( mif, &sort);
 
     WRITE_FMT_LOG("MapCallEvent:sorted map, count=%u\n", (uint32_t)sort.header.count);
-    WRITE_LOG_BUFFER( sort );
+    WRITE_LOG_BUFFER(mif, sort );
 
     if ( AllocBuffer(result, MRITEM_SIZE(mif), sort.header.count/4 ) !=0 ){
 	assert(0);
@@ -412,7 +362,7 @@ MapInputDataLocalProcessing( struct MapReduceUserIf *mif,
     }
 
     WRITE_FMT_LOG("MapCallEvent: Combine Complete, count=%u\n", (uint32_t)result->header.count);
-    WRITE_LOG_BUFFER( *result );
+    WRITE_LOG_BUFFER(mif, *result );
     return unhandled_data_pos;
 }
 
@@ -755,12 +705,11 @@ MapNodeMain( struct MapReduceUserIf *mif,
     assert(mif->Map);
     assert(mif->Combine);
     assert(mif->Reduce);
-    assert(mif->HashComparator);
+    assert(mif->ComparatorHash);
+    assert(mif->ComparatorMrItem);
 #ifndef DISABLE_WRITE_LOG_BUFFER
-    assert(mif->HashAsString);
+    assert(mif->DebugHashAsString);
 #endif
-
-    s_mif = mif;
 
     struct MapNodeEvents events;
     InitMapInternals(mif, chif, &events);
@@ -962,12 +911,11 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
     assert(mif->Map);
     assert(mif->Combine);
     assert(mif->Reduce);
-    assert(mif->HashComparator);
+    assert(mif->ComparatorHash);
+    assert(mif->ComparatorMrItem);
 #ifndef DISABLE_WRITE_LOG_BUFFER
-    assert(mif->HashAsString);
+    assert(mif->DebugHashAsString);
 #endif
-
-    s_mif = mif;
 
     /*get map_nodes_count*/
     int *map_nodes_list = NULL;
@@ -1041,13 +989,13 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
 	/**********************************************************/
 	/*combine data every time while it receives from map nodes*/
 	if ( mif->Combine ){
-	    WRITE_LOG_BUFFER(merged);
+	    WRITE_LOG_BUFFER(mif,merged);
 	    WRITE_FMT_LOG( "keys count before Combine: %d\n", 
 			   (int)merged.header.count );
 	    mif->Combine( &merged, &all );
 	    FreeBufferData( &merged );
 	    WRITE_FMT_LOG( "keys count after Combine: %d\n", (int)all.header.count );
-	    WRITE_LOG_BUFFER(all);
+	    WRITE_LOG_BUFFER(mif,all);
 	}else{
 	    int not_supported_yet = 0;
 	    assert(not_supported_yet);

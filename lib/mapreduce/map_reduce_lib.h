@@ -21,23 +21,26 @@ enum { EMapNode=1, EReduceNode=2, EInputOutputNode=3 };
 #define MAP_CHUNK_SIZE_ENV           "MAP_CHUNK_SIZE"
 
 /*Init MapReduceUserIf existing pointer object and get it ready to use
- comparator_f - if user provides NULL then default comparator will used */
-#define PREPARE_MAPREDUCE(mif_p, map_f, combine_f, reduce_f, hashcomparator_f, \
-			  hashstr_f, val_addr_is_data, item_size, h_size ) \
-    (mif_p)->Map = (map_f);         /*set user Map function*/		\
-    (mif_p)->Combine = (combine_f); /*set user Combine function */	\
-    (mif_p)->Reduce = (reduce_f);   /*set user Reduce function */		\
-    (mif_p)->HashComparator = (hashcomparator_f);				\
-    /*set user function convert hash to a string */			\
-    (mif_p)->HashAsString = (hashstr_f);					\
-    (mif_p)->data.value_addr_is_data = (val_addr_is_data);		\
-    (mif_p)->data.mr_item_size = item_size;				\
-    (mif_p)->data.hash_size = (h_size);
+  comparator_f - if user provides NULL then default comparator will used */
+#define PREPARE_MAPREDUCE(mif_p, map_f, combine_f, reduce_f, mritemcomparator_f, \
+			  hashcomparator_f,  hashstr_f,			\
+			  val_addr_is_data, item_size, h_size ){	\
+	(mif_p)->Map =     (map_f);    /*set user Map function*/	\
+	(mif_p)->Combine = (combine_f);/*set user Combine function */	\
+	(mif_p)->Reduce = (reduce_f);  /*set user Reduce function */	\
+	(mif_p)->ComparatorMrItem = (mritemcomparator_f);		\
+	(mif_p)->ComparatorHash = (hashcomparator_f);			\
+	/*set user function convert hash to a string */			\
+	(mif_p)->DebugHashAsString = (hashstr_f);			\
+	(mif_p)->data.value_addr_is_data = (val_addr_is_data);		\
+	(mif_p)->data.mr_item_size = item_size;				\
+	(mif_p)->data.hash_size = (h_size);				\
+    }
 
 
 struct MapReduceUserIf{
     /* read input buffer, allocate and fill keys & values arrays.
-     * User is not responsible to free keys & values arrays;
+     * map_buffer array is initialized and destroying itself by library;
      * @param last_chunk 1 if last chunk data provided, otherwise 0
      * @param mapped Result mapped hashes,keys and data, user is not 
      * responsible to free it is
@@ -52,11 +55,13 @@ struct MapReduceUserIf{
 		    Buffer *reduce_buffer );
     /*reduce and output data into stdout*/
     int (*Reduce)( const Buffer *reduce_buffer );
-    /*comparator can be overrided by user, otherwise library will use own*/
-    int (*HashComparator)(const void *p1, const void *p2);
+    /*comparator for elastic_mr_item can be overrided by user*/
+    int (*ComparatorMrItem)(const void *p1, const void *p2);
+    /*comparator for hash can be overrided by user*/
+    int (*ComparatorHash)(const void *p1, const void *p2);
     /*function converts hash to a string can be overrided by user, otherwise library 
       will use own. It's function used by library for test purposes*/
-    char* (*HashAsString)( char* str, const uint8_t* hash, int size);
+    char* (*DebugHashAsString)( char* str, const uint8_t* hash, int size);
     /*data*/
     struct MapReduceData data;
 };
@@ -69,7 +74,8 @@ int ReduceNodeMain(struct MapReduceUserIf *userif,
 		   struct ChannelsConfigInterface *ch_if );
 
 
-/*Functions related to implementation, moved into header to be tested in separate main*/
+/*Functions internal to implementation, 
+  moved into this header to be tested in separate main*/
 
 /*Read MR items from map buffer and pass every "step" item into histogram->buffer array
  *histogram created histogram
@@ -91,6 +97,17 @@ GetReducersDividerArrayBasedOnSummarizedHistograms( struct MapReduceUserIf *mif,
 						    Histogram *histograms, 
 						    int histograms_count, 
 						    Buffer *divider_array );
+
+/*Sort Buffer array using mritem comparator provided by mif*/
+void 
+LocalSort( struct MapReduceUserIf *mif, Buffer *sortable );
+
+size_t
+MapInputDataLocalProcessing( struct MapReduceUserIf *mif, 
+			     const char *buf, 
+			     size_t buf_size, 
+			     int last_chunk, 
+			     Buffer *result );
 
 #endif //__MAP_REDUCE_LIB_H__
 
