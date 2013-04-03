@@ -8,6 +8,7 @@
 
 /*forward decl*/
 struct ChannelsConfigInterface;
+struct MapReduceUserIf;
 
 /*Histogram - slice of data, where every N-item "step_hist_common" added into
  *histogram buffer. Hash of key is used as histogram item. 
@@ -24,7 +25,7 @@ typedef struct Histogram{
 struct MapReduceData{
     int mr_item_size;     /*user must provide right mr item structure size*/
     int hash_size;        /*set BufItemElastic::key_hash size*/
-    int value_is_data;    /*use BufItemElastic::addr as data*/
+    int value_addr_is_data; /*use BufItemElastic::addr as data*/
     //internals
     Histogram *histograms_list;
     int        histograms_count; /*histograms count is equal to map nodes count*/
@@ -46,7 +47,8 @@ struct MapNodeEvents{
      * * @param result_values Save processed values. should be valid pointer.
      * @return unhandled data buffer pos*/
     size_t
-    (*MapInputDataLocalProcessing)( const char *buf, 
+    (*MapInputDataLocalProcessing)( struct MapReduceUserIf *mif,
+				    const char *buf, 
 				    size_t buf_size, 
 				    int last_chunk, 
 				    Buffer *result );
@@ -59,11 +61,12 @@ struct MapNodeEvents{
     void
     (*MapCreateHistogramSendEachToOtherCreateDividersList)
     ( struct ChannelsConfigInterface *ch_if, 
-      struct MapReduceData *data, 
+      struct MapReduceUserIf *mif, 
       const Buffer *map );
     /**/
     void
     (*MapSendToAllReducers)(struct ChannelsConfigInterface *ch_if, 
+			    struct MapReduceUserIf *mif,
 			    int last_data, 
 			    const Buffer *map);
 };

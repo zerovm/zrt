@@ -27,33 +27,41 @@
 #define DISABLE_WRITE_LOG_BUFFER
 
 #define MAX_UINT32 4294967295
-#define HASH_SIZE __mrif->data.hash_size
+#define HASH_SIZE(mif_p) (mif_p)->data.hash_size
 #define ALLOC_HASH_IN_STACK alloca(HASH_SIZE)
 
 typedef int exclude_flag_t;
 #define MAP_NODE_NO_EXCLUDE 0
 #define MAP_NODE_EXCLUDE 1
 
-struct MapReduceUserIf *__mrif = NULL;
-#define PRINTABLE_HASH( hash) \
-    __mrif->HashAsString( (char*)alloca((HASH_SIZE)*2+1), (hash), __mrif->data.hash_size)
+/*MapReduceUserIf s_mif must be initialized in order to use user defined 
+ comparator inside of qsort routine*/
+struct MapReduceUserIf *s_mif = NULL;
 
-#define HASH_COPY(dest, src) memcpy((dest), (src), __mrif->data.hash_size)
-#define HASH_CMP(h1_p, h2_p) __mrif->HashComparator( (h1_p), (h2_p) )
+
+#define PRINTABLE_HASH(mif_p, hash) \
+    ((mif_p)!=NULL && (mif_p)->HashAsString != NULL)?			\
+    (mif_p)->HashAsString( (char*)alloca((mif_p)->data.hash_size*2+1),	\
+			   (hash),					\
+			   (mif_p)->data.hash_size)			\
+    :""
+
+#define HASH_COPY(dest, src, size) memcpy((dest), (src), (size))
+#define HASH_CMP(mif_p, h1_p, h2_p) (mif_p)->HashComparator( (h1_p), (h2_p) )
 
 /*Buffer item size used by mapreduce library*/
-#define MRITEM_SIZE (__mrif->data.mr_item_size)
+#define MRITEM_SIZE(mif_p) ((mif_p)->data.mr_item_size)
 
 #define BOUNDS_OK(item_index, items_count)  (item_index) < (items_count)
 
 #if defined(DEBUG) && !defined(DISABLE_WRITE_LOG_BUFFER)
-#  define WRITE_LOG_BUFFER( map )					\
+#  define WRITE_LOG_BUFFER( mif_p,map )					\
     if ( (map).header.count ){						\
 	ElasticBufItemData *data;					\
 	for (int i_=0; i_ < (map).header.count; i_++){			\
 	    data = (ElasticBufItemData *)BufferItemPointer(&(map), i_);	\
 	    WRITE_FMT_LOG( "[%d] %s\n",					\
-			   i_, PRINTABLE_HASH(&data->key_hash) );	\
+			   i_, PRINTABLE_HASH(mif_p, &data->key_hash) ); \
 	}								\
 	fflush(0);							\
     }
@@ -63,7 +71,7 @@ struct MapReduceUserIf *__mrif = NULL;
 
 static int 
 ElasticBufItemHashQSortComparator(const void *p1, const void *p2){
-    return __mrif->HashComparator( &((ElasticBufItemData*)p1)->key_hash,
+    return s_mif->HashComparator( &((ElasticBufItemData*)p1)->key_hash,
 				   &((ElasticBufItemData*)p2)->key_hash );
 }
 
@@ -134,7 +142,8 @@ LocalSort( Buffer *sortable ){
 
 
 size_t
-GetHistogram( const Buffer* map, 
+GetHistogram( struct MapReduceUserIf *mif,
+	      const Buffer* map, 
 	      int step, 
 	      Histogram *histogram ){
     /*access hash keys in map buffer and add every N hash into histogram*/
@@ -158,14 +167,16 @@ GetHistogram( const Buffer* map,
 
     }
 #ifdef DEBUG
-    WRITE_LOG("\nHistogram=[");
-    uint8_t* hash;
-    int i;
-    for( i=0; i < histogram->buffer.header.count ; i++ ){
-	hash = (uint8_t*) BufferItemPointer( &histogram->buffer, i);
-	WRITE_FMT_LOG("%s ", PRINTABLE_HASH(hash) );
+    if ( mif && mif->HashAsString ){
+	WRITE_LOG("\nHistogram=[");
+	uint8_t* hash;
+	int i;
+	for( i=0; i < histogram->buffer.header.count ; i++ ){
+	    hash = (uint8_t*) BufferItemPointer( &histogram->buffer, i);
+	    WRITE_FMT_LOG("%s ", PRINTABLE_HASH(mif, hash) );
+	}
+	WRITE_LOG("]\n"); fflush(0);
     }
-    WRITE_LOG("]\n"); fflush(0);
 #endif
     return histogram->buffer.header.count;
 }
@@ -224,11 +235,13 @@ WriteHistogramToNode( struct EachToOtherPattern *p_this,
 
 
 void 
-GetReducersDividerArrayBasedOnSummarizedHistograms( Histogram *histograms, 
+GetReducersDividerArrayBasedOnSummarizedHistograms( struct MapReduceUserIf *mif,
+						    Histogram *histograms, 
 						    int histograms_count, 
 						    Buffer *divider_array ){
 int CalculateItemsCountBasedOnHistograms(Histogram *histograms, int histograms_count );
-int SearchMinimumHashAmongCurrentItemsOfAllHistograms( Histogram *histograms, 
+int SearchMinimumHashAmongCurrentItemsOfAllHistograms( struct MapReduceUserIf *mif,
+						       Histogram *histograms, 
 						       int *current_indexes_array,
 						       int histograms_count );
 
@@ -252,7 +265,8 @@ int SearchMinimumHashAmongCurrentItemsOfAllHistograms( Histogram *histograms,
       with maximum value as possible*/
     while( divider_array->header.count+1 < dividers_count_max ){
 	histogram_index_with_minimal_hash = 
-	    SearchMinimumHashAmongCurrentItemsOfAllHistograms( histograms, 
+	    SearchMinimumHashAmongCurrentItemsOfAllHistograms( mif,
+							       histograms, 
 							       indexes, 
 							       histograms_count );
 	if ( histogram_index_with_minimal_hash == -1 ){
@@ -282,7 +296,7 @@ int SearchMinimumHashAmongCurrentItemsOfAllHistograms( Histogram *histograms,
 
 	    WRITE_FMT_LOG( "histogram#=%d, item#=%d, hash=%s\n", 
 			   histogram_index_with_minimal_hash, min_item_index,
-			   PRINTABLE_HASH(divider_hash) );
+			   PRINTABLE_HASH(mif, divider_hash) );
 	    fflush(0);
 	}
 	indexes[histogram_index_with_minimal_hash]++;
@@ -292,15 +306,15 @@ int SearchMinimumHashAmongCurrentItemsOfAllHistograms( Histogram *histograms,
     /*Add last divider hash with maximum value, and it is guaranties that all rest 
       map values with hash value less than maximum will distributed into last reduce node 
       appropriated to last divider*/
-    uint8_t* divider_hash = alloca(HASH_SIZE);
-    memset( divider_hash, 0xffffff, HASH_SIZE );
+    uint8_t* divider_hash = alloca( HASH_SIZE(mif) );
+    memset( divider_hash, 0xffffff, HASH_SIZE(mif) );
     AddBufferItem(divider_array, divider_hash);
 
 #ifdef DEBUG
     WRITE_LOG("\ndivider_array=[");
     for( int i=0; i < dividers_count_max; i++ ){
 	const uint8_t* current_hash = (const uint8_t*)BufferItemPointer(divider_array, i);
-	WRITE_FMT_LOG("%s ", PRINTABLE_HASH(current_hash) );
+	WRITE_FMT_LOG("%s ", PRINTABLE_HASH(mif,current_hash) );
     }
     WRITE_LOG("]\n");
 #endif
@@ -328,7 +342,8 @@ CalculateItemsCountBasedOnHistograms(Histogram *histograms, int hist_count ){
 
 
 int
-SearchMinimumHashAmongCurrentItemsOfAllHistograms( Histogram *histograms, 
+SearchMinimumHashAmongCurrentItemsOfAllHistograms( struct MapReduceUserIf *mif,
+						   Histogram *histograms, 
 						   int *current_indexes_array,
 						   int histograms_count){ 
     int res = -1;
@@ -342,7 +357,8 @@ SearchMinimumHashAmongCurrentItemsOfAllHistograms( Histogram *histograms,
 	    /*get minimal value among currently indexed histogram values*/ 
 	    current_hash = (const uint8_t*)BufferItemPointer( &histograms[i].buffer,
 							      current_indexes_array[i]);
-	    if ( !minimal_hash || HASH_CMP( current_hash, minimal_hash ) <= 0 ){
+	    if ( !minimal_hash || 
+		 HASH_CMP( mif, current_hash, minimal_hash ) <= 0 ){
 		res = i;
 		minimal_hash = current_hash;
 	    }
@@ -353,13 +369,14 @@ SearchMinimumHashAmongCurrentItemsOfAllHistograms( Histogram *histograms,
 
 
 size_t
-MapInputDataLocalProcessing( const char *buf, 
+MapInputDataLocalProcessing( struct MapReduceUserIf *mif, 
+			     const char *buf, 
 			     size_t buf_size, 
 			     int last_chunk, 
 			     Buffer *result ){
     size_t unhandled_data_pos = 0;
     Buffer sort;
-    if( AllocBuffer( &sort, MRITEM_SIZE, 1024 /*granularity*/ ) != 0 ){
+    if( AllocBuffer( &sort, MRITEM_SIZE(mif), 1024 /*granularity*/ ) != 0 ){
 	assert(0);
     }
 
@@ -367,7 +384,7 @@ MapInputDataLocalProcessing( const char *buf,
     WRITE_FMT_LOG("======= new portion of data read: input buffer=%p, buf_size=%u\n", 
 		  buf, (uint32_t)buf_size );
     /*user Map process input data and allocate keys, values buffers*/
-    unhandled_data_pos = __mrif->Map( buf, buf_size, last_chunk, &sort );
+    unhandled_data_pos = mif->Map( buf, buf_size, last_chunk, &sort );
     WRITE_FMT_LOG("User Map() function result : items count=%u, unhandled pos=%u\n",
 		  (uint32_t)sort.header.count, (uint32_t)unhandled_data_pos );
 
@@ -377,13 +394,13 @@ MapInputDataLocalProcessing( const char *buf,
     WRITE_FMT_LOG("MapCallEvent:sorted map, count=%u\n", (uint32_t)sort.header.count);
     WRITE_LOG_BUFFER( sort );
 
-    if ( AllocBuffer(result, MRITEM_SIZE, sort.header.count/4 ) !=0 ){
+    if ( AllocBuffer(result, MRITEM_SIZE(mif), sort.header.count/4 ) !=0 ){
 	assert(0);
     }
 
     WRITE_FMT_LOG("MapCallEvent: Combine Start, count=%u\n", (uint32_t)sort.header.count);
-    if ( __mrif->Combine ){
-	__mrif->Combine( &sort, result );
+    if ( mif->Combine ){
+	mif->Combine( &sort, result );
 	FreeBufferData(&sort);
     }
     else{
@@ -400,7 +417,7 @@ MapInputDataLocalProcessing( const char *buf,
 
 void 
 MapCreateHistogramSendEachToOtherCreateDividersList( struct ChannelsConfigInterface *ch_if, 
-						     struct MapReduceData *data, 
+						     struct MapReduceUserIf *mif, 
 						     const Buffer *map ){
     /*retrieve Map/Reducer nodes list and nodes count*/
     int *map_nodes_list = NULL;
@@ -415,11 +432,11 @@ MapCreateHistogramSendEachToOtherCreateDividersList( struct ChannelsConfigInterf
     //generate histogram with offset
     int current_node_index = ch_if->ownnodeid-1;
 
-    struct Histogram* histogram = &data->histograms_list[current_node_index];
+    struct Histogram* histogram = &mif->data.histograms_list[current_node_index];
 
     size_t hist_step = map->header.count / 100 / map_nodes_count;
     /*save histogram for own data always into current_node_index-pos of histograms array*/
-    GetHistogram( map, hist_step, histogram );
+    GetHistogram( mif, map, hist_step, histogram );
 
     WRITE_FMT_LOG("MapCallEvent: histogram created. "
 		  "count=%d, fstep=%u, lstep=%u\n",
@@ -430,20 +447,20 @@ MapCreateHistogramSendEachToOtherCreateDividersList( struct ChannelsConfigInterf
     /*use eachtoother pattern to map nodes communication*/
     struct EachToOtherPattern histogram_from_all_to_all_pattern = {
 	.conf = ch_if,
-	.data = data,
+	.data = &mif->data,
 	.Read = ReadHistogramFromNode,
 	.Write = WriteHistogramToNode
     };
     StartEachToOtherCommunication( &histogram_from_all_to_all_pattern, EMapNode );
 
     /*Preallocate buffer space and exactly for items count=reduce_nodes_count */
-    AllocBuffer( &data->dividers_list, HASH_SIZE, reduce_nodes_count);
+    AllocBuffer( &mif->data.dividers_list, HASH_SIZE(mif), reduce_nodes_count);
     /*From now every map node contain histograms from all map nodes, summarize histograms,
      *to get distribution of all data. Result of summarization write into divider_array.*/
-    GetReducersDividerArrayBasedOnSummarizedHistograms(
-						       data->histograms_list,
-						       data->histograms_count,
-						       &data->dividers_list );
+    GetReducersDividerArrayBasedOnSummarizedHistograms( mif,
+							mif->data.histograms_list,
+							mif->data.histograms_count,
+							&mif->data.dividers_list );
     free(map_nodes_list);
     free(reduce_nodes_list);
 }
@@ -451,14 +468,16 @@ MapCreateHistogramSendEachToOtherCreateDividersList( struct ChannelsConfigInterf
 static int
 BufferedWriteSingleMrItem( BufferedIOWrite* bio, 
 			   int fdw,
-			   const ElasticBufItemData* item ){
+			   const ElasticBufItemData* item,
+			   int hashsize,
+			   int value_addr_is_data){
     int bytes=0;
     /*key size*/
     bytes+=bio->write( bio, fdw, (void*)&item->key_data.size, sizeof(item->key_data.size));
     /*key data*/
     bytes+=bio->write( bio, fdw, (void*)item->key_data.addr, item->key_data.size);
 
-    if ( __mrif->data.value_is_data ){
+    if ( value_addr_is_data ){
 	/*ElasticBufItemData::key_data::addr used as data, key_data::size not used*/
 	bytes+=bio->write( bio, fdw, (void*)&item->value.addr, sizeof(item->value.addr) );
     }
@@ -469,14 +488,16 @@ BufferedWriteSingleMrItem( BufferedIOWrite* bio,
 	bytes+=bio->write( bio, fdw,(void*)item->value.addr, item->value.size);
     }
     /*hash of key*/
-    bytes+=bio->write( bio, fdw, (void*)&item->key_hash, HASH_SIZE);
+    bytes+=bio->write( bio, fdw, (void*)&item->key_hash, hashsize );
     return bytes;
 }
 
 static int
 BufferedReadSingleMrItem( BufferedIORead* bio, 
 			  int fdr,
-			  ElasticBufItemData* item ){
+			  ElasticBufItemData* item,
+			  int hashsize,
+			  int value_addr_is_data){
     int bytes=0;
     /*key size*/
     bytes += bio->read( bio, fdr, (void*)&item->key_data.size, sizeof(item->key_data.size));
@@ -485,7 +506,7 @@ BufferedReadSingleMrItem( BufferedIORead* bio,
     item->own_key = EDataOwned;
     bytes += bio->read( bio, fdr, (void*)item->key_data.addr, item->key_data.size);
 
-    if ( __mrif->data.value_is_data ){
+    if ( value_addr_is_data ){
 	/*ElasticBufItemData::key_data::addr used as data, key_data::size not used*/
 	bytes += bio->read( bio, fdr, (void*)&item->value.addr, sizeof(item->value.addr) );
 	item->own_value = EDataNotOwned;
@@ -501,7 +522,7 @@ BufferedReadSingleMrItem( BufferedIORead* bio,
 	bytes += bio->read( bio, fdr, (void*)item->value.addr, item->value.size);
     }
     /*key hash*/
-    bytes += bio->read( bio, fdr, (void*)&item->key_hash, HASH_SIZE);
+    bytes += bio->read( bio, fdr, (void*)&item->key_hash, hashsize );
     return bytes;
 }
  
@@ -509,7 +530,9 @@ BufferedReadSingleMrItem( BufferedIORead* bio,
 static size_t
 CalculateSendingDataSize(const Buffer *map, 
 			 int data_start_index, 
-			 int items_count)
+			 int items_count,
+			 int hashsize,
+			 int value_addr_is_data)
 {
     /*calculate sending data of size */
     size_t senddatasize= 0;
@@ -520,17 +543,17 @@ CalculateSendingDataSize(const Buffer *map,
     for( int i=data_start_index; i < loop_up_to_count; i++ ){
 	item = (const ElasticBufItemData*)BufferItemPointer( map, i );
 	senddatasize+= item->key_data.size;     /*size of key data*/
-	if ( !__mrif->data.value_is_data )
+	if ( !value_addr_is_data )
 	    senddatasize+= item->value.size;    /*size of value data*/
     }
     /*size of value data / value size*/
     //value data/size
-    if ( __mrif->data.value_is_data )
+    if ( value_addr_is_data )
 	senddatasize+= items_count * sizeof(((struct BinaryData*)0)->addr);
     else
 	senddatasize+= items_count * sizeof(((struct BinaryData*)0)->size);
     /*size of hash*/
-    senddatasize+= items_count * HASH_SIZE;
+    senddatasize+= items_count * hashsize;
     /*size of key size*/
     senddatasize+= items_count * sizeof(((struct BinaryData*)0)->size);
     /*************************************/
@@ -539,29 +562,34 @@ CalculateSendingDataSize(const Buffer *map,
 }
  
 void 
-WriteDataToReduce( BufferedIOWrite* bio, 
-		    int fdw, 
-		    const Buffer *map, 
-		    int data_start_index, 
-		    int items_count,
-		    int last_data_flag ){
+WriteDataToReduce( struct MapReduceUserIf *mif,
+		   BufferedIOWrite* bio, 
+		   int fdw, 
+		   const Buffer *map, 
+		   int data_start_index, 
+		   int items_count,
+		   int last_data_flag ){
     int bytes=0;
-    ElasticBufItemData* current = alloca( MRITEM_SIZE );
+    ElasticBufItemData* current = alloca( MRITEM_SIZE(mif) );
     int loop_up_to_count = data_start_index+items_count;
     assert( loop_up_to_count <= map->header.count );
 
-    int senddatasize = CalculateSendingDataSize(map, data_start_index, items_count);
+    int senddatasize = CalculateSendingDataSize(map, 
+						data_start_index, 
+						items_count, 
+						HASH_SIZE(mif),
+						mif->data.value_addr_is_data);
 
     /*log first and last hashes of range to send */
 #ifdef DEBUG
     WRITE_FMT_LOG( "data_start_index=%d, items_count=%d\n", 
 		   data_start_index, items_count );
-    ElasticBufItemData* temp = alloca( MRITEM_SIZE );
+    ElasticBufItemData* temp = alloca( MRITEM_SIZE(mif) );
     GetBufferItem( map, data_start_index, current );
     GetBufferItem( map, data_start_index+items_count-1, temp ); /*last item from range*/
     WRITE_FMT_LOG( "send range of hashes [%s - %s]",
-		   PRINTABLE_HASH(&current->key_hash), 
-		   PRINTABLE_HASH(&temp->key_hash) );
+		   PRINTABLE_HASH(mif, &current->key_hash), 
+		   PRINTABLE_HASH(mif, &temp->key_hash) );
     WRITE_FMT_LOG( "fdw=%d, last_data_flag=%d, items_count=%d\n", 
 		   fdw, last_data_flag, items_count );
 #endif //DEBUG
@@ -576,7 +604,9 @@ WriteDataToReduce( BufferedIOWrite* bio,
 
     for( int i=data_start_index; i < loop_up_to_count; i++ ){
 	GetBufferItem( map, i, current );
-	bytes+= BufferedWriteSingleMrItem( bio, fdw, current );
+	bytes+= BufferedWriteSingleMrItem( bio, fdw, current, 
+					   HASH_SIZE(mif),
+					   mif->data.value_addr_is_data);
     }
     bio->flush_write(bio, fdw);
     assert(bytes ==senddatasize);
@@ -585,6 +615,7 @@ WriteDataToReduce( BufferedIOWrite* bio,
 
 static void 
 MapSendToAllReducers( struct ChannelsConfigInterface *ch_if, 
+		      struct MapReduceUserIf *mif,
 		      int last_data, 
 		      const Buffer *map){
     /*get reducers count, this is same as dividers count for us*/
@@ -596,11 +627,11 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
      * data_end_index range their max value less or equal to current divider value */
     int data_start_index = 0;
     int count_in_section = 0;
-    ElasticBufItemData* current = alloca( MRITEM_SIZE );
-    void*  current_divider_hash = ALLOC_HASH_IN_STACK;
+    ElasticBufItemData* current = alloca( MRITEM_SIZE(mif) );
+    void*  current_divider_hash = alloca( HASH_SIZE(mif) );
 
     /*Get first divider hash*/
-    GetBufferItem(&__mrif->data.dividers_list, 0, current_divider_hash);
+    GetBufferItem(&mif->data.dividers_list, 0, current_divider_hash);
 
     int current_divider_index = 0;
 
@@ -612,26 +643,26 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
     /*loop for data*/
     for ( int j=0; j < map->header.count; j++ ){
 	GetBufferItem( map, j, current);
-	if ( HASH_CMP(&current->key_hash, current_divider_hash ) <= 0 ){
+	if ( HASH_CMP(mif, &current->key_hash, current_divider_hash ) <= 0 ){
 	    count_in_section++;
 	}
 
 	/*if current item is last OR current hash more than current divider key*/
 	if ( j+1 == map->header.count ||
-	     HASH_CMP(&current->key_hash, current_divider_hash ) > 0 ){
+	     HASH_CMP(mif, &current->key_hash, current_divider_hash ) > 0 ){
 #ifdef DEBUG
 	    if ( j > 0 ){
-		ElasticBufItemData* previtem = alloca( MRITEM_SIZE );
+		ElasticBufItemData* previtem = alloca( MRITEM_SIZE(mif) );
 		GetBufferItem( map, j-1, previtem);
 		WRITE_FMT_LOG( "reducer #%d divider_hash=%s, [%d]=%s\n",
 			       reduce_nodes_list[current_divider_index],
-			       PRINTABLE_HASH(current_divider_hash),
-			       j-1, PRINTABLE_HASH(&previtem->key_hash) );
+			       PRINTABLE_HASH(mif, current_divider_hash),
+			       j-1, PRINTABLE_HASH(mif, &previtem->key_hash) );
 	    }
 	    WRITE_FMT_LOG( "reducer #%d divider_hash=%s, [%d]=%s\n",
 			   reduce_nodes_list[current_divider_index],
-			   PRINTABLE_HASH(current_divider_hash),
-			   j, PRINTABLE_HASH(&current->key_hash) );
+			   PRINTABLE_HASH(mif, current_divider_hash),
+			   j, PRINTABLE_HASH(mif, &current->key_hash) );
 #endif
 	    /*send to reducer with current_divider_index index*/
 	    struct UserChannel *channel 
@@ -644,7 +675,8 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
 	    last_data = last_data ? MAP_NODE_EXCLUDE : MAP_NODE_NO_EXCLUDE;
 	    WRITE_FMT_LOG( "fdw=%d to reducer node %d write %d items\n", fdw,
 			   reduce_nodes_list[current_divider_index], (int)count_in_section );
-	    WriteDataToReduce( bio,
+	    WriteDataToReduce( mif,
+			       bio,
 			       fdw, 
 			       map, 
 			       data_start_index, 
@@ -659,7 +691,7 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
 	    if ( j+1 < map->header.count ){
 		current_divider_index++;
 		/*retrieve hash value by updated index*/
-		GetBufferItem( &__mrif->data.dividers_list, 
+		GetBufferItem( &mif->data.dividers_list, 
 			       current_divider_index, 
 			       current_divider_hash);
 	    }
@@ -679,7 +711,7 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
             assert(channel);
 	    int fdw = channel->fd;
 	    WRITE_FMT_LOG( "fdw=%d write to reducer MAP_NODE_EXCLUDE\n", fdw );
-	    WriteDataToReduce( bio, fdw, map, 0, 0, MAP_NODE_EXCLUDE );
+	    WriteDataToReduce( mif, bio, fdw, map, 0, 0, MAP_NODE_EXCLUDE );
 	}
     }
 
@@ -689,20 +721,20 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
 }
 
 void 
-InitMapInternals( struct MapReduceUserIf *mrif, 
+InitMapInternals( struct MapReduceUserIf *mif, 
 		  const struct ChannelsConfigInterface *chif, 
 		  struct MapNodeEvents* ev){
     /*get histograms count for MapReduceData*/
     int *nodes_list_unwanted = NULL;
-    mrif->data.histograms_count = 
+    mif->data.histograms_count = 
 	chif->GetNodesListByType(chif, EMapNode, &nodes_list_unwanted );
-    assert(mrif->data.histograms_count>0);
+    assert(mif->data.histograms_count>0);
     free(nodes_list_unwanted);
     /*init histograms list*/
-    mrif->data.histograms_list = calloc( mrif->data.histograms_count, 
-					 sizeof(*mrif->data.histograms_list) );
-    for(int i=0; i<mrif->data.histograms_count; i++){
-	AllocBuffer(&mrif->data.histograms_list[i].buffer, mrif->data.hash_size, 100);
+    mif->data.histograms_list = calloc( mif->data.histograms_count, 
+					 sizeof(*mif->data.histograms_list) );
+    for(int i=0; i<mif->data.histograms_count; i++){
+	AllocBuffer(&mif->data.histograms_list[i].buffer, HASH_SIZE(mif), 100);
     }
 
     ev->MapCreateHistogramSendEachToOtherCreateDividersList 
@@ -714,22 +746,22 @@ InitMapInternals( struct MapReduceUserIf *mrif,
 
 
 int 
-MapNodeMain( struct MapReduceUserIf *mrif, 
+MapNodeMain( struct MapReduceUserIf *mif, 
 	     struct ChannelsConfigInterface *chif ){
     WRITE_LOG("MapNodeMain\n");
-    assert(mrif);
-    assert(mrif->Map);
-    assert(mrif->Combine);
-    assert(mrif->Reduce);
-    assert(mrif->HashComparator);
+    assert(mif);
+    assert(mif->Map);
+    assert(mif->Combine);
+    assert(mif->Reduce);
+    assert(mif->HashComparator);
 #ifndef DISABLE_WRITE_LOG_BUFFER
-    assert(mrif->HashAsString);
+    assert(mif->HashAsString);
 #endif
 
-    __mrif = mrif;
+    s_mif = mif;
 
     struct MapNodeEvents events;
-    InitMapInternals(mrif, chif, &events);
+    InitMapInternals(mif, chif, &events);
 
     /*should be initialized at fist call of DataProvider*/
     char *buffer = NULL;
@@ -777,20 +809,22 @@ MapNodeMain( struct MapReduceUserIf *mrif,
 	if ( returned_buf_size ){
 	    /*call users Map, Combine functions only for non empty data set*/
 	    current_unhandled_data_pos = 
-		events.MapInputDataLocalProcessing( buffer, 
+		events.MapInputDataLocalProcessing( mif,
+						    buffer, 
 						    returned_buf_size,
 						    last_chunk,
 						    &map_buffer );
 	}
 
-	if ( !mrif->data.dividers_list.header.count ){
+	if ( !mif->data.dividers_list.header.count ){
 	    events.MapCreateHistogramSendEachToOtherCreateDividersList( chif, 
-									&mrif->data, 
+									mif, 
 									&map_buffer );
 	}
 
 	/*based on dividers list which helps easy distribute data to reduce nodes*/
 	events.MapSendToAllReducers( chif, 
+				     mif,
 				     last_chunk, 
 				     &map_buffer);
 
@@ -808,10 +842,12 @@ MapNodeMain( struct MapReduceUserIf *mrif,
 
 /*Copy into dest buffer items from source_arrays buffers in sorted order*/
 static void 
-MergeBuffersToNew( Buffer *dest,
+MergeBuffersToNew( struct MapReduceUserIf *mif,
+		   Buffer *dest,
 		   const Buffer *source_arrays, 
 		   int arrays_count ){
-    int SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( const Buffer* merge_buffers, 
+    int SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( struct MapReduceUserIf *mif,
+							     const Buffer* merge_buffers, 
 							     int *current_indexes_array,
 							     int count);
 #ifdef DEBUG
@@ -829,7 +865,8 @@ MergeBuffersToNew( Buffer *dest,
 
     /*search minimal key among current items of source_arrays*/
     min_key_array =
-	SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( source_arrays, 
+	SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( mif,
+							     source_arrays, 
 							     merge_pos,
 							     arrays_count);
     while( min_key_array !=-1 ){
@@ -839,14 +876,16 @@ MergeBuffersToNew( Buffer *dest,
 	AddBufferItem( dest, current );
 	merge_pos[min_key_array]++;
 	min_key_array =
-	    SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( source_arrays, 
+	    SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( mif,
+								 source_arrays, 
 								 merge_pos,
 								 arrays_count);
     }
 }
 
 int
-SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( const Buffer* merge_buffers, 
+SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( struct MapReduceUserIf *mif,
+						     const Buffer* merge_buffers, 
 						     int *current_indexes_array,
 						     int count){ 
     int res = -1;
@@ -858,7 +897,7 @@ SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( const Buffer* merge_buffers
 	    /*get minimal value among currently indexed histogram values*/ 
 	    current_hash = (const uint8_t*)BufferItemPointer( &merge_buffers[i],
 							      current_indexes_array[i]);
-	    if ( !minimal_hash || HASH_CMP( current_hash, minimal_hash ) <= 0 ){
+	    if ( !minimal_hash || HASH_CMP( mif, current_hash, minimal_hash ) <= 0 ){
 		res = i;
 		minimal_hash = current_hash;
 	    }
@@ -869,7 +908,8 @@ SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( const Buffer* merge_buffers
 
 
 static exclude_flag_t
-RecvDataFromSingleMap( int fdr,
+RecvDataFromSingleMap( struct MapReduceUserIf *mif,
+		       int fdr,
 		       Buffer *map) {
     exclude_flag_t excl_flag;
     int items_count;
@@ -889,7 +929,7 @@ RecvDataFromSingleMap( int fdr,
 
     /*alloc memory for all array cells expected to receive, if no items will recevied
      *initialize buffer anyway*/
-    AllocBuffer(map, MRITEM_SIZE, items_count);
+    AllocBuffer(map, MRITEM_SIZE(mif), items_count);
 
     if ( items_count > 0 ){
 	/*read items_count items*/
@@ -899,7 +939,9 @@ RecvDataFromSingleMap( int fdr,
 	    AddBufferItemVirtually(map);
 	    item = (ElasticBufItemData*)BufferItemPointer( map, i );
 	    /*save directly into array*/
-	    bytes+=BufferedReadSingleMrItem( bio, fdr, item );
+	    bytes+=BufferedReadSingleMrItem( bio, fdr, item, 
+					     HASH_SIZE(mif),
+					     mif->data.value_addr_is_data);
 	}
     }
     WRITE_FMT_LOG( "readed %d bytes from Map node, fdr=%d, item count=%d\n", 
@@ -911,19 +953,19 @@ RecvDataFromSingleMap( int fdr,
 
 
 int 
-ReduceNodeMain( struct MapReduceUserIf *mrif, 
+ReduceNodeMain( struct MapReduceUserIf *mif, 
 		struct ChannelsConfigInterface *chif ){
     WRITE_LOG("ReduceNodeMain\n");
-    assert(mrif);
-    assert(mrif->Map);
-    assert(mrif->Combine);
-    assert(mrif->Reduce);
-    assert(mrif->HashComparator);
+    assert(mif);
+    assert(mif->Map);
+    assert(mif->Combine);
+    assert(mif->Reduce);
+    assert(mif->HashComparator);
 #ifndef DISABLE_WRITE_LOG_BUFFER
-    assert(mrif->HashAsString);
+    assert(mif->HashAsString);
 #endif
 
-    __mrif = mrif;
+    s_mif = mif;
 
     /*get map_nodes_count*/
     int *map_nodes_list = NULL;
@@ -958,7 +1000,8 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
 		merge_buffers = realloc( merge_buffers, 
 					 (++merge_buffers_count)*sizeof(Buffer) );
 		excluded_map_nodes[i] 
-		    = RecvDataFromSingleMap( channel->fd, 
+		    = RecvDataFromSingleMap( mif, 
+					     channel->fd, 
 					     &merge_buffers[merge_buffers_count-1] );
 		
 		/*set next wait loop condition*/
@@ -978,11 +1021,11 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
 
 	/*Alloc buffers for merge results, and merge previous and new data*/
 	int granularity = all.header.count>0? all.header.count/3 : 1000;
-	int ret = AllocBuffer( &merged, MRITEM_SIZE, granularity );
+	int ret = AllocBuffer( &merged, MRITEM_SIZE(mif), granularity );
 	assert(!ret);
-	ret = AllocBuffer( &all, MRITEM_SIZE, granularity );
+	ret = AllocBuffer( &all, MRITEM_SIZE(mif), granularity );
 	assert(!ret);
-	MergeBuffersToNew( &merged, merge_buffers, merge_buffers_count );
+	MergeBuffersToNew(mif, &merged, merge_buffers, merge_buffers_count );
 	WRITE_FMT_LOG( "merge complete, keys count %d\n", merged.header.count );
 
 	/*Merge complete, free source recv buffers*/
@@ -995,11 +1038,11 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
 
 	/**********************************************************/
 	/*combine data every time while it receives from map nodes*/
-	if ( mrif->Combine ){
+	if ( mif->Combine ){
 	    WRITE_LOG_BUFFER(merged);
 	    WRITE_FMT_LOG( "keys count before Combine: %d\n", 
 			   (int)merged.header.count );
-	    mrif->Combine( &merged, &all );
+	    mif->Combine( &merged, &all );
 	    FreeBufferData( &merged );
 	    WRITE_FMT_LOG( "keys count after Combine: %d\n", (int)all.header.count );
 	    WRITE_LOG_BUFFER(all);
@@ -1015,11 +1058,11 @@ ReduceNodeMain( struct MapReduceUserIf *mrif,
 	FreeBufferData(&merge_buffers[i]);
     }
 
-    if( mrif->Reduce ){
+    if( mif->Reduce ){
 	/*user should output data into output file/s*/
 	WRITE_FMT_LOG( "Reduce : %d items\n", (int)all.header.count );
 
-	mrif->Reduce( &all );
+	mif->Reduce( &all );
     }
 
     free(map_nodes_list);

@@ -25,12 +25,12 @@ static int s_mr_buffer_item_size=0;
 
 /*******************************************************************************
  * USER HASH*/
-static const uint32_t InitialFNV = 2166136261U;
-static const uint32_t FNVMultiple = 16777619;
+static const HASH_TYPE InitialFNV = 2166136261U;
+static const HASH_TYPE FNVMultiple = 16777619;
 /* Fowler / Noll / Vo (FNV) Hash */
-uint32_t HashForUserString( const char *str, int size )
+HASH_TYPE HashForUserString( const char *str, int size )
 {
-    uint32_t hash = InitialFNV;
+    HASH_TYPE hash = InitialFNV;
     for(int i = 0; i < size; i++)
 	{
 	    hash = hash ^ (str[i]);       /* xor  the low 8 bits */
@@ -299,7 +299,7 @@ void InitInterface( struct MapReduceUserIf* mr_if ){
 				 BinaryData     value; 
 				 uint8_t        own_key; 
 				 uint8_t        own_value; 
-				 uint32_t       key_hash; 
+				 HASH_TYPE      key_hash; 
 			     });
     PREPARE_MAPREDUCE(mr_if, 
 		      Map, 

@@ -22,17 +22,17 @@ enum { EMapNode=1, EReduceNode=2, EInputOutputNode=3 };
 
 /*Init MapReduceUserIf existing pointer object and get it ready to use
  comparator_f - if user provides NULL then default comparator will used */
-#define PREPARE_MAPREDUCE(mr_if, map_f, combine_f, reduce_f, hashcomparator_f, \
-			  hashstr_f, val_is_data, item_size, h_size )	\
-    mr_if->Map = (map_f);         /*set user Map function*/		\
-    mr_if->Combine = (combine_f); /*set user Combine function */	\
-    mr_if->Reduce = (reduce_f);   /*set user Reduce function */		\
-    mr_if->HashComparator = (hashcomparator_f);				\
+#define PREPARE_MAPREDUCE(mif_p, map_f, combine_f, reduce_f, hashcomparator_f, \
+			  hashstr_f, val_addr_is_data, item_size, h_size ) \
+    (mif_p)->Map = (map_f);         /*set user Map function*/		\
+    (mif_p)->Combine = (combine_f); /*set user Combine function */	\
+    (mif_p)->Reduce = (reduce_f);   /*set user Reduce function */		\
+    (mif_p)->HashComparator = (hashcomparator_f);				\
     /*set user function convert hash to a string */			\
-    mr_if->HashAsString = (hashstr_f);					\
-    mr_if->data.value_is_data = (val_is_data);				\
-    mr_if->data.mr_item_size = item_size;				\
-    mr_if->data.hash_size = (h_size);
+    (mif_p)->HashAsString = (hashstr_f);					\
+    (mif_p)->data.value_addr_is_data = (val_addr_is_data);		\
+    (mif_p)->data.mr_item_size = item_size;				\
+    (mif_p)->data.hash_size = (h_size);
 
 
 struct MapReduceUserIf{
@@ -75,7 +75,8 @@ int ReduceNodeMain(struct MapReduceUserIf *userif,
  *histogram created histogram
  *@return count of added items into histogram*/
 size_t
-GetHistogram( const Buffer* map,
+GetHistogram( struct MapReduceUserIf *mif,
+	      const Buffer* map,
 	      int step, 
 	      Histogram *histogram );
 
@@ -86,7 +87,8 @@ GetHistogram( const Buffer* map,
  *@param histograms_count histograms in array
  *@param divider_array Result of histograms summarization*/
 void 
-GetReducersDividerArrayBasedOnSummarizedHistograms( Histogram *histograms, 
+GetReducersDividerArrayBasedOnSummarizedHistograms( struct MapReduceUserIf *mif,
+						    Histogram *histograms, 
 						    int histograms_count, 
 						    Buffer *divider_array );
 
