@@ -11,9 +11,7 @@ MEMMAX=268435456
 endif
 
 #Note2: RELEASE VERSION OF ZEROVM
-#Given Makefile - test runner is using release build of zerovm, and it should be
-#accessible at path described just here:
-ZEROVM=$(ZEROVM_ROOT)/zerovm
+#Given Makefile - test runner using release build of zerovm
 
 #default types of channels we specifying from make
 DEF_CHANTYPE1=0
@@ -64,13 +62,6 @@ CFLAGS+=-I.. -I.
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
 
-
-#libzrt should be encluded before generic object file of test, because it contains itself main
-#declaration, in case if test source didn't explicitly defined zmain it raises linking error;
-#in case if libzrt linking after test object file, then linker is using wrong entry point
-#if test was not properly ported to zerovm and didn't have zmain function
-#LDFLAGS_ZMAIN+= -L$(ZRT_ROOT)/lib -lzrt
-
 #in order to correectly link glibs substituted functions libzrt should be linked twice
 #before object file and after
 #For rt tests
@@ -81,6 +72,8 @@ LDFLAGS+= -ldl
 LDFLAGS+= -lm
 #crypt
 LDFLAGS+= -lcrypt
+#networking mapreduce
+LDFLAGS+= -lmapreduce -lnetworking
 
 #####################################################################
 #in this section describe compiler flags by defining makefile variable 
@@ -160,7 +153,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	@echo -n "TEST RUN $@ "
 #compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
-	@$(CC) -o $@ $(LDFLAGS_ZMAIN) $(BASENAME).o $(LDFLAGS)
+	@$(CC) -o $@ $(BASENAME).o $(LDFLAGS)
 #prepare manifest
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g manifest_zrttests.template | \
 	 sed s@{ABS_PATH}@$(CURDIR)/@g | \
@@ -175,7 +168,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #$shell should could not be used to get test result from file because it unexpectadly
 #using contents of previosly saved test output, and it is the main reason why using awk;
 #parsing correct output retrieved via pipe
-	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest -v1 \
+	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest \
 	| $(PRINT_ERRCODE) > $(OUTPUT_LAST)
 	@cat $(OUTPUT_LAST)
 #save failed tests to displaytheir at report
