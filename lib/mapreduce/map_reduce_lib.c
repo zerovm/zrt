@@ -234,6 +234,8 @@ WriteHistogramToNode( struct EachToOtherPattern *p_this,
 
 
 
+/*@param divider_array space must preallocated by exact items count to be added
+ it's maximum value will be used by algorithm*/
 void 
 GetReducersDividerArrayBasedOnSummarizedHistograms( struct MapReduceUserIf *mif,
 						    Histogram *histograms, 
