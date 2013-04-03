@@ -10,6 +10,8 @@
 
 #include "test_channels.h"
 
+#define SEQUENTIAL_CHANNEL S_IFIFO
+
 void test_readonly_channel(const char* name);
 void test_writeonly_channel(const char* name);
 
@@ -74,7 +76,7 @@ void test_readonly_channel(const char* name){
 			  &ret2, ret2 != -1 );
     TEST_OPERATION_RESULT(
 			  st.st_mode&S_IFMT, 
-			  &ret2, ret2 == S_IFCHR );
+			  &ret2, ret2 == SEQUENTIAL_CHANNEL );
     TEST_OPERATION_RESULT(
 			  close(ret), 
 			  &ret2, ret2 != -1 );
@@ -86,7 +88,7 @@ void test_readonly_channel(const char* name){
 			  &ret2, ret2 != -1 );
     TEST_OPERATION_RESULT(
 			  st.st_mode&S_IFMT, 
-			  &ret2, ret2 == S_IFCHR );
+			  &ret2, ret2 == SEQUENTIAL_CHANNEL );
 
 }
 
@@ -135,7 +137,7 @@ void test_writeonly_channel(const char* name){
 			  &ret2, ret2 != -1 );
     TEST_OPERATION_RESULT(
 			  st.st_mode&S_IFMT, 
-			  &ret2, ret2 == S_IFCHR );
+			  &ret2, ret2 == SEQUENTIAL_CHANNEL );
     TEST_OPERATION_RESULT(
 			  close(ret), 
 			  &ret2, ret2 != -1 );
@@ -147,5 +149,5 @@ void test_writeonly_channel(const char* name){
 			  &ret2, ret2 != -1 );
     TEST_OPERATION_RESULT(
 			  st.st_mode&S_IFMT, 
-			  &ret2, ret2 == S_IFCHR );
+			  &ret2, ret2 == SEQUENTIAL_CHANNEL );
 }

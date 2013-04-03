@@ -1,5 +1,5 @@
 #!/bin/bash
 
 NAMESERVICE=ns_server.py
-pkill -f ${NAMESERVICE}
+pkill -9 -f ${NAMESERVICE}
 

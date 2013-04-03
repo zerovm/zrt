@@ -12,4 +12,4 @@ NAMESERVICE=ns_server.py
 pkill -f ${NAMESERVICE}
 echo "python ${SCRIPT_PATH}/${NAMESERVICE} $1 54321 > nameservice.log &"
 python -u ${SCRIPT_PATH}/${NAMESERVICE} $1 54321 > nameservice.log &
-
+sleep 1
