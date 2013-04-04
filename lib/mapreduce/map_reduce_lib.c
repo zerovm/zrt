@@ -264,7 +264,7 @@ int SearchMinimumHashAmongCurrentItemsOfAllHistograms( struct MapReduceUserIf *m
 
 #ifdef DEBUG
     WRITE_LOG("\ndivider_array=[");
-    for( int i=0; i < dividers_count_max; i++ ){
+    for( int i=0; i < divider_array->header.count; i++ ){
 	const uint8_t* current_hash = (const uint8_t*)BufferItemPointer(divider_array, i);
 	WRITE_FMT_LOG("%s ", PRINTABLE_HASH(mif,current_hash) );
     }

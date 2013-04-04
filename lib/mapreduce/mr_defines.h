@@ -17,7 +17,7 @@
 #endif
 
 /*this option disables macros WRITE_LOG_BUFFER */
-/* #define DISABLE_WRITE_LOG_BUFFER */
+#define DISABLE_WRITE_LOG_BUFFER
 
 #ifndef DISABLE_WRITE_LOG_BUFFER
 #  define WRITE_LOG_BUFFER( mif_p,map )				\
@@ -31,7 +31,7 @@
 	fflush(0);							\
     }
 #else
-#  define WRITE_LOG_BUFFER(map)
+#  define WRITE_LOG_BUFFER(mif_p, map)
 #endif
 
 #define MAX_UINT32 4294967295

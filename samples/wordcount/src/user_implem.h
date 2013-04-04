@@ -14,13 +14,20 @@
 #define STDIN  0
 #define STDOUT 1 //fd
 
-#define HASH_TYPE         uint32_t
-#define HASH_SIZE         sizeof(uint32_t)
-#define HASH_STR_LEN      HASH_SIZE*2+1
-//#define HASH_TYPE         uint16_t
-//#define HASH_SIZE         sizeof(uint16_t)
-//#define HASH_STR_LEN      HASH_SIZE*2+1
+//#define HASH_TYPE_UINT64
+#define HASH_TYPE_UINT32
+//#define HASH_TYPE_UINT16
 
+#ifdef HASH_TYPE_UINT64
+#  define HASH_TYPE         uint64_t
+#elif defined(HASH_TYPE_UINT32)
+#  define HASH_TYPE         uint32_t
+#elif defined(HASH_TYPE_UINT16)
+#  define HASH_TYPE         uint16_t
+#endif
+
+#define HASH_SIZE         sizeof(HASH_TYPE)
+#define HASH_STR_LEN      HASH_SIZE*2+1
 #define IO_BUF_SIZE       0x100000
 
 /* It's switching mapreduce library use cases for test purposes. 

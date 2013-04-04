@@ -20,13 +20,15 @@
 #include "buffered_io.h"
 #include "buffer.h"
 
-/*must be initialized by PREPARE_MAPREDUCE macros*/
-static int s_mr_buffer_item_size=0;
-
 /*******************************************************************************
  * USER HASH*/
+#ifdef HASH_TYPE_UINT16
+static const HASH_TYPE InitialFNV = 21661U;
+static const HASH_TYPE FNVMultiple = 16719;
+#else
 static const HASH_TYPE InitialFNV = 2166136261U;
 static const HASH_TYPE FNVMultiple = 16777619;
+#endif
 /* Fowler / Noll / Vo (FNV) Hash */
 HASH_TYPE HashForUserString( const char *str, int size )
 {
@@ -54,7 +56,12 @@ ComparatorElasticBufItemByHashQSort(const void *p1, const void *p2){
 
 static char* 
 PrintableHash( char* str, const uint8_t* hash, int size){
-    snprintf(str, HASH_STR_LEN, "%X", *(uint32_t*)hash);
+#ifdef HASH_TYPE_UINT64
+    snprintf(str, HASH_STR_LEN, "%X%X", 
+	     (uint32_t)(*(HASH_TYPE*)hash>>32), (uint32_t)(*(HASH_TYPE*)hash));
+#else
+    snprintf(str, HASH_STR_LEN, "%X", *(HASH_TYPE*)hash);
+#endif
     return str;
 }
 
@@ -271,20 +278,20 @@ int Reduce( const Buffer *reduced_buffer ){
 	HASH_TYPE* keyhash = (HASH_TYPE*)&elasticdata->key_hash;
 	if ( i>0 && prev_key >= *keyhash ){
 	    bio->flush_write(bio, STDOUT);
-	    printf("test failed prev_key=%u, key=%u\n", prev_key, *keyhash );
+	    printf("test failed prev_key=%s, key=%s\n", 
+		   PrintableHash(alloca(HASH_STR_LEN), (const uint8_t *)&prev_key, HASH_SIZE),
+		   PrintableHash(alloca(HASH_STR_LEN), (const uint8_t *)keyhash, HASH_SIZE) );
 	    fflush(0);
 	    exit(-1);
 	}
 
 	prev_key = (HASH_TYPE)elasticdata->key_hash;
-	/**** glibc detected *** red-1: munmap_chunk(): invalid pointer*/
 	TRY_FREE_MRITEM_DATA(elasticdata);  
 
     }
     bio->flush_write(bio, STDOUT);
 
     WRITE_FMT_LOG("bio->data.buf=%p\n", bio->data.buf);
-    /**** glibc detected *** red-1: munmap_chunk(): invalid pointer*/
     free(bio->data.buf);     /*free buffer in this way because not saved pointer*/
     WRITE_LOG("OK");
     free(bio);
@@ -294,15 +301,6 @@ int Reduce( const Buffer *reduced_buffer ){
 
 void InitInterface( struct MapReduceUserIf* mr_if ){
     memset( mr_if, '\0', sizeof(struct MapReduceUserIf) );
-    /*provide size of user structure. we assume key_hash size = 4bytes*/
-    s_mr_buffer_item_size = sizeof(
-			     struct{
-				 BinaryData     key_data;
-				 BinaryData     value; 
-				 uint8_t        own_key; 
-				 uint8_t        own_value; 
-				 HASH_TYPE      key_hash; 
-			     });
     PREPARE_MAPREDUCE(mr_if, 
 		      Map, 
 		      Combine, 
@@ -311,7 +309,16 @@ void InitInterface( struct MapReduceUserIf* mr_if ){
 		      ComparatorHash,
 		      PrintableHash,
 		      VALUE_ADDR_AS_DATA,
-		      s_mr_buffer_item_size,
+		      /*provide size of user structure. 
+			we assume key_hash size sizeof(HASH_TYPE)*/
+		      sizeof(
+			     struct{
+				 BinaryData     key_data;
+				 BinaryData     value; 
+				 uint8_t        own_key; 
+				 uint8_t        own_value; 
+				 HASH_TYPE      key_hash; 
+			     }),
 		      HASH_SIZE );
 }
 
