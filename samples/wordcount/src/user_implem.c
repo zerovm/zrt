@@ -22,7 +22,10 @@
 
 /*******************************************************************************
  * USER HASH*/
-#ifdef HASH_TYPE_UINT16
+#ifdef HASH_TYPE_UINT8
+static const HASH_TYPE InitialFNV = 61U;
+static const HASH_TYPE FNVMultiple = 169;
+#elif defined(HASH_TYPE_UINT16)
 static const HASH_TYPE InitialFNV = 21661U;
 static const HASH_TYPE FNVMultiple = 16719;
 #else

@@ -260,7 +260,8 @@ int SearchMinimumHashAmongCurrentItemsOfAllHistograms( struct MapReduceUserIf *m
       appropriated to last divider*/
     uint8_t* divider_hash = alloca( HASH_SIZE(mif) );
     memset( divider_hash, 0xffffff, HASH_SIZE(mif) );
-    AddBufferItem(divider_array, divider_hash);
+    for(int i=divider_array->header.count; i < dividers_count_max; i++)
+	AddBufferItem(divider_array, divider_hash);
 
 #ifdef DEBUG
     WRITE_LOG("\ndivider_array=[");
@@ -564,33 +565,72 @@ WriteDataToReduce( struct MapReduceUserIf *mif,
     assert(bytes ==senddatasize);
 }
 
+/*struct to be used inside MapSendToAllReducers*/
+struct BasketInfo{
+    int data_start_index;
+    int count_in_section;
+};
 
 static void 
 MapSendToAllReducers( struct ChannelsConfigInterface *ch_if, 
 		      struct MapReduceUserIf *mif,
 		      int last_data, 
 		      const Buffer *map){
+    /*Distribute data to Reducer nodes, using dividers data*/
+    struct BasketInfo* DistributeDataIntoBaskets(struct MapReduceUserIf *mif, 
+						 const Buffer *map,
+						 int basket_count);
+
+    int basket_count = mif->data.dividers_list.header.count;
+    struct BasketInfo* basket_array = DistributeDataIntoBaskets( mif, map, basket_count);
+    last_data = last_data ? MAP_NODE_EXCLUDE : MAP_NODE_NO_EXCLUDE; 
+  
     /*get reducers count, this is same as dividers count for us*/
     int *reduce_nodes_list = NULL;
     int dividers_count = ch_if->GetNodesListByType( ch_if, EReduceNode, &reduce_nodes_list );
     assert(reduce_nodes_list);
+    WRITE_FMT_LOG("dividers_count=%d, basket_count=%d\n", dividers_count, basket_count);
+    assert(dividers_count==basket_count);
 
-    /*send keys-values to Reducer nodes, using dividers data from data_start_index to
-     * data_end_index range their max value less or equal to current divider value */
+    /*Declare big buffer to provide efficient buffered IO, free it at the function end*/
+    void *send_buffer = malloc(SEND_BUFFER_SIZE);
+    BufferedIOWrite* bio = AllocBufferedIOWrite( send_buffer, SEND_BUFFER_SIZE);
+
+    for( int i=0; i < basket_count; i++ ){
+	/*send to reducer with current_divider_index index*/
+	struct UserChannel *channel 
+	    = ch_if->Channel(ch_if, EReduceNode, reduce_nodes_list[i], EChannelModeWrite);
+	assert(channel);
+	int fdw = channel->fd;
+	WRITE_FMT_LOG( "write to fdw=%d /reducer node=%d, %d items\n", fdw,
+		       reduce_nodes_list[i], basket_array[i].count_in_section );
+	WriteDataToReduce( mif,
+			   bio,
+			   fdw, 
+			   map, 
+			   basket_array[i].data_start_index, 
+			   basket_array[i].count_in_section, 
+			   last_data );
+    }
+
+    free(bio);
+    free(send_buffer);
+    free(reduce_nodes_list);
+}
+
+struct BasketInfo* DistributeDataIntoBaskets(struct MapReduceUserIf *mif, 
+					     const Buffer *map,
+					     int basket_count){
+    int basket_index=0;
     int data_start_index = 0;
     int count_in_section = 0;
+    int current_divider_index = 0;
     ElasticBufItemData* current = alloca( MRITEM_SIZE(mif) );
     void*  current_divider_hash = alloca( HASH_SIZE(mif) );
+    struct BasketInfo* basket_array = malloc(sizeof(struct BasketInfo)*basket_count);
 
     /*Get first divider hash*/
     GetBufferItem(&mif->data.dividers_list, 0, current_divider_hash);
-
-    int current_divider_index = 0;
-
-    /*Declare pretty big buffer to provide efficient buffered IO, 
-      free it at the function end*/
-    void *send_buffer = malloc(SEND_BUFFER_SIZE);
-    BufferedIOWrite* bio = AllocBufferedIOWrite( send_buffer, SEND_BUFFER_SIZE);
 
     /*loop for data*/
     for ( int j=0; j < map->header.count; j++ ){
@@ -604,36 +644,24 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
 	     HASH_CMP(mif, &current->key_hash, current_divider_hash ) > 0 ){
 #ifdef DEBUG
 	    if ( j > 0 ){
-		ElasticBufItemData* previtem = alloca( MRITEM_SIZE(mif) );
-		GetBufferItem( map, j-1, previtem);
+		ElasticBufItemData* previtem 
+		    = (ElasticBufItemData*)BufferItemPointer( map, j-1);
 		WRITE_FMT_LOG( "reducer #%d divider_hash=%s, [%d]=%s\n",
-			       reduce_nodes_list[current_divider_index],
+			       basket_index,
 			       PRINTABLE_HASH(mif, current_divider_hash),
 			       j-1, PRINTABLE_HASH(mif, &previtem->key_hash) );
 	    }
 	    WRITE_FMT_LOG( "reducer #%d divider_hash=%s, [%d]=%s\n",
-			   reduce_nodes_list[current_divider_index],
+			   basket_index,
 			   PRINTABLE_HASH(mif, current_divider_hash),
 			   j, PRINTABLE_HASH(mif, &current->key_hash) );
 #endif
-	    /*send to reducer with current_divider_index index*/
-	    struct UserChannel *channel 
-		= ch_if->Channel(ch_if,
-				 EReduceNode, 
-				 reduce_nodes_list[current_divider_index], 
-				 EChannelModeWrite);
-	    assert(channel);
-	    int fdw = channel->fd;
-	    last_data = last_data ? MAP_NODE_EXCLUDE : MAP_NODE_NO_EXCLUDE;
-	    WRITE_FMT_LOG( "fdw=%d to reducer node %d write %d items\n", fdw,
-			   reduce_nodes_list[current_divider_index], (int)count_in_section );
-	    WriteDataToReduce( mif,
-			       bio,
-			       fdw, 
-			       map, 
-			       data_start_index, 
-			       count_in_section, 
-			       last_data );
+	    WRITE_FMT_LOG( "Basket #%d start_index=%d, count=%d\n", 
+			   basket_index, data_start_index, count_in_section );
+	    struct BasketInfo info;
+	    info.data_start_index = data_start_index;
+	    info.count_in_section = count_in_section;
+	    basket_array[basket_index++] = info;
 
 	    /*set start data index of next divider*/
 	    data_start_index = j+1;
@@ -647,30 +675,22 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
 			       current_divider_index, 
 			       current_divider_hash);
 	    }
-	    assert( current_divider_index < dividers_count );
+	    assert( current_divider_index < basket_count );
 	}
     }
 
-    /*if map is empty then nothing sent to reduce nodes. But every map node should
-     *send at least one time to every reduce node last_data flag and little bit*/
-    if ( !map->header.count ){
-	for ( int i=0; i < dividers_count; i++ ){
-            struct UserChannel *channel 
-		= ch_if->Channel(ch_if, 
-				 EReduceNode, 
-				 reduce_nodes_list[i], 
-				 EChannelModeWrite);
-            assert(channel);
-	    int fdw = channel->fd;
-	    WRITE_FMT_LOG( "fdw=%d write to reducer MAP_NODE_EXCLUDE\n", fdw );
-	    WriteDataToReduce( mif, bio, fdw, map, 0, 0, MAP_NODE_EXCLUDE );
-	}
+    /*add info about empty data to the rest of baskets*/
+    for(int i=basket_index; i < basket_count; i++ ){
+	struct BasketInfo info;
+	info.data_start_index = 0;
+	info.count_in_section = 0;
+	basket_array[basket_index++] = info;
     }
 
-    free(bio);
-    free(send_buffer);
-    free(reduce_nodes_list);
+    return basket_array;
 }
+
+
 
 void 
 InitMapInternals( struct MapReduceUserIf *mif, 
@@ -792,7 +812,7 @@ MapNodeMain( struct MapReduceUserIf *mif,
 }
 
 /*Copy into dest buffer items from source_arrays buffers in sorted order*/
-static void 
+void 
 MergeBuffersToNew( struct MapReduceUserIf *mif,
 		   Buffer *dest,
 		   const Buffer *source_arrays, 
@@ -811,7 +831,7 @@ MergeBuffersToNew( struct MapReduceUserIf *mif,
 #endif //DEBUG
     int merge_pos[arrays_count];
     memset(merge_pos, '\0', sizeof(merge_pos) );
-    int min_key_array = -1;
+    int min_key_array;
     ElasticBufItemData* current;
 
     /*search minimal key among current items of source_arrays*/
@@ -840,15 +860,17 @@ SearchMinimumHashAmongCurrentItemsOfAllMergeBuffers( struct MapReduceUserIf *mif
 						     int *current_indexes_array,
 						     int count){ 
     int res = -1;
+    ElasticBufItemData* item;
     const uint8_t* current_hash;
     const uint8_t* minimal_hash = NULL;
     for ( int i=0; i < count; i++ ){ /*loop for merge arrays*/
 	/*check bounds of current buffer*/
 	if ( BOUNDS_OK(current_indexes_array[i],merge_buffers[i].header.count) ){
 	    /*get minimal value among currently indexed histogram values*/ 
-	    current_hash = (const uint8_t*)BufferItemPointer( &merge_buffers[i],
-							      current_indexes_array[i]);
-	    if ( !minimal_hash || HASH_CMP( mif, current_hash, minimal_hash ) <= 0 ){
+		item = (ElasticBufItemData*)BufferItemPointer( &merge_buffers[i],
+							       current_indexes_array[i]);
+		current_hash =  (const uint8_t*)&item->key_hash;
+	    if ( minimal_hash == NULL || HASH_CMP( mif, current_hash, minimal_hash ) <= 0 ){
 		res = i;
 		minimal_hash = current_hash;
 	    }
@@ -868,37 +890,41 @@ RecvDataFromSingleMap( struct MapReduceUserIf *mif,
     int bytes;
     /*read exact packet size and allocate buffer to read a whole data by single read i/o*/
     read(fdr, &bytes, sizeof(int) );
-    recv_buffer = malloc(bytes);
-    BufferedIORead* bio = AllocBufferedIORead( recv_buffer, bytes);
-    /*read last data flag 0 | 1, if reducer receives 1 then it should
-     * exclude sender map node from communications in further*/
-    bytes=0;
-    bytes += bio->read( bio, fdr, &excl_flag, sizeof(int) );
-    /*read items count*/
-    bytes += bio->read( bio, fdr, &items_count, sizeof(int));
-    WRITE_FMT_LOG( "readmap exclude flag=%d, items_count=%d\n", excl_flag, items_count );
+    WRITE_FMT_LOG( "packet size=%d\n", bytes );
+    if ( bytes > 0 ){
+	recv_buffer = malloc(bytes);
+	BufferedIORead* bio = AllocBufferedIORead( recv_buffer, bytes);
+	/*read last data flag 0 | 1, if reducer receives 1 then it should
+	 * exclude sender map node from communications in further*/
+	bytes=0;
+	bytes += bio->read( bio, fdr, &excl_flag, sizeof(int) );
+	/*read items count*/
+	bytes += bio->read( bio, fdr, &items_count, sizeof(int));
+	WRITE_FMT_LOG( "readmap exclude flag=%d, items_count=%d\n", excl_flag, items_count );
 
-    /*alloc memory for all array cells expected to receive, if no items will recevied
-     *initialize buffer anyway*/
-    AllocBuffer(map, MRITEM_SIZE(mif), items_count);
+	/*alloc memory for all array cells expected to receive, if no items will recevied
+	 *initialize buffer anyway*/
+	AllocBuffer(map, MRITEM_SIZE(mif), items_count);
 
-    if ( items_count > 0 ){
-	/*read items_count items*/
-	ElasticBufItemData* item;
-	for( int i=0; i < items_count; i++ ){
-	    /*add item manually, no excesive copy doing*/
-	    AddBufferItemVirtually(map);
-	    item = (ElasticBufItemData*)BufferItemPointer( map, i );
-	    /*save directly into array*/
-	    bytes+=BufferedReadSingleMrItem( bio, fdr, item, 
-					     HASH_SIZE(mif),
-					     mif->data.value_addr_is_data);
+	if ( items_count > 0 ){
+	    /*read items_count items*/
+	    ElasticBufItemData* item;
+	    for( int i=0; i < items_count; i++ ){
+		/*add item manually, no excesive copy doing*/
+		AddBufferItemVirtually(map);
+		item = (ElasticBufItemData*)BufferItemPointer( map, i );
+		/*save directly into array*/
+		bytes+=BufferedReadSingleMrItem( bio, fdr, item, 
+						 HASH_SIZE(mif),
+						 mif->data.value_addr_is_data);
+	    }
 	}
+	WRITE_FMT_LOG( "readed %d bytes from Map node, fdr=%d, item count=%d\n", 
+		       bytes, fdr, map->header.count );
+	WRITE_LOG_BUFFER( mif, *map );
+	free(bio);
+	free(recv_buffer);
     }
-    WRITE_FMT_LOG( "readed %d bytes from Map node, fdr=%d, item count=%d\n", 
-		   bytes, fdr, map->header.count );
-    free(bio);
-    free(recv_buffer);
     return excl_flag;
 }
 

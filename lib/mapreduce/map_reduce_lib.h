@@ -102,12 +102,22 @@ GetReducersDividerArrayBasedOnSummarizedHistograms( struct MapReduceUserIf *mif,
 void 
 LocalSort( struct MapReduceUserIf *mif, Buffer *sortable );
 
+/*process input data by Map function, sort items, apply Combine and get result
+ *@return pos of unhandled input data provided in buf*/
 size_t
 MapInputDataLocalProcessing( struct MapReduceUserIf *mif, 
 			     const char *buf, 
 			     size_t buf_size, 
 			     int last_chunk, 
 			     Buffer *result );
+
+/*Merge source_arrays data into dest array, new array will contain all items
+  from source arrays in sorted order*/
+void 
+MergeBuffersToNew( struct MapReduceUserIf *mif,
+		   Buffer *dest,
+		   const Buffer *source_arrays, 
+		   int arrays_count );
 
 #endif //__MAP_REDUCE_LIB_H__
 

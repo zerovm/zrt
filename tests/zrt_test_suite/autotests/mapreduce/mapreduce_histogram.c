@@ -12,6 +12,7 @@
 #include "../channels/test_channels.h"
 #include "map_reduce_lib.h"
 #include "elastic_mr_item.h"
+#include "mr_defines.h"
 #include "buffer.h"
 
 
@@ -26,7 +27,7 @@
 			     HASH_TYPE      key_hash;	\
 			 })
 #define VALUE_TYPE uint32_t
-#define HASH_TYPE  unsigned short int
+#define HASH_TYPE  uint16_t
 
 #define SET_BINARY_STRING(binary,str){					\
 	(binary).addr = (uintptr_t) (str);				\
@@ -78,6 +79,8 @@ ComparatorElasticBufItemByHashQSort(const void *p1, const void *p2){
 
 #define TEST_CASE_1 "1"
 #define TEST_CASE_2 "2"
+#define TEST_CASE_3 "3"
+#define TEST_CASE_4 "4"
 static int 
 Map(const char *data, size_t size, int last_chunk, Buffer *map_buffer ){
     int i;
@@ -106,6 +109,14 @@ Map(const char *data, size_t size, int last_chunk, Buffer *map_buffer ){
 	    AddItemStrKey( map_buffer, temp, 0xf00000+i, i*2 /*hash*/ );
 	}
 	unhandled_data_pos=size; /*all data processed*/
+	break;
+    case '3':
+	AddItemStrKey( map_buffer, temp, 0xf00000, 0xE /*hash*/ );
+	AddItemStrKey( map_buffer, temp, 0xf00000, 0x1 /*hash*/ );
+	break;
+    case '4':
+	AddItemStrKey( map_buffer, temp, 0xf00000, 0xE /*hash*/ );
+	AddItemStrKey( map_buffer, temp, 0xf00000, 0x10 /*hash*/ );
 	break;
     default:
 	break;
@@ -272,6 +283,43 @@ TestHistogramGetDividers(struct MapReduceUserIf* mif, int count, const char* tes
     return divider_hashes;
 }
 
+Buffer*
+TestMerge(struct MapReduceUserIf *mif){
+    int ret;
+    Buffer* current;
+    int count = 2; /*only two arrays will be merged*/
+    Buffer* array_of_buffers = alloca(sizeof(Buffer)*count);
+    Buffer* dest = malloc(sizeof(Buffer));
+
+    //array1
+    current = &array_of_buffers[0];
+    ret = AllocBuffer( current, ITEM_SIZE, GRANULARITY );
+    assert(!ret);
+    MapInputDataLocalProcessing( mif, TEST_CASE_3, strlen(TEST_CASE_3), 1, current );
+
+    //array2
+    current = &array_of_buffers[1];
+    ret = AllocBuffer( current, ITEM_SIZE, GRANULARITY );
+    assert(!ret);
+    MapInputDataLocalProcessing( mif, TEST_CASE_4, strlen(TEST_CASE_4), 1, current );
+
+    ////////////
+    ret = AllocBuffer( dest, ITEM_SIZE, GRANULARITY );
+    MergeBuffersToNew( mif, dest, array_of_buffers, count);
+
+    /*Test items sorted or not by hash*/
+    HASH_TYPE minitem=0;
+    ElasticBufItemData* currentitem;
+    for(int j=0; j < dest->header.count; j++ ){
+	currentitem = (ElasticBufItemData*)BufferItemPointer(dest, j);
+	fprintf(stderr, "prev=%X, current=%X\n", minitem, *(HASH_TYPE*)&currentitem->key_hash );
+	assert( HASH_CMP(mif, &minitem, &currentitem->key_hash ) <= 0 );
+	HASH_COPY( &minitem, &currentitem->key_hash, sizeof(HASH_TYPE));
+    }
+    
+    return dest;
+}
+
 struct MapReduceUserIf* AllocMapReduce()
 {
     struct MapReduceUserIf* mif = malloc(sizeof(struct MapReduceUserIf));
@@ -313,6 +361,13 @@ int main(int argc, char** argv){
     dividers = TestHistogramGetDividers(mif, 3, TEST_CASE_2);
     FreeBufferData(dividers);
     free(dividers);
+    free(mif);
+
+    /*Merge buffers test. This is test for bug in merge of items which have 16bit hash */
+    mif = AllocMapReduce();
+    Buffer* merged = TestMerge(mif);
+    FreeBufferData(merged);
+    free(merged);
     free(mif);
 
     (void)ret;
