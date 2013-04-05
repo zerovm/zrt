@@ -17,9 +17,9 @@
 #define STDOUT 1 //fd
 
 //#define HASH_TYPE_UINT64
-//#define HASH_TYPE_UINT32
+#define HASH_TYPE_UINT32
 //#define HASH_TYPE_UINT16
-#define HASH_TYPE_UINT8
+//#define HASH_TYPE_UINT8
 
 #ifdef HASH_TYPE_UINT64
 #  define HASH_TYPE         uint64_t

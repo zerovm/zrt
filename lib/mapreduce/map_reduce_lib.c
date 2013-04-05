@@ -618,6 +618,9 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
     free(reduce_nodes_list);
 }
 
+/*Depend on mif->data.dividers_list calculate inex of beginning item index and items
+ *count of buffer map to be send into reducer node in further, 
+ *@param resulted array with calculation info*/
 struct BasketInfo* DistributeDataIntoBaskets(struct MapReduceUserIf *mif, 
 					     const Buffer *map,
 					     int basket_count){
@@ -723,7 +726,7 @@ MapNodeMain( struct MapReduceUserIf *mif,
     WRITE_LOG("MapNodeMain\n");
     assert(mif);
     assert(mif->Map);
-    assert(mif->Combine);
+    /*Combine function can be not defined*/
     assert(mif->Reduce);
     assert(mif->ComparatorHash);
     assert(mif->ComparatorMrItem);
@@ -935,7 +938,7 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
     WRITE_LOG("ReduceNodeMain\n");
     assert(mif);
     assert(mif->Map);
-    assert(mif->Combine);
+    /*Combine function can be not defined*/
     assert(mif->Reduce);
     assert(mif->ComparatorHash);
     assert(mif->ComparatorMrItem);
@@ -952,7 +955,7 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
     Buffer *merge_buffers = NULL;
     int merge_buffers_count=0;
     /*Buffer for merge*/
-    Buffer merged; memset( &merged, '\0', sizeof(merged) );
+    Buffer merged;
     /*Buffer for sorted*/
     Buffer all; memset( &all, '\0', sizeof(all) );
 
@@ -1023,8 +1026,10 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
 	    WRITE_FMT_LOG( "keys count after Combine: %d\n", (int)all.header.count );
 	    WRITE_LOG_BUFFER(mif,all);
 	}else{
-	    int not_supported_yet = 0;
-	    assert(not_supported_yet);
+	    WRITE_LOG( "Combine function not defined and skipped" );
+	    /*assign data from 'merged' buffer into 'all' buffer*/
+	    FreeBufferData(&all);
+	    all = merged;
 	}
 	WRITE_FMT_LOG("sbrk()=%d\n", sbrk(0) );
     }while( leave_map_nodes != 0 );
