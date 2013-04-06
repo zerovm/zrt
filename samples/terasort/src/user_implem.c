@@ -73,7 +73,9 @@ DirectReadRecord( const char* databegin, const char* dataend,
 /*******************************************************************************
  * User map for MAP REDUCE
  * Readed data will organized as MrItem with a 
- * 10bytes key, 90bytes data and 10bytes hash exactly equal to the key*/
+ * 10bytes key, 90bytes data and 10bytes hash exactly equal to the key
+ * @param size size of data must be multiple on 100, 
+ * set MAP_CHUNK_SIZE env variable properly*/
 int Map(const char *data, 
 	size_t size, 
 	int last_chunk, 

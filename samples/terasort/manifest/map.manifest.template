@@ -19,7 +19,8 @@ Channel = tcp:2:, r_map{NODEID}-map-2, 0, 99999999, 9999999999, 0, 0
 Channel = tcp:3:, r_map{NODEID}-map-3, 0, 99999999, 9999999999, 0, 0
 Channel = tcp:4:, r_map{NODEID}-map-4, 0, 99999999, 9999999999, 0, 0
 
-Environment =MAP_NAME,map, REDUCE_NAME,red, VERBOSITY,2, MAP_CHUNK_SIZE,10485760
+#MAP_CHUNK_SIZE for terasort must be multiple on 100, it's simplify parsing of input
+Environment =MAP_NAME,map, REDUCE_NAME,red, VERBOSITY,2, MAP_CHUNK_SIZE,100485700
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some

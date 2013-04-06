@@ -22,14 +22,14 @@ obj/user_implem.o: src/user_implem.c src/user_implem.h
 	@$(CC) -c -o obj/user_implem.o ${CFLAGS} src/user_implem.c -D_GNU_SOURCE
 
 createdirs:
-	chmod u+rwx gendatamanifest.sh mr_start.sh
+	chmod u+rwx gendatamanifest.sh start.sh
 	@mkdir -p obj log
 
 clean: 
 	@rm -f obj/*.o
 	@rm -f log/*.log
 	@rm -f data/*.txt
-	@rm -f data/*.res
+	@rm -f data/*.dat
 	@rm -f data/*.sum
 	@rm -f manifest/*.manifest	
 	@rm -f *.nexe
