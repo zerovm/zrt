@@ -143,16 +143,20 @@ ReadHistogramFromNode( struct EachToOtherPattern *p_this,
     struct MapReduceData *mapred_data = (struct MapReduceData *)p_this->data;
     /*histogram has always the same index as node in nodes_list reading from*/
     assert( index < mapred_data->histograms_count );
+    Histogram temp;
     Histogram *histogram = &mapred_data->histograms_list[index];
     WRITE_FMT_LOG("ReadHistogramFromNode index=%d\n", index);
     /*histogram array should be empty before reading*/
     assert( !histogram->buffer.header.count );
-    read(fdr, histogram, sizeof(Histogram) );
+    read(fdr, &temp, sizeof(Histogram) );
+    *histogram = temp;
     /*alloc buffer and receive data*/
     AllocBuffer( &histogram->buffer, 
 		 histogram->buffer.header.item_size, 
-		 histogram->buffer.header.count );
+		 temp.buffer.header.count );
     read(fdr, histogram->buffer.data, histogram->buffer.header.buf_size );
+    histogram->buffer.header.count = temp.buffer.header.count;
+    WRITE_FMT_LOG("ReadHistogramFromNode count=%d\n", histogram->buffer.header.count);
 }
 
 /************************************************************************
@@ -175,6 +179,7 @@ WriteHistogramToNode( struct EachToOtherPattern *p_this,
     write(fdw, histogram, sizeof(Histogram));
     /*write histogram data*/
     write(fdw, histogram->buffer.data, histogram->buffer.header.buf_size );
+    WRITE_FMT_LOG( "eachtoother:wrote( count=%d)\n", histogram->buffer.header.count );
 }
 
 
@@ -618,12 +623,34 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
     free(reduce_nodes_list);
 }
 
+
 /*Depend on mif->data.dividers_list calculate inex of beginning item index and items
  *count of buffer map to be send into reducer node in further, 
  *@param resulted array with calculation info*/
 struct BasketInfo* DistributeDataIntoBaskets(struct MapReduceUserIf *mif, 
 					     const Buffer *map,
 					     int basket_count){
+
+#define LOG_ADD_TO_NEW_BASKET(mif_p, map_p, itemindex, basketindex, dataindex, countsection, \
+			      currentdivider)				\
+	{								\
+	    if ( itemindex > 0 ){					\
+		ElasticBufItemData* previtem				\
+		    = (ElasticBufItemData*)BufferItemPointer( map_p, itemindex-1); \
+		WRITE_FMT_LOG( "reducer #%d divider_hash=%s, [%d]=%s\n", \
+			       basketindex,				\
+			       PRINTABLE_HASH(mif_p, currentdivider),	\
+			       itemindex-1, PRINTABLE_HASH(mif, &previtem->key_hash) );	\
+	    }								\
+	    WRITE_FMT_LOG( "reducer #%d divider_hash=%s, [%d]=%s\n",	\
+			   basketindex,					\
+			   PRINTABLE_HASH(mif_p, currentdivider),	\
+			   itemindex, PRINTABLE_HASH(mif_p, &current->key_hash) ); \
+	    WRITE_FMT_LOG( "Basket #%d start_index=%d, count=%d\n",	\
+			   basketindex, dataindex, countsection );	\
+	}								\
+
+    int switchbasket=0;
     int basket_index=0;
     int data_start_index = 0;
     int count_in_section = 0;
@@ -635,50 +662,47 @@ struct BasketInfo* DistributeDataIntoBaskets(struct MapReduceUserIf *mif,
     /*Get first divider hash*/
     GetBufferItem(&mif->data.dividers_list, 0, current_divider_hash);
 
-    /*loop for data*/
-    for ( int j=0; j < map->header.count; j++ ){
-	GetBufferItem( map, j, current);
-	if ( HASH_CMP(mif, &current->key_hash, current_divider_hash ) <= 0 ){
-	    count_in_section++;
+    /*loop for data +1, no out of bounds can be because handle it*/
+    for ( int j=0; j < map->header.count+1; j++ ){
+	if ( j < map->header.count ){
+	    /*get item by valid index*/
+	    GetBufferItem( map, j, current);
+	    if ( HASH_CMP(mif, &current->key_hash, current_divider_hash ) <= 0 ){
+		switchbasket=0;
+		count_in_section++;
+	    }
+	    /*switch to new basket, cuurent hash more than divider*/
+	    else{
+		switchbasket=1;
+	    }
+	}
+	else{
+	    switchbasket=1;
 	}
 
 	/*if current item is last OR current hash more than current divider key*/
-	if ( j+1 == map->header.count ||
-	     HASH_CMP(mif, &current->key_hash, current_divider_hash ) > 0 ){
+	if ( switchbasket != 0 ){
 #ifdef DEBUG
-	    if ( j > 0 ){
-		ElasticBufItemData* previtem 
-		    = (ElasticBufItemData*)BufferItemPointer( map, j-1);
-		WRITE_FMT_LOG( "reducer #%d divider_hash=%s, [%d]=%s\n",
-			       basket_index,
-			       PRINTABLE_HASH(mif, current_divider_hash),
-			       j-1, PRINTABLE_HASH(mif, &previtem->key_hash) );
-	    }
-	    WRITE_FMT_LOG( "reducer #%d divider_hash=%s, [%d]=%s\n",
-			   basket_index,
-			   PRINTABLE_HASH(mif, current_divider_hash),
-			   j, PRINTABLE_HASH(mif, &current->key_hash) );
+	    LOG_ADD_TO_NEW_BASKET(mif, map, j, basket_index, data_start_index, 
+				  count_in_section, current_divider_hash);
 #endif
-	    WRITE_FMT_LOG( "Basket #%d start_index=%d, count=%d\n", 
-			   basket_index, data_start_index, count_in_section );
 	    struct BasketInfo info;
 	    info.data_start_index = data_start_index;
 	    info.count_in_section = count_in_section;
 	    basket_array[basket_index++] = info;
 
-	    /*set start data index of next divider*/
-	    data_start_index = j+1;
-	    /*reset count for next divider*/
-	    count_in_section = 0;
 	    /*switch to next divider, do increment if it's not last handling item*/
-	    if ( j+1 < map->header.count ){
-		current_divider_index++;
+	    current_divider_index++;
+	    if ( current_divider_index < mif->data.dividers_list.header.count ){
 		/*retrieve hash value by updated index*/
 		GetBufferItem( &mif->data.dividers_list, 
 			       current_divider_index, 
 			       current_divider_hash);
 	    }
-	    assert( current_divider_index < basket_count );
+	    /*update data start index for new divider*/
+	    data_start_index = j;
+	    /*reset count for next divider, also count current item */
+	    count_in_section = 1;
 	}
     }
 

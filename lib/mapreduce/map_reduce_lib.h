@@ -49,10 +49,9 @@ struct MapReduceUserIf{
 	       size_t size, 
 	       int last_chunk, 
 	       Buffer *map_buffer );
-    /* Waiting sorted data by keys.
-     * reduce and put reduced into reduced_keys, reduced_values*/
-    int (*Combine)( const Buffer *map_buffer, 
-		    Buffer *reduce_buffer );
+    /* Waiting sorted map_buffer.
+     * reduce and put reduced into reduce_buffer*/
+    int (*Combine)( const Buffer *map_buffer, Buffer *reduce_buffer );
     /*reduce and output data into stdout*/
     int (*Reduce)( const Buffer *reduce_buffer );
     /*comparator for elastic_mr_item can be overrided by user*/
