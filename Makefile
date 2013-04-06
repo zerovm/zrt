@@ -71,7 +71,7 @@ CFLAGS += -I. \
 	-Ilib/fs \
 	-Ilib/tar-1.11.8/src \
 	-Ilib/fs/unpack \
-	-I$(ZVM_PREFIX)/api
+	-I$(ZVM_PREFIX)/${ARCH}/include
 CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 
@@ -134,7 +134,7 @@ ${SAMPLES}:
 	@make -Csamples/$@
 
 ################ "make clean" Cleaning libs, tests, samples 	
-clean: libclean clean_ports clean_samples clean_test_suites
+clean: libclean clean_ports clean_test_suites
 	@rm -f lib/*.a
 
 ################ "make clean" Cleaning libs 
@@ -181,14 +181,14 @@ doc:
 	@find ./lib ./tests ./samples -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
 	@chmod 0444 ${README_GEN}
 
-INCLUDE_DIR=$(ZVM_PREFIX)/include
 ARCH=x86_64-nacl
-LIB_DIR=$(ZVM_PREFIX)/${ARCH}/lib
+INCLUDE_DIR=$(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/include
+LIB_DIR=$(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 install:
-	install -m 0644 lib/libzrt.a $(ZVM_PREFIX)/${ARCH}/lib
-	install -m 0644 lib/libmapreduce.a $(ZVM_PREFIX)/${ARCH}/lib
-	install -m 0644 lib/libnetworking.a $(ZVM_PREFIX)/${ARCH}/lib
-	install -m 0644 lib/libfs.a $(ZVM_PREFIX)/${ARCH}/lib
+	install -m 0644 lib/libzrt.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
+	install -m 0644 lib/libmapreduce.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
+	install -m 0644 lib/libnetworking.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
+	install -m 0644 lib/libfs.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -d $(INCLUDE_DIR)/sqlite3 $(INCLUDE_DIR)/lua $(INCLUDE_DIR)/helpers \
 		$(INCLUDE_DIR)/networking $(INCLUDE_DIR)/mapreduce $(LIB_DIR)
 	install -m 0644 libports/sqlite3/vfs_channel.h $(INCLUDE_DIR)/sqlite3
@@ -210,8 +210,8 @@ install:
 	install -m 0644 lib/libgtest.a $(LIB_DIR)
 	install -m 0644 lib/libtar.a $(LIB_DIR)
 	install -m 0644 lib/libsqlite3.a $(LIB_DIR)
-	install -m 0755 zvsh $(ZVM_PREFIX)
-	sed -i 's#$$ZEROVM_ROOT#$(ZVM_PREFIX)#' $(ZVM_PREFIX)/zvsh
+	install -m 0755 zvsh $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin
+	sed -i 's#$$ZEROVM_ROOT#$(ZVM_PREFIX)/bin#' $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin/zvsh
 
 .PHONY: install
 
