@@ -1,0 +1,27 @@
+=====================================================================
+== i/o switches. full list. optional. some switches now meaningless,
+== placed here for completeness and future changes
+=====================================================================
+Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
+==Channel = {ABS_PATH}log/reduce{NODEID}.zrt.log, /dev/debug, 0, 0, 0, 999999999, 999999999
+Channel = {ABS_PATH}data/{NODEID}sorted.dat, /dev/stdout, 0, 0, 0, 99999999, 9999999999
+Channel = {ABS_PATH}log/reduce{NODEID}.stderr.log, /dev/stderr, 0, 0, 0, 9999999, 9999999
+Channel = tcp:1:, r_red{NODEID}-map-1, 0, 99999999, 99999999999, 0, 0
+Channel = tcp:2:, r_red{NODEID}-map-2, 0, 99999999, 99999999999, 0, 0
+Channel = tcp:3:, r_red{NODEID}-map-3, 0, 99999999, 99999999999, 0, 0
+Channel = tcp:4:, r_red{NODEID}-map-4, 0, 99999999, 99999999999, 0, 0
+
+Environment =MAP_NAME,map,REDUCE_NAME,red
+==CommandLine = red-{NODEID}
+
+=====================================================================
+== switches for zerovm. some of them used to control nexe, some
+== for the internal zerovm needs
+=====================================================================
+Version = 09082012
+Nexe = {ABS_PATH}reduce.nexe
+==MemMax = 134217728
+MemMax = 4294967296
+NameServer = udp:127.0.0.1:54321
+Timeout=600
+NodeName=red-{NODEID},{SEQUENTIAL_ID}

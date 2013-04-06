@@ -1,3 +1,4 @@
+*~
 .cproject
 *.o
 *.nexe
@@ -6,3 +7,4 @@
 tests/zrt_test_suite/autotests/channels/forwriting
 *.Po
 *.Plo
+README.gen
