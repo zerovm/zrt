@@ -85,15 +85,11 @@ CXXFLAGS = -I. -Ilib -Ilib/fs
 
 all: notests autotests
 
-notests: prepare doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
+notests: doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
 
 #build zrt0 to be used as stub inside of zlibc
 zlibc_dep: CFLAGS+=-DZLIBC_STUB
 zlibc_dep: ${LIBDEP_OBJECTS}
-
-prepare:
-	@chmod u+rwx ns_start.sh
-	@chmod u+rwx ns_stop.sh
 
 ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
