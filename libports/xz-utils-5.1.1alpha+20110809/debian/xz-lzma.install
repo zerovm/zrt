@@ -1,8 +1,0 @@
-usr/bin/lzma
-usr/bin/unlzma
-usr/bin/lzcat
-usr/bin/lzmore
-usr/bin/lzless
-usr/bin/lzdiff
-usr/bin/lzcmp
-usr/bin/lz*grep

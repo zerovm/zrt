@@ -1,3 +1,0 @@
-debian/tmp/etc/fonts/fonts.*
-debian/tmp/etc/fonts/conf.d/*
-debian/tmp/etc/fonts/conf.avail/*

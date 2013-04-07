@@ -1,7 +1,0 @@
-usr/bin/xml2-config
-usr/lib/*/libxml2.so
-usr/lib/*/libxml2.a
-usr/lib/*/xml2Conf.sh
-usr/share/aclocal
-usr/lib/*/pkgconfig
-usr/include/libxml2
