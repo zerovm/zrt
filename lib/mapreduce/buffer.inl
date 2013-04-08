@@ -27,7 +27,9 @@ SetBufferItem( Buffer *buf, int index, const void* item){
 INLINE void 
 AddBufferItem( Buffer *buf, const void* item){
     if ( buf->header.count == BufferCountMax( buf ) ){
-	ReallocBuffer(buf);
+	if ( ReallocBuffer(buf) ){
+	    assert(0);
+	}	
     }
     SetBufferItem( buf, buf->header.count++, (const char *)item);
 }
@@ -36,7 +38,9 @@ AddBufferItem( Buffer *buf, const void* item){
 INLINE int 
 AddBufferItemVirtually( Buffer *buf){
     if ( buf->header.count == BufferCountMax( buf ) ){
-	ReallocBuffer(buf);
+	if ( ReallocBuffer(buf) ){
+	    assert(0);
+	}
     }
     return buf->header.count++;
 }

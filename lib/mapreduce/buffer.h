@@ -31,11 +31,11 @@ FreeBufferData(Buffer *buf);
 /*@param buf pointer to unitialized Buffer struct
  *@param itemsize buffer item size
  *@param granularity memory reallocation chunk size
- *@return 0 if ok, otherwise -1 */
+ *@return 0 if ok, otherwise on error unallocated data size*/
 int 
 AllocBuffer( Buffer *buf, int itemsize, uint32_t granularity );
 
-/*@return 0 if ok, otherwise -1 */
+/*@return 0 if ok, otherwise on error unallocated data size */
 int 
 ReallocBuffer( Buffer *buf );
 

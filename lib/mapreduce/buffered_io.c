@@ -85,7 +85,7 @@ int buf_read (BufferedIORead* self, int handle, void* data, size_t size){
 
 
 BufferedIOWrite* AllocBufferedIOWrite(void* buf, size_t size){
-    WRITE_FMT_LOG( "AllocBufferedIOWrite size=%d \n", size );
+    WRITE_FMT_LOG( "AllocBufferedIOWrite buf=%p, size=%d \n", buf, size );
     assert(buf);
     BufferedIOWrite* self = malloc( sizeof(BufferedIOWrite) );
     self->data.buf = buf;
@@ -97,7 +97,7 @@ BufferedIOWrite* AllocBufferedIOWrite(void* buf, size_t size){
 }
 
 BufferedIORead* AllocBufferedIORead(void* buf, size_t size){
-    WRITE_FMT_LOG( "AllocBufferedIORead size=%d \n", size );
+    WRITE_FMT_LOG( "AllocBufferedIORead buf=%p, size=%d \n", buf, size );
     assert(buf);
     BufferedIORead* self = malloc( sizeof(BufferedIORead) );
     self->data.buf = buf;

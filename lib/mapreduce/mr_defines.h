@@ -20,7 +20,7 @@
 #define DISABLE_WRITE_LOG_BUFFER
 
 #ifndef DISABLE_WRITE_LOG_BUFFER
-#  define WRITE_LOG_BUFFER( mif_p,map )				\
+#  define WRITE_LOG_BUFFER( mif_p,map )					\
     if ( (map).header.count ){						\
 	ElasticBufItemData *data;					\
 	for (int i_=0; i_ < (map).header.count; i_++){			\
@@ -57,6 +57,15 @@ typedef int exclude_flag_t;
 
 #define BOUNDS_OK(item_index, items_count)  (item_index) < (items_count)
 
+#define MALLOC_AND_CHECK(p_p, size)					\
+    if ( !(p_p) = malloc( (size) ) ) {					\
+	MALLOC_ERROR(size);						\
+    }
 
+#ifdef DEBUG
+#define IF_ALLOC_ERROR(size) if ((size)) {WRITE_FMT_LOG("Can't allocate %d bytes\n", (size)); assert(0);}
+#else
+#define IF_ALLOC_ERROR(size) if ((size)) {assert(0);}
+#endif
 
 #endif /* MR_DEFINES_H_ */

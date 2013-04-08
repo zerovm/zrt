@@ -30,7 +30,7 @@ int AllocBuffer( Buffer *buf, int itemsize, uint32_t granularity ){
     if ( buf->data )
 	return 0;
     else
-	return -1;
+	return granularity*buf->header.item_size; /*not allocated size*/
 }
 
 int ReallocBuffer( Buffer *buf ){
@@ -40,7 +40,7 @@ int ReallocBuffer( Buffer *buf ){
 	buf->header.buf_size *= 2;
 	buf->data = (char*)realloc( buf->data, buf->header.buf_size );
 	if ( !buf->data )
-	    return -1;
+	    return buf->header.buf_size; /*not allocated size*/
     }
     return 0;
 }

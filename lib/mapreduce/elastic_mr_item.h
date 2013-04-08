@@ -16,9 +16,9 @@ enum { EDataNotOwned=0, EDataOwned=1 };
 /*if data owned it will be freed, else nothing happens*/
 #define TRY_FREE_MRITEM_DATA(elasticitem_p)				\
     if ( (elasticitem_p)->own_value == EDataOwned )			\
-	free((void*)(elasticitem_p)->value.addr);			\
+	free((void*)(elasticitem_p)->value.addr), (elasticitem_p)->value.addr=0; \
     else if ( (elasticitem_p)->own_key == EDataOwned )			\
-	free((void*)(elasticitem_p)->key_data.addr);
+	free((void*)(elasticitem_p)->key_data.addr), (elasticitem_p)->key_data.addr=0;
 
 typedef struct BinaryData{
     uintptr_t addr;

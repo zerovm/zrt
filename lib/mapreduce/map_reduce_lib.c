@@ -151,9 +151,10 @@ ReadHistogramFromNode( struct EachToOtherPattern *p_this,
     read(fdr, &temp, sizeof(Histogram) );
     *histogram = temp;
     /*alloc buffer and receive data*/
-    AllocBuffer( &histogram->buffer, 
+    int res = AllocBuffer( &histogram->buffer, 
 		 histogram->buffer.header.item_size, 
 		 temp.buffer.header.count );
+    IF_ALLOC_ERROR(res);
     read(fdr, histogram->buffer.data, histogram->buffer.header.buf_size );
     histogram->buffer.header.count = temp.buffer.header.count;
     WRITE_FMT_LOG("ReadHistogramFromNode count=%d\n", histogram->buffer.header.count);
@@ -334,11 +335,10 @@ MapInputDataLocalProcessing( struct MapReduceUserIf *mif,
 			     Buffer *result ){
     size_t unhandled_data_pos = 0;
     Buffer sort;
-    if( AllocBuffer( &sort, MRITEM_SIZE(mif), 1024 /*granularity*/ ) != 0 ){
-	assert(0);
-    }
+    int res = AllocBuffer( &sort, MRITEM_SIZE(mif), 1024 /*granularity*/ );
+    IF_ALLOC_ERROR(res);
 
-    WRITE_FMT_LOG("sbrk()=%d\n", sbrk(0) );
+    WRITE_FMT_LOG("sbrk()=%p\n", sbrk(0) );
     WRITE_FMT_LOG("======= new portion of data read: input buffer=%p, buf_size=%u\n", 
 		  buf, (uint32_t)buf_size );
     /*user Map process input data and allocate keys, values buffers*/
@@ -352,9 +352,8 @@ MapInputDataLocalProcessing( struct MapReduceUserIf *mif,
     WRITE_FMT_LOG("MapCallEvent:sorted map, count=%u\n", (uint32_t)sort.header.count);
     WRITE_LOG_BUFFER(mif, sort );
 
-    if ( AllocBuffer(result, MRITEM_SIZE(mif), sort.header.count/4 ) !=0 ){
-	assert(0);
-    }
+    res = AllocBuffer(result, MRITEM_SIZE(mif), sort.header.count/4 );
+    IF_ALLOC_ERROR(res);
 
     WRITE_FMT_LOG("MapCallEvent: Combine Start, count=%u\n", (uint32_t)sort.header.count);
     if ( mif->Combine ){
@@ -412,7 +411,8 @@ MapCreateHistogramSendEachToOtherCreateDividersList( struct ChannelsConfigInterf
     StartEachToOtherCommunication( &histogram_from_all_to_all_pattern, EMapNode );
 
     /*Preallocate buffer space and exactly for items count=reduce_nodes_count */
-    AllocBuffer( &mif->data.dividers_list, HASH_SIZE(mif), reduce_nodes_count);
+    int res = AllocBuffer( &mif->data.dividers_list, HASH_SIZE(mif), reduce_nodes_count);
+    IF_ALLOC_ERROR(res);
     /*From now every map node contain histograms from all map nodes, summarize histograms,
      *to get distribution of all data. Result of summarization write into divider_array.*/
     GetReducersDividerArrayBasedOnSummarizedHistograms( mif,
@@ -598,8 +598,11 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
     assert(dividers_count==basket_count);
 
     /*Declare big buffer to provide efficient buffered IO, free it at the function end*/
-    void *send_buffer = malloc(SEND_BUFFER_SIZE);
+    void *send_buffer; 
+    send_buffer= malloc(SEND_BUFFER_SIZE);
+    IF_ALLOC_ERROR(send_buffer?0:SEND_BUFFER_SIZE);
     BufferedIOWrite* bio = AllocBufferedIOWrite( send_buffer, SEND_BUFFER_SIZE);
+    IF_ALLOC_ERROR( bio?0:SEND_BUFFER_SIZE );
 
     for( int i=0; i < basket_count; i++ ){
 	/*send to reducer with current_divider_index index*/
@@ -657,7 +660,8 @@ struct BasketInfo* DistributeDataIntoBaskets(struct MapReduceUserIf *mif,
     int current_divider_index = 0;
     ElasticBufItemData* current = alloca( MRITEM_SIZE(mif) );
     void*  current_divider_hash = alloca( HASH_SIZE(mif) );
-    struct BasketInfo* basket_array = malloc(sizeof(struct BasketInfo)*basket_count);
+    struct BasketInfo* basket_array;
+    basket_array = malloc(sizeof(struct BasketInfo)*basket_count);
 
     /*Get first divider hash*/
     GetBufferItem(&mif->data.dividers_list, 0, current_divider_hash);
@@ -723,6 +727,7 @@ void
 InitMapInternals( struct MapReduceUserIf *mif, 
 		  const struct ChannelsConfigInterface *chif, 
 		  struct MapNodeEvents* ev){
+    int res;
     /*get histograms count for MapReduceData*/
     int *nodes_list_unwanted = NULL;
     mif->data.histograms_count = 
@@ -733,7 +738,8 @@ InitMapInternals( struct MapReduceUserIf *mif,
     mif->data.histograms_list = calloc( mif->data.histograms_count, 
 					 sizeof(*mif->data.histograms_list) );
     for(int i=0; i<mif->data.histograms_count; i++){
-	AllocBuffer(&mif->data.histograms_list[i].buffer, HASH_SIZE(mif), 100);
+	res = AllocBuffer(&mif->data.histograms_list[i].buffer, HASH_SIZE(mif), 100);
+	IF_ALLOC_ERROR(res);
     }
 
     ev->MapCreateHistogramSendEachToOtherCreateDividersList 
@@ -741,6 +747,25 @@ InitMapInternals( struct MapReduceUserIf *mif,
     ev->MapInputDataLocalProcessing = MapInputDataLocalProcessing;
     ev->MapInputDataProvider = MapInputDataProvider;
     ev->MapSendToAllReducers = MapSendToAllReducers;
+}
+
+
+void
+PrintDebugInfo(struct MapReduceUserIf *mif, struct ChannelsConfigInterface *chif){
+    WRITE_FMT_LOG("MrItemSize =%dbytes\n", mif->data.mr_item_size);
+    WRITE_FMT_LOG("HashSize =%dbytes\n", mif->data.hash_size);
+
+    /*get map_nodes_count*/
+    int *map_nodes_list = NULL;
+    int map_nodes_count = chif->GetNodesListByType( chif, EMapNode, &map_nodes_list);
+    free(map_nodes_list);
+    WRITE_FMT_LOG("MapNodesCount= %d\n", map_nodes_count);
+
+    /*get reduce_nodes_count*/
+    int *reduce_nodes_list = NULL;
+    int reduce_nodes_count = chif->GetNodesListByType( chif, EReduceNode, &reduce_nodes_list);
+    free(reduce_nodes_list);
+    WRITE_FMT_LOG("ReduceNodesCount= %d\n", reduce_nodes_count);
 }
 
 
@@ -760,6 +785,8 @@ MapNodeMain( struct MapReduceUserIf *mif,
 
     struct MapNodeEvents events;
     InitMapInternals(mif, chif, &events);
+
+    PrintDebugInfo(mif, chif);
 
     /*should be initialized at fist call of DataProvider*/
     char *buffer = NULL;
@@ -848,14 +875,18 @@ MergeBuffersToNew( struct MapReduceUserIf *mif,
 							     const Buffer* merge_buffers, 
 							     int *current_indexes_array,
 							     int count);
-#ifdef DEBUG
+    int all_items_count=0;
     /*List of items count of every merging item before merge*/
     int i;
     for(i=0; i < arrays_count; i++ ){
+	all_items_count += source_arrays[i].header.count;
 	WRITE_FMT_LOG( "Before merge: source[#%d], keys count %d\n", 
 		       i, source_arrays[i].header.count );
     }    
-#endif //DEBUG
+    /*alloc buffer for all items*/
+    int ret = AllocBuffer( dest, MRITEM_SIZE(mif), all_items_count );
+    IF_ALLOC_ERROR(ret);
+
     int merge_pos[arrays_count];
     memset(merge_pos, '\0', sizeof(merge_pos) );
     int min_key_array;
@@ -867,6 +898,7 @@ MergeBuffersToNew( struct MapReduceUserIf *mif,
 							     source_arrays, 
 							     merge_pos,
 							     arrays_count);
+    uint32_t merge_result_bytes_occupied=0;
     while( min_key_array !=-1 ){
 	/*copy item data with minimal key into destination buffer*/
 	current = (ElasticBufItemData*)
@@ -878,7 +910,11 @@ MergeBuffersToNew( struct MapReduceUserIf *mif,
 								 source_arrays, 
 								 merge_pos,
 								 arrays_count);
+	merge_result_bytes_occupied += mif->data.mr_item_size + current->key_data.size;
+	if( !mif->data.value_addr_is_data )
+	    merge_result_bytes_occupied += current->value.size;
     }
+    WRITE_FMT_LOG("Merged Items memory occupied=%u\n", merge_result_bytes_occupied);
 }
 
 int
@@ -920,7 +956,10 @@ RecvDataFromSingleMap( struct MapReduceUserIf *mif,
     WRITE_FMT_LOG( "packet size=%d\n", bytes );
     if ( bytes > 0 ){
 	recv_buffer = malloc(bytes);
+	IF_ALLOC_ERROR(recv_buffer?0:bytes);
+
 	BufferedIORead* bio = AllocBufferedIORead( recv_buffer, bytes);
+	IF_ALLOC_ERROR(bio?0:bytes);
 	/*read last data flag 0 | 1, if reducer receives 1 then it should
 	 * exclude sender map node from communications in further*/
 	bytes=0;
@@ -931,7 +970,8 @@ RecvDataFromSingleMap( struct MapReduceUserIf *mif,
 
 	/*alloc memory for all array cells expected to receive, if no items will recevied
 	 *initialize buffer anyway*/
-	AllocBuffer(map, MRITEM_SIZE(mif), items_count);
+	int res = AllocBuffer(map, MRITEM_SIZE(mif), items_count);
+	IF_ALLOC_ERROR(res);
 
 	if ( items_count > 0 ){
 	    /*read items_count items*/
@@ -955,6 +995,26 @@ RecvDataFromSingleMap( struct MapReduceUserIf *mif,
     return excl_flag;
 }
 
+/*into newbuf_p will be added all from merge_buffers_p and from all buffer in sort order*/
+#define MERGE_PREVIOUS_AND_NEW(mif_p, merge_buffers_p, count_buffers, prevbuf, newbuf ){ \
+	/*grow array of buffers, and add previous merge result into merge array*/ \
+	merge_buffers_p = realloc( merge_buffers_p,			\
+				   (++count_buffers)*sizeof(Buffer) );	\
+	merge_buffers_p[count_buffers-1] = prevbuf;			\
+	memset( &prevbuf, '\0', sizeof(prevbuf) );			\
+	WRITE_LOG( "Data received from mappers, merge it" );		\
+	/*Alloc buffers for merge results, and merge previous and new data*/ \
+	MergeBuffersToNew(mif_p, &newbuf, merge_buffers_p, count_buffers ); \
+	WRITE_FMT_LOG( "merge complete, keys count %d, data=%p\n", newbuf.header.count, newbuf.data ); \
+	/*Merge complete, free source recv buffers*/			\
+	for ( int i=0; i < count_buffers; i++ ){			\
+	    FreeBufferData(&merge_buffers_p[i]);			\
+	}								\
+	/*reset merge buffers*/						\
+	free(merge_buffers_p), merge_buffers_p = NULL;			\
+	count_buffers=0;						\
+    }
+
 
 int 
 ReduceNodeMain( struct MapReduceUserIf *mif, 
@@ -968,6 +1028,10 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
     assert(mif->ComparatorMrItem);
 #ifndef DISABLE_WRITE_LOG_BUFFER
     assert(mif->DebugHashAsString);
+#endif
+
+#ifdef DEBUG
+    PrintDebugInfo(mif, chif);
 #endif
 
     /*get map_nodes_count*/
@@ -1015,33 +1079,15 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
 	    }
 	}//for
 
-	/*grow array of buffers, and add previous merge result into merge array*/
-	merge_buffers = realloc( merge_buffers, 
-				 (++merge_buffers_count)*sizeof(Buffer) );
-	merge_buffers[merge_buffers_count-1] = all;
-
-	WRITE_LOG( "Data received from mappers, merge it" );
-
-	/*Alloc buffers for merge results, and merge previous and new data*/
-	int granularity = all.header.count>0? all.header.count/3 : 1000;
-	int ret = AllocBuffer( &merged, MRITEM_SIZE(mif), granularity );
-	assert(!ret);
-	ret = AllocBuffer( &all, MRITEM_SIZE(mif), granularity );
-	assert(!ret);
-	MergeBuffersToNew(mif, &merged, merge_buffers, merge_buffers_count );
-	WRITE_FMT_LOG( "merge complete, keys count %d\n", merged.header.count );
-
-	/*Merge complete, free source recv buffers*/
-	for ( int i=0; i < merge_buffers_count; i++ ){
-	    FreeBufferData(&merge_buffers[i]);
-	}
-	/*reset merge buffers*/
-	free(merge_buffers), merge_buffers = NULL;
-	merge_buffers_count=0;
-
 	/**********************************************************/
 	/*combine data every time while it receives from map nodes*/
 	if ( mif->Combine ){
+	    MERGE_PREVIOUS_AND_NEW(mif, merge_buffers, merge_buffers_count, all, merged );
+
+	    int granularity = all.header.count>0? all.header.count/3 : 1000;
+	    int ret = AllocBuffer( &all, MRITEM_SIZE(mif), granularity );
+	    IF_ALLOC_ERROR(ret);
+
 	    WRITE_LOG_BUFFER(mif,merged);
 	    WRITE_FMT_LOG( "keys count before Combine: %d\n", 
 			   (int)merged.header.count );
@@ -1051,22 +1097,21 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
 	    WRITE_LOG_BUFFER(mif,all);
 	}else{
 	    WRITE_LOG( "Combine function not defined and skipped" );
-	    /*assign data from 'merged' buffer into 'all' buffer*/
-	    FreeBufferData(&all);
-	    all = merged;
 	}
-	WRITE_FMT_LOG("sbrk()=%d\n", sbrk(0) );
+	WRITE_FMT_LOG("sbrk()=%p\n", sbrk(0) );
     }while( leave_map_nodes != 0 );
 
-    /*free intermediate keys,values buffers*/
-    for(int i=0; i < merge_buffers_count; i++){
-	FreeBufferData(&merge_buffers[i]);
+    /*do merge only once if Combine not defined*/
+    if ( !mif->Combine ){
+	MERGE_PREVIOUS_AND_NEW(mif, merge_buffers, merge_buffers_count, all, merged );
+	/*assign data from 'merged' buffer into 'all' buffer*/
+	FreeBufferData(&all);
+	all = merged;
     }
 
     if( mif->Reduce ){
 	/*user should output data into output file/s*/
-	WRITE_FMT_LOG( "Reduce : %d items\n", (int)all.header.count );
-
+	WRITE_FMT_LOG( "Reduce : %d items, data=%p\n", (int)all.header.count, all.data );
 	mif->Reduce( &all );
     }
 
