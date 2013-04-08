@@ -1,8 +1,0 @@
-usr/bin/Magick++-config
-usr/include/ImageMagick/Magick++*
-usr/lib/libMagick++.a
-usr/lib/libMagick++.la
-usr/lib/libMagick++.so
-usr/lib/pkgconfig/ImageMagick++.pc
-usr/lib/pkgconfig/Magick++.pc
-usr/share/man/man1/Magick++-config.1

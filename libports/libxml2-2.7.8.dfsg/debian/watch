@@ -1,3 +1,0 @@
-version=3
-opts=dversionmangle=s/\.dfsg.*$// \
-ftp://xmlsoft.org/libxml2/libxml2-([\d\.]+)\.tar\.gz

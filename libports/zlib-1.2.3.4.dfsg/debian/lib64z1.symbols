@@ -1,3 +1,0 @@
-libz.so.1 lib64z1 #MINVER#
-#include "zlib-core.symbols"
-#include "zlib-64.symbols"

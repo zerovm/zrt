@@ -1,3 +1,0 @@
-version=3
-opts=dversionmangle=s/\+\d{8}$// \
-http://tukaani.org/xz/xz-([\d.]*(?:beta)?)\.tar\.gz
