@@ -11,12 +11,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <alloca.h>
 
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "conf_parser.h"
 #include "conf_keys.h"
-
 
 #define IS_IT_CHAR_TO_STRIP(chr) strchr(STRIPING_CHARS, chr)
 
@@ -32,8 +32,6 @@ struct internal_parse_data{
     char* val;
     uint16_t vallen;
 };
-
-struct internal_parse_data s_temp_parsed[MAX_KEYS_COUNT]; 
 
 
 /********************************************
@@ -68,16 +66,17 @@ int extract_key_value( const char* src, int src_len,
 }
 
 /*****************************************
- * parse and save parsed data
+ * parse and save parsed data, if during parsing any unsupported key
+ * is located then current record will be discarded and return NULL
  *****************************************/
 
 static 
 struct ParsedRecord* 
-save_parsed_param_into_record(const struct KeyList* keys,
-			      struct internal_parse_data* params_array, 
-			      int params_count){
+get_parsed_record(struct ParsedRecord* record,
+		  const struct KeyList* keys,
+		  struct internal_parse_data* params_array, 
+		  int params_count){
     assert(keys);
-    struct ParsedRecord* record = NULL;
     int i;
     for(i=0; i < params_count; i++ ){
 	/*if key matched it return key index, in specified list of expecting keys so it's
@@ -85,25 +84,11 @@ save_parsed_param_into_record(const struct KeyList* keys,
 	int key_index =  keys->find(keys, params_array[i].key, params_array[i].keylen);
 	/*if current key is wrong*/
 	if ( key_index < 0 ){
-	    char* wrong_key = malloc(params_array[i].keylen+1);
-	    strcpy(wrong_key, params_array[i].key);
-	    ZRT_LOG(L_ERROR, "conf_parser: not valid key '%s'", wrong_key);
-	    free(wrong_key);
-	    /*free record memories*/
-	    if (record){
-		free(record->parsed_params_array);
-		free(record);
-	    }
+	    ZRT_LOG(L_ERROR, "invalid key '%s'", 
+		    GET_STRING(params_array[i].key, params_array[i].keylen ) );
 	    return NULL; /*error*/
 	}
 	else{
-	    /*alloc record if not yet alloced*/
-	    if ( record == NULL ){
-		/*alloc record*/
-		record = malloc(sizeof(struct ParsedRecord));
-		/*alloc params array*/
-		record->parsed_params_array = malloc(sizeof(struct ParsedParam)*params_count);
-	    }
 	    /*save current param*/
 	    record->parsed_params_array[key_index].key_index = key_index; /*param index*/
 	    record->parsed_params_array[key_index].val = params_array[i].val;
@@ -114,20 +99,22 @@ save_parsed_param_into_record(const struct KeyList* keys,
 }
 
 
-struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_list,
-				int* parsed_records_count){
+struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
+					 const char* text, int len, struct KeyList* key_list){
+    assert(records);
     assert(text);
     assert(key_list);
     int lex_cursor = 0;
     int lex_length = 0;
-    struct ParsedRecord* records = NULL;
     int parsed_params_count=0;
-    struct internal_parse_data s_temp_single_parsed;
-    memset(&s_temp_parsed, '\0', sizeof(struct internal_parse_data)*MAX_KEYS_COUNT);
+    struct internal_parse_data key_val_parse;
+    struct internal_parse_data temp_keys_parsed[NVRAM_MAX_KEYS_COUNT_IN_RECORD]; 
+    memset(&temp_keys_parsed, '\0', sizeof(temp_keys_parsed));
     enum ParsingStatus st = EStProcessing;
     enum ParsingStatus st_prev = st;
 
     ZRT_LOG(L_INFO, P_TEXT, "parsing");
+    records->count=0;
     int cursor=0;
     do {
         /*set comment stat if comment start found*/
@@ -184,10 +171,7 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 	    ZRT_LOG(L_INFO, "swicth EStToken: lex_cursor=%d, lex_length=%d, pointer=%p", 
 		    lex_cursor, lex_length, &text[lex_cursor]);
 	    /*log non-striped lexema*/
-	    char* non_striped_lexem_text = calloc(lex_length+1, 1);
-	    memcpy(non_striped_lexem_text, &text[lex_cursor], lex_length);
-	    ZRT_LOG(L_EXTRA, "lex= '%s'", non_striped_lexem_text);
-	    free(non_striped_lexem_text);
+	    ZRT_LOG(L_EXTRA, "lex= '%s'", GET_STRING(&text[lex_cursor], lex_length));
 
 	    uint16_t striped_token_len=0;
 	    const char* striped_token = 
@@ -197,36 +181,33 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 	    /*If token has data, try to extract key and value*/
 	    if ( striped_token_len > 0 ){
 		/*log striped token*/
-		char* token_text = calloc(striped_token_len+1, 1);
-		memcpy(token_text, striped_token, striped_token_len);
-		ZRT_LOG(L_INFO, "token= '%s'", token_text);
-		free(token_text);
+		ZRT_LOG(L_INFO, "token= '%s'", GET_STRING(striped_token, striped_token_len));
 		/*parse pair 'key=value', strip spaces */
 		int parsed_key_index = -1;
 		if ( !extract_key_value( striped_token, striped_token_len,
-					 &s_temp_single_parsed.key, 
-					 &s_temp_single_parsed.keylen,
-					 &s_temp_single_parsed.val, 
-					 &s_temp_single_parsed.vallen ) 
+					 &key_val_parse.key, 
+					 &key_val_parse.keylen,
+					 &key_val_parse.val, 
+					 &key_val_parse.vallen ) 
 		     )
 		    {
 			/*get key index*/
 			parsed_key_index = key_list->find(key_list, 
-							  s_temp_single_parsed.key,
-							  s_temp_single_parsed.keylen);
-			/*log found key string up to 9 chars*/
-			char temp[10];
-			strncpy(temp, s_temp_single_parsed.key, MIN(sizeof(temp) -1, s_temp_single_parsed.keylen));
-			ZRT_LOG(L_INFO, "key found, name=%s index=%d", temp, parsed_key_index);
+							  key_val_parse.key,
+							  key_val_parse.keylen);
+			ZRT_LOG(L_INFO, "key found, key=%s, len=%d index=%d", 
+				GET_STRING(key_val_parse.key,
+					   key_val_parse.keylen),
+				key_val_parse.keylen, parsed_key_index);
 			if ( parsed_key_index >= 0 ){
-			    if ( s_temp_parsed[parsed_key_index].key != NULL ){
+			    if ( temp_keys_parsed[parsed_key_index].key != NULL ){
 				/*parsed item with the same key already saved, and new 
 				  one will be ignored*/
 				ZRT_LOG(L_ERROR, P_TEXT, "last key duplicated, skipped");
 			    }
 			    else{
 				/*save parsed key,value*/
-				s_temp_parsed[parsed_key_index] = s_temp_single_parsed;
+				temp_keys_parsed[parsed_key_index] = key_val_parse;
 				/*one of record parameters was parsed*/
 				/*increase counter of parsed data*/
 				++parsed_params_count;
@@ -239,33 +220,21 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 
 		    
 		/*If get waiting count of record parameters*/
-		if ( key_list->count( key_list ) == parsed_params_count ){
-		    ZRT_LOG(L_SHORT, "key_list->count =%d", parsed_params_count);
-		    (*parsed_records_count)++;
+		if ( key_list->count == parsed_params_count ){
+		    ZRT_LOG(L_INFO, "key_list->count =%d", parsed_params_count);
 		    /*parsed params count is enough to save it as single record.
 		     *add it to parsed records array*/
-		    records = realloc(records, 
-				      sizeof(struct ParsedRecord)*(*parsed_records_count));
-		    ZRT_LOG(L_INFO, "save record #%d", (*parsed_records_count));
-		    struct ParsedRecord* record = 
-			save_parsed_param_into_record(key_list,
-						      s_temp_parsed, parsed_params_count);
-		    ZRT_LOG(L_INFO, P_TEXT, "save record OK");
-		    if ( record == NULL ){
-			/*record parsing error*/
-			free(records);
-			records = NULL;
-			break;
-		    }
-		    else{
+		    struct ParsedRecord record;
+		    if ( get_parsed_record(&record,
+					   key_list, temp_keys_parsed, parsed_params_count) ){
 			/*record parsed OK*/
-			records[*parsed_records_count - 1] = *record;
+			ZRT_LOG(L_INFO, "save record #%d OK", records->count);
+			records->records[records->count++] = record;
 		    }
 		    /* current record parsed, reset params count 
 		     * to be able parse new record*/
 		    parsed_params_count=0;
-		    memset(&s_temp_parsed, '\0', 
-			   sizeof(struct internal_parse_data)*MAX_KEYS_COUNT);
+		    memset(&temp_keys_parsed, '\0', sizeof(temp_keys_parsed) );
                 }
             }
 	    /*restore processing state*/
@@ -284,18 +253,6 @@ struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_l
 
     ZRT_LOG(L_INFO, P_TEXT, "return records");
     return records; /*complete if OK, or NULL if error*/
-}
-
-void free_records_array(struct ParsedRecord *records, int count){
-    if ( records ){
-	int i;
-	for(i=0; i < count; i++){
-	    /*free handled record memory*/
-	    free(records[i].parsed_params_array);
-	}
-	/*free records array*/
-	free(records);
-    }
 }
 
 //end of file

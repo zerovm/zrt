@@ -13,6 +13,11 @@
 
 #include <stdint.h>
 
+#include "nvram.h"
+#include "conf_keys.h"
+
+struct MNvramObserver;
+
 #define KEY_VALUE_DELIMETER '='
 #define STRIPING_CHARS      " \t\n"
 
@@ -22,20 +27,26 @@ struct KeyList;
 /*single parsed parameter, part of single record*/
 struct ParsedParam{
     int key_index; /*index in array of struct KeyList.key_list*/
-    char* val;
+    char *val; /*pointer to existing char data*/
     uint16_t vallen;
 };
 
-#define ALLOC_PARAM_VALUE(parsed_param, str_value_pp){		\
+#define ALLOCA_PARAM_VALUE(parsed_param, str_value_pp){			\
 	*str_value_pp = calloc( parsed_param.vallen+1, 1 );		\
-	memcpy( *str_value_pp, parsed_param.val, parsed_param.vallen); \
+	memcpy( *str_value_pp, parsed_param.val, parsed_param.vallen);	\
     }
 
 
 /*single parsed record*/
 struct ParsedRecord{
     /*parsed parameters count is the same as keys count in struct Keylist.key_count*/
-    struct ParsedParam* parsed_params_array;
+    struct ParsedParam parsed_params_array[NVRAM_MAX_KEYS_COUNT_IN_RECORD];
+};
+
+struct ParsedRecords{
+    struct MNvramObserver* observer;
+    struct ParsedRecord records[NVRAM_MAX_RECORDS_IN_SECTION];
+    int count;
 };
 
 /*parsing text data and observe all parsed data
@@ -47,10 +58,8 @@ struct ParsedRecord{
  *@return array or parsed records, caller is responsible to free array
  * by using free_records_array
  */
-struct ParsedRecord* conf_parse(const char* text, int len, struct KeyList* key_list,
-				int* parsed_records_count);
-
-void free_records_array(struct ParsedRecord *records, int count);
+struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
+					 const char* text, int len, struct KeyList* key_list);
 
 const char* strip_all(const char* str, int len, uint16_t* striped_len );
 

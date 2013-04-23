@@ -75,6 +75,7 @@ CFLAGS += -I. \
 CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 
+
 CXXFLAGS = -I. -Ilib -Ilib/fs
 
 ################# "make all" Build libs 
@@ -174,7 +175,7 @@ README_GEN=README.gen
 doc:	
 	@rm -f ${README_GEN}
 	@echo "Auto created from READMEs located in ZRT project\n" > ${README_GEN}
-	@find ./lib ./tests ./samples -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
+	@find ./lib ./tests -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
 	@chmod 0444 ${README_GEN}
 
 ARCH=x86_64-nacl

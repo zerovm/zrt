@@ -8,6 +8,9 @@
 #include <errno.h>
 #include "zvm.h"
 #include "zcalls.h"
+#include "nvram_loader.h"
+#include "fstab_observer.h"
+
 #define SET_ERRNO(err) errno=err
 
 #define ONLY_PROLOG_SYSCALL 1
@@ -26,6 +29,7 @@
 static int   s_prolog_doing_now;
 static void* s_tls_addr=NULL;
 static void* sbrk_default = NULL;
+static struct NvramLoader s_nvram;
 
 void zrt_zcall_prolog_init(){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
@@ -372,5 +376,38 @@ void zrt_zcall_prolog_zrt_setup(void){
      *enhanced syscall handlers*/
     s_prolog_doing_now = 0; 
     zrt_zcall_enhanced_zrt_setup();    
+}
+
+/*nvram access from prolog*/
+void zrt_zcall_prolog_read_nvram_gen_args_envs(int *arg_array_lengths, int *arg_count,
+					       int *env_array_lengths, int *env_count){
+#ifdef FSTAB_CONF_ENABLE
+    ZRT_LOG(L_SHORT, "nvram object size in stack=%u bytes", sizeof(struct NvramLoader));
+    /*Get static fstab observer object, it's memory should not be freed*/
+    struct MNvramObserver* fstab_observer = get_fstab_observer();
+    struct NvramLoader nvram;
+    construct_nvram_loader( &nvram );
+    /*add observers here to handle various sections of config data*/
+    nvram.add_observer(&nvram, fstab_observer);
+    /*if readed not null bytes and result non negative then doing parsing*/
+    if ( nvram.read(&nvram, DEV_NVRAM) > 0 ){
+        nvram.parse(&nvram);
+	ZRT_LOG(L_SHORT, "%s", "nvram parsing complete");
+	/*handle sections here*/
+	ZRT_LOG(L_SHORT, "%s", "nvram handled");
+    }
+
+    fstab_observer->cleanup( fstab_observer );
+    ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished");
+    ZRT_LOG_DELIMETER;
+#endif
+
+}
+
+void zrt_zcall_prolog_get_args_envs(char** args, char** envs){
+}
+
+void zrt_zcall_prolog_handle_nvram_unhandled_sections(){
+    //zrt_zcall_enhanced_handle_nvram_unhandled_sections( &s_nvram );
 }
 

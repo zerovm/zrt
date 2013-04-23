@@ -332,7 +332,9 @@ static int mem_close(int fd){
 
     s_mem_mount_cpp->Unref(mnode->slot()); /*decrement use count*/
     if ( mnode->UnlinkisTrying() ){
-	s_mem_mount_cpp->UnlinkInternal(mnode);
+	if( s_mem_mount_cpp->UnlinkInternal(mnode) == 0 ){
+	    mnode->UnlinkOkResetFlag();
+	}
     }
     
     int ret = s_handle_allocator->free_handle(fd);

@@ -80,6 +80,21 @@
 /*alloc and copy null-terminated string into text*/
 #define STR_ALLOCA_COPY(str) strcpy((char*)alloca(strlen(str)+1), str)
 
+#ifndef strndupa
+# define strndupa(s, n)					\
+    (__extension__					\
+     ({							\
+	 int __len = (n);				\
+	 char *__old = (char *)	(s);			\
+	 char *__new = (char *) alloca (__len + 1);	\
+	 __new[__len] = '\0';				\
+	 (char *) memcpy (__new, __old, __len);		\
+     }))
+#endif //strndupa
+
+/*alloc in stack null terminated string*/
+#define GET_STRING(str,size) strndupa( (str), (size))
+
 #define APPLY_UMASK(mode_p){				\
 	if ( getenv(UMASK_ENV) != NULL ){		\
 	    mode_t umask;				\

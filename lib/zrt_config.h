@@ -5,7 +5,7 @@
 #define FSTAB_CONF_ENABLE
 
 /*/dev/fstab access=wo will ignored if disabled*/
-/*#define FSTAB_SAVE_TAR_ENABLE*/
+#define FSTAB_SAVE_TAR_ENABLE
 
 
 

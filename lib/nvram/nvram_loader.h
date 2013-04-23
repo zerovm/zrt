@@ -10,39 +10,35 @@
 
 #include <limits.h>
 
+#include "nvram.h"
 #include "nvram_observer.h"
-
-#define NVRAM_MAX_FILE_SIZE 10240
-#define NVRAM_MAX_OBSERVERS_COUNT 5
-
-/*check nvram size validity*/
-#if NVRAM_MAX_FILE_SIZE > SSIZE_MAX
-#undef NVRAM_MAX_FILE_SIZE
-#define NVRAM_MAX_FILE_SIZE SSIZE_MAX
-#endif
+#include "conf_parser.h"
 
 struct NvramLoader{
     /*at least one observer should be added before NvramLoader::read is invoked*/
     void (*add_observer)(struct NvramLoader* nvram, struct MNvramObserver* observer);
-    /*read nvram file and next run NvramLoader::parse*/
+    /*read nvram file*/
     int  (*read)(struct NvramLoader* nvram, const char* nvram_file_name);
-    /*parse nvram and handle parsed data inside observers
-     *@return parsed records count*/
-    int  (*parse)(struct NvramLoader* nvram);
-    void (*free)(struct NvramLoader* nvram);
+    /*parse nvram and handle parsed data inside observers, in case if observer is NULL
+      all sections must be parsed, but if provided observer is matched then only
+      section appropriate to observer should be parsed.
+     *@param observer*/
+    void (*parse)(struct NvramLoader* nvram);
+    /*handle parsed nvram data by observer functions, if provided observer is matched 
+      then only section appropriate to observer should be parsed.*/
+    void (*handle)(struct NvramLoader* nvram, struct MNvramObserver* observer,
+		   void* obj1, void* obj2);
 
     //data
     char nvram_data[NVRAM_MAX_FILE_SIZE];
     int  nvram_data_size;
-    /*observers array, unused cells would be NULL*/
-    struct MNvramObserver*  nvram_observers[NVRAM_MAX_OBSERVERS_COUNT];
-    struct MountsInterface* channels_mount;       /*filesystem interface*/
-    struct MountsInterface* transparent_mount;    /*filesystem interface*/
+    struct ParsedRecords parsed_sections[NVRAM_MAX_SECTIONS_COUNT];
+    int parsed_sections_count;
+    /*array of pointers to observer objects, unused cells would be NULL*/
+    struct MNvramObserver* nvram_observers[NVRAM_MAX_OBSERVERS_COUNT];
 };
 
-struct NvramLoader* alloc_nvram_loader(
-        struct MountsInterface* channels_mount,
-        struct MountsInterface* transparent_mount );
+struct NvramLoader* construct_nvram_loader(struct NvramLoader* nvram_loader);
 
 void free_nvram_loader(struct NvramLoader* nvram);
 

@@ -181,9 +181,9 @@ memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
     if ( !(addr >= this->heap_ptr && addr <= this->heap_ptr+this->heap_size) ){
-	ZRT_LOG(L_ERROR, "warning: addr=%p is not in range [%p-%p]", addr, begin, end );
+	ZRT_LOG(L_ERROR, "addr=%p is not in range [%p-%p]", addr, begin, end );
+	free(addr);
     }
-    free(addr);
     return 0;
 }
 

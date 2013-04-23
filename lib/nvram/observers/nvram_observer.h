@@ -9,8 +9,8 @@
 #ifndef NVRAM_OBSERVER_H_
 #define NVRAM_OBSERVER_H_
 
-#define MAX_OBSERVER_SECTION_NAME_LEN 50
-#define MAX_KEYS_COUNT 4
+#include "nvram.h"
+#include "conf_keys.h"
 
 /*forward declarations*/
 struct NvramLoader;
@@ -21,17 +21,18 @@ struct ParsedRecord;
 struct MNvramObserver{
     /*Handle parsed nvram record data
      *@param keys 
-     *@param record */
+     *@param record 
+     *@param obj1, obj2 can be any object expected by section handler, can be NULL*/
     void (*handle_nvram_record)(struct MNvramObserver* observer,
-				struct NvramLoader* nvram_loader,
-				struct ParsedRecord* record );
+				struct ParsedRecord* record,
+				void* obj1, void* obj2);
     void (*cleanup)(struct MNvramObserver* obs);
     /*it's a section name in nvram config file which corresponds to observer;
      *only if section name in config file will equal to folowing section name
      *then observer will handle data belonging to this section*/
-    char observed_section_name[MAX_OBSERVER_SECTION_NAME_LEN];
+    char observed_section_name[NVRAM_MAX_SECTION_NAME_LEN];
 
-    struct KeyList* keys;
+    struct KeyList keys;
 };
 
 #endif /* NVRAM_OBSERVER_H_ */

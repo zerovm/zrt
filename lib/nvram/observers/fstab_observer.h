@@ -20,6 +20,6 @@
 
 /*get static interface object not intended to destroy after using*/
 struct MNvramObserver* get_fstab_observer();
-void cleanup_fstab_observer( struct MNvramObserver* );
+void handle_tar_export();
 
 #endif /* FSTAB_OBSERVER_H_ */

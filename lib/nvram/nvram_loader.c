@@ -22,16 +22,6 @@
 #include "nvram_loader.h"
 #include "conf_parser.h"
 
-struct config_section_t{
-    char* name;         /*section name in square brackets, it's allocated and should be freed*/
-    int offset_start;   /*starting from header section*/
-    int offset_end;     /*up to next header or till the end of file if last section*/
-};
-
-struct config_structure_t{
-    struct config_section_t* sections;
-    int count;
-};
 
 #define IS_VALID_POINTER_IN_RANGE(whole_data, whole_size, p) \
     (p != NULL && p >= whole_data && p < whole_data+whole_size )
@@ -39,12 +29,29 @@ struct config_structure_t{
 #define IS_SQUARE_BRACKETS_ON_SAME_LINE(bound_start, bound_end, end_line) \
     ( bound_start != NULL && bound_end != NULL && (end_line == NULL || bound_end < end_line) )
 
+
+/*section name, start, end*/
+struct config_section_t{
+    const char *name; /*section name, referred in config as name in square brackets*/
+    int name_len;
+    int offset_start;   /*starting from header section*/
+    int offset_end;     /*up to next header or till the end of file if last section*/
+};
+
+/*list of sections*/
+struct config_structure_t{
+    struct config_section_t sections[NVRAM_MAX_SECTIONS_COUNT];
+    int count;
+};
+
+
 /*Parse section name
- *@return allocated section struct if section name extracted correctly, 
+ *@return filled section struct if section name extracted correctly, 
  *NULL if no section name is located; section should be freed after use*/
 static 
 struct config_section_t* 
-nearest_section_start(const char* whole_data, int whole_size, int* cursor_pos ){
+get_nearest_section_start(struct config_section_t* section,
+			  const char* whole_data, int whole_size, int* cursor_pos ){
     ZRT_LOG(L_INFO, "whole_size=%d, cursor_pos=%d", whole_size, *cursor_pos );
     struct config_section_t* new_section = NULL;    
     char* bound_start;
@@ -65,16 +72,16 @@ nearest_section_start(const char* whole_data, int whole_size, int* cursor_pos ){
 	    if ( bound_start == &whole_data[*cursor_pos] ||
 		 ( bound_start > whole_data && bound_start[-1] == '\n' ) )
 		{
-		    /*alloc new section*/
-		    new_section = calloc(1, sizeof(struct config_section_t*));
+		    /*fill new section*/
+		    new_section = section;
 		    uint16_t striped_len;
 		    const char* s = strip_all(bound_start+1, bound_end-bound_start-1, 
 					      &striped_len );
-		    new_section->name = calloc(striped_len+1, 1);
+		    new_section->name = s;
+		    new_section->name_len = striped_len;
 		    new_section->offset_start = bound_start - whole_data;
-		    strncpy(new_section->name, s, striped_len );
-		    ZRT_LOG(L_SHORT, "new section %s start =%d", 
-			    new_section->name, new_section->offset_start );
+		    ZRT_LOG(L_INFO, "new section %s start =%d", 
+			    GET_STRING(s,striped_len), new_section->offset_start );
 		    //section located, set cursor_pos just after section name
 		    *cursor_pos = bound_start - whole_data;
 		}
@@ -92,90 +99,77 @@ nearest_section_start(const char* whole_data, int whole_size, int* cursor_pos ){
 }
 
 /*get complete list of configured sections*/
-void get_config_structure(struct config_structure_t* conf_struct, struct NvramLoader* nvram){
+void get_config_structure(struct NvramLoader* nvram, 
+			  struct config_structure_t* sections ){
+    int i;
     int cursor=0;
-    /*get list of sections '[xxxx]' in configs*/
-    memset(conf_struct, '\0', sizeof(struct config_structure_t) );
-    struct config_section_t* new_section;
+    sections->count=0;
+    struct config_section_t* section = &sections->sections[sections->count];
 
     /*get section names and starting pos for every section*/
-    while( (new_section=nearest_section_start(nvram->nvram_data, nvram->nvram_data_size, 
-					&cursor )) != NULL  ){
-	ZRT_LOG(L_INFO, "section %s, cursor=%d", new_section->name, cursor);
-	int curr_sect_index = conf_struct->count;
-	++conf_struct->count;
-	conf_struct->sections = realloc(conf_struct->sections, 
-					conf_struct->count*sizeof(struct config_section_t));
-	/*copy parsed section into array, and free memory*/
-	memcpy(&conf_struct->sections[curr_sect_index], new_section,
-	       sizeof(struct config_section_t));
+    while( NULL != get_nearest_section_start( section,
+					     nvram->nvram_data, 
+					     nvram->nvram_data_size, 
+					     &cursor ) ){
 	/*increment cursor to skip start of existing section */
-	cursor += strlen(new_section->name); 
-	ZRT_LOG(L_INFO, "section %s, newcursor=%d", new_section->name, cursor);
-	free(new_section);
+	cursor += section->name_len;
+	ZRT_LOG(L_INFO, "section %s, newcursor=%d", 
+		GET_STRING(section->name, section->name_len), cursor);
+	assert( sections->count < NVRAM_MAX_SECTIONS_COUNT );
+	section = &sections->sections[++sections->count];
     }
     /*set end bounds for sections*/
-    int i = conf_struct->count-1;
     int section_end = nvram->nvram_data_size;
-    for ( ; i >= 0; i--){
-	conf_struct->sections[i].offset_end = section_end;
-	section_end = conf_struct->sections[i].offset_start;
+    for ( i = sections->count-1; i >= 0; i--){
+	sections->sections[i].offset_end = section_end;
+	section_end = sections->sections[i].offset_start;
     }
 }
 
 
-/*check section_name wanted to parse either valid or not
+/*check section_name wanted to parse either valid or not and return valid obserber
  *@param  section_name section name taken from nvram configuration file
- *@return -1 if not valid, or index of observer in observers array that intended to handle
- *specified section */
-static int validate_section_name( struct NvramLoader* nvram, const char* section_name ){
+ *@param namelen section name length, because it's not null terminated
+ *@return NULL if not valid, or observer that intended to handle specified section */
+static struct MNvramObserver*
+section_observer( struct NvramLoader* nvram, const char* section_name, int namelen ){
     assert(section_name);
-    int ret=0;
     /*match observer corresponding to section name*/
     struct MNvramObserver* matched_observer = NULL;
     int i;
     for (i=0; i < NVRAM_MAX_OBSERVERS_COUNT; i++ ){
 	struct MNvramObserver* obs = nvram->nvram_observers[i];
-	if ( obs != NULL && !strcasecmp( obs->observed_section_name, section_name ) ){
+	if ( obs != NULL && 
+	     !strncasecmp( obs->observed_section_name, section_name, namelen ) ){
 	    matched_observer = obs;
 	    break;
 	}
     }
 
     if ( matched_observer == NULL ){
-	ZRT_LOG(L_ERROR, "Invalid nvram section %s", section_name);
-	ret = -1;
+	ZRT_LOG(L_ERROR, "Invalid nvram section %s", GET_STRING(section_name,namelen));
     }
-    else{
-	
-    }
-
-    return ret;
+    return matched_observer;
 }
 
-/*@return parsde records count*/
-static int parse_section( struct NvramLoader* nvram, const char* section_data, int count, 
-			  struct MNvramObserver* observer ){
+/*@param records pointer to future result
+ *@return records*/
+static struct ParsedRecords* 
+parse_section( struct NvramLoader* nvram, 
+	       struct ParsedRecords* records,
+	       const char* section_data, int count, 
+	       struct MNvramObserver* observer ){
+    assert(nvram);
     assert(observer);
-    assert(observer->keys);
-    int parsed_records_count = 0;
-    /*get records_array and records_count*/
-    struct ParsedRecord* records_array = conf_parse( section_data, count, 
-						    observer->keys,
-						    &parsed_records_count);
-    /*handle parsed data*/
-    if ( records_array && parsed_records_count>0 ){
+    assert(records);
+    assert(section_data);
+    /*parse records and handle parsed data*/
+    if ( get_parsed_records(records, section_data, count, &observer->keys) ){
 	/*parameters parsed correctly and seems to be correct*/
-	ZRT_LOG(L_INFO, "nvram parsed record count=%d", parsed_records_count);
-	int i;
-	for(i=0; i < parsed_records_count; i++){
-	    /*handle parsed record*/
-	    observer->handle_nvram_record(observer, nvram, &records_array[i] );
-	}
-	/*free memories occupied by records*/
-	free_records_array(records_array, parsed_records_count);
+	records->observer = observer;
+	ZRT_LOG(L_INFO, "nvram parsed record count=%d", records->count);
     }
-    return parsed_records_count; 
+    return records->count?records:NULL; 
 }
 
 void nvram_add_observer(struct NvramLoader* nvram, struct MNvramObserver* observer){
@@ -192,74 +186,75 @@ void nvram_add_observer(struct NvramLoader* nvram, struct MNvramObserver* observ
 }
 
 int nvram_read(struct NvramLoader* nvram, const char* nvram_file_name){
-    ssize_t read_bytes=0;
     /*open nvram file and read a whole content in a single read operation*/
     int fd = open(nvram_file_name, O_RDONLY);
     if ( fd>0 ){
-	read_bytes = read( fd, nvram->nvram_data, NVRAM_MAX_FILE_SIZE);
+	nvram->nvram_data_size = read( fd, nvram->nvram_data, NVRAM_MAX_FILE_SIZE);
 	close(fd);
+	ZRT_LOG(L_INFO, "nvram file data size=%d", nvram->nvram_data_size);
     }
-    nvram->nvram_data_size = read_bytes;
-    return read_bytes;
+    return nvram->nvram_data_size;
 }
 
-int nvram_parse(struct NvramLoader* nvram){
+void nvram_parse(struct NvramLoader* nvram){
     assert(nvram);
-    int res = -1; /*error by default*/
 
-    /*get initialized sections list*/
-    struct config_structure_t conf_struct;
-    get_config_structure(&conf_struct, nvram);
-    ZRT_LOG(L_INFO, "sections count %d", conf_struct.count );
-    
-    /*get through list and parse sections*/
+    /*get sections list and save it in nvram object*/
+    struct config_structure_t sections_bounds;
+    get_config_structure(nvram, &sections_bounds);
+    ZRT_LOG(L_INFO, "sections count %d", sections_bounds.count );
+
+    /*go through list and parse sections*/
+    struct MNvramObserver* observer;
+    struct config_section_t* section; 
     int i;
-    for( i=0; i < conf_struct.count; i++ ){
-	const char* section_name = conf_struct.sections[i].name;
-	int section_size = conf_struct.sections[i].offset_end 
-	    - conf_struct.sections[i].offset_start;
-	int validated_observer_index;
-	if ( -1 != (validated_observer_index = 
-		    validate_section_name(nvram, section_name )) ) {
-	    ZRT_LOG(L_SHORT, "nvram successfully validated section %s", section_name );
-	    res = parse_section(nvram, 
-				&nvram->nvram_data[conf_struct.sections[i].offset_start],
-				section_size, 
-				nvram->nvram_observers[validated_observer_index]);
-	    ZRT_LOG(L_SHORT, "nvram parsing result=%d for section: %s", res, section_name);
-	}
-	else{
-	    ZRT_LOG(L_SHORT, "nvram invalid section %s", section_name);
+    for( i=0; i < sections_bounds.count; i++ ){
+	section = &sections_bounds.sections[i];
+	/*if section is valid*/
+	if ( (observer=section_observer(nvram, section->name, section->name_len )) ){
+	    ZRT_LOG(L_INFO, "parse section %s", GET_STRING(section->name, section->name_len));
+	    if ( parse_section(nvram, 
+			       &nvram->parsed_sections[nvram->parsed_sections_count],
+			       &nvram->nvram_data[section->offset_start],
+			       section->offset_end - section->offset_start, 
+			       observer) != NULL ){
+		ZRT_LOG(L_INFO, "parsed nvram section#%d: %s, records count=%d", 
+			nvram->parsed_sections_count,
+			GET_STRING(section->name, section->name_len), 
+			nvram->parsed_sections[nvram->parsed_sections_count].count);
+		++nvram->parsed_sections_count;
+	    }
 	}
     }
-
-    /*free config structure*/
-    for(i=0; i < conf_struct.count; i++ )
-	free(conf_struct.sections[i].name);
-    free(conf_struct.sections);
-
-    return res; 
 }
 
-void free_nvram_loader(struct NvramLoader* nvram){
-    free(nvram);
+void nvram_handle(struct NvramLoader* nvram, struct MNvramObserver* observer,
+		  void* obj1, void* obj2){
+    struct ParsedRecords* records;
+    int i, j;
+    for ( j=0; j < nvram->parsed_sections_count; j++ ){
+	records = &nvram->parsed_sections[j];
+	/*handle only records with observer matched */
+	if ( observer==records->observer ){
+	    for(i=0; i < records->count; i++){
+		/*handle parsed record*/
+		records->observer->handle_nvram_record(records->observer,  
+						       &records->records[i],
+						       obj1, obj2);
+	    }
+	}
+    }
 }
-
-
-struct NvramLoader* alloc_nvram_loader(
-        struct MountsInterface* channels_mount,
-        struct MountsInterface* transparent_mount ){
-    /*alloc nvram struct*/
-    struct NvramLoader* nvram = calloc(1, sizeof(struct NvramLoader));
-    nvram->channels_mount = channels_mount;
-    nvram->transparent_mount = transparent_mount;
-    /*alloc array and fill cells by NULL, so unused cells would be stay NULL*/
+    
+struct NvramLoader* construct_nvram_loader(struct NvramLoader* nvram ){
+    nvram->parsed_sections_count=0;
+    /*fill cells by NULL, so unused cells would be stay NULL*/
     memset(nvram->nvram_observers, '\0', 
 	   NVRAM_MAX_OBSERVERS_COUNT*sizeof(struct MNvramObserver*));
     nvram->read = nvram_read;
     nvram->add_observer = nvram_add_observer;
     nvram->parse = nvram_parse;
-    nvram->free = free_nvram_loader;
+    nvram->handle = nvram_handle;
     return nvram;
 }
 

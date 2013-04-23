@@ -31,6 +31,7 @@ struct stat;
 struct dirent;
 struct timeval;
 struct timespec;
+struct NvramLoader;
 
 #define ZCALLS_INIT 1   /*use as type param in __query_zcalls*/
 struct zcalls_init_t{
@@ -111,6 +112,17 @@ struct zcalls_nonsyscalls_t{
     int  (*chown)(const char *path, uid_t owner, gid_t group);
     int  (*fchown)(int fd, uid_t owner, gid_t group);
     int  (*ftruncate)(int fd, off_t length);
+};
+
+#define ZCALLS_PROLOG 4         /*use as type param in __query_zcalls*/
+struct zcalls_prolog_t{
+    /*read&parse nvram and get lengths and count, for both envs, args 
+     *to know what memories need to allocate on prolog side*/
+    void (*read_nvram_gen_args_envs)(int *arg_array_lengths, int *arg_count,
+				     int *env_array_lengths, int *env_count);
+    /*copy args &envs from zrt into preallocated arrays on prolog side*/
+    void (*get_nvram_args_envs)(char** args, char** envs);
+    void (*handle_nvram_unhandled_sections)(struct NvramLoader* nvram);
 };
 
 

@@ -28,10 +28,7 @@
 #define DEV_STDIN  "/dev/stdin"
 #define DEV_STDOUT "/dev/stdout"
 #define DEV_STDERR "/dev/stderr"
-#define DEV_FSTAB  "/dev/nvram"
-
-/*****************************************************************
-helpers, we should remove it from here */
+#define DEV_NVRAM  "/dev/nvram"
 
 /*get static object from zrtsyscalls.c*/
 struct MountsInterface* transparent_mount();

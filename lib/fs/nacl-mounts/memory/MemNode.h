@@ -161,6 +161,7 @@ class MemNode {
 
     void TryUnlink(){ nodedata_->want_unlink_=1; }
     int  UnlinkisTrying()const{ return nodedata_->want_unlink_; }
+    void UnlinkOkResetFlag(){ nodedata_->want_unlink_ = 0; }
 
  private:
     int slot_;

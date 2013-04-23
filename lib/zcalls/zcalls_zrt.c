@@ -26,6 +26,7 @@
 #include "zvm.h"
 #include "zrt.h"
 #include "zrt_config.h"
+#include "zcalls.h"
 #include "zcalls_zrt.h"
 #include "memory_syscall_handlers.h"
 #include "zrtlog.h"
@@ -123,23 +124,32 @@ static void zrt_setup_finally(){
     s_mem_mount->mkdir( "/dev", 0777 );
 
 #ifdef FSTAB_CONF_ENABLE
+#define HANDLE_ONLY_FSTAB_SECTION fstab_observer
+    ZRT_LOG(L_SHORT, "nvram object size in stack=%u bytes", sizeof(struct NvramLoader));
     /*Get static fstab observer object, it's memory should not be freed*/
     struct MNvramObserver* fstab_observer = get_fstab_observer();
-    struct NvramLoader* nvram = alloc_nvram_loader( s_channels_mount, s_transparent_mount );
+    struct NvramLoader nvram;
+    construct_nvram_loader( &nvram );
     /*add observers here to handle various sections of config data*/
-    nvram->add_observer(nvram, fstab_observer);
-    /*if readed not null bytes and result not negative then doing parsing*/
-    if ( nvram->read(nvram, DEV_FSTAB) > 0 ){
-        int res = nvram->parse(nvram);
-	ZRT_LOG(L_SHORT, "nvram parse res=%d", res);
+    nvram.add_observer(&nvram, fstab_observer);
+    /*if readed not null bytes and result non negative then doing parsing*/
+    if ( nvram.read(&nvram, DEV_NVRAM) > 0 ){
+        nvram.parse(&nvram);
+	ZRT_LOG(L_SHORT, "%s", "nvram parsing complete");
+	nvram.handle(&nvram, HANDLE_ONLY_FSTAB_SECTION, s_channels_mount, s_transparent_mount);
+	ZRT_LOG(L_SHORT, "%s", "nvram handled");
     }
 
     fstab_observer->cleanup( fstab_observer );
-    nvram->free( nvram );
     ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished");
     ZRT_LOG_DELIMETER;
 #endif
 }
+     
+void zrt_zcall_enhanced_handle_nvram_unhandled_sections(struct NvramLoader* nvram){
+    nvram->handle(nvram, get_fstab_observer(), s_channels_mount, s_transparent_mount);
+}
+
 
 static inline void update_cached_time()
 {
@@ -161,6 +171,7 @@ static inline void update_cached_time()
  */
 void zrt_zcall_enhanced_exit(int status){
     ZRT_LOG(L_SHORT, "status %d exiting...", status);
+    handle_tar_export();
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
     return; 
@@ -392,6 +403,7 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
 * Setup zrt
 *************************************************************************/
 void zrt_zcall_enhanced_zrt_setup(void){
+    zrt_zcall_prolog_handle_nvram_unhandled_sections();
     int i;
     char **envp = environ;
     const struct UserManifest const *setup = MANIFEST;
