@@ -8,7 +8,10 @@
 #ifndef ZRTLOG_H_
 #define ZRTLOG_H_
 
-#include "stdint.h"
+#include <stdint.h>
+#include <stdio.h> //snprintf
+#include "printf_prolog.h" //tfp_sprintf
+
 
 /*log levels*/
 #define L_SHORT 1
@@ -41,29 +44,37 @@
 #ifdef DEBUG
 #define LOG_BUFFER_SIZE 0x1000
 
-#define SAFE_LOG(s_123) zrt_zcall_loglibc(s_123)
-
 /*ZRT_LOG
   v_123 verbosity param, fmt_123 format string, ... arguments*/
-#define ZRT_LOG(v_123, fmt_123, ...) if( __zrt_log_is_enabled() ){	\
-	int debug_handle_123;						\
-	char *buf__123;							\
-	if( __zrt_log_verbosity() >= v_123 &&				\
-	    (debug_handle_123=__zrt_log_debug_get_buf(&buf__123)) >= 0 ){ \
-	    int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,		\
-				   #v_123 " %s; [%s]; %s, %d: " fmt_123 "\n", \
-				   __FILE__, __zrt_log_syscall_stack_str(), \
-				   __func__, __LINE__, __VA_ARGS__);	\
-	    __zrt_log_write(debug_handle_123, buf__123, len_123, 0);	\
+#define ZRT_LOG(v_123, fmt_123, ...)					\
+    if ( __zrt_log_is_enabled() && __zrt_log_fd() > 0 ){		\
+	if ( __zrt_log_prolog_mode_is_enabled() ){			\
+	    /*write directly into channel always if logfile defined*/	\
+	    tfp_printf(#v_123 " prolog %s:%d; " fmt_123 "\n",		\
+		       __FILE__, __LINE__, __VA_ARGS__);		\
+	    /*flush data prepared in internal buffer by tfp_printf*/	\
+	    __zrt_log_write(__zrt_log_fd(), NULL, 0, 0);		\
 	}								\
-    }
+	else{								\
+	    int debug_handle_123;					\
+	    char *buf__123;						\
+	    if( __zrt_log_verbosity() >= v_123 &&			\
+		(debug_handle_123=__zrt_log_debug_get_buf(&buf__123)) >= 0 ){ \
+		int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,	\
+				       #v_123 " %s; [%s]; %s, %d: " fmt_123 "\n", \
+				       __FILE__, __zrt_log_syscall_stack_str(), \
+				       __func__, __LINE__, __VA_ARGS__); \
+		__zrt_log_write(debug_handle_123, buf__123, len_123, 0); \
+	    }								\
+	}								\
+    }									\
 
 
 #define ZRT_LOG_DELIMETER  if( __zrt_log_is_enabled() ){ 		\
 	char *buf__123;							\
 	int debug_handle = __zrt_log_debug_get_buf(&buf__123);		\
 	int len;							\
-	if( debug_handle > 0){						\
+	if( debug_handle > 0 ){						\
 	    len = snprintf(buf__123, LOG_BUFFER_SIZE, "%060d\n", 0 );	\
 	    __zrt_log_write(debug_handle, buf__123, len, 0);		\
 	}								\
@@ -123,17 +134,21 @@
 	    stat->st_size, (int)stat->st_blocks, stat->st_atime, stat->st_mtime );
 
 
+void __zrt_log_init();
 const char* __zrt_log_syscall_stack_str();
 void __zrt_log_push_name( const char* name );
 void __zrt_log_pop_name( const char* name );
-void __zrt_log_set_fd(int fd);
 int  __zrt_log_verbosity();
 int  __zrt_log_fd();
 
-/* 0 switch on logging
- * 1 switch off logging*/
+/* 1 switch on logging
+ * 0 switch off logging*/
 void __zrt_log_enable(int status);
 int  __zrt_log_is_enabled();
+/* 1 enables safe log allowed during prolog state*/
+/* 0 switch off prolog mode*/
+void __zrt_log_prolog_mode_enable(int status);
+int  __zrt_log_prolog_mode_is_enabled();
 
 int __zrt_log_debug_get_buf(char **buf);
 int32_t __zrt_log_write( int handle, const char* buf, int32_t size, int64_t offset);

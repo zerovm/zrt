@@ -31,7 +31,7 @@
 
 int zrt_zcall_chown(const char *path, uid_t owner, gid_t group){
     if ( !is_zrt_ready() ){
-	SAFE_LOG(__func__);
+	ZRT_LOG(L_SHORT, "%s %s", __func__, "can't be used while prolog running");
 	/*while not initialized completely*/
 	errno=ENOSYS;
 	return -1;

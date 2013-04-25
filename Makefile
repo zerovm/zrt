@@ -18,6 +18,7 @@ lib/libc/chown.c \
 lib/libc/ftruncate.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
+lib/helpers/printf_prolog.c \
 lib/helpers/conf_parser.c \
 lib/helpers/conf_keys.c \
 lib/helpers/path_utils.c \
@@ -61,22 +62,8 @@ TEST_SUITES=lua_test_suite
 
 ################# flags set
 CFLAGS += -Werror-implicit-function-declaration
-#include paths
-CFLAGS += -I. \
-	-Ilib \
-	-Ilib/memory \
-	-Ilib/helpers \
-	-Ilib/nvram \
-	-Ilib/nvram/observers \
-	-Ilib/fs \
-	-Ilib/tar-1.11.8/src \
-	-Ilib/fs/unpack \
-	-I$(ZVM_PREFIX)/${ARCH}/include
 CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
-
-
-CXXFLAGS = -I. -Ilib -Ilib/fs
 
 ################# "make all" Build libs 
 

@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include "zrtlog.h"
 #include "zvm.h"
 #include "zcalls.h"
 #include "nvram_loader.h"
@@ -31,7 +32,10 @@ static void* s_tls_addr=NULL;
 static void* sbrk_default = NULL;
 static struct NvramLoader s_nvram;
 
+
 void zrt_zcall_prolog_init(){
+    __zrt_log_init( ZRT_LOG_NAME );
+    ZRT_LOG(L_INFO, P_TEXT, "prolog init");
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     s_prolog_doing_now = 1;
     if ( MANIFEST )
@@ -375,6 +379,8 @@ void zrt_zcall_prolog_zrt_setup(void){
     /*prolog initialization done and now main syscall handling should be processed by
      *enhanced syscall handlers*/
     s_prolog_doing_now = 0; 
+    __zrt_log_prolog_mode_enable(0);
+    ZRT_LOG_DELIMETER;
     zrt_zcall_enhanced_zrt_setup();    
 }
 

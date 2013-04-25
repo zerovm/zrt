@@ -85,10 +85,6 @@ static void zrt_init( const struct UserManifest const* manifest ){
     /*alloc entry point to mounted filesystems*/
     s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
 
-    /* using direct call to channels_mount and create debuging log channel*/
-    int zrtlog_fd = s_channels_mount->open( ZRT_LOG_NAME, O_WRONLY, 0 ); /*open log channel*/
-    __zrt_log_set_fd( zrtlog_fd );
-    __zrt_log_enable(1);
     s_zrt_ready = 1;
     /*user main execution just after zrt initialization*/
 }
@@ -238,7 +234,7 @@ int  zrt_zcall_enhanced_write(int handle, const void *buf, size_t count, size_t 
     int ret=-1;
     int log_state = __zrt_log_is_enabled();
     /*disable logging write calls related to debug, stdout and stderr channel */
-    if ( __zrt_log_fd() == handle || handle <= 2 ){
+    if ( handle <= 2 && log_state ){
 	__zrt_log_enable(0);
     }
 
@@ -253,7 +249,8 @@ int  zrt_zcall_enhanced_write(int handle, const void *buf, size_t count, size_t 
     }
     LOG_INFO_SYSCALL_FINISH( ret, "bytes_wrote=%d, handle=%d count=%u", 
 			      bytes_wrote, handle, count);
-    __zrt_log_enable(log_state); /*restore log state*/
+    if ( log_state )
+	__zrt_log_enable(log_state); /*restore log state*/
     return ret;
 }
 

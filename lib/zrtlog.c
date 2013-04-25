@@ -17,11 +17,32 @@
 #define MAX_NESTED_SYSCALLS_LOG 5
 #define MAX_NESTED_SYSCALL_LEN 1000
 static int s_verbosity_level = 1;
-static int s_log_enabled=0;
+static int s_log_enabled=1;  /*log enabled by default*/
+static int s_log_prolog_mode_enabled=1; /*prolog mode enabled by default*/
 static int s_zrt_log_fd = -1;
+static int s_buffered_len = 0;
 static char s_logbuf[LOG_BUFFER_SIZE];
 
 static char s_nested_syscalls_str[MAX_NESTED_SYSCALL_LEN] = "\0";
+
+static void tfp_printf_putc(void* someobj, char ch){
+    if ( s_buffered_len < LOG_BUFFER_SIZE )
+	s_logbuf[s_buffered_len++] = ch;
+}
+
+void __zrt_log_init(const char* logpath){
+    int i;
+    for (i=0; i < MANIFEST->channels_count; i++ ){
+	if ( !strcmp(logpath, MANIFEST->channels[i].name) ){
+	    s_zrt_log_fd = i;
+	    break;
+	}
+    }
+    init_printf(NULL, tfp_printf_putc);
+    s_log_enabled = 1;
+    s_log_prolog_mode_enabled = 1;
+}
+
 
 void __zrt_log_enable(int status){
    s_log_enabled = status;
@@ -31,19 +52,26 @@ int  __zrt_log_is_enabled(){
     return s_log_enabled;
 }
 
-int __zrt_log_verbosity(){
-    return s_verbosity_level;
+void __zrt_log_prolog_mode_enable(int status){
+    s_log_prolog_mode_enabled = status;
+    if ( !status ){
+	/*update verbosity, because it's value was not available early*/
+	/*get verbosity level via environment*/
+	const char* verbosity_str = getenv(VERBOSITY_ENV);
+	if ( verbosity_str ){
+	    int verbosity = atoi(verbosity_str);
+	    if ( verbosity > 0)
+		s_verbosity_level = verbosity;
+	}
+    }
 }
 
-void __zrt_log_set_fd(int fd){
-    s_zrt_log_fd = fd;
-    /*get verbosity level via environment*/
-    const char* verbosity_str = getenv(VERBOSITY_ENV);
-    if ( verbosity_str ){
-	int verbosity = atoi(verbosity_str);
-	if ( verbosity > 1)
-	    s_verbosity_level = verbosity;
-    }
+int  __zrt_log_prolog_mode_is_enabled(){
+    return s_log_prolog_mode_enabled;
+}
+
+int __zrt_log_verbosity(){
+    return s_verbosity_level;
 }
 
 int __zrt_log_fd(){
@@ -82,14 +110,21 @@ void __zrt_log_pop_name( const char* expected_name ) {
 }
 
 int32_t __zrt_log_write( int handle, const char* buf, int32_t size, int64_t offset){
-    if ( !s_log_enabled ) return 0; /*logging switched off*/
-    return zvm_pwrite(handle, buf, size, offset);
+    if ( s_log_prolog_mode_enabled ){ 
+	if ( s_buffered_len ){
+	    /*write to log buffer, that is using internally by tfp_printf*/
+	    int wr = zvm_pwrite(handle, s_logbuf, s_buffered_len, offset);
+	    s_buffered_len=0;
+	    return wr;
+	}
+    }
+    else
+	return zvm_pwrite(handle, buf, size, offset);
 }
 
 int __zrt_log_debug_get_buf(char **buf){
-    if ( !s_log_enabled ) return -1; /*logging switched off*/
     *buf = s_logbuf;
-    return s_zrt_log_fd;
+    return __zrt_log_fd();
 }
 
 #endif

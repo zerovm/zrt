@@ -32,7 +32,7 @@
 
 int zrt_zcall_chmod(const char *path, mode_t mode){
     if ( !is_zrt_ready() ){
-	SAFE_LOG(__func__);
+	ZRT_LOG(L_SHORT, "%s %s", __func__, "can't be used while prolog running");
 	/*while not initialized completely*/
 	errno=ENOSYS;
 	return -1;
