@@ -147,7 +147,8 @@ section_observer( struct NvramLoader* nvram, const char* section_name, int namel
     }
 
     if ( matched_observer == NULL ){
-	ZRT_LOG(L_ERROR, "Invalid nvram section %s", GET_STRING(section_name,namelen));
+	ZRT_LOG(L_ERROR, 
+		"Not found observer for nvram section %s", GET_STRING(section_name,namelen));
     }
     return matched_observer;
 }
@@ -167,7 +168,24 @@ parse_section( struct NvramLoader* nvram,
     if ( get_parsed_records(records, section_data, count, &observer->keys) ){
 	/*parameters parsed correctly and seems to be correct*/
 	records->observer = observer;
-	ZRT_LOG(L_INFO, "nvram parsed record count=%d", records->count);
+	/*print section detailed records*/
+	ZRT_LOG(L_BASE, "nvram section [%s] has observer,records count=%d", 
+		observer->observed_section_name, records->count);
+	int i;
+	struct ParsedRecord *r;
+	for(i=0; i < records->count; i++){
+	    if ( (r=&records->records[i]) != NULL ){
+		ZRT_LOG(L_BASE, "nvram record #%d", i);
+		int j=0;
+		struct ParsedParam* p;
+		while( j < observer->keys.count && 
+		       (p=&r->parsed_params_array[j++]) != NULL ){
+		    ZRT_LOG(L_BASE, "%s=%s", 
+			    observer->keys.keys[p->key_index],
+			    GET_STRING(p->val, p->vallen) );
+		}
+	    }
+	}
     }
     return records->count?records:NULL; 
 }
@@ -218,10 +236,6 @@ void nvram_parse(struct NvramLoader* nvram){
 			       &nvram->nvram_data[section->offset_start],
 			       section->offset_end - section->offset_start, 
 			       observer) != NULL ){
-		ZRT_LOG(L_INFO, "parsed nvram section#%d: %s, records count=%d", 
-			nvram->parsed_sections_count,
-			GET_STRING(section->name, section->name_len), 
-			nvram->parsed_sections[nvram->parsed_sections_count].count);
 		++nvram->parsed_sections_count;
 	    }
 	}

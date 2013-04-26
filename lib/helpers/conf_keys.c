@@ -17,7 +17,7 @@ static int add_key_to_list(struct KeyList* list, const char* key){
     assert(list);
     /*copy key up to maximum length*/
     strncpy( list->keys[list->count], key, NVRAM_MAX_KEY_LENGTH );
-    ZRT_LOG(L_SHORT, "%s", key);
+    ZRT_LOG(L_INFO, "%s", key);
     /*if folowing assert is raised then just increase NVRAM_MAX_KEYS_COUNT_IN_RECORD value*/
     assert(list->count<NVRAM_MAX_KEYS_COUNT_IN_RECORD);
     return list->count++; /*get index of added key*/

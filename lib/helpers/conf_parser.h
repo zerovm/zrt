@@ -32,8 +32,9 @@ struct ParsedParam{
 };
 
 #define ALLOCA_PARAM_VALUE(parsed_param, str_value_pp){			\
-	*str_value_pp = calloc( parsed_param.vallen+1, 1 );		\
+	*str_value_pp = alloca( parsed_param.vallen+1 );		\
 	memcpy( *str_value_pp, parsed_param.val, parsed_param.vallen);	\
+	*str_value_pp[parsed_param.vallen] = '\0';			\
     }
 
 

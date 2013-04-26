@@ -14,10 +14,11 @@
 
 
 /*log levels*/
-#define L_SHORT 1
-#define L_ERROR 1
-#define L_INFO 2
-#define L_EXTRA 3
+#define L_BASE  1   /*log only base zrt data*/
+#define L_ERROR 1   /*log errors*/
+#define L_SHORT 2  
+#define L_INFO  3
+#define L_EXTRA 4
 
 #define VERBOSITY_ENV "VERBOSITY"
 
@@ -50,7 +51,7 @@
     if ( __zrt_log_is_enabled() && __zrt_log_fd() > 0 ){		\
 	if ( __zrt_log_prolog_mode_is_enabled() ){			\
 	    /*write directly into channel always if logfile defined*/	\
-	    tfp_printf(#v_123 " prolog %s:%d; " fmt_123 "\n",		\
+	    tfp_printf("L_BASE PROLOG %s:%d " fmt_123 "\n",		\
 		       __FILE__, __LINE__, __VA_ARGS__);		\
 	    /*flush data prepared in internal buffer by tfp_printf*/	\
 	    __zrt_log_write(__zrt_log_fd(), NULL, 0, 0);		\
@@ -61,9 +62,9 @@
 	    if( __zrt_log_verbosity() >= v_123 &&			\
 		(debug_handle_123=__zrt_log_debug_get_buf(&buf__123)) >= 0 ){ \
 		int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,	\
-				       #v_123 " %s; [%s]; %s, %d: " fmt_123 "\n", \
-				       __FILE__, __zrt_log_syscall_stack_str(), \
-				       __func__, __LINE__, __VA_ARGS__); \
+				       #v_123 " %s:%d; [%s]- " fmt_123 "\n", \
+				       __FILE__, __LINE__,		\
+				       __zrt_log_syscall_stack_str(), __VA_ARGS__); \
 		__zrt_log_write(debug_handle_123, buf__123, len_123, 0); \
 	    }								\
 	}								\
@@ -74,7 +75,7 @@
 	char *buf__123;							\
 	int debug_handle = __zrt_log_debug_get_buf(&buf__123);		\
 	int len;							\
-	if( debug_handle > 0 ){						\
+	if( debug_handle > 0 && __zrt_log_verbosity() >= L_SHORT ){	\
 	    len = snprintf(buf__123, LOG_BUFFER_SIZE, "%060d\n", 0 );	\
 	    __zrt_log_write(debug_handle, buf__123, len, 0);		\
 	}								\

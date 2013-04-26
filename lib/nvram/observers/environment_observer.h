@@ -17,4 +17,10 @@
 /*get static interface object not intended to destroy after using*/
 struct MNvramObserver* get_env_observer();
 
+/*before handling environment section set buffer to store all parsed env pairs*/
+void set_environments_buffer(char* buffer, int bufsize);
+/*resulted array ready to use by prolog */
+void get_env_array(char **envs);
+
+
 #endif /* __ENVIRONMENT_OBSERVER_H__ */

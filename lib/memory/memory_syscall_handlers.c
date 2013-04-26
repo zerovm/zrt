@@ -28,7 +28,7 @@
 	int err = posix_memalign(addr_p, rounded_memsize, memsize);	\
 	if ( err != 0 ){						\
 	    SET_ERRNO(err);						\
-	    ZRT_LOG(L_ERROR, "posix_memalign(%p,alignment=%u,size=%lld) failed", \
+	    ZRT_LOG(L_SHORT, "warning: posix_memalign(%p,alignment=%u,size=%lld) failed", \
 		    *addr_p, rounded_memsize, memsize  );		\
 	}								\
 	else{								\
@@ -41,7 +41,7 @@
 #define ALLOC_MMAP_MEMORY_MALLOC(addr_p, memsize){			\
 	if ( ( *addr_p = malloc( memsize ) ) == NULL ){			\
 	    SET_ERRNO(errno);						\
-	    ZRT_LOG(L_ERROR, "malloc(%lld) failed", memsize );		\
+	    ZRT_LOG(L_SHORT, "malloc(%lld) failed", memsize );		\
 	}								\
 	else{								\
 	    ZRT_LOG(L_SHORT, "malloc(%lld) ret addr=%p", memsize, *addr_p ); \

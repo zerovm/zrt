@@ -1036,7 +1036,7 @@ struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_all
     ZRT_LOG(L_EXTRA, "dirs count loaded from manifest=%d", s_manifest_dirs.dircount);
     int i;
     for ( i=0; i < s_manifest_dirs.dircount; i++ ){
-        ZRT_LOG( L_EXTRA, "dir[%d].handle=%d; .path=%s; .nlink=%d", i,
+        ZRT_LOG( L_EXTRA, "dir[%d].handle=%d; .path=%20s; .nlink=%d", i,
 		 s_manifest_dirs.dir_array[i].handle,
 		 s_manifest_dirs.dir_array[i].path,
 		 s_manifest_dirs.dir_array[i].nlink);

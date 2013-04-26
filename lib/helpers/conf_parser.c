@@ -18,6 +18,8 @@
 #include "conf_parser.h"
 #include "conf_keys.h"
 
+//#define PARSER_DEBUG_LOG
+
 #define IS_IT_CHAR_TO_STRIP(chr) strchr(STRIPING_CHARS, chr)
 
 enum ParsingStatus{
@@ -84,8 +86,10 @@ get_parsed_record(struct ParsedRecord* record,
 	int key_index =  keys->find(keys, params_array[i].key, params_array[i].keylen);
 	/*if current key is wrong*/
 	if ( key_index < 0 ){
+#ifdef PARSER_DEBUG_LOG
 	    ZRT_LOG(L_ERROR, "invalid key '%s'", 
 		    GET_STRING(params_array[i].key, params_array[i].keylen ) );
+#endif
 	    return NULL; /*error*/
 	}
 	else{
@@ -113,7 +117,9 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
     enum ParsingStatus st = EStProcessing;
     enum ParsingStatus st_prev = st;
 
+#ifdef PARSER_DEBUG_LOG
     ZRT_LOG(L_INFO, P_TEXT, "parsing");
+#endif
     records->count=0;
     int cursor=0;
     do {
@@ -126,7 +132,9 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 	    else{
 		st = EStComment;
 	    }
+#ifdef PARSER_DEBUG_LOG
 	    ZRT_LOG(L_EXTRA, "cursor=%d EStComment", cursor);
+#endif
         }
         /* If comma in non comment state OR 
 	 * for new line OR 
@@ -136,13 +144,17 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 		  text[cursor] == '\n' ){
 	    if ( st == EStProcessing ){
 		/*if now processing data then handle it*/
+#ifdef PARSER_DEBUG_LOG
 		ZRT_LOG(L_EXTRA, "cursor=%d EStToken", cursor);
+#endif
 		st_prev = EStProcessing;
 		st = EStToken;
 	    }
 	    else{
 		/*start processing of significant data*/
+#ifdef PARSER_DEBUG_LOG
 		ZRT_LOG(L_EXTRA, "cursor=%d EStProcessing", cursor);
+#endif
 		st = EStProcessing;
 		/*save begin of unprocessed data to know start position of unhandled data*/
 		lex_cursor = cursor+1;
@@ -168,20 +180,25 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
             lex_length=0;
             break;
         case EStToken:{
+#ifdef PARSER_DEBUG_LOG
 	    ZRT_LOG(L_INFO, "swicth EStToken: lex_cursor=%d, lex_length=%d, pointer=%p", 
 		    lex_cursor, lex_length, &text[lex_cursor]);
 	    /*log non-striped lexema*/
 	    ZRT_LOG(L_EXTRA, "lex= '%s'", GET_STRING(&text[lex_cursor], lex_length));
-
+#endif
 	    uint16_t striped_token_len=0;
 	    const char* striped_token = 
 		strip_all(&text[lex_cursor], lex_length, &striped_token_len );
+#ifdef PARSER_DEBUG_LOG
 	    ZRT_LOG(L_INFO, "swicth EStToken: striped token len=%d, pointer=%p", 
 		    striped_token_len, striped_token);
+#endif
 	    /*If token has data, try to extract key and value*/
 	    if ( striped_token_len > 0 ){
+#ifdef PARSER_DEBUG_LOG
 		/*log striped token*/
 		ZRT_LOG(L_INFO, "token= '%s'", GET_STRING(striped_token, striped_token_len));
+#endif
 		/*parse pair 'key=value', strip spaces */
 		int parsed_key_index = -1;
 		if ( !extract_key_value( striped_token, striped_token_len,
@@ -195,15 +212,19 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 			parsed_key_index = key_list->find(key_list, 
 							  key_val_parse.key,
 							  key_val_parse.keylen);
+#ifdef PARSER_DEBUG_LOG
 			ZRT_LOG(L_INFO, "key found, key=%s, len=%d index=%d", 
 				GET_STRING(key_val_parse.key,
 					   key_val_parse.keylen),
 				key_val_parse.keylen, parsed_key_index);
+#endif
 			if ( parsed_key_index >= 0 ){
 			    if ( temp_keys_parsed[parsed_key_index].key != NULL ){
 				/*parsed item with the same key already saved, and new 
 				  one will be ignored*/
+#ifdef PARSER_DEBUG_LOG
 				ZRT_LOG(L_ERROR, P_TEXT, "last key duplicated, skipped");
+#endif
 			    }
 			    else{
 				/*save parsed key,value*/
@@ -215,20 +236,26 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 			}
 		    }
 		else{
+#ifdef PARSER_DEBUG_LOG
 		    ZRT_LOG(L_ERROR, P_TEXT, "last token parsing error");
+#endif
 		}
 
 		    
 		/*If get waiting count of record parameters*/
 		if ( key_list->count == parsed_params_count ){
+#ifdef PARSER_DEBUG_LOG
 		    ZRT_LOG(L_INFO, "key_list->count =%d", parsed_params_count);
+#endif
 		    /*parsed params count is enough to save it as single record.
 		     *add it to parsed records array*/
 		    struct ParsedRecord record;
 		    if ( get_parsed_record(&record,
 					   key_list, temp_keys_parsed, parsed_params_count) ){
 			/*record parsed OK*/
+#ifdef PARSER_DEBUG_LOG
 			ZRT_LOG(L_INFO, "save record #%d OK", records->count);
+#endif
 			records->records[records->count++] = record;
 		    }
 		    /* current record parsed, reset params count 
@@ -239,7 +266,9 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
             }
 	    /*restore processing state*/
 	    st = st_prev;
+#ifdef PARSER_DEBUG_LOG
 	    ZRT_LOG(L_INFO, P_TEXT, "restore previous parsing state");
+#endif
 	    /*save begin of unprocessed data to know start position of unhandled data*/
 	    lex_cursor = cursor;
 	    lex_length=0;
@@ -250,8 +279,9 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
         }
 
     }while( cursor < len );
-
-    ZRT_LOG(L_INFO, P_TEXT, "return records");
+#ifdef PARSER_DEBUG_LOG
+    ZRT_LOG(L_INFO, P_TEXT, "Section parsed");
+#endif
     return records; /*complete if OK, or NULL if error*/
 }
 

@@ -31,7 +31,7 @@
 
 int zrt_zcall_link(const char *oldpath, const char *newpath){
     if ( !is_zrt_ready() ){
-	ZRT_LOG(L_SHORT, "%s %s", __func__, "can't be used while prolog running");
+	ZRT_LOG(L_SHORT, "%s %s", __func__, PROLOG_WARNING);
 	/*while not initialized completely*/
 	errno=ENOSYS;
 	return -1;

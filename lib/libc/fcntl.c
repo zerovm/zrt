@@ -48,7 +48,7 @@ const char *byte_to_binary(int x)
 
 int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
     if ( !is_zrt_ready() ){
-	ZRT_LOG(L_SHORT, "%s %s", __func__, "can't be used while prolog running");
+	ZRT_LOG(L_SHORT, "%s %s", __func__, PROLOG_WARNING);
 	/*while not initialized completely*/
 	errno=ENOSYS;
 	return -1;

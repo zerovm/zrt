@@ -103,4 +103,6 @@
 	}						\
     }
 
+#define PROLOG_WARNING "Can not run - ZRT not ready"
+
 #endif /* ZRT_HELPER_MACROS_H_ */

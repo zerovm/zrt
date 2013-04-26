@@ -39,6 +39,8 @@ int save_as_tar(const char *dir_path, const char *tar_path );
 void handle_fstab_record(struct MNvramObserver* observer,
 			 struct ParsedRecord* record,
 			 void* obj1, void* obj2){
+    assert(record);
+
     /*as temp solution, need to do good solution to export tar*/
     memset(&s_export_tarrecords, '\0', sizeof(s_export_tarrecords));
 
@@ -131,8 +133,6 @@ void handle_tar_export(){
 	int res = save_as_tar(mount_path, channel_alias);
 	ZRT_LOG(L_SHORT, "save_as_tar res=%d, dirpath=%s, tar_path=%s", 
 		res, mount_path, channel_alias);
-	free(mount_path);
-	free(channel_alias);
     }
 }
 

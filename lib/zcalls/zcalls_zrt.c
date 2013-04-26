@@ -34,6 +34,7 @@
 #include "transparent_mount.h"
 #include "stream_reader.h"
 #include "path_utils.h"             /*alloc_absolute_path_from_relative*/
+#include "environment_observer.h"
 #include "fstab_observer.h"
 #include "nvram_loader.h"
 #include "mounts_manager.h"
@@ -91,12 +92,10 @@ static void zrt_init( const struct UserManifest const* manifest ){
 
 /*second step zrt initializer*/
 static void zrt_setup_finally(){
-    /* using of channels_mount directly to preallocate standard channels sdtin, stdout, stderr */
-    /* logPushFilter(name,canberead,canbewrite,handle); */
+    /*open standard files to conform C*/
     s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
     s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
     s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
-    /* logPopFilter(); */
 
     /* get time stamp from the environment, and cache it */
     char *stamp = getenv( TIMESTAMP_STR );
@@ -121,19 +120,28 @@ static void zrt_setup_finally(){
 
 #ifdef FSTAB_CONF_ENABLE
 #define HANDLE_ONLY_FSTAB_SECTION fstab_observer
+#define HANDLE_ONLY_ENV_SECTION   env_observer
     ZRT_LOG(L_SHORT, "nvram object size in stack=%u bytes", sizeof(struct NvramLoader));
     /*Get static fstab observer object, it's memory should not be freed*/
     struct MNvramObserver* fstab_observer = get_fstab_observer();
+    struct MNvramObserver* env_observer   = get_env_observer();
     struct NvramLoader nvram;
     construct_nvram_loader( &nvram );
     /*add observers here to handle various sections of config data*/
     nvram.add_observer(&nvram, fstab_observer);
+    nvram.add_observer(&nvram, env_observer);
     /*if readed not null bytes and result non negative then doing parsing*/
     if ( nvram.read(&nvram, DEV_NVRAM) > 0 ){
         nvram.parse(&nvram);
-	ZRT_LOG(L_SHORT, "%s", "nvram parsing complete");
+	ZRT_LOG(L_SHORT, "%s", "nvram handle fstab");
 	nvram.handle(&nvram, HANDLE_ONLY_FSTAB_SECTION, s_channels_mount, s_transparent_mount);
-	ZRT_LOG(L_SHORT, "%s", "nvram handled");
+	ZRT_LOG(L_SHORT, "%s", "nvram handle envs");
+	char envbuf[1000];
+	set_environments_buffer(envbuf, 1000);
+	nvram.handle(&nvram, HANDLE_ONLY_ENV_SECTION, NULL, NULL);
+	char* env[NVRAM_MAX_RECORDS_IN_SECTION];
+	get_env_array( (char**)&env);
+	ZRT_LOG(L_SHORT, "%s", "nvram handle args");
     }
 
     fstab_observer->cleanup( fstab_observer );
@@ -233,7 +241,7 @@ int  zrt_zcall_enhanced_read(int handle, void *buf, size_t count, size_t *nread)
 int  zrt_zcall_enhanced_write(int handle, const void *buf, size_t count, size_t *nwrote){
     int ret=-1;
     int log_state = __zrt_log_is_enabled();
-    /*disable logging write calls related to debug, stdout and stderr channel */
+    /*disable logging while writing to stdout and stderr channel */
     if ( handle <= 2 && log_state ){
 	__zrt_log_enable(0);
     }
@@ -409,31 +417,32 @@ void zrt_zcall_enhanced_zrt_setup(void){
     zrt_init( setup );
 
     /* debug print */
-    ZRT_LOG(L_SHORT, "DEBUG INFORMATION%s", "");
-    ZRT_LOG(L_SHORT, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
-    ZRT_LOG(L_SHORT, "user memory size = %u", setup->heap_size);
+    ZRT_LOG(L_BASE, P_TEXT, "DEBUG INFORMATION");
+    ZRT_LOG(L_BASE, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
+    ZRT_LOG(L_BASE, "user memory size = %u", setup->heap_size);
     ZRT_LOG_DELIMETER;
-    ZRT_LOG(L_SHORT, "sizeof(struct ZVMChannel) = %d", sizeof(struct ZVMChannel));
 
     /*print environment variables*/
     i=0;
     while( envp[i] ){
-        ZRT_LOG(L_SHORT, "envp[%d] = '%s'", i, envp[i]);
+        ZRT_LOG(L_BASE, "envp[%d] = '%s'", i, envp[i]);
 	++i;
     }
 
-    ZRT_LOG(L_SHORT, "channels count = %d", setup->channels_count);
+    ZRT_LOG(L_BASE, "channels count = %d", setup->channels_count);
     ZRT_LOG_DELIMETER;
     /*print channels list*/
     for(i = 0; i < setup->channels_count; ++i)
     {
-        ZRT_LOG(L_SHORT, "channel[%d].name = '%s'", i, setup->channels[i].name);
-        ZRT_LOG(L_SHORT, "channel[%d].type = %d", i, setup->channels[i].type);
-        ZRT_LOG(L_SHORT, "channel[%d].size = %lld", i, setup->channels[i].size);
-        ZRT_LOG(L_SHORT, "channel[%d].limits[GetsLimit] = %lld", i, setup->channels[i].limits[GetsLimit]);
-        ZRT_LOG(L_SHORT, "channel[%d].limits[GetSizeLimit] = %lld", i, setup->channels[i].limits[GetSizeLimit]);
-        ZRT_LOG(L_SHORT, "channel[%d].limits[PutsLimit] = %lld", i, setup->channels[i].limits[PutsLimit]);
-        ZRT_LOG(L_SHORT, "channel[%d].limits[PutSizeLimit] = %lld", i, setup->channels[i].limits[PutSizeLimit]);
+        ZRT_LOG(L_BASE, "channel[%2d].name = '%s'", i, setup->channels[i].name);
+        ZRT_LOG(L_BASE, "channel[%2d].type=%d, size=%lld", i, 
+		setup->channels[i].type, setup->channels[i].size);
+        ZRT_LOG(L_BASE, "channel[%2d].limits[GetsLimit=%7lld, GetSizeLimit=%7lld]", i, 
+		setup->channels[i].limits[GetsLimit], 
+		setup->channels[i].limits[GetSizeLimit]);
+        ZRT_LOG(L_BASE, "channel[%2d].limits[PutsLimit=%7lld, PutSizeLimit=%7lld]", i, 
+		setup->channels[i].limits[PutsLimit],
+		setup->channels[i].limits[PutSizeLimit]);
     }
     ZRT_LOG_DELIMETER;
     ZRT_LOG(L_SHORT, "_SC_PAGE_SIZE=%ld", sysconf(_SC_PAGE_SIZE));
