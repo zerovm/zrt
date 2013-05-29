@@ -3,18 +3,26 @@ ZRT - ZeroVM runtime library
 ---------------------------------------------------------------
 {DOCPATH}
 
-1. ZRT is a part of libc, implementing syscalls and has own
-filesystem. Direct syscalls from user code to host system are not
-allowed, and such unsecure applications should not be validated by
-ZeroVM, see ZeroVM docs.
-2. Currently ZRT own 2 filesystems:
+1. ZRT it is an environment for user application, simple POSIX
+Operating System that itself implements system calls handlers. ZRT is a
+part of GNU libc that using plaggable interface to access syscall
+handlers implemented on side of ZRT environment. Direct syscalls from
+user code to host system are not allowed, untrusted code at all should
+be prevalidated by ZeroVM before execution, see ZeroVM docs.
+Untrusted code - it's an any code running under ZeroVM. Both zerovm
+environment and user code running in the same address space.
+2. Implemented 2 own filesystems that also accessible via plaggable
+interface: RW FS hosted in memory and FS with an unmutable structure
+on top of channels; All FSs accessible via single object - main
+filesystem that combines implemented FSs and translates requests to
+real FS implementations depending on file path.
 2.1 Rewritable filesystem, available in user space as mounted on "/"
 root. ZRT creates it at runtime in memory, and injects it by real
 directories/files if nvram feature used during startup before main()
 entry point.  All changes made in this filesystem will lost at nexe
 exit.
 2.2 Channels mount filesystem - it is wrapper around zerovm channels,
-it's mounted into "/dev" folder. It has static structure based on
+and mounted into "/dev" folder. It has static structure based on
 channels aliases list, and interpret channels as devices. All channels
 aliases listed in zerovm manifest file should be started with /dev/
 alias, that represents their belonging to /dev/ mount. Channels whose
@@ -46,4 +54,15 @@ with alias name "/dev/debug". If this channel is defined then all
 debugging ZRT information will go into the debug channel If debug
 channel is not defined no debug info will available (apart from system
 logs). Debugging level are regulated by VERBOSITY environment
-variables and support 1,2,3 values.
+variables and supports 1,2,3 values.
+2.2.3 Nvram channel, it is a config file for ZRT, has alias
+"/dev/nvram". It allows comments starting with "#", and different
+sections names expected in square brackets. Currently supported only
+fstab section, but sections env, args coming soon. Fstab section
+allows at start of ZRT session importing of TAR archive contents with
+saving directory structure, into RW FS in memory. And exporting of RW
+FS contents into tar archive just at "exit" syscall handler.
+example below importing and exporting files related to FS in memory:
+[fstab] 
+channel=/dev/mount/import, mountpoint=/, access=ro
+channel=/dev/mount/export,  mountpoint=/singles, access=wo
