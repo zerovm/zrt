@@ -18,8 +18,13 @@
 
 struct MNvramObserver;
 
+#define COMMENT_CHAR        '#'
 #define KEY_VALUE_DELIMETER '='
 #define STRIPING_CHARS      " \t\n"
+#define ESCAPE_COMMA        "\x2c" /* , */
+#define ESCAPE_DQUOTES      "\x22" /* " */
+#define ESCAPE_BSLASH       "\x5c" /* \ */
+#define ESCAPE_CARRET       "\x0a" /* \n */
 
 /*forward declarations*/
 struct KeyList;
@@ -63,6 +68,21 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 					 const char* text, int len, struct KeyList* key_list);
 
 const char* strip_all(const char* str, int len, uint16_t* striped_len );
+
+int parse_args(struct ParsedParam* parsed_args_array, int args_array_len,
+	       const char* args_buf, int bufsize);
+
+/*unescape characters: 
+  \d2c into ','  
+  \d22 into '"'
+  \d5c into '\'
+  \d0a into '\n'
+  @param dest must be not less than source buf
+  @return length of data in dest buf*/
+int unescape_string_copy_to_dest(const char* source, int sourcelen, char* dest);
+
+/*prolog safe not using, can'r use atoi from libc because using prolog */
+char str_hex_to_int_not_using_locale(char *two_digits_str);
 
 #endif //CONF_PARSER_H
 

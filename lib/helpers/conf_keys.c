@@ -29,7 +29,7 @@ static int key_find(const struct KeyList* list, const char* key, int keylen){
     for(i=0; i < list->count; i++ ){
 	/*compare key ignoring case*/
 	int etalonkeylen = strlen(list->keys[i]);
-	if ( !strncasecmp(key, list->keys[i], etalonkeylen) &&
+	if ( !strncmp(key, list->keys[i], etalonkeylen) &&
 	     keylen == etalonkeylen )
 	    {
 		return i; /*get key index, specified key macthed*/

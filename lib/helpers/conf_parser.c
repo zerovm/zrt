@@ -1,5 +1,5 @@
-/* parse text buffers and extract values in key=value format
- * comments started with '#' are allowed
+/* parse text buffers and extract values in key=value format,
+ * comments are allowed
  * 
  * conf_parser.c
  *
@@ -7,6 +7,7 @@
  *      Author: YaroslavLitvinov
  */
 
+#define _GNU_SOURCE
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,11 +42,11 @@ struct internal_parse_data{
  ********************************************/
 const char* strip_all(const char* str, int len, uint16_t* striped_len ){
     int begin, end;
-    /*strip from begin*/
+    /*strip left*/
     for( begin=0; begin < len; begin++ ){
 	if ( ! IS_IT_CHAR_TO_STRIP( str[begin] ) ) break;
     }
-    /*strip from end*/
+    /*strip right*/
     for( end=len-1; len > 0; end-- ){
 	if ( ! IS_IT_CHAR_TO_STRIP( str[end] ) ) break;
     }
@@ -115,7 +116,7 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
     struct internal_parse_data temp_keys_parsed[NVRAM_MAX_KEYS_COUNT_IN_RECORD]; 
     memset(&temp_keys_parsed, '\0', sizeof(temp_keys_parsed));
     enum ParsingStatus st = EStProcessing;
-    enum ParsingStatus st_prev = st;
+    enum ParsingStatus st_new = st;
 
 #ifdef PARSER_DEBUG_LOG
     ZRT_LOG(L_INFO, P_TEXT, "parsing");
@@ -123,13 +124,15 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
     records->count=0;
     int cursor=0;
     do {
-        /*set comment stat if comment start found*/
-        if ( text[cursor] == '#' ){
+        /*set comment state if comment begin located*/
+        if ( text[cursor] == COMMENT_CHAR ){
 	    if ( st == EStProcessing ){
-		st_prev = EStComment;
+		/*retrieve already processed data, if has, before comment begin*/
+		st_new = EStComment;
 		st = EStToken;
 	    }
 	    else{
+		/*just a comment, nothing processed previously*/
 		st = EStComment;
 	    }
 #ifdef PARSER_DEBUG_LOG
@@ -138,16 +141,17 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
         }
         /* If comma in non comment state OR 
 	 * for new line OR 
-	 * if previos state was complete token 
+	 * double quotes " begins text block for processing
+	 * if previous state was complete token 
          * then set processing state to catch new processing data by cursor position*/
-        else if ( (st != EStComment && text[cursor] == ',') ||
-		  text[cursor] == '\n' ){
+        else if ( (st != EStComment && ( text[cursor] == ',' )) 
+		  || text[cursor] == '\n' ){
 	    if ( st == EStProcessing ){
 		/*if now processing data then handle it*/
 #ifdef PARSER_DEBUG_LOG
 		ZRT_LOG(L_EXTRA, "cursor=%d EStToken", cursor);
 #endif
-		st_prev = EStProcessing;
+		st_new = EStProcessing;
 		st = EStToken;
 	    }
 	    else{
@@ -163,7 +167,7 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 		lex_length=-1; 
 	    }
         }
-	/*parsing data right bound reached*/
+	/*right bound reached of processing data*/
 	else if (cursor == len-1){
 	    /*extend current token up to last char*/
 	    ++lex_length;
@@ -179,6 +183,7 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
             lex_cursor = -1;
             lex_length=0;
             break;
+	    /*token now is ready to retrieve and check*/
         case EStToken:{
 #ifdef PARSER_DEBUG_LOG
 	    ZRT_LOG(L_INFO, "swicth EStToken: lex_cursor=%d, lex_length=%d, pointer=%p", 
@@ -265,7 +270,7 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
                 }
             }
 	    /*restore processing state*/
-	    st = st_prev;
+	    st = st_new;
 #ifdef PARSER_DEBUG_LOG
 	    ZRT_LOG(L_INFO, P_TEXT, "restore previous parsing state");
 #endif
@@ -283,6 +288,115 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
     ZRT_LOG(L_INFO, P_TEXT, "Section parsed");
 #endif
     return records; /*complete if OK, or NULL if error*/
+}
+
+
+/*****************************************
+ * command line arguments parsing
+ *****************************************/
+
+/*parsed arg, save it*/
+#define SAVE_PARSED_ARG(records, r_array_len, r_count, parsed)	\
+    if ( r_count < r_array_len ){				\
+	records[(r_count)++] = parsed;				\
+	(parsed).val = NULL, (parsed).vallen=0;			\
+    }
+    
+
+int parse_args(struct ParsedParam* parsed_args_array, int args_array_len,
+	       const char* args_buf, int bufsize){
+    struct ParsedParam temp = {0, NULL, 0};
+    int count=0;
+    int index=0;
+
+    while( index < bufsize ){
+	if ( args_buf[index] == ' ' || 
+	     args_buf[index] == '\t' ){
+	    if ( temp.val != NULL ){
+		temp.vallen = &args_buf[index] - temp.val;
+		SAVE_PARSED_ARG(parsed_args_array, args_array_len, count, temp);
+	    }
+	}
+	/*located " after space, skipped if not preceded by space */
+	else if ( args_buf[index] == '"' && temp.val == NULL ){
+	    char* double_quote=NULL;
+	    if ( index+1 < bufsize && (double_quote=strchrnul(args_buf+index+1, '"')) != NULL ){
+		/*extract value between double quotes*/
+		temp.val = (char*)&args_buf[index+1];
+		temp.vallen = double_quote - temp.val;
+		index += temp.vallen +1;
+		SAVE_PARSED_ARG(parsed_args_array, args_array_len, count, temp);
+	    }
+	    else{
+		temp.val = (char*)&args_buf[index];
+	    }
+	}
+	else if ( temp.val == NULL ){
+	    temp.val = (char*)&args_buf[index];
+	}
+	++index;
+    }
+
+    //save last parsed data
+    if ( temp.val != NULL ){
+	temp.vallen = &args_buf[index-1] - temp.val;
+	SAVE_PARSED_ARG(parsed_args_array, args_array_len, count, temp);
+    }
+    return count;
+}
+
+#define MATCH_HEX(chr)							\
+    ((chr >= '0' && chr <= '9') || (chr >= 'a' && chr <= 'z') ||	\
+     (chr >= 'A' && chr <= 'Z'))? 1 : 0
+/*example: aa, 0a*/
+#define MATCH_2HEX_DIGITS(hexstr)				\
+    (MATCH_HEX( (hexstr)[0] ) != 0 && MATCH_HEX( (hexstr)[1] ) != 0)
+#define MATCH_2ESCAPING_CHARS(stre)			\
+    ((stre)[0] == '\\' && (stre)[1] == 'x')? 1 : 0
+
+int unescape_string_copy_to_dest(const char* source, int sourcelen, char* dest){
+    char tmp[3];
+    int index_in=0;
+    int index_out=0;
+    while( index_in < sourcelen ){
+	/*try to escape if has enough length for conversion*/
+	if ( index_in + 3 < sourcelen /*if escape sequence has enough len*/ && 
+	     MATCH_2ESCAPING_CHARS(source+index_in) &&
+	     MATCH_2HEX_DIGITS(source+index_in+2) ){
+	    /*escaping chars and hex values are validated*/
+	    char* hex = (char*)(source+index_in+2);
+	    tmp[0] = hex[0];
+	    tmp[1] = hex[1];
+	    tmp[2] = '\0';
+	    dest[index_out++] = str_hex_to_int_not_using_locale(tmp);
+	    index_in+=4;
+	}
+	else{
+	    dest[index_out++] = source[index_in++];
+	}
+    }
+    return index_out;
+ }
+
+/*convert validated single hex character into integer*/
+#define GET_VALIDATED_HEX_CHAR_TO_INT(hexchar, hexint)				\
+    if (hexchar >= '0' && hexchar <= '9')				\
+	hexint = hexchar-'0';						\
+    if (hexchar >= 'a' && hexchar <= 'z')				\
+	hexint = 10+hexchar-'a';						\
+    if (hexchar >= 'A' && hexchar <= 'Z')				\
+	hexint = 10+hexchar-'A';
+
+
+char str_hex_to_int_not_using_locale(char * two_digits_str)
+{
+    char temp;
+    char res;
+    GET_VALIDATED_HEX_CHAR_TO_INT(two_digits_str[0], temp);
+    temp <<= 4;
+    GET_VALIDATED_HEX_CHAR_TO_INT(two_digits_str[1], res);
+    res |= temp;
+    return res;
 }
 
 //end of file

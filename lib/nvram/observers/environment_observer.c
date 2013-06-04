@@ -22,39 +22,32 @@
 #define ENV_PARAM_VALUE_KEY_INDEX   1
 
 static struct MNvramObserver s_env_observer;
-static char* s_temp_buffer;
-static int   s_temp_bufsize;
-static int   s_temp_bufindex;
 
-static void add_pair_to_temp_buffer(const char* name, int len, const char* val, int len2){
-    if ( s_temp_bufindex+len+len2 < s_temp_bufsize ){
-	memcpy(s_temp_buffer+s_temp_bufindex, name, len);
-	s_temp_bufindex+=len;
-	s_temp_buffer[s_temp_bufindex++] = '=';
-	memcpy(s_temp_buffer+s_temp_bufindex, val, len2);
-	s_temp_buffer[s_temp_bufindex++] = '\0';
+static void add_pair_to_temp_buffer(char* buf, int bufsize, int* index,
+				    const char* name, int len, const char* val, int len2){
+    /*add env pairs into buffer, every pair end must be null term char '\0' */
+    if ( *index+len+len2 < bufsize ){
+	memcpy(buf+*index, name, len);
+	(*index)+=len;
+	buf[ (*index)++ ] = '=';
+	memcpy(buf+*index, val, len2);
+	(*index)+=len2;
+	buf[ (*index)++ ] = '\0';
     }
     else{
 	ZRT_LOG(L_BASE, "can't save env %s=%s, insufficient buffer size=%d/%d",
-		name, val, s_temp_bufindex+len+len2+1, s_temp_bufsize );
+		name, val, *index+len+len2+1, bufsize );
     }
 }
 
-void set_environments_buffer(char* buffer, int bufsize){
-    assert(buffer);
-    s_temp_buffer = buffer;
-    s_temp_bufsize = bufsize;
-    s_temp_bufindex = 0;
-}
-
-void get_env_array(char **envs){
+void get_env_array(char **envs, char* buf, int bufsize){
     int idx=0;
     int handled_buf_idx=0;
     int i;
     while( idx < NVRAM_MAX_RECORDS_IN_SECTION ){
-	for(i=handled_buf_idx; i < s_temp_bufindex; i++ ){
-	    if ( s_temp_buffer[i] == '\0' ){
-		envs[idx++] = &s_temp_buffer[handled_buf_idx];
+	for(i=handled_buf_idx; i < bufsize; i++ ){
+	    if ( buf[i] == '\0' ){
+		envs[idx++] = &buf[handled_buf_idx];
 		handled_buf_idx = i+1;
 		continue;
 	    }
@@ -65,10 +58,16 @@ void get_env_array(char **envs){
     }
 }
 
-/*interface functions*/
+/*interface function
+ while handling data it's saving it to buffer provided in obj1 and updating 
+ used buffer space (index) in obj3 param*/
 void handle_env_record(struct MNvramObserver* observer,
 		       struct ParsedRecord* record,
-		       void* obj1, void* obj2){
+		       void* obj1, void* obj2, void* obj3){
+    char* buffer = (char*)obj1; /*obj1 - char* */
+    int bufsize = *(int*)obj2;  /*obj2 - int*  */
+    int* index = (int*)obj3;    /*obj3 - int*  */
+    assert(buffer); /*into buffer will be saved results*/
     assert(record);
     /*get param*/
     char* envname = NULL;
@@ -79,13 +78,11 @@ void handle_env_record(struct MNvramObserver* observer,
     ALLOCA_PARAM_VALUE(record->parsed_params_array[ENV_PARAM_VALUE_KEY_INDEX], 
 		      &envval);
     ZRT_LOG(L_SHORT, "env record: %s=%s", envname, envval);
-    add_pair_to_temp_buffer(envname, 
+    add_pair_to_temp_buffer(buffer, bufsize, index,
+			    envname, 
 			    record->parsed_params_array[ENV_PARAM_NAME_KEY_INDEX].vallen, 
 			    envval, 
 			    record->parsed_params_array[ENV_PARAM_VALUE_KEY_INDEX].vallen);
-}
-
-static void cleanup_env_observer( struct MNvramObserver* obs){
 }
 
 struct MNvramObserver* get_env_observer(){
@@ -105,7 +102,6 @@ struct MNvramObserver* get_env_observer(){
 
     /*setup functions*/
     s_env_observer.handle_nvram_record = handle_env_record;
-    s_env_observer.cleanup = cleanup_env_observer;
     ZRT_LOG(L_SHORT, "OK observer for section: %s", ENVIRONMENT_SECTION_NAME);
     return &s_env_observer;
 }

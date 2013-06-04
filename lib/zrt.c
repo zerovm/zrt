@@ -76,11 +76,10 @@ static struct zcalls_zrt_t KZcalls_zrt = {
     zrt_zcall_prolog_zrt_setup
 };
 
-/* static struct zcalls_prolog_t KZcalls_prolog = { */
-/*     zrt_zcall_prolog_read_nvram_args_envs, */
-/*     zrt_zcall_prolog_get_nvram_args_envs, */
-/*     zrt_zcall_prolog_handle_nvram_unhandled_sections */
-/* }; */
+static struct zcalls_env_args_init_t KZcalls_env_args_init = {
+    zrt_zcall_prolog_nvram_read_get_args_envs,
+    zrt_zcall_prolog_nvram_get_args_envs
+};
 
 static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
     zrt_zcall_loglibc,
@@ -118,10 +117,10 @@ __query_zcalls(int type, void** table )
 	*table = &KZcalls_nonsyscalls;
 	ret_type = type;
 	break;
-    /* case ZCALLS_PROLOG: */
-    /* 	*table = &KZcalls_prolog; */
-    /* 	ret_type = type; */
-    /* 	break; */
+    case ZCALLS_ENV_ARGS_INIT:
+    	*table = &KZcalls_env_args_init;
+    	ret_type = type;
+    	break;
     default:
 	ret_type = -1;
 	break;

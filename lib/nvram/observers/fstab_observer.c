@@ -13,7 +13,6 @@
 #include "zrt_config.h"
 
 /*switch off all of code if it's deisabled*/
-#ifdef FSTAB_CONF_ENABLE
 
 #include "zrtlog.h"
 #include "unpack_tar.h" //tar unpacker
@@ -38,7 +37,7 @@ int save_as_tar(const char *dir_path, const char *tar_path );
 
 void handle_fstab_record(struct MNvramObserver* observer,
 			 struct ParsedRecord* record,
-			 void* obj1, void* obj2){
+			 void* obj1, void* obj2, void* obj3){
     assert(record);
 
     /*as temp solution, need to do good solution to export tar*/
@@ -65,7 +64,7 @@ void handle_fstab_record(struct MNvramObserver* observer,
 	    channel_alias, mount_path, access);
 
     /*for injecting files into FS*/
-    if ( !strcasecmp(access, FSTAB_VAL_ACCESS_READ) ){
+    if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) ){
 	/*
 	 * load filesystem from channel having which name is channel_alias. 
 	 * Content of filesystem is reading from tar image channel that points to 
@@ -100,7 +99,7 @@ void handle_fstab_record(struct MNvramObserver* observer,
     }
 #ifdef FSTAB_SAVE_TAR_ENABLE
     /*save files located at mount_path into tar archive*/
-    else if ( !strcasecmp(access, FSTAB_VAL_ACCESS_WRITE) ){
+    else if ( !strcmp(access, FSTAB_VAL_ACCESS_WRITE) ){
 	struct ParsedRecord* record = &s_export_tarrecords.records[s_export_tarrecords.count];
 	struct ParsedParam* p1 = &record->parsed_params_array[FSTAB_PARAM_CHANNEL_KEY_INDEX];
 	struct ParsedParam* p2 = &record->parsed_params_array[FSTAB_PARAM_MOUNTPOINT_KEY_INDEX];
@@ -136,9 +135,6 @@ void handle_tar_export(){
     }
 }
 
-static void cleanup_fstab_observer( struct MNvramObserver* obs){
-}
-
 struct MNvramObserver* get_fstab_observer(){
     if ( s_inited_observer ) 
 	return s_inited_observer;
@@ -160,10 +156,8 @@ struct MNvramObserver* get_fstab_observer(){
 
     /*setup functions*/
     s_fstab_observer.handle_nvram_record = handle_fstab_record;
-    s_fstab_observer.cleanup = cleanup_fstab_observer;
     ZRT_LOG(L_SHORT, "OK observer for section: %s", FSTAB_SECTION_NAME);
     s_inited_observer = &s_fstab_observer;
     return s_inited_observer;
 }
 
-#endif //FSTAB_CONF_ENABLE

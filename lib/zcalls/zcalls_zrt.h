@@ -24,12 +24,8 @@
 
 #include <sys/stat.h> //mode_t
 
-/*reserved channels list*/
-#define DEV_STDIN  "/dev/stdin"
-#define DEV_STDOUT "/dev/stdout"
-#define DEV_STDERR "/dev/stderr"
-#define DEV_NVRAM  "/dev/nvram"
-
+/*@return nvram must be accessible from zcalls_prolog.c */
+struct NvramLoader*     static_nvram();
 /*get static object from zrtsyscalls.c*/
 struct MountsInterface* transparent_mount();
 

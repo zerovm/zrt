@@ -16,18 +16,30 @@
 
 struct NvramLoader{
     /*at least one observer should be added before NvramLoader::read is invoked*/
-    void (*add_observer)(struct NvramLoader* nvram, struct MNvramObserver* observer);
+    void 
+    (*add_observer)(struct NvramLoader* nvram, struct MNvramObserver* observer);
+
     /*read nvram file*/
-    int  (*read)(struct NvramLoader* nvram, const char* nvram_file_name);
+    int  
+    (*read)(struct NvramLoader* nvram, const char* nvram_file_name);
+
     /*parse nvram and handle parsed data inside observers, in case if observer is NULL
       all sections must be parsed, but if provided observer is matched then only
       section appropriate to observer should be parsed.
      *@param observer*/
-    void (*parse)(struct NvramLoader* nvram);
+    void 
+    (*parse)(struct NvramLoader* nvram);
+
     /*handle parsed nvram data by observer functions, if provided observer is matched 
-      then only section appropriate to observer should be parsed.*/
-    void (*handle)(struct NvramLoader* nvram, struct MNvramObserver* observer,
-		   void* obj1, void* obj2);
+      then only section appropriate to observer should be parsed.
+    @param obj1, obj2, obj3 not mandatory additional parameters for observers*/
+    void 
+    (*handle)(struct NvramLoader* nvram, struct MNvramObserver* observer,
+	      void* obj1, void* obj2, void* obj3);
+    
+    /*@return Section data by name, NULL if not located*/
+    struct ParsedRecords* 
+    (*section_by_name)(struct NvramLoader* nvram, const char* name);
 
     //data
     char nvram_data[NVRAM_MAX_FILE_SIZE];

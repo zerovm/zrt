@@ -87,7 +87,13 @@ void zrt_zcall_prolog_zrt_setup(void);
 void zrt_zcall_prolog_read_nvram_args_envs(int *arg_array_lengths, int *arg_count,
 					   int *env_array_lengths, int *env_count);
 void zrt_zcall_prolog_get_nvram_args_envs(char** args, char** envs);
-void zrt_zcall_prolog_handle_nvram_unhandled_sections();
+
+/************************** zcalls_env_args_init_t functions **************/
+void zrt_zcall_prolog_nvram_read_get_args_envs( int *args_buf_size, 
+						int *envs_buf_size, int *env_count );
+void zrt_zcall_prolog_nvram_get_args_envs( char** args, char* args_buf, int args_buf_size,
+					   char** envs, char* envs_buf, int envs_buf_size );
+
 
 /***************************************************************************
 * Declaration of ZLIBC syscall implementations that used as secondary syscall
@@ -116,8 +122,6 @@ int zrt_zcall_enhanced_munmap(void *addr, size_t len);
 
 /************************** zcalls_zrt_t functions **************/
 void zrt_zcall_enhanced_zrt_setup(void);
-/*handle the rest of nvram data not handled in prolog*/
-void zrt_zcall_enhanced_handle_nvram_unhandled_sections(struct NvramLoader* nvram);
 
 /*nonsyscalls*/
 void zrt_zcall_loglibc(const char* str);

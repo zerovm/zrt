@@ -58,7 +58,7 @@ get_nearest_section_start(struct config_section_t* section,
     do{
 	bound_start = strchr(&whole_data[*cursor_pos], '[');
 	if ( !IS_VALID_POINTER_IN_RANGE(whole_data,whole_size, bound_start) ){
-	    ZRT_LOG(L_INFO, P_TEXT, "no begin of section located");
+	    ZRT_LOG(L_INFO, "valid section not located at pos:%d", *cursor_pos);
 	    break;
 	}
 	char* bound_end = strchr(bound_start, ']');
@@ -113,7 +113,7 @@ void get_config_structure(struct NvramLoader* nvram,
 					     &cursor ) ){
 	/*increment cursor to skip start of existing section */
 	cursor += section->name_len;
-	ZRT_LOG(L_INFO, "section %s, newcursor=%d", 
+	ZRT_LOG(L_INFO, "section %s, section data pos=%d", 
 		GET_STRING(section->name, section->name_len), cursor);
 	assert( sections->count < NVRAM_MAX_SECTIONS_COUNT );
 	section = &sections->sections[++sections->count];
@@ -140,7 +140,7 @@ section_observer( struct NvramLoader* nvram, const char* section_name, int namel
     for (i=0; i < NVRAM_MAX_OBSERVERS_COUNT; i++ ){
 	struct MNvramObserver* obs = nvram->nvram_observers[i];
 	if ( obs != NULL && 
-	     !strncasecmp( obs->observed_section_name, section_name, namelen ) ){
+	     !strncmp( obs->observed_section_name, section_name, namelen ) ){
 	    matched_observer = obs;
 	    break;
 	}
@@ -243,7 +243,7 @@ void nvram_parse(struct NvramLoader* nvram){
 }
 
 void nvram_handle(struct NvramLoader* nvram, struct MNvramObserver* observer,
-		  void* obj1, void* obj2){
+		  void* obj1, void* obj2, void* obj3){
     struct ParsedRecords* records;
     int i, j;
     for ( j=0; j < nvram->parsed_sections_count; j++ ){
@@ -254,11 +254,26 @@ void nvram_handle(struct NvramLoader* nvram, struct MNvramObserver* observer,
 		/*handle parsed record*/
 		records->observer->handle_nvram_record(records->observer,  
 						       &records->records[i],
-						       obj1, obj2);
+						       obj1, obj2, obj3);
 	    }
 	}
     }
 }
+
+/*@return records count in section*/
+struct ParsedRecords* nvram_section_by_name( struct NvramLoader* nvram, 
+					     const char* section_name){
+    /*Go through parsed sections and locate section by name*/
+    int i;
+    for(i=0; i < nvram->parsed_sections_count; i++ ){
+	struct ParsedRecords* section = &nvram->parsed_sections[i];
+	/*if section matched ignoring case*/
+	if( !strcmp( section->observer->observed_section_name, section_name) )
+	    return section;
+    }
+    return NULL;
+}
+
     
 struct NvramLoader* construct_nvram_loader(struct NvramLoader* nvram ){
     nvram->parsed_sections_count=0;
@@ -269,6 +284,7 @@ struct NvramLoader* construct_nvram_loader(struct NvramLoader* nvram ){
     nvram->add_observer = nvram_add_observer;
     nvram->parse = nvram_parse;
     nvram->handle = nvram_handle;
+    nvram->section_by_name = nvram_section_by_name;
     return nvram;
 }
 

@@ -20,13 +20,12 @@ struct ParsedRecord;
  *Base nvram observer interface should be derived by another observers*/
 struct MNvramObserver{
     /*Handle parsed nvram record data
-     *@param keys 
      *@param record 
-     *@param obj1, obj2 can be any object expected by section handler, can be NULL*/
+     *@param obj1, obj2, obj3 can be any object expected by section handler, can be NULL*/
     void (*handle_nvram_record)(struct MNvramObserver* observer,
 				struct ParsedRecord* record,
-				void* obj1, void* obj2);
-    void (*cleanup)(struct MNvramObserver* obs);
+				void* obj1, void* obj2, void* obj3);
+
     /*it's a section name in nvram config file which corresponds to observer;
      *only if section name in config file will equal to folowing section name
      *then observer will handle data belonging to this section*/

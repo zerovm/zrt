@@ -41,16 +41,14 @@
 #include "mem_mount_wraper.h"
 #include "nacl_struct.h"
 #include "image_engine.h"
-#include "channels_mount.h"
 #include "enum_strings.h"
+#include "channels_reserved.h"
+#include "channels_mount.h"
 
 
 /* TODO
  * RESEARCH
  * #include <mcheck.h> research debugging capabilities
- * channels close, reopen, reclose
- * BUGS
- * fdopen failed, ftell fread
  * */
 
 /* if given in manifest let user to have it */
@@ -59,15 +57,17 @@
 extern char **environ;
 
 /****************** static data*/
+static struct NvramLoader      s_nvram;
 struct timeval                 s_cached_timeval;
 struct MountsInterface*        s_channels_mount=NULL;
 struct MountsInterface*        s_mem_mount=NULL;
-static struct MountsManager* s_mounts_manager = NULL;
+static struct MountsManager*   s_mounts_manager = NULL;
 static struct MountsInterface* s_transparent_mount = NULL;
 static struct MemoryInterface* s_memory_interface = NULL;
 static int                     s_zrt_ready=0;
 /****************** */
 
+struct NvramLoader*     static_nvram()      { return &s_nvram; }
 struct MountsInterface* transparent_mount() { return s_transparent_mount; }
 
 
@@ -83,7 +83,7 @@ static void zrt_init( const struct UserManifest const* manifest ){
     /*alloc filesystem based on channels*/
     s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator,
 					     manifest->channels, manifest->channels_count );
-    /*alloc entry point to mounted filesystems*/
+    /*alloc main filesystem that combines all filesystems mounts*/
     s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
 
     s_zrt_ready = 1;
@@ -118,42 +118,17 @@ static void zrt_setup_finally(){
       FS structure, readdir from now can list /dev dir recursively from root */
     s_mem_mount->mkdir( "/dev", 0777 );
 
-#ifdef FSTAB_CONF_ENABLE
-#define HANDLE_ONLY_FSTAB_SECTION fstab_observer
-#define HANDLE_ONLY_ENV_SECTION   env_observer
-    ZRT_LOG(L_SHORT, "nvram object size in stack=%u bytes", sizeof(struct NvramLoader));
-    /*Get static fstab observer object, it's memory should not be freed*/
-    struct MNvramObserver* fstab_observer = get_fstab_observer();
-    struct MNvramObserver* env_observer   = get_env_observer();
-    struct NvramLoader nvram;
-    construct_nvram_loader( &nvram );
-    /*add observers here to handle various sections of config data*/
-    nvram.add_observer(&nvram, fstab_observer);
-    nvram.add_observer(&nvram, env_observer);
-    /*if readed not null bytes and result non negative then doing parsing*/
-    if ( nvram.read(&nvram, DEV_NVRAM) > 0 ){
-        nvram.parse(&nvram);
+#define HANDLE_ONLY_FSTAB_SECTION get_fstab_observer()
+    /*nvram must be already parsed*/
+    if ( NULL != s_nvram.section_by_name( &s_nvram, FSTAB_SECTION_NAME ) ){
 	ZRT_LOG(L_SHORT, "%s", "nvram handle fstab");
-	nvram.handle(&nvram, HANDLE_ONLY_FSTAB_SECTION, s_channels_mount, s_transparent_mount);
-	ZRT_LOG(L_SHORT, "%s", "nvram handle envs");
-	char envbuf[1000];
-	set_environments_buffer(envbuf, 1000);
-	nvram.handle(&nvram, HANDLE_ONLY_ENV_SECTION, NULL, NULL);
-	char* env[NVRAM_MAX_RECORDS_IN_SECTION];
-	get_env_array( (char**)&env);
-	ZRT_LOG(L_SHORT, "%s", "nvram handle args");
+	s_nvram.handle(&s_nvram, HANDLE_ONLY_FSTAB_SECTION, 
+		       s_channels_mount, s_transparent_mount, NULL);
     }
 
-    fstab_observer->cleanup( fstab_observer );
     ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished");
     ZRT_LOG_DELIMETER;
-#endif
 }
-     
-void zrt_zcall_enhanced_handle_nvram_unhandled_sections(struct NvramLoader* nvram){
-    nvram->handle(nvram, get_fstab_observer(), s_channels_mount, s_transparent_mount);
-}
-
 
 static inline void update_cached_time()
 {
@@ -408,7 +383,6 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
 * Setup zrt
 *************************************************************************/
 void zrt_zcall_enhanced_zrt_setup(void){
-    zrt_zcall_prolog_handle_nvram_unhandled_sections();
     int i;
     char **envp = environ;
     const struct UserManifest const *setup = MANIFEST;
@@ -421,6 +395,13 @@ void zrt_zcall_enhanced_zrt_setup(void){
     ZRT_LOG(L_BASE, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
     ZRT_LOG(L_BASE, "user memory size = %u", setup->heap_size);
     ZRT_LOG_DELIMETER;
+
+    /* /\*print arguments*\/ */
+    /* i=0; */
+    /* while( envp[i] ){ */
+    /*     ZRT_LOG(L_BASE, "envp[%d] = '%s'", i, envp[i]); */
+    /* 	++i; */
+    /* } */
 
     /*print environment variables*/
     i=0;

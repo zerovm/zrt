@@ -24,6 +24,7 @@ lib/helpers/conf_keys.c \
 lib/helpers/path_utils.c \
 lib/memory/memory_syscall_handlers.c \
 lib/nvram/nvram_loader.c \
+lib/nvram/observers/args_observer.c \
 lib/nvram/observers/environment_observer.c \
 lib/nvram/observers/fstab_observer.c \
 lib/fs/fcntl_implem.c \
