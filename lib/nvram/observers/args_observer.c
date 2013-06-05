@@ -24,29 +24,20 @@ static struct MNvramObserver s_arg_observer;
 
 static void add_val_to_temp_buffer(char* buf, int bufsize, int* index,
 				    const char* val, int len){
-    if ( *index == 0 ){
-	/*add argv0, must be replaced by value brovided by zerovm 
-	  via manifest object in memory. currently stub value taken 
-	  from zerovm as argv0 */
-	#define STUB_ARG0 "stub"
-	memcpy(buf, STUB_ARG0, strlen(STUB_ARG0) );
-	(*index) += strlen(STUB_ARG0);
-	buf[ (*index)++] = '\0';
-	ZRT_LOG(L_SHORT, "arg[0] %s", buf );
-    }
     /*add arg pairs into buffer, every pair end must be null term char '\0' */
     if ( *index+len < bufsize ){
 	/*all arguments coming unparsed, parse it here*/
 	struct ParsedParam args[NVRAM_MAX_RECORDS_IN_SECTION];
 	/*in case if too many args will be parsed they will be skipped*/
 	int argc = parse_args(args, NVRAM_MAX_RECORDS_IN_SECTION, val, len);
+	ZRT_LOG(L_SHORT, "argc= %d", argc );
 	int i;
-	/*val is escaped argument and must be converted*/
+	/*argument char can be escaped and must be converted*/
 	for(i=0; i < argc; i++){
 	    char* current_arg = buf+*index;
 	    *index += unescape_string_copy_to_dest(args[i].val, args[i].vallen, buf+*index);
 	    buf[ (*index)++ ] = '\0';
-	    ZRT_LOG(L_SHORT, "arg[] %s", current_arg );
+	    ZRT_LOG(L_SHORT, "arg[%d] %s", i, current_arg );
 	}
     }
     else{

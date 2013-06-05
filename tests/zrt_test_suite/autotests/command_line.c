@@ -8,15 +8,21 @@ int main(int argc, char **argv)
     int i;
     int res;
 
+    /* print list of main() arguments */
+    printf("list of arguments%s\n", argc == 1 ? " is empty" : ":");
+    fflush(0);
+
     /*expecting some arguments*/
     if ( argc <= 1 ){
 	return 1;
     }
 
-    /* print list of main() arguments */
-    printf("list of arguments%s\n", argc == 1 ? " is empty" : ":");
     for(i = 0; i < argc; ++i){
         printf("%d. %s\n", i, argv[i]);
+	if ( i == 0 ){
+            res = strcmp(argv[i], "command_line.nexe" );
+            assert( res == 0 );
+	}
         if ( i == 1 ){
             res = strcmp(argv[i], "argument_number_1" );
             assert( res == 0 );

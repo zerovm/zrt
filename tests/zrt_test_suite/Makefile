@@ -91,7 +91,7 @@ LDFLAGS+= -lmapreduce -lnetworking
 #CMDLINE-xxxxxxxxx=args=cmd line argument listed here
 #where xxxxxxxxx is the source file name waiting cmd line arguments
 #examples:
-CMDLINE-command_line.c=args=argument_number_1 argument_number_2 the_last_argument
+CMDLINE-command_line.c=args=command_line.nexe argument_number_1 argument_number_2 the_last_argument
 #####################################################################
 
 #####################################################################

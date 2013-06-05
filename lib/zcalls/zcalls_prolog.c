@@ -16,10 +16,20 @@
 #include "environment_observer.h"
 #include "args_observer.h"
 
+#define STUB_ARG0 "stub"
 #define SET_ERRNO(err) errno=err
 
 #define ONLY_PROLOG_SYSCALL 1
 //#define LOW_LEVEL_LOG_ENABLE
+
+/*setup stub argv0 if user not specified explicitly nvram args*/
+#define CHECK_SET_ARGV0_STUB(args, args_buf, buf_size)		\
+    if ( args[0] == NULL && strlen(STUB_ARG0) < buf_size ){	\
+	memcpy(args_buf, STUB_ARG0, strlen(STUB_ARG0) );	\
+	args_buf[ strlen(STUB_ARG0) ] = '\0';			\
+	args[0] = args_buf;					\
+	ZRT_LOG(L_SHORT, "arg[0] by default: %s", args[0] );	\
+    }
 
 #define FUNC_NAME __func__
 
@@ -141,6 +151,10 @@ int  zrt_zcall_prolog_read(int handle, void *buf, size_t count, size_t *nread){
 }
 
 int  zrt_zcall_prolog_write(int handle, const void *buf, size_t count, size_t *nwrote){
+    if ( handle == 2 ){
+	int vv=90;
+	ZRT_LOG(L_INFO, "stderr %s", "tar");
+    }
     if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
@@ -429,10 +443,7 @@ static int get_records_count_for_section_and_buffer_size_to_copy_contents
 	    }
 	    ++(*buf_size); //fon null-termination char
 	}
-	/*reserve additional space to be sure, to be able add null termination 
-	  chars for all available args, see args_observer.c: add_val_to_temp_buffer */
-	(*buf_size)+= NVRAM_MAX_RECORDS_IN_SECTION; 
-	ZRT_LOG(L_SHORT, "section records=%d, buf_size=%d", records_count, *buf_size);
+	ZRT_LOG(L_SHORT, "section records=%d", records_count);
 	return records_count;
     }
     else
@@ -462,6 +473,10 @@ void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size,
 	/*handle args section*/
 	get_records_count_for_section_and_buffer_size_to_copy_contents
 	    (nvram, ARGS_SECTION_NAME, args_buf_size);
+	/*reserve additional space  to be able add null termination chars for all
+	  available args, see args_observer.c: add_val_to_temp_buffer */
+	args_buf_size+= strlen(STUB_ARG0);
+	args_buf_size+= NVRAM_MAX_RECORDS_IN_SECTION; 
     }
 }
 
@@ -497,6 +512,7 @@ void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_
 	args[0] = NULL;
 	args[1] = NULL;
     }
+    CHECK_SET_ARGV0_STUB( args, args_buf, args_buf_size );
 }
 
 
