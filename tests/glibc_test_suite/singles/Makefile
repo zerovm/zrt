@@ -1,12 +1,12 @@
 include ${ZRT_ROOT}/Makefile.env
+#it should use release version of zerovm
 ifndef TESTS_ROOT
 TESTS_ROOT=src
 endif
 ifndef MEMMAX
 MEMMAX=234217728
 endif
-#it should be zerovm release version
-ZEROVM=$(ZEROVM_ROOT)/zerovm
+
 
 OUTPUT_LAST=last_test.output
 OUTPUT_FAIL=fail_tests.output
@@ -102,22 +102,22 @@ CFLAGS-scanf17.c = -I../libio -I../stdlib -I../wcsmbs -I../time -I../string \
 		   -I../wctype
 
 ################ posix CommandLine
-CMDLINE-tst-pcre.c=/tmp/PCRE.tests
-CMDLINE-tst-boost.c=/tmp/BOOST.tests
-CMDLINE-bug-getdate1.c=/tmp/bug-getdate1-fmt
-CMDLINE-tst-rxspencer.c=--utf8 /tmp/rxspencer/tests
-CMDLINE-bug-glob1.c=/tmp
+CMDLINE-tst-pcre.c=args=/tmp/PCRE.tests
+CMDLINE-tst-boost.c=args=/tmp/BOOST.tests
+CMDLINE-bug-getdate1.c=args=/tmp/bug-getdate1-fmt
+CMDLINE-tst-rxspencer.c=args=--utf8 /tmp/rxspencer/tests
+CMDLINE-bug-glob1.c=args=/tmp
 
 ################ libio Environment 
 #LOCPATH is set to /lib/locale only for demonstration of setting env var
 #by glibc test suite, in anyway envvar was set into default path for localedata 
 #that uses glibc, so another localisation tests will work withouth LOCPATH env
-ENV-tst-swscanf.c=, LOCPATH, /lib/locale
+ENV-tst-swscanf.c=name=LOCPATH, value=/lib/locale
 
 ############### time Environment
-ENV-tst-getdate.c=, DATEMSK, datemsk, TZDIR, /tmp/getdate-data
-ENV-tst-widetext.c=, LOCPATH,$(common-objpfx)localedata, LANGUAGE,C
-ENV-tst-putenv.c=, SOMETHING_NOBODY_USES, 
+ENV-tst-getdate.c=name=DATEMSK, value=datemsk {BR}name=TZDIR, value=/tmp/getdate-data
+ENV-tst-widetext.c=name=LOCPATH, value=$(common-objpfx)localedata {BR}name=LANGUAGE, value=C
+ENV-tst-putenv.c=
 
 all: clean $(ZEROVM) $(TEST_NEXES) report
 
@@ -155,9 +155,12 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g ../manifest_glibc_tests.template | \
 	 sed s@{ABS_PATH}@$(CURDIR)/@g | \
 	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
-	 sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g | \
-	 sed s@{MEMMAX}@$(MEMMAX)@g | \
-	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).manifest
+	 sed s@{MEMMAX}@$(MEMMAX)@g > $(CURDIR)/$(BASENAME).manifest
+#prepare nvram
+	@sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g ../nvram_glibc_tests.template | \
+	 sed s@{BR}@'\n'@g | \
+	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).nvram
+
 #Run test under zerovm and display returned error code
 #$shell should could not be used to get test result from file because it unexpectadly
 #using contents of previosly saved test output, and it is the main reason why using awk;

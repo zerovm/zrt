@@ -7,12 +7,11 @@ Channel = {OUTFILE}.stdout.std, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {OUTFILE}.stderr.std, /dev/stderr, 0, 0, 0, 999999, 999999
 Channel = {OUTFILE}.zrtdebug.log, /dev/debug, 0, 0, 0, 50999999, 50999999
 
-CommandLine = {COMMAND_LINE}
-
 =====================================================================
-== inject tar archives contents into ZRT filesystem using fstab.conf
+== inject tar archives contents into ZRT filesystem using nvram
+== and setup commandline and environments
 =====================================================================
-Channel = {ABS_PATH}fstab.conf, /dev/fstab, 0, 999999, 999999, 0, 0
+Channel = {OUTFILE}.nvram, /dev/nvram, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}mounts/tmp_dir.tar, /dev/mount/tmp, 0, 9999999, 9999999, 0, 0
 ===== add localisations separatedly 
 Channel = {MOUNTS_PATH}locales/de_DE.UTF-8.tar, /dev/mount/de_DE.UTF-8.tar, 0, 9999999, 9999999, 0, 0
@@ -36,6 +35,5 @@ Nexe = {OUTFILE}.nexe
 ==MemMax=134217728
 MemMax={MEMMAX}
 Timeout=10
-Environment = VERBOSITY, 2, TimeStamp, 1344719070 {ENVIRONMENT}, LOCPATH, /lib/locale
 NodeName=glibc-test,1
 

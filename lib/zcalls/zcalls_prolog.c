@@ -416,23 +416,27 @@ static int get_records_count_for_section_and_buffer_size_to_copy_contents
     ZRT_LOG(L_SHORT, "For nvram section '%s' calculations", section_name);
     int records_count = 0;
     struct ParsedRecords* section = nvram->section_by_name( nvram, section_name );
-    struct ParsedRecord* current_rec;
-    int j, k;
-    for (j=0; j < section->count; j++){
-	/*calculate records count in section*/
-	++records_count; 
-	current_rec = &section->records[j];
-	for (k=0; k < section->observer->keys.count; k++){
-	    struct ParsedParam* param = &section->records[j].parsed_params_array[k];
-	    *buf_size += param->vallen + 1; //+ null term char
+    if ( section != NULL ){
+	struct ParsedRecord* current_rec;
+	int j, k;
+	for (j=0; j < section->count; j++){
+	    /*calculate records count in section*/
+	    ++records_count; 
+	    current_rec = &section->records[j];
+	    for (k=0; k < section->observer->keys.count; k++){
+		struct ParsedParam* param = &section->records[j].parsed_params_array[k];
+		*buf_size += param->vallen + 1; //+ null term char
+	    }
+	    ++(*buf_size); //fon null-termination char
 	}
-	++(*buf_size); //fon null-termination char
+	/*reserve additional space to be sure, to be able add null termination 
+	  chars for all available args, see args_observer.c: add_val_to_temp_buffer */
+	(*buf_size)+= NVRAM_MAX_RECORDS_IN_SECTION; 
+	ZRT_LOG(L_SHORT, "section records=%d, buf_size=%d", records_count, *buf_size);
+	return records_count;
     }
-    /*reserve additional space to be sure, to be able add null termination 
-      chars for all available args, see args_observer.c: add_val_to_temp_buffer */
-    (*buf_size)+= NVRAM_MAX_RECORDS_IN_SECTION; 
-    ZRT_LOG(L_SHORT, "section records=%d, buf_size=%d", records_count, *buf_size);
-    return records_count;
+    else
+	return 0;
 }
 
 /*nvram access from prolog*/

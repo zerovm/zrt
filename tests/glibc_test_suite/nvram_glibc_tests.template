@@ -19,3 +19,12 @@ channel=/dev/mount/hr_HR.ISO-8859-2.tar, mountpoint=/, access=ro
 
 #additional test files 
 channel=/dev/mount/tmp, mountpoint=/, access=ro
+
+[env]
+name=VERBOSITY, value=2
+name=TimeStamp, value=1344719070
+name=LOCPATH,   value=/lib/locale
+{ENVIRONMENT} 
+
+[args]
+{COMMAND_LINE}
