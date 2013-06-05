@@ -23,6 +23,7 @@ OUTPUT_FAIL=fail_tests.output
 TEST_INCLUDES=$(shell find $(TESTS_ROOT) -name "*.h")
 TEST_SOURCES=$(shell find $(TESTS_ROOT) -name "*.c")
 TEST_OBJECTS=$(addsuffix .o, $(basename $(TEST_SOURCES) ) )
+TEST_NVRAMS=$(addsuffix .nvram, $(basename $(TEST_SOURCES) ) )
 TEST_MANIFESTS=$(addsuffix .manifest, $(basename $(TEST_SOURCES) ) )
 TEST_STDOUTS=$(addsuffix .stdout.std, $(basename $(TEST_SOURCES) ) )
 TEST_STDERRS=$(addsuffix .stderr.std, $(basename $(TEST_SOURCES) ) )
@@ -87,12 +88,10 @@ LDFLAGS+= -lmapreduce -lnetworking
 #####################################################################
 #in this section specify command line arguments which should be passed 
 #as cmd line parameters for nexe, it should be specified in format:
-#CMDLINE-xxxxxxxxx=cmd line argument listed here
+#CMDLINE-xxxxxxxxx=args=cmd line argument listed here
 #where xxxxxxxxx is the source file name waiting cmd line arguments
 #examples:
-#CMDLINE-tst-pcre.c=arg1 arg2 arg3
-#CMDLINE-tst-boost.c=/tmp/BOOST.tests
-CMDLINE-command_line.c=argument_number_1 argument_number_2 the_last_argument
+CMDLINE-command_line.c=args=argument_number_1 argument_number_2 the_last_argument
 #####################################################################
 
 #####################################################################
@@ -101,8 +100,8 @@ CMDLINE-command_line.c=argument_number_1 argument_number_2 the_last_argument
 #xxxxxxx - source file name, just after '=' should be passed environment variable names
 #and their value divided by comma ',', and not that just after '=' is expected comma ','
 #examples: 
-#ENV-tst-swscanf.c=, LOCPATH, /lib/locale
-ENV-environment.c=, SafeWords, klaato_verada_nikto
+#ENV-environment.c=name=SafeWords, value=klaato_verada_nikto {BR} name=TTT, value=BBB
+ENV-environment.c=name=SafeWords, value=klaato_verada_nikto
 #####################################################################
 
 #####################################################################
@@ -132,6 +131,7 @@ clean:
 	@rm -f $(TEST_LOG_ZVM)
 	@rm -f $(TEST_NEXES)
 	@rm -f $(TEST_MANIFESTS)
+	@rm -f $(TEST_NVRAMS)
 	@rm -f $(TEST_LOG_DEBUG)
 
 $(ZEROVM):
@@ -161,9 +161,13 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{CHANTYPE2}@$(SPECIFIC_TEST_CHANTYPE2)@g | \
 	 sed s@{CHANTYPE3}@$(SPECIFIC_TEST_CHANTYPE3)@g | \
 	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
-	 sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g | \
-	 sed s@{MEMMAX}@$(MEMMAX)@g | \
-	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).manifest
+	 sed s@{MEMMAX}@$(MEMMAX)@g > $(CURDIR)/$(BASENAME).manifest
+#prepare nvram
+	@sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g nvram_zrttests.template | \
+	 sed s@{BR}@'\n'@g | \
+	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).nvram
+
+
 #Run test under zerovm and display returned error code
 #$shell should could not be used to get test result from file because it unexpectadly
 #using contents of previosly saved test output, and it is the main reason why using awk;

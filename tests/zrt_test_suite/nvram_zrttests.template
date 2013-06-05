@@ -1,0 +1,11 @@
+###########################################################
+# ZRT nvram file, setup cmd line args, environment vars   #
+###########################################################
+
+[env]
+name=VERBOSITY, value=3
+name=TimeStamp, value=1337012520
+{ENVIRONMENT} 
+
+[args]
+{COMMAND_LINE}

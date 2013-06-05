@@ -5,11 +5,10 @@ Channel = /dev/null, /dev/stdin, 0, 999999, 999999, 0, 0
 Channel = {OUTFILE}.stdout.std, /dev/stdout, 0, 0, 0, 999999, 999999
 Channel = {OUTFILE}.stderr.std, /dev/stderr, 0, 0, 0, 999999, 999999
 Channel = {OUTFILE}.zrtdebug.log, /dev/debug, 0, 0, 0, 50999999, 50999999
+Channel = {OUTFILE}.nvram, /dev/nvram, 0, 999999, 999999, 0, 0
 Channel = {ABS_PATH}autotests/channels/forreading, /dev/readonly, {CHANTYPE1}, 99999, 999999, 0, 0
 Channel = {ABS_PATH}autotests/channels/forwriting, /dev/writeonly, {CHANTYPE2}, 0, 0, 999999, 999999
 Channel = {ABS_PATH}autotests/channels/forreadwrite, /dev/read-write, {CHANTYPE3}, 99999, 99999, 99999, 99999
-
-CommandLine = {COMMAND_LINE}
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
@@ -22,6 +21,5 @@ Nexe = {OUTFILE}.nexe
 ==MemMax=134217728
 MemMax={MEMMAX}
 Timeout=10
-Environment = VERBOSITY, 3, TimeStamp, 1337012520 {ENVIRONMENT}
 NodeName=zrt-test,1
 

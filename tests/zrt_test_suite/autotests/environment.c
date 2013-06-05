@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     printf("\nTEST3: using setenv & getenv:\n");
     printf( "before new environment assignemnt\n" );
     var = "Pum"; val = getenv(var);  
-    if ( val == NULL ) return 1;
+    if ( val != NULL ) return 1;
     printf("%s=%s\n", var, val );
     printf( "setenv status=%d;\nafter new environment assignment\n",  setenv( "Pum", "PumPum", 1) );
     val = getenv(var); 
