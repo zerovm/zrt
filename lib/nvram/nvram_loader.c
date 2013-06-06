@@ -52,13 +52,13 @@ static
 struct config_section_t* 
 get_nearest_section_start(struct config_section_t* section,
 			  const char* whole_data, int whole_size, int* cursor_pos ){
-    ZRT_LOG(L_INFO, "whole_size=%d, cursor_pos=%d", whole_size, *cursor_pos );
+    ZRT_LOG(L_EXTRA, "whole_size=%d, cursor_pos=%d", whole_size, *cursor_pos );
     struct config_section_t* new_section = NULL;    
     char* bound_start;
     do{
 	bound_start = strchr(&whole_data[*cursor_pos], '[');
 	if ( !IS_VALID_POINTER_IN_RANGE(whole_data,whole_size, bound_start) ){
-	    ZRT_LOG(L_INFO, "valid section not located at pos:%d", *cursor_pos);
+	    ZRT_LOG(L_EXTRA, "valid section not located at pos:%d", *cursor_pos);
 	    break;
 	}
 	char* bound_end = strchr(bound_start, ']');
@@ -80,7 +80,7 @@ get_nearest_section_start(struct config_section_t* section,
 		    new_section->name = s;
 		    new_section->name_len = striped_len;
 		    new_section->offset_start = bound_start - whole_data;
-		    ZRT_LOG(L_INFO, "new section %s start =%d", 
+		    ZRT_LOG(L_EXTRA, "new section %s start =%d", 
 			    GET_STRING(s,striped_len), new_section->offset_start );
 		    //section located, set cursor_pos just after section name
 		    *cursor_pos = bound_start - whole_data;
@@ -169,18 +169,18 @@ parse_section( struct NvramLoader* nvram,
 	/*parameters parsed correctly and seems to be correct*/
 	records->observer = observer;
 	/*print section detailed records*/
-	ZRT_LOG(L_BASE, "nvram section [%s] has observer,records count=%d", 
+	ZRT_LOG(L_INFO, "nvram section [%s] has observer,records count=%d", 
 		observer->observed_section_name, records->count);
 	int i;
 	struct ParsedRecord *r;
 	for(i=0; i < records->count; i++){
 	    if ( (r=&records->records[i]) != NULL ){
-		ZRT_LOG(L_BASE, "nvram record #%d", i);
+		ZRT_LOG(L_INFO, "nvram record #%d", i);
 		int j=0;
 		struct ParsedParam* p;
 		while( j < observer->keys.count && 
 		       (p=&r->parsed_params_array[j++]) != NULL ){
-		    ZRT_LOG(L_BASE, "%s=%s", 
+		    ZRT_LOG(L_EXTRA, "%s=%s", 
 			    observer->keys.keys[p->key_index],
 			    GET_STRING(p->val, p->vallen) );
 		}
@@ -209,7 +209,7 @@ int nvram_read(struct NvramLoader* nvram, const char* nvram_file_name){
     if ( fd>0 ){
 	nvram->nvram_data_size = read( fd, nvram->nvram_data, NVRAM_MAX_FILE_SIZE);
 	close(fd);
-	ZRT_LOG(L_INFO, "nvram file data size=%d", nvram->nvram_data_size);
+	ZRT_LOG(L_BASE, "nvram file size=%d", nvram->nvram_data_size);
     }
     return nvram->nvram_data_size;
 }
@@ -220,7 +220,7 @@ void nvram_parse(struct NvramLoader* nvram){
     /*get sections list and save it in nvram object*/
     struct config_structure_t sections_bounds;
     get_config_structure(nvram, &sections_bounds);
-    ZRT_LOG(L_INFO, "sections count %d", sections_bounds.count );
+    ZRT_LOG(L_EXTRA, "nvram sections count %d", sections_bounds.count );
 
     /*go through list and parse sections*/
     struct MNvramObserver* observer;
@@ -230,7 +230,7 @@ void nvram_parse(struct NvramLoader* nvram){
 	section = &sections_bounds.sections[i];
 	/*if section is valid*/
 	if ( (observer=section_observer(nvram, section->name, section->name_len )) ){
-	    ZRT_LOG(L_INFO, "parse section %s", GET_STRING(section->name, section->name_len));
+	    ZRT_LOG(L_EXTRA, "parse section %s", GET_STRING(section->name, section->name_len));
 	    if ( parse_section(nvram, 
 			       &nvram->parsed_sections[nvram->parsed_sections_count],
 			       &nvram->nvram_data[section->offset_start],

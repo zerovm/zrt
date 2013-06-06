@@ -25,7 +25,7 @@
 
 #include "zvm.h"
 #include "zrt.h"
-#include "zrt_config.h"
+#include "zrt_defines.h"
 #include "zcalls.h"
 #include "zcalls_zrt.h"
 #include "memory_syscall_handlers.h"
@@ -33,6 +33,7 @@
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
 #include "stream_reader.h"
+#include "settime_observer.h"
 #include "path_utils.h"             /*alloc_absolute_path_from_relative*/
 #include "environment_observer.h"
 #include "fstab_observer.h"
@@ -44,12 +45,6 @@
 #include "enum_strings.h"
 #include "channels_reserved.h"
 #include "channels_mount.h"
-
-
-/* TODO
- * RESEARCH
- * #include <mcheck.h> research debugging capabilities
- * */
 
 /* if given in manifest let user to have it */
 #define TIMESTAMP_STR "TimeStamp"
@@ -87,25 +82,11 @@ static void zrt_init( const struct UserManifest const* manifest ){
     s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
 
     s_zrt_ready = 1;
-    /*user main execution just after zrt initialization*/
-}
 
-/*second step zrt initializer*/
-static void zrt_setup_finally(){
     /*open standard files to conform C*/
     s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
     s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
     s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
-
-    /* get time stamp from the environment, and cache it */
-    char *stamp = getenv( TIMESTAMP_STR );
-    if ( stamp && *stamp ){
-        s_cached_timeval.tv_usec = 0; /* msec not supported by nacl */
-        s_cached_timeval.tv_sec = atoi(stamp); /* manifest always contain decimal values */
-        ZRT_LOG(L_SHORT, 
-		"s_cached_timeval.nacl_abi_tv_sec=%lld", 
-		s_cached_timeval.tv_sec );
-    }
 
     /*create mem mount*/
     s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
@@ -118,10 +99,19 @@ static void zrt_setup_finally(){
       FS structure, readdir from now can list /dev dir recursively from root */
     s_mem_mount->mkdir( "/dev", 0777 );
 
+#define HANDLE_ONLY_TIME_SECTION get_settime_observer()
+    /*nvram must be already parsed*/
+    if ( NULL != s_nvram.section_by_name( &s_nvram, TIME_SECTION_NAME ) ){
+	s_nvram.handle(&s_nvram, HANDLE_ONLY_TIME_SECTION, &s_cached_timeval, NULL, NULL);
+    }
+    /*user main execution just after zrt initialization*/
+}
+
+/*second step zrt initializer*/
+static void zrt_setup_finally(){
 #define HANDLE_ONLY_FSTAB_SECTION get_fstab_observer()
     /*nvram must be already parsed*/
     if ( NULL != s_nvram.section_by_name( &s_nvram, FSTAB_SECTION_NAME ) ){
-	ZRT_LOG(L_SHORT, "%s", "nvram handle fstab");
 	s_nvram.handle(&s_nvram, HANDLE_ONLY_FSTAB_SECTION, 
 		       s_channels_mount, s_transparent_mount, NULL);
     }
@@ -157,20 +147,17 @@ void zrt_zcall_enhanced_exit(int status){
 }
 
 int  zrt_zcall_enhanced_gettod(struct timeval *tvl){
-    struct nacl_abi_timeval  *tv = (struct nacl_abi_timeval *)tvl;
     int ret=-1;
     errno=0;
 
-    if(!tv) {
+    if(tvl == NULL) {
         errno = EFAULT;
     }
     else{
         /*retrieve and get cached time value*/
-        tv->nacl_abi_tv_usec = s_cached_timeval.tv_usec;
-        tv->nacl_abi_tv_sec = s_cached_timeval.tv_sec;
-        ZRT_LOG(L_INFO,
-		"tv->nacl_abi_tv_sec=%lld, tv->nacl_abi_tv_usec=%d",
-		tv->nacl_abi_tv_sec, tv->nacl_abi_tv_usec );
+        tvl->tv_usec = s_cached_timeval.tv_usec;
+        tvl->tv_sec  = s_cached_timeval.tv_sec;
+        ZRT_LOG(L_INFO, "tv_sec=%lld, tv_usec=%d", tvl->tv_sec, tvl->tv_usec );
 
         /* update time value*/
         update_cached_time();
@@ -392,16 +379,11 @@ void zrt_zcall_enhanced_zrt_setup(void){
 
     /* debug print */
     ZRT_LOG(L_BASE, P_TEXT, "DEBUG INFORMATION");
+    time_t t = time(NULL);
+    ZRT_LOG(L_BASE, "Time %s", ctime(&t) );
     ZRT_LOG(L_BASE, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
     ZRT_LOG(L_BASE, "user memory size = %u", setup->heap_size);
     ZRT_LOG_DELIMETER;
-
-    /* /\*print arguments*\/ */
-    /* i=0; */
-    /* while( envp[i] ){ */
-    /*     ZRT_LOG(L_BASE, "envp[%d] = '%s'", i, envp[i]); */
-    /* 	++i; */
-    /* } */
 
     /*print environment variables*/
     i=0;

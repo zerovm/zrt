@@ -82,7 +82,6 @@ static struct zcalls_env_args_init_t KZcalls_env_args_init = {
 };
 
 static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
-    zrt_zcall_loglibc,
     zrt_zcall_fcntl,
     zrt_zcall_link,
     zrt_zcall_unlink,

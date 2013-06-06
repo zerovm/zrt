@@ -7,7 +7,6 @@ LIBZRT=lib/libzrt.a
 LIBZRT_SOURCES= \
 lib/zcalls/zcalls_prolog.c \
 lib/zcalls/zcalls_zrt.c \
-lib/libc/loglibc.c \
 lib/libc/fcntl.c \
 lib/libc/link.c \
 lib/libc/unlink.c \
@@ -27,6 +26,7 @@ lib/nvram/nvram_loader.c \
 lib/nvram/observers/args_observer.c \
 lib/nvram/observers/environment_observer.c \
 lib/nvram/observers/fstab_observer.c \
+lib/nvram/observers/settime_observer.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \

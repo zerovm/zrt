@@ -11,15 +11,18 @@
 #include <stdint.h>
 #include <stdio.h> //snprintf
 #include "printf_prolog.h" //tfp_sprintf
-
+#include "channels_reserved.h"
 
 /*log levels*/
-#define L_BASE  1   /*log only base zrt data*/
-#define L_ERROR 1   /*log errors*/
-#define L_SHORT 2  
-#define L_INFO  3
-#define L_EXTRA 4
+#define L_BASE   1   /*log only base zrt data*/
+#define L_ERROR  1   /*log errors*/
+#define L_SHORT  2  
+#define L_INFO   3
+#define L_EXTRA  4
 
+/*verbosity not available during prolog stage before nvram file parsed,
+  so use default verbosity value defined here, especially for that*/
+#define DEFAULT_VERBOSITY_FOR_PROLOG_LOG L_BASE
 #define VERBOSITY_ENV "VERBOSITY"
 
 //formating types 
@@ -29,8 +32,6 @@
 #define P_INT  "%d"
 #define P_UINT  "%u"
 #define P_LONGINT  "%lld"
-
-#define ZRT_LOG_NAME "/dev/debug"
 
 #ifndef DEBUG
 #define DEBUG
@@ -50,11 +51,13 @@
 #define ZRT_LOG(v_123, fmt_123, ...)					\
     if ( __zrt_log_is_enabled() && __zrt_log_fd() > 0 ){		\
 	if ( __zrt_log_prolog_mode_is_enabled() ){			\
-	    /*write directly into channel always if logfile defined*/	\
-	    tfp_printf("L_BASE PROLOG %s:%d " fmt_123 "\n",		\
-		       __FILE__, __LINE__, __VA_ARGS__);		\
-	    /*flush data prepared in internal buffer by tfp_printf*/	\
-	    __zrt_log_write(__zrt_log_fd(), NULL, 0, 0);		\
+	    if ( DEFAULT_VERBOSITY_FOR_PROLOG_LOG >= v_123 ){		\
+		/*write directly into channel always if logfile defined*/ \
+		tfp_printf("PROLOG " #v_123 " %s:%d " fmt_123 "\n",	\
+			   __FILE__, __LINE__, __VA_ARGS__);		\
+		/*flush data prepared in internal buffer by tfp_printf*/ \
+		__zrt_log_write(__zrt_log_fd(), NULL, 0, 0);		\
+	    }								\
 	}								\
 	else{								\
 	    int debug_handle_123;					\

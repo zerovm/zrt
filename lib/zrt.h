@@ -101,7 +101,6 @@ struct zcalls_zrt_t{
 
 #define ZCALLS_NONSYSCALLS 3 /*use as type param in __query_zcalls*/
 struct zcalls_nonsyscalls_t{
-    void (*loglibc)(const char* str);
     int  (*fcntl) (int fd, int cmd, ...);
     int  (*link)(const char *oldpath, const char *newpath);
     int  (*unlink)(const char *pathname);

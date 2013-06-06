@@ -12,6 +12,7 @@
 #include "zcalls_zrt.h" //nvram()
 #include "nvram_loader.h"
 #include "fstab_observer.h"
+#include "settime_observer.h"
 #include "channels_reserved.h"
 #include "environment_observer.h"
 #include "args_observer.h"
@@ -19,7 +20,6 @@
 #define STUB_ARG0 "stub"
 #define SET_ERRNO(err) errno=err
 
-#define ONLY_PROLOG_SYSCALL 1
 //#define LOW_LEVEL_LOG_ENABLE
 
 /*setup stub argv0 if user not specified explicitly nvram args*/
@@ -28,14 +28,14 @@
 	memcpy(args_buf, STUB_ARG0, strlen(STUB_ARG0) );	\
 	args_buf[ strlen(STUB_ARG0) ] = '\0';			\
 	args[0] = args_buf;					\
-	ZRT_LOG(L_SHORT, "arg[0] by default: %s", args[0] );	\
+	ZRT_LOG(L_BASE, "arg[0] by default: %s", args[0] );	\
     }
 
 #define FUNC_NAME __func__
 
 #ifdef LOW_LEVEL_LOG_ENABLE
 #  define ZRT_LOG_LOW_LEVEL(str) \
-    zrt_zcall_loglibc(str)
+    ZRT_LOG(L_BASE, P_TEXT, str)
 #else
 #  define ZRT_LOG_LOW_LEVEL(str)
 #endif //LOW_LEVEL_LOG_ENABLE
@@ -47,8 +47,8 @@ static void* sbrk_default = NULL;
 
 
 void zrt_zcall_prolog_init(){
-    __zrt_log_init( ZRT_LOG_NAME );
-    ZRT_LOG(L_INFO, P_TEXT, "prolog init");
+    __zrt_log_init( DEV_DEBUG );
+    ZRT_LOG(L_BASE, P_TEXT, "prolog init");
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     s_prolog_doing_now = 1;
     if ( MANIFEST )
@@ -151,10 +151,6 @@ int  zrt_zcall_prolog_read(int handle, void *buf, size_t count, size_t *nread){
 }
 
 int  zrt_zcall_prolog_write(int handle, const void *buf, size_t count, size_t *nwrote){
-    if ( handle == 2 ){
-	int vv=90;
-	ZRT_LOG(L_INFO, "stderr %s", "tar");
-    }
     if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
@@ -232,7 +228,7 @@ int  zrt_zcall_prolog_sysbrk(void **newbrk){
     else
 	sbrk_default = *newbrk;
 
-    if ( /* ONLY_PROLOG_SYSCALL ||  */s_prolog_doing_now ){
+    if ( s_prolog_doing_now ){
 	return 0;
     }
     else
@@ -427,7 +423,7 @@ static int get_records_count_for_section_and_buffer_size_to_copy_contents
     /*Go through parsed envs section and calculate buffer size
       needed to store environment variables into single buffer
       as into null terminated strings folowing each after other*/
-    ZRT_LOG(L_SHORT, "For nvram section '%s' calculations", section_name);
+    ZRT_LOG(L_INFO, "For nvram section '%s' calculations", section_name);
     int records_count = 0;
     struct ParsedRecords* section = nvram->section_by_name( nvram, section_name );
     if ( section != NULL ){
@@ -443,7 +439,7 @@ static int get_records_count_for_section_and_buffer_size_to_copy_contents
 	    }
 	    ++(*buf_size); //fon null-termination char
 	}
-	ZRT_LOG(L_SHORT, "section records=%d", records_count);
+	ZRT_LOG(L_INFO, "section records=%d", records_count);
 	return records_count;
     }
     else
@@ -453,12 +449,13 @@ static int get_records_count_for_section_and_buffer_size_to_copy_contents
 /*nvram access from prolog*/
 void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size, 
 					       int *envs_buf_size, int *env_count){
-    ZRT_LOG(L_SHORT, "nvram object size %u bytes", sizeof(struct NvramLoader));
+    ZRT_LOG(L_INFO, "nvram object size %u bytes", sizeof(struct NvramLoader));
     struct NvramLoader* nvram = static_nvram();
     construct_nvram_loader( nvram );
     /*Get static observers object, their memory should not be freed
      Must add here all observers to known nvram sections*/
     nvram->add_observer(nvram, get_fstab_observer() );
+    nvram->add_observer(nvram, get_settime_observer() );
     nvram->add_observer(nvram, get_env_observer() );
     nvram->add_observer(nvram, get_arg_observer() );
     /*if readed not null bytes and result non negative then doing parsing*/
@@ -487,7 +484,7 @@ void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_
     struct NvramLoader* nvram = static_nvram();
     /*handle "env" section*/
     if ( NULL != nvram->section_by_name( nvram, ENVIRONMENT_SECTION_NAME ) ){
-	ZRT_LOG(L_SHORT, "%s", "nvram handle envs");
+	ZRT_LOG(L_INFO, "%s", "nvram handle envs");
 	/*handle uses "envs_buf" to save envs data, 
 	  and "envs" to get result as two-dimens array*/
 	int handled_buf_index=0;
@@ -498,7 +495,7 @@ void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_
     }
     /*handle "arg" section*/
     if ( NULL != nvram->section_by_name( nvram, ARGS_SECTION_NAME ) ){
-	ZRT_LOG(L_SHORT, "%s", "nvram handle args");
+	ZRT_LOG(L_INFO, "%s", "nvram handle args");
 	/*handle uses "args_buf" to save args data, 
 	  and "args" to get result as two-dimens array*/
 	int handled_buf_index=0;
@@ -514,5 +511,3 @@ void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_
     }
     CHECK_SET_ARGV0_STUB( args, args_buf, args_buf_size );
 }
-
-
