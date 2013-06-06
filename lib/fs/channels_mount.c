@@ -399,7 +399,7 @@ static int64_t channel_pos( int handle, int8_t whence, int8_t access, int64_t of
     return -1;
 }
 
-static void set_stat_timestamp( struct stat* st )
+static void set_stat_time( struct stat* st )
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -454,7 +454,7 @@ static void set_stat(struct stat *stat, int fd)
     stat->st_blocks =               /* number of 512B blocks allocated */
 	((stat->st_size + stat->st_blksize - 1) / stat->st_blksize) * stat->st_blksize / 512;
 
-    set_stat_timestamp( stat );
+    set_stat_time( stat );
 }
 
 

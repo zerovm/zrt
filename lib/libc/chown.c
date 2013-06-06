@@ -21,6 +21,7 @@
 #include "zcalls.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
+#include "zrt_check.h"
 #include "transparent_mount.h"
 #include "mounts_interface.h"
 #include "path_utils.h"
@@ -30,12 +31,7 @@
  **************************************************************************/
 
 int zrt_zcall_chown(const char *path, uid_t owner, gid_t group){
-    if ( !is_zrt_ready() ){
-	ZRT_LOG(L_SHORT, "%s %s", __func__, PROLOG_WARNING);
-	/*while not initialized completely*/
-	errno=ENOSYS;
-	return -1;
-    }
+    CHECK_EXIT_IF_ZRT_NOT_READY;
 
     LOG_SYSCALL_START("path=%s owner=%u group=%u", path, owner, group);
     errno=0;
@@ -51,6 +47,8 @@ int zrt_zcall_chown(const char *path, uid_t owner, gid_t group){
 }
 
 int zrt_zcall_fchown(int fd, uid_t owner, gid_t group){
+    CHECK_EXIT_IF_ZRT_NOT_READY;
+
     LOG_SYSCALL_START("fd=%d owner=%u group=%u", fd, owner, group);
 
     struct MountsInterface* transpar_mount = transparent_mount();

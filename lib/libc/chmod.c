@@ -22,6 +22,7 @@
 #include "zcalls.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
+#include "zrt_check.h"
 #include "transparent_mount.h"
 #include "mounts_interface.h"
 #include "path_utils.h"
@@ -31,12 +32,7 @@
  **************************************************************************/
 
 int zrt_zcall_chmod(const char *path, mode_t mode){
-    if ( !is_zrt_ready() ){
-	ZRT_LOG(L_SHORT, "%s %s", __func__, PROLOG_WARNING);
-	/*while not initialized completely*/
-	errno=ENOSYS;
-	return -1;
-    }
+    CHECK_EXIT_IF_ZRT_NOT_READY;
 
     LOG_SYSCALL_START("path=%s mode=%o(octal)", path, mode);
 
@@ -55,6 +51,8 @@ int zrt_zcall_chmod(const char *path, mode_t mode){
 }
 
 int zrt_zcall_fchmod(int fd, mode_t mode){
+    CHECK_EXIT_IF_ZRT_NOT_READY;
+
     LOG_SYSCALL_START("fd=%d mode=%o(octal)", fd, mode);
     errno=0;
 

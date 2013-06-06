@@ -13,6 +13,7 @@
 #include "nvram_loader.h"
 #include "fstab_observer.h"
 #include "settime_observer.h"
+#include "debug_observer.h"
 #include "channels_reserved.h"
 #include "environment_observer.h"
 #include "args_observer.h"
@@ -456,6 +457,7 @@ void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size,
      Must add here all observers to known nvram sections*/
     nvram->add_observer(nvram, get_fstab_observer() );
     nvram->add_observer(nvram, get_settime_observer() );
+    nvram->add_observer(nvram, get_debug_observer() );
     nvram->add_observer(nvram, get_env_observer() );
     nvram->add_observer(nvram, get_arg_observer() );
     /*if readed not null bytes and result non negative then doing parsing*/
@@ -481,7 +483,13 @@ void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_
 					  char** envs, char* envs_buf, int envs_buf_size){
     #define HANDLE_ONLY_ENV_SECTION get_env_observer()
     #define HANDLE_ONLY_ARG_SECTION get_arg_observer()
+    #define HANDLE_ONLY_DEBUG_SECTION get_debug_observer()
     struct NvramLoader* nvram = static_nvram();
+    /*handle debug section - verbosity*/
+    if ( NULL != nvram->section_by_name( nvram, DEBUG_SECTION_NAME ) ){
+	ZRT_LOG(L_INFO, "%s", "nvram handle debug");
+	nvram->handle(nvram, HANDLE_ONLY_DEBUG_SECTION, NULL, NULL, NULL );
+    }
     /*handle "env" section*/
     if ( NULL != nvram->section_by_name( nvram, ENVIRONMENT_SECTION_NAME ) ){
 	ZRT_LOG(L_INFO, "%s", "nvram handle envs");

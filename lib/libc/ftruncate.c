@@ -22,6 +22,7 @@
 #include "zcalls.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
+#include "zrt_check.h"
 #include "transparent_mount.h"
 #include "mount_specific_implem.h"
 #include "mounts_manager.h"
@@ -58,12 +59,7 @@ static int write_file_padding(int fd, off_t length){
  **************************************************************************/
 
 int zrt_zcall_ftruncate(int fd, off_t length){
-    if ( !is_zrt_ready() ){
-	ZRT_LOG(L_SHORT, "%s %s", __func__, PROLOG_WARNING);
-	/*while not initialized completely*/
-	errno=ENOSYS;
-	return -1;
-    }
+    CHECK_EXIT_IF_ZRT_NOT_READY;
 
     LOG_SYSCALL_START("fd=%d,length=%lld", fd, length);
     

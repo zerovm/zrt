@@ -46,9 +46,6 @@
 #include "channels_reserved.h"
 #include "channels_mount.h"
 
-/* if given in manifest let user to have it */
-#define TIMESTAMP_STR "TimeStamp"
-
 extern char **environ;
 
 /****************** static data*/

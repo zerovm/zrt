@@ -23,7 +23,6 @@
 /*verbosity not available during prolog stage before nvram file parsed,
   so use default verbosity value defined here, especially for that*/
 #define DEFAULT_VERBOSITY_FOR_PROLOG_LOG L_BASE
-#define VERBOSITY_ENV "VERBOSITY"
 
 //formating types 
 #define P_TEXT "%s"
@@ -142,6 +141,7 @@ void __zrt_log_init();
 const char* __zrt_log_syscall_stack_str();
 void __zrt_log_push_name( const char* name );
 void __zrt_log_pop_name( const char* name );
+void __zrt_log_set_verbosity(int v);
 int  __zrt_log_verbosity();
 int  __zrt_log_fd();
 

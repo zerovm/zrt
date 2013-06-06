@@ -54,20 +54,14 @@ int  __zrt_log_is_enabled(){
 
 void __zrt_log_prolog_mode_enable(int status){
     s_log_prolog_mode_enabled = status;
-    if ( !status ){
-	/*update verbosity, because it's value was not available early*/
-	/*get verbosity level via environment*/
-	const char* verbosity_str = getenv(VERBOSITY_ENV);
-	if ( verbosity_str ){
-	    int verbosity = atoi(verbosity_str);
-	    if ( verbosity > 0)
-		s_verbosity_level = verbosity;
-	}
-    }
 }
 
 int  __zrt_log_prolog_mode_is_enabled(){
     return s_log_prolog_mode_enabled;
+}
+
+void __zrt_log_set_verbosity(int v){
+    s_verbosity_level = v;
 }
 
 int __zrt_log_verbosity(){
