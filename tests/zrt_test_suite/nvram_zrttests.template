@@ -9,3 +9,9 @@ name=TimeStamp, value=1337012520
 
 [args]
 {COMMAND_LINE}
+
+[mapping]
+{MAPPING}
+
+[debug]
+verbosity=4

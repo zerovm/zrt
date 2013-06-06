@@ -37,6 +37,7 @@
 #include "path_utils.h"             /*alloc_absolute_path_from_relative*/
 #include "environment_observer.h"
 #include "fstab_observer.h"
+#include "mapping_observer.h"
 #include "nvram_loader.h"
 #include "mounts_manager.h"
 #include "mem_mount_wraper.h"
@@ -106,6 +107,12 @@ static void zrt_init( const struct UserManifest const* manifest ){
 
 /*second step zrt initializer*/
 static void zrt_setup_finally(){
+#define HANDLE_ONLY_MAPPING_SECTION get_mapping_observer()
+    /*nvram must be already parsed*/
+    if ( NULL != s_nvram.section_by_name( &s_nvram, MAPPING_SECTION_NAME ) ){
+	s_nvram.handle(&s_nvram, HANDLE_ONLY_MAPPING_SECTION, NULL, NULL, NULL);
+    }
+
 #define HANDLE_ONLY_FSTAB_SECTION get_fstab_observer()
     /*nvram must be already parsed*/
     if ( NULL != s_nvram.section_by_name( &s_nvram, FSTAB_SECTION_NAME ) ){

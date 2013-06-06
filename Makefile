@@ -28,6 +28,7 @@ lib/nvram/observers/environment_observer.c \
 lib/nvram/observers/fstab_observer.c \
 lib/nvram/observers/settime_observer.c \
 lib/nvram/observers/debug_observer.c \
+lib/nvram/observers/mapping_observer.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \

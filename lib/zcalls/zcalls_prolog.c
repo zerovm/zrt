@@ -14,6 +14,7 @@
 #include "fstab_observer.h"
 #include "settime_observer.h"
 #include "debug_observer.h"
+#include "mapping_observer.h"
 #include "channels_reserved.h"
 #include "environment_observer.h"
 #include "args_observer.h"
@@ -458,6 +459,7 @@ void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size,
     nvram->add_observer(nvram, get_fstab_observer() );
     nvram->add_observer(nvram, get_settime_observer() );
     nvram->add_observer(nvram, get_debug_observer() );
+    nvram->add_observer(nvram, get_mapping_observer() );
     nvram->add_observer(nvram, get_env_observer() );
     nvram->add_observer(nvram, get_arg_observer() );
     /*if readed not null bytes and result non negative then doing parsing*/
