@@ -35,5 +35,5 @@ Nexe = {OUTFILE}.nexe
 ==MemMax=134217728
 MemMax={MEMMAX}
 Timeout=10
-NodeName=glibc-test,1
+
 
