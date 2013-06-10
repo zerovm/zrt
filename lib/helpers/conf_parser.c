@@ -339,7 +339,7 @@ int parse_args(struct ParsedParam* parsed_args_array, int args_array_len,
 
     //save last parsed data
     if ( temp.val != NULL ){
-	temp.vallen = &args_buf[index-1] - temp.val;
+	temp.vallen = &args_buf[index] - temp.val;
 	SAVE_PARSED_ARG(parsed_args_array, args_array_len, count, temp);
     }
     return count;
