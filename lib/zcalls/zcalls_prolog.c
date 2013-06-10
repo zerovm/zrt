@@ -503,6 +503,10 @@ void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_
 	/*access to static data in environment_observer.c*/
 	get_env_array(envs, envs_buf, handled_buf_index); 
     }
+    else{
+	/*if not provided section then explicitly set NULL*/
+	envs[0] = NULL;	
+    }
     /*handle "arg" section*/
     if ( NULL != nvram->section_by_name( nvram, ARGS_SECTION_NAME ) ){
 	ZRT_LOG(L_INFO, "%s", "nvram handle args");
