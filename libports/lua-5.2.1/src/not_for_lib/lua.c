@@ -477,16 +477,6 @@ static int pmain (lua_State *L) {
 }
 
 int main (int argc, char **argv) {
-/*ZeroVM command line unescaping @ used insted =*/
-  int i;
-  int j;
-  for ( i=0; i < argc; i++ ){
-	for( j=0; j<strlen(argv[i]); j++ ){
-		if ( argv[i][j] == '@' )
-			argv[i][j] = '=';
-	}
-  }
-/*ZeroVM command line */
   int status, result;
   lua_State *L = luaL_newstate();  /* create state */
   if (L == NULL) {

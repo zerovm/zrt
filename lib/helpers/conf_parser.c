@@ -239,6 +239,11 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 				++parsed_params_count;
 			    }
 			}
+			else{
+			    /*wrong key*/
+			    ZRT_LOG(L_ERROR, "wrong key, key=%s", 
+				GET_STRING(key_val_parse.key, key_val_parse.keylen));
+			}
 		    }
 		else{
 #ifdef PARSER_DEBUG_LOG

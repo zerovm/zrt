@@ -40,6 +40,22 @@ int main(int argc, char**argv){
 
     CMP_MEM_DATA(data1, data2, filesize1);
 
+    //check stat data
+    struct stat st1;
+    struct stat st2;
+    TEST_OPERATION_RESULT(
+			  stat(TEST_FILE, &st1),
+			  &ret, ret==0);
+    TEST_OPERATION_RESULT(
+			  stat(TEST_FILE2, &st2),
+			  &ret, ret==0);
+    TEST_OPERATION_RESULT( 
+			  st1.st_nlink==st2.st_nlink,
+			  &ret, ret!=0);
+    TEST_OPERATION_RESULT( 
+			  st1.st_ino==st2.st_ino,
+			  &ret, ret!=0);
+
     MUNMAP_FILE(data1, filesize1);
     MUNMAP_FILE(data2, filesize2);
 
