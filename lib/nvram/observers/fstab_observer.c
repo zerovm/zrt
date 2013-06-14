@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "zrt_config.h"
+#include "zrt_defines.h"
 
 /*switch off all of code if it's deisabled*/
 

@@ -58,5 +58,15 @@ int main(int argc, char**argv){
 
     REMOVE_EXISTING_FILEPATH(TEST_FILE);
 
+    TEST_OPERATION_RESULT(
+			  stat("/dev/stdin", &st),
+			  &ret, ret==0&&S_ISFIFO(st.st_mode));
+    TEST_OPERATION_RESULT(
+			  stat("/dev/stdout", &st),
+			  &ret, ret==0&&S_ISCHR(st.st_mode));
+    TEST_OPERATION_RESULT(
+			  stat("/dev/stderr", &st),
+			  &ret, ret==0&&S_ISREG(st.st_mode));
+
     return 0;
 }

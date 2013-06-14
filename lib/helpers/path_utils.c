@@ -10,7 +10,6 @@
 
 #include "path_utils.h"
 
-
 /*if path starting with more than one slashes together 
   then return path starting from last of that slashes*/
 static const char* absolute_path_starting_with_single_slash(const char* path){
@@ -67,3 +66,6 @@ char* alloc_absolute_path_from_relative( const char* path )
     }
     return absolute_path;
 }
+
+
+

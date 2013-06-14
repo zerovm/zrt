@@ -32,7 +32,14 @@
 #define SPARSE_EXT_HDR	21
 #define SPARSE_IN_HDR	4
 
-#define DEBUG_PRINT(s) {fprintf(stderr, "%s\n",s );fflush(0);}
+/*debugging is switched off, and also stderr WARN*/
+#define SWITCH_OFF_DEBUG_PRINT
+
+#ifdef SWITCH_OFF_DEBUG_PRINT
+#  define DEBUG_PRINT(s)
+#else
+#  define DEBUG_PRINT(s) {fprintf(stderr, "%s\n",s );fflush(0);}
+#endif
 
 struct sparse
   {
@@ -333,7 +340,12 @@ GLOBAL char *gnu_dumpfile;
 
 GLOBAL char read_error_flag;
 
-#define WARN(Args) error Args
+#ifdef SWITCH_OFF_DEBUG_PRINT
+#  define WARN(Args)
+#else
+#  define WARN(Args) error Args
+#endif
+
 #define ERROR(Args) (error Args, exit_status = TAREXIT_FAILURE)
 
 /* Module buffer.c.  */

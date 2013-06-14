@@ -124,7 +124,6 @@ int zrt_zcall_enhanced_munmap(void *addr, size_t len);
 void zrt_zcall_enhanced_zrt_setup(void);
 
 /*nonsyscalls*/
-void zrt_zcall_loglibc(const char* str);
 int zrt_zcall_fcntl(int fd, int cmd, ...);
 int zrt_zcall_link(const char *oldpath, const char *newpath);
 int zrt_zcall_unlink(const char *pathname);

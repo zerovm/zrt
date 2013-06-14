@@ -7,7 +7,6 @@ LIBZRT=lib/libzrt.a
 LIBZRT_SOURCES= \
 lib/zcalls/zcalls_prolog.c \
 lib/zcalls/zcalls_zrt.c \
-lib/libc/loglibc.c \
 lib/libc/fcntl.c \
 lib/libc/link.c \
 lib/libc/unlink.c \
@@ -27,6 +26,9 @@ lib/nvram/nvram_loader.c \
 lib/nvram/observers/args_observer.c \
 lib/nvram/observers/environment_observer.c \
 lib/nvram/observers/fstab_observer.c \
+lib/nvram/observers/settime_observer.c \
+lib/nvram/observers/debug_observer.c \
+lib/nvram/observers/mapping_observer.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
@@ -191,6 +193,8 @@ install:
 	install -m 0644 lib/mapreduce/buffer.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/buffer.inl $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/buffered_io.h $(INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/map_reduce_datatypes.h $(INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/elastic_mr_item.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
 	install -m 0644 lib/liblua.a $(LIB_DIR)
 	install -m 0644 lib/libgtest.a $(LIB_DIR)

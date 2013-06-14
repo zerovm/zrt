@@ -43,6 +43,7 @@ struct ZrtChannelRt{
     int64_t random_access_pos;     /*random read, random write*/
     int64_t maxsize;               /*synthethic size. based on maximum position of cursor pos 
 				     channel for all I/O requests*/
+    int     mode;                  /*channel type, taken from mapping nvram section*/
     struct flock fcntl_flock;      /*lock flag for support fcntl locking function*/
 };
 
@@ -68,12 +69,15 @@ struct ZrtChannelRt{
 #define CHANNEL_ASSERT_IF_FAIL( handle )  assert( handle >=0 && handle < s_channels_count )
 
 
+#define CHANNEL_MODE( handle ) s_channels_mode[handle]
+
 //////////////// data
 struct HandleAllocator* s_handle_allocator;
 struct manifest_loaded_directories_t s_manifest_dirs;
 /*runtime information related to channels*/
 static struct ZrtChannelRt**  s_zrt_channels;
 static const struct ZVMChannel* s_channels_list;
+static uint* s_channels_mode;
 static int s_channels_count;
 
 
@@ -246,9 +250,13 @@ static int open_channel( const char *name, int flags, int mode )
 }
 
 
-static uint32_t channel_permissions(const struct ZVMChannel *channel){
+static uint32_t channel_permissions(const struct ZVMChannel *channel, int fd){
     uint32_t perm = 0;
-    assert(channel);
+    uint mode;
+    assert(channel->name);
+    /*if nvram type is available for given channel*/
+    mode = CHANNEL_MODE( fd );
+
     if ( channel->limits[GetsLimit] != 0 && channel->limits[GetSizeLimit] )
         perm |= S_IRUSR;
     if ( channel->limits[PutsLimit] != 0 && channel->limits[PutSizeLimit] )
@@ -257,11 +265,15 @@ static uint32_t channel_permissions(const struct ZVMChannel *channel){
 	 (channel->type == RGetSPut && (perm&S_IRWXU)==S_IWUSR ) ||
 	 (channel->type == SGetRPut && (perm&S_IRWXU)==S_IRUSR ) )
 	{
-	    perm |= S_IFIFO;
+	    if ( mode == 0 ) perm |= S_IFIFO;
 	}
     else{
-        perm |= S_IFBLK;
+	if ( mode == 0 ) perm |= S_IFBLK;
     }
+
+    if ( mode != 0 )
+	perm |= mode;
+
     return perm;
 }
 
@@ -399,7 +411,7 @@ static int64_t channel_pos( int handle, int8_t whence, int8_t access, int64_t of
     return -1;
 }
 
-static void set_stat_timestamp( struct stat* st )
+static void set_stat_time( struct stat* st )
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -424,9 +436,11 @@ static void set_stat(struct stat *stat, int fd)
     if ( check_handle(fd) != 0 ){
         /*channel handle*/
         CHANNEL_ASSERT_IF_FAIL( fd );
-        permissions = channel_permissions( &s_channels_list[fd] );
-        if ( CHECK_FLAG( permissions, S_IFIFO) ) blksize = DEV_CHAR_DEVICE_BLK_SIZE;
-        else                                     blksize = DEV_BLOCK_DEVICE_BLK_SIZE;
+        permissions = channel_permissions( &s_channels_list[fd], fd );
+        if ( CHECK_FLAG( permissions, S_IFIFO ) || CHECK_FLAG( permissions, S_IFCHR ) )
+	     blksize = DEV_CHAR_DEVICE_BLK_SIZE;
+        else 
+	    blksize = DEV_BLOCK_DEVICE_BLK_SIZE;
         ino = INODE_FROM_HANDLE( fd );
         size = CHANNEL_SIZE(fd);
     }
@@ -454,7 +468,7 @@ static void set_stat(struct stat *stat, int fd)
     stat->st_blocks =               /* number of 512B blocks allocated */
 	((stat->st_size + stat->st_blksize - 1) / stat->st_blksize) * stat->st_blksize / 512;
 
-    set_stat_timestamp( stat );
+    set_stat_time( stat );
 }
 
 
@@ -715,7 +729,7 @@ static int channels_getdents(int fd, void *buf, unsigned int buf_size){
     /*choose handle type: channel handle or dir handle */		\
 	if ( check_handle(fd) != 0 ){					\
 	    /*channel handle*/						\
-	    *(mode_p) = channel_permissions( &s_channels_list[fd] );	\
+	    *(mode_p) = channel_permissions( &s_channels_list[fd], fd ); \
 	}								\
 	else{								\
 	    /*dir handle*/						\
@@ -1011,6 +1025,7 @@ struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_all
     /* array of channels runtime data. For opened channels suitable data is:
      * opened flags, mode, i/o positions*/
     s_zrt_channels = calloc( channels_count, sizeof(struct ZrtChannelRt*) );
+    s_channels_mode = calloc( channels_count, sizeof(uint) );
 
     s_manifest_dirs.dircount=0;
     process_channels_create_dir_list( channels, channels_count, &s_manifest_dirs );
@@ -1046,4 +1061,13 @@ struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_all
     return &s_channels_mount;
 }
 
+uint* channel_mode(const char* channel_name){
+    int handle = channel_handle(channel_name);
+    if (handle > 0)
+	return &s_channels_mode[handle];
+    else
+	return NULL;
+
+    
+}
 

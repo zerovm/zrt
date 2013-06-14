@@ -115,9 +115,9 @@ CMDLINE-bug-glob1.c=args=/tmp
 ENV-tst-swscanf.c=name=LOCPATH, value=/lib/locale
 
 ############### time Environment
-ENV-tst-getdate.c=name=DATEMSK, value=datemsk {BR}name=TZDIR, value=/tmp/getdate-data
+ENV-tst-getdate.c=name=DATEMSK, value=/tmp/datemsk {BR}name=TZDIR, value=/tmp/getdate-data
 ENV-tst-widetext.c=name=LOCPATH, value=$(common-objpfx)localedata {BR}name=LANGUAGE, value=C
-ENV-tst-putenv.c=
+ENV-tst-putenv.c=name=SOMETHING_NOBODY_USES, value=
 
 all: clean $(ZEROVM) $(TEST_NEXES) report
 

@@ -91,7 +91,7 @@ LDFLAGS+= -lmapreduce -lnetworking
 #CMDLINE-xxxxxxxxx=args=cmd line argument listed here
 #where xxxxxxxxx is the source file name waiting cmd line arguments
 #examples:
-CMDLINE-command_line.c=args=argument_number_1 argument_number_2 the_last_argument
+CMDLINE-command_line.c=args=command_line.nexe argument_number_1 argument_number_2 the_last_argument
 #####################################################################
 
 #####################################################################
@@ -102,6 +102,11 @@ CMDLINE-command_line.c=args=argument_number_1 argument_number_2 the_last_argumen
 #examples: 
 #ENV-environment.c=name=SafeWords, value=klaato_verada_nikto {BR} name=TTT, value=BBB
 ENV-environment.c=name=SafeWords, value=klaato_verada_nikto
+#####################################################################
+
+#####################################################################
+#mapping channels, set mode for zrt channel stat: pipe, chr, file
+MAPPING-lstat-stat.c=channel=/dev/stdin, mode=pipe {BR}channel=/dev/stdout, mode=char {BR}channel=/dev/stderr, mode=file
 #####################################################################
 
 #####################################################################
@@ -146,6 +151,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_FLAGS:=$(CFLAGS-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_CMDLINE:=$(CMDLINE-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_ENV:=$(ENV-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_MAPPING:=$(MAPPING-$(NAMEONLY).c))
 #channels testing suport
 	$(eval SPECIFIC_TEST_CHANTYPE1:=$(firstword $(CHANTYPE1-$(NAMEONLY).c) $(DEF_CHANTYPE1)))
 	$(eval SPECIFIC_TEST_CHANTYPE2:=$(firstword $(CHANTYPE2-$(NAMEONLY).c) $(DEF_CHANTYPE2)))
@@ -164,6 +170,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{MEMMAX}@$(MEMMAX)@g > $(CURDIR)/$(BASENAME).manifest
 #prepare nvram
 	@sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g nvram_zrttests.template | \
+	 sed s@{MAPPING}@"$(SPECIFIC_TEST_MAPPING)"@g | \
 	 sed s@{BR}@'\n'@g | \
 	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).nvram
 

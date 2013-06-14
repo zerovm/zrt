@@ -22,6 +22,7 @@
 #include "zcalls_zrt.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
+#include "zrt_check.h"
 #include "transparent_mount.h"
 #include "mounts_interface.h"
 #include "path_utils.h"
@@ -47,12 +48,7 @@ const char *byte_to_binary(int x)
  **************************************************************************/
 
 int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
-    if ( !is_zrt_ready() ){
-	ZRT_LOG(L_SHORT, "%s %s", __func__, PROLOG_WARNING);
-	/*while not initialized completely*/
-	errno=ENOSYS;
-	return -1;
-    }
+    CHECK_EXIT_IF_ZRT_NOT_READY;
 
     int ret=0;
     LOG_SYSCALL_START("fd=%d cmd=%d", fd, cmd);

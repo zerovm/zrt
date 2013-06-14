@@ -55,14 +55,64 @@ debugging ZRT information will go into the debug channel If debug
 channel is not defined no debug info will available (apart from system
 logs). Debugging level are regulated by VERBOSITY environment
 variables and supports 1,2,3 values.
-2.2.3 Nvram channel, it is a config file for ZRT, has alias
-"/dev/nvram". It allows comments starting with "#", and different
-sections names expected in square brackets. Currently supported only
-fstab section, but sections env, args coming soon. Fstab section
-allows at start of ZRT session importing of TAR archive contents with
-saving directory structure, into RW FS in memory. And exporting of RW
-FS contents into tar archive just at "exit" syscall handler.
-example below importing and exporting files related to FS in memory:
+2.2.3 Nvram channel, it is a config file for zerovm environment, has
+alias "/dev/nvram". Config syntax is allowing comments starting with
+"#", and sections names that are expected in square brackets. Single
+pair of key and value must be in single line and it's value should not
+contain carriage return. Escaping rules available if need to provide
+unsupported chars as value.
+List of supported nvram sections:
+2.2.3.1. Section [fstab]: allows at start of ZRT session importing of
+TAR archive contents with saving directory structure, into RW FS in
+memory. And exporting of RW FS contents into tar archive just at
+'exit' syscall handler. Keywords valid for fstab:
+- channel : zerovm channel alias, provided in manifest file
+- mountpoint : path in zrt filesystem, any directory path except '/dev/' 
+- access : ro / wo. 
+a) 'ro' value if you need to inject files into zrt;
+b) 'rw' value for saving contents of zrt filesystem into tar archive,
+uses of '/' root does not support for 'wo' access value;
+2.2.3.2. Section [env]: set list of environment vars, keywords are:
+- name : variable name
+- value : variable value
+2.2.3.3. Section [args]: Setup command line arguments - 1st argument
+is application name famous as argv0, the rest of contents is
+arguments. argument has several words but inside of double quotes
+interpreting as single argument. It's necessary to escape chars: ','
+'\n' '"' '\' it must be escaped. instead of char just insert \x and
+appropriate hex value. But any another char can be escaped, using same
+rule.
+- args : command line, specifying also program name as first arg.
+2.2.3.4. Section [mapping] : Can be used to set zerovm channels mode,
+if need to override default values: for sequential channels default
+mode is 'pipe', for devices with random access mode is block device.
+args are:
+- channel : zerovm channel whose mode need to be overrided
+- mode : pipe / char /file ;
+2.2.3.5. Section [time] : Use to set time, arg:
+- seconds : Amount of seconds since 1970, to get value in linux
+  terminal use command: date +"%s"
+2.2.3.6. Section [debug] : Use to set verbosity level, for log file
+/dev/debug. To enable logging this channel must exist in zerovm
+manifest file. Arg is:
+- verbosity : decimal value 0,1,2,3 or 4 for maximum logging level.
+2.2.3.7. Example:
 [fstab] 
-channel=/dev/mount/import, mountpoint=/, access=ro
-channel=/dev/mount/export,  mountpoint=/singles, access=wo
+#inject archive contents into zrt fs
+channel=/dev/mount/import.tar, mountpoint=/, access=ro
+#save /singles folder contents into archive
+channel=/dev/mount/export.tar,  mountpoint=/singles, access=wo
+[env]
+name=SOMEENV, value=some value
+[args]
+args=tarimage.nexe -arg1 \x2C\x2C\x2C ::: \x22\x22\x22 "short text"
+\x22short text\x22 c:\x5Cwin\x5Cpath\x5Cfile.txt "big text with
+carriage \x0A return"
+[mapping]
+channel=/dev/stdin,  mode=pipe #FIFO DEV
+channel=/dev/stdout, mode=char  #CHAR DEV
+channel=/dev/stderr, mode=file #REGULAR FILE
+[time]
+seconds=1370454582 #since 1970
+[debug]
+verbosity=4
