@@ -98,7 +98,7 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf, MemD
     // Get the directory its in.
     int parent_slot = GetParentSlot(path);
     if (parent_slot == -1) {
-	SET_ERRNO(ENOTDIR);
+	SET_ERRNO(ENOENT);
         return -1;
     }
     parent = slots_.At(parent_slot);

@@ -193,6 +193,8 @@ install:
 	install -m 0644 lib/mapreduce/buffer.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/buffer.inl $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/buffered_io.h $(INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/map_reduce_datatypes.h $(INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/elastic_mr_item.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
 	install -m 0644 lib/liblua.a $(LIB_DIR)
 	install -m 0644 lib/libgtest.a $(LIB_DIR)
