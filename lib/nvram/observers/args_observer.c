@@ -30,14 +30,14 @@ static void add_val_to_temp_buffer(char* buf, int bufsize, int* index,
 	struct ParsedParam args[NVRAM_MAX_RECORDS_IN_SECTION];
 	/*in case if too many args will be parsed they will be skipped*/
 	int argc = parse_args(args, NVRAM_MAX_RECORDS_IN_SECTION, val, len);
-	ZRT_LOG(L_SHORT, "argc= %d", argc );
+	ZRT_LOG(L_BASE, "argc= %d", argc );
 	int i;
 	/*argument char can be escaped and must be converted*/
 	for(i=0; i < argc; i++){
 	    char* current_arg = buf+*index;
 	    *index += unescape_string_copy_to_dest(args[i].val, args[i].vallen, buf+*index);
 	    buf[ (*index)++ ] = '\0';
-	    ZRT_LOG(L_SHORT, "arg[%d] %s", i, current_arg );
+	    ZRT_LOG(L_BASE, "arg[%d] %s", i, current_arg );
 	}
     }
     else{

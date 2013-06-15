@@ -1,4 +1,5 @@
 #!/bin/bash
+source $ZRT_ROOT/run.env
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_PATH=`dirname "$SCRIPT"`
@@ -12,8 +13,8 @@ sed s@{ABS_PATH}@$SCRIPT_PATH/@g manifest_template/lua.manifest.template | \
 sed s@{LUA_TEST_PATH}@$LUA_TEST_PATH/@g > lua.manifest
 
 echo some input text > lua.input
-setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M$SCRIPT_PATH/lua.manifest
+${ZEROVM} -M$SCRIPT_PATH/lua.manifest
 cat lua.output
-
+cat lua.log
 
 

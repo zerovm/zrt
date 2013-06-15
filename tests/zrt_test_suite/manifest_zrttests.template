@@ -14,12 +14,12 @@ Channel = {ABS_PATH}autotests/channels/forreadwrite, /dev/read-write, {CHANTYPE3
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
-Version = 09082012
-Nexe = {OUTFILE}.nexe
+Version = 20130611
+Program = {OUTFILE}.nexe
 ==MemMax=33554432
 ==MemMax=67108864
 ==MemMax=134217728
-MemMax={MEMMAX}
+Memory={MEMMAX}
 Timeout=10
 
 

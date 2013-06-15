@@ -10,20 +10,15 @@ Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 9999999, 9999999
 =====================================================================
 == Mounts 
 =====================================================================
-Channel = {ABS_PATH}mounts/fstab.conf, /dev/fstab, 0, 9999999, 9999999, 0, 0 
+Channel = {ABS_PATH}mounts/nvram.conf, /dev/nvram, 0, 9999999, 9999999, 0, 0 
 Channel = {ABS_PATH}mounts/lua-5.2.1-tests.tar, /dev/mount/root, 0, 9999999, 9999999, 0, 0 
-
-=='@' should be replaced by '=' in user main, currently zerovm does not supported '=' char in command line
-CommandLine = -e_U@true /lua-5.2.1-tests/all.lua
-
-Environment = PATH, foo, VERBOSITY, 1
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
-Version = 09082012
-Nexe = {ABS_PATH}lua.nexe
-MemMax=134217728
+Version = 20130611
+Program = {ABS_PATH}lua.nexe
+Memory=134217728
 Timeout=20
-NodeName=luatests, 1
+

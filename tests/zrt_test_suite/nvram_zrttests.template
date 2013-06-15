@@ -3,8 +3,6 @@
 ###########################################################
 
 [env]
-name=VERBOSITY, value=3
-name=TimeStamp, value=1337012520
 {ENVIRONMENT} 
 
 [args]
@@ -13,5 +11,8 @@ name=TimeStamp, value=1337012520
 [mapping]
 {MAPPING}
 
+[time]
+seconds=1337012520
+
 [debug]
-verbosity=4
+verbosity=3
