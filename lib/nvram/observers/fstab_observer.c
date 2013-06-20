@@ -40,9 +40,6 @@ void handle_fstab_record(struct MNvramObserver* observer,
 			 void* obj1, void* obj2, void* obj3){
     assert(record);
 
-    /*as temp solution, need to do good solution to export tar*/
-    memset(&s_export_tarrecords, '\0', sizeof(s_export_tarrecords));
-
     /*obj1 - only channels filesystem interface*/
     struct MountsInterface* channels_mount = (struct MountsInterface*)obj1;
     /*obj2 - whole filesystem interface*/
@@ -100,6 +97,9 @@ void handle_fstab_record(struct MNvramObserver* observer,
 #ifdef FSTAB_SAVE_TAR_ENABLE
     /*save files located at mount_path into tar archive*/
     else if ( !strcmp(access, FSTAB_VAL_ACCESS_WRITE) ){
+	/*as temp solution, need to do good solution to export tar*/
+	memset(&s_export_tarrecords, '\0', sizeof(s_export_tarrecords));
+
 	struct ParsedRecord* record = &s_export_tarrecords.records[s_export_tarrecords.count];
 	struct ParsedParam* p1 = &record->parsed_params_array[FSTAB_PARAM_CHANNEL_KEY_INDEX];
 	struct ParsedParam* p2 = &record->parsed_params_array[FSTAB_PARAM_MOUNTPOINT_KEY_INDEX];
@@ -110,6 +110,8 @@ void handle_fstab_record(struct MNvramObserver* observer,
 	p2->val = strdup(mount_path);
 	p2->vallen = strlen(mount_path);
 	s_export_tarrecords.count++;
+	ZRT_LOG( L_SHORT, "Export scheduled on exit from '%s' into channel '%s'", 
+		 mount_path, channel_alias);
     }
 #endif //FSTAB_SAVE_TAR_ENABLE
 
