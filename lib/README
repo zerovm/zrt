@@ -58,7 +58,7 @@ variables and supports 1,2,3 values.
 2.2.3 Nvram channel, it is a config file for zerovm environment, has
 alias "/dev/nvram". Config syntax is allowing comments starting with
 "#", and sections names that are expected in square brackets. Single
-pair of key and value must be in single line and it's value should not
+pair of key and value must be on single line and it's value should not
 contain carriage return. Escaping rules available if need to provide
 unsupported chars as value.
 List of supported nvram sections:
@@ -75,6 +75,7 @@ uses of '/' root does not support for 'wo' access value;
 2.2.3.2. Section [env]: set list of environment vars, keywords are:
 - name : variable name
 - value : variable value
+Escaping of value are supported, rules the same as for args section.
 2.2.3.3. Section [args]: Setup command line arguments - 1st argument
 is application name famous as argv0, the rest of contents is
 arguments. argument has several words but inside of double quotes
