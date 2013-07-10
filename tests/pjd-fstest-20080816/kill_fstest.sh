@@ -13,6 +13,11 @@ then
     if [ "`pgrep -f fstest.manifest`" != "" ]
     then
         echo fstest does not closed correctly - killed
-        pgrep -f fstest.manifest | xargs kill
+        pgrep -f fstest.manifest | xargs kill -9
     fi
+fi
+
+if [ "`pgrep -f redirect_pipe`" != "" ]
+then
+    pgrep -f redirect_pipe | xargs kill -9
 fi

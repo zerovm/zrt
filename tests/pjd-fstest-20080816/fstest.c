@@ -44,8 +44,8 @@
 /*if that data reading from stding application should exit*/
 #define CONTROL_DATA "test12345complete"
 #define PARAM_STRING_MAXSIZE 10240
-#define DEBUG
-#define PARSING_DEBUG
+//#define DEBUG
+//#define PARSING_DEBUG
 
 #ifndef HAS_TRUNCATE64
 #define	truncate64	truncate
@@ -100,7 +100,7 @@ struct syscall_desc {
     int		 sd_args[MAX_ARGS];
 };
 
-static s_counter=0;
+static int s_counter=0;
 
 static struct syscall_desc syscalls[] = {
         { "open", ACTION_OPEN, { TYPE_STRING, TYPE_STRING, TYPE_NUMBER | TYPE_OPTIONAL, TYPE_NONE } },
@@ -552,13 +552,13 @@ set_gids(char *gids)
         return 1;
     }
     free(gidset);
+    return 0;
 }
 
 
 static int
 read_stdin_parameters( char* argv[] ){
-    const int stdin=0;
-    int words_count=0;
+int words_count=0;
     int cursor = 0;
     int condition=0;
     char *lexema=NULL;
@@ -569,8 +569,13 @@ read_stdin_parameters( char* argv[] ){
     char prev = 0;
     do{
         prev=c;
-        ssize_t bytes = read(stdin, &c, 1);
-        if ( bytes <= 0 ){
+        ssize_t bytes = fread(&c, 1, 1, stdin);
+	if ( feof(stdin) != 0 ){
+	    /*reading complete*/
+	    words_count=-1;
+            break;
+        }
+	else if ( bytes <= 0 ){
             continue;
         }
 
@@ -747,6 +752,7 @@ main(int argc, char *argv[])
 #ifdef DEBUG
         fprintf(stderr, "run_syscall complete %d\n", ret);
 #endif
+	(void)ret;
         for ( i=0; i < stdin_argc; i++ ){
             free( syscall_argv[i] );
         }

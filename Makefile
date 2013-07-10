@@ -60,7 +60,6 @@ libports/sqlite3/libsqlite3.a
 
 ################# samples to build
 UNSTABLE_SAMPLES=
-SAMPLES=hello tarimage readdir sort_paging reqrep disort wordcount zshell time cgioutput
 TEST_SAMPLES=file_stat bigfile
 TEST_SUITES=lua_test_suite
 
@@ -115,11 +114,6 @@ ${TEST_SUITES}:
 zrt_tests: ${TEST_SAMPLES}
 ${TEST_SAMPLES}: 	
 	@make -Ctests/zrt_test_suite/functional/$@
-
-############## "make all_samples" Build samples 
-all_samples: ${SAMPLES} 
-${SAMPLES}: 
-	@make -Csamples/$@
 
 ################ "make clean" Cleaning libs, tests, samples 	
 clean: libclean clean_ports clean_test_suites

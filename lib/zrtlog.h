@@ -22,7 +22,7 @@
 
 /*verbosity not available during prolog stage before nvram file parsed,
   so use default verbosity value defined here, especially for that*/
-#define DEFAULT_VERBOSITY_FOR_PROLOG_LOG L_BASE
+#define DEFAULT_VERBOSITY_FOR_PROLOG_LOG L_SHORT
 
 //formating types 
 #define P_TEXT "%s"

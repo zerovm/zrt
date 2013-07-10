@@ -30,8 +30,9 @@ static void add_pair_to_temp_buffer(char* buf, int bufsize, int* index,
 	memcpy(buf+*index, name, len);
 	(*index)+=len;
 	buf[ (*index)++ ] = '=';
-	memcpy(buf+*index, val, len2);
-	(*index)+=len2;
+	/*try unescape value contets*/
+
+	*index += unescape_string_copy_to_dest(val, len2, buf+*index);
 	buf[ (*index)++ ] = '\0';
     }
     else{
@@ -45,7 +46,7 @@ void get_env_array(char **envs, char* buf, int bufsize){
     int handled_buf_idx=0;
     int i;
     while( idx < NVRAM_MAX_RECORDS_IN_SECTION ){
-	for(i=handled_buf_idx; i < bufsize; i++ ){
+	for(i=handled_buf_idx; i < bufsize && idx < NVRAM_MAX_RECORDS_IN_SECTION; i++ ){
 	    if ( buf[i] == '\0' ){
 		envs[idx++] = &buf[handled_buf_idx];
 		handled_buf_idx = i+1;

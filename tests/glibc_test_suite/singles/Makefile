@@ -119,21 +119,24 @@ ENV-tst-getdate.c=name=DATEMSK, value=/tmp/datemsk {BR}name=TZDIR, value=/tmp/ge
 ENV-tst-widetext.c=name=LOCPATH, value=$(common-objpfx)localedata {BR}name=LANGUAGE, value=C
 ENV-tst-putenv.c=name=SOMETHING_NOBODY_USES, value=
 
+VERBOSE_CLEAN=-v
+
 all: clean $(ZEROVM) $(TEST_NEXES) report
 
 resume:$(ZEROVM) $(TEST_NEXES)
 
 clean:
-	@rm -f *.o
-	@rm -f $(OUTPUT_LAST)
-	@rm -f $(OUTPUT_FAIL)
-	@rm -f $(TEST_OBJECTS) 
-	@rm -f $(TEST_STDOUTS)
-	@rm -f $(TEST_STDERRS)
-	@rm -f $(TEST_LOG_ZVM)
-	@rm -f $(TEST_NEXES)
-	@rm -f $(TEST_MANIFESTS)
-	@rm -f $(TEST_LOG_DEBUG)
+	@find -name "*.scp" | xargs rm -f -v
+	@find -name "*.nvram" | xargs rm -f -v
+	@rm -f $(VERBOSE_CLEAN) $(OUTPUT_LAST)
+	@rm -f $(VERBOSE_CLEAN) $(OUTPUT_FAIL)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_OBJECTS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_STDOUTS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_STDERRS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_LOG_ZVM)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_NEXES)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_MANIFESTS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_LOG_DEBUG)
 
 $(ZEROVM):
 	$(error "$(ZEROVM) does not exist")

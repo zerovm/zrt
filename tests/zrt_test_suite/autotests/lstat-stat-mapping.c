@@ -58,15 +58,31 @@ int main(int argc, char**argv){
 
     REMOVE_EXISTING_FILEPATH(TEST_FILE);
 
+    /*mapping && file mode tests*/
     TEST_OPERATION_RESULT(
 			  stat("/dev/stdin", &st),
-			  &ret, ret==0&&S_ISFIFO(st.st_mode));
+			  &ret, ret==0&&
+			  ((st.st_mode&S_IWUSR)!=S_IWUSR)&&
+			  ((st.st_mode&S_IRUSR)==S_IRUSR)&&
+			  S_ISFIFO(st.st_mode));
     TEST_OPERATION_RESULT(
 			  stat("/dev/stdout", &st),
-			  &ret, ret==0&&S_ISCHR(st.st_mode));
+			  &ret, ret==0&&
+			  ((st.st_mode&S_IWUSR)==S_IWUSR)&&
+			  ((st.st_mode&S_IRUSR)!=S_IRUSR)&&
+			  S_ISCHR(st.st_mode));
     TEST_OPERATION_RESULT(
 			  stat("/dev/stderr", &st),
-			  &ret, ret==0&&S_ISREG(st.st_mode));
+			  &ret, ret==0&&
+			  ((st.st_mode&S_IWUSR)==S_IWUSR)&&
+			  ((st.st_mode&S_IRUSR)!=S_IRUSR)&&
+			  S_ISREG(st.st_mode));
+    TEST_OPERATION_RESULT(
+			  stat("/dev/read-write", &st),
+			  &ret, ret==0&&
+			  ((st.st_mode&S_IWUSR)==S_IWUSR)&&
+			  ((st.st_mode&S_IRUSR)==S_IRUSR)&&
+			  S_ISBLK(st.st_mode));
 
     return 0;
 }

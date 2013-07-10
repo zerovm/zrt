@@ -51,7 +51,7 @@ void get_arg_array(char **args, char* buf, int bufsize){
     int handled_buf_idx=0;
     int i;
     while( idx < NVRAM_MAX_RECORDS_IN_SECTION ){
-	for(i=handled_buf_idx; i < bufsize; i++ ){
+	for(i=handled_buf_idx; i < bufsize && idx < NVRAM_MAX_RECORDS_IN_SECTION; i++ ){
 	    if ( buf[i] == '\0' ){
 		args[idx++] = &buf[handled_buf_idx];
 		handled_buf_idx = i+1;

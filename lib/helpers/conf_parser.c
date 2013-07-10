@@ -47,10 +47,15 @@ const char* strip_all(const char* str, int len, uint16_t* striped_len ){
 	if ( ! IS_IT_CHAR_TO_STRIP( str[begin] ) ) break;
     }
     /*strip right*/
-    for( end=len-1; len > 0; end-- ){
+    for( end=len-1; end>0 && len > 0; end-- ){
 	if ( ! IS_IT_CHAR_TO_STRIP( str[end] ) ) break;
     }
     *striped_len = end-begin+1;
+    /*self testing*/
+    if ( *striped_len > len ){
+	ZRT_LOG(L_ERROR, "begin=%d, end=%d, striped_len=%d, fulllen=%d", begin, end, striped_len, len);
+	assert(*striped_len<=len);
+    }
     return MAX(0, str+begin);
 }
 
@@ -218,10 +223,12 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 							  key_val_parse.key,
 							  key_val_parse.keylen);
 #ifdef PARSER_DEBUG_LOG
-			ZRT_LOG(L_INFO, "key found, key=%s, len=%d index=%d", 
+			ZRT_LOG(L_INFO, "key (len=%d,index=%d) '%s' found, keyval=%s,", 
+				key_val_parse.keylen, parsed_key_index,
 				GET_STRING(key_val_parse.key,
 					   key_val_parse.keylen),
-				key_val_parse.keylen, parsed_key_index);
+				GET_STRING(key_val_parse.val,
+					   key_val_parse.vallen));
 #endif
 			if ( parsed_key_index >= 0 ){
 			    if ( temp_keys_parsed[parsed_key_index].key != NULL ){
@@ -232,6 +239,10 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 #endif
 			    }
 			    else{
+				ZRT_LOG(L_INFO, "parsed key(len=%d)=%s saved", 
+					key_val_parse.vallen,
+					GET_STRING(key_val_parse.val, key_val_parse.vallen) );
+
 				/*save parsed key,value*/
 				temp_keys_parsed[parsed_key_index] = key_val_parse;
 				/*one of record parameters was parsed*/

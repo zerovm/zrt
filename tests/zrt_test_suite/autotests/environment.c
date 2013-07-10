@@ -21,14 +21,16 @@ int main(int argc, char **argv)
     const char* var = NULL;
     const char* val = NULL;
     printf("get environment variables, by getenv:\n");
-    var = "TimeStamp"; val = getenv(var);  
-    if ( val == NULL ) return 1;
-    printf("%s=%s\n", var, val );
-    assert( !strcmp(val, "1337012520") );
     var = "SafeWords"; val = getenv(var);  
     if ( val == NULL ) return 1;
     printf("%s=%s\n", var, val );
     assert( !strcmp(val, "klaato_verada_nikto") );
+
+    /*test escaped env var*/
+    char* pattern = "1,2,3/\"1,2,3\"";
+    var = "usable"; val = getenv(var);  
+    printf("%s=%s\n%s\n", var, val,  pattern );
+    assert( !strcmp(val,  pattern) );
 
     printf("\nTEST3: using setenv & getenv:\n");
     printf( "before new environment assignemnt\n" );

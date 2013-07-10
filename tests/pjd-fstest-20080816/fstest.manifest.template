@@ -1,24 +1,22 @@
 =====================================================================
 == "template" for nacltests
 =====================================================================
-Channel = {ABS_PATH}data/{NAME}.fifo.input,  /dev/stdin, 0, 999999, 999999, 0, 0
-Channel = {ABS_PATH}data/{NAME}.fifo.output, /dev/stderr, 0, 0, 0, 999999, 999999
-Channel = {ABS_PATH}data/{NAME}.stdout.data, /dev/stdout, 0, 0, 0, 999999, 999999
-==Channel = {ABS_PATH}data/{NAME}.zrtdebug.log, /dev/debug, 0, 0, 0, 99999999, 99999999
+Channel = {ABS_PATH}data/{NAME}.fifo.input,  /dev/stdin, 0, 0, 999999, 999999, 0, 0
+Channel = {ABS_PATH}data/{NAME}.fifo.output, /dev/stderr, 0, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}data/{NAME}.stdout.data, /dev/stdout, 0, 0, 0, 0, 999999, 999999
+Channel = {ABS_PATH}{NAME}.nvram, /dev/nvram, 0, 0, 999999, 999999, 0, 0
+==Channel = {ABS_PATH}data/{NAME}.zrtdebug.log, /dev/debug, 0, 0, 0, 0, 99999999, 99999999
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================
-Version = 09082012
-Nexe = {ABS_PATH}{NAME}.nexe
-NexeMax = 10000000
+Version = 20130611
+Program = {ABS_PATH}{NAME}.nexe
 ==512MB Memory
 ==MemMax=536870912
 ==4GB-16MB
-MemMax=4278190080
-SyscallsMax = 3333
+Memory=4278190080, 0
 Timeout=180
 Environment = TimeStamp, 1344719070
-NodeName={NAME},1
 

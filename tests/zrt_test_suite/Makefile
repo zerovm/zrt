@@ -101,12 +101,14 @@ CMDLINE-command_line.c=args=command_line.nexe argument_number_1 argument_number_
 #and their value divided by comma ',', and not that just after '=' is expected comma ','
 #examples: 
 #ENV-environment.c=name=SafeWords, value=klaato_verada_nikto {BR} name=TTT, value=BBB
+#trying to add env variable, escaping it twice because Makefile unescaping it
+#waiting is env variable:  usable=1,2,3/"3,2,1"
 ENV-environment.c=name=SafeWords, value=klaato_verada_nikto
 #####################################################################
 
 #####################################################################
 #mapping channels, set mode for zrt channel stat: pipe, chr, file
-MAPPING-lstat-stat.c=channel=/dev/stdin, mode=pipe {BR}channel=/dev/stdout, mode=char {BR}channel=/dev/stderr, mode=file
+MAPPING-lstat-stat-mapping.c=channel=/dev/stdin, mode=pipe {BR}channel=/dev/stdout, mode=char {BR}channel=/dev/stderr, mode=file
 #####################################################################
 
 #####################################################################
@@ -115,29 +117,30 @@ MAPPING-lstat-stat.c=channel=/dev/stdin, mode=pipe {BR}channel=/dev/stdout, mode
 #{CHANTYPE1} {CHANTYPE2} {CHANTYPE3} possible channel types: [0, 1, 2, 3]
 #this option is allow create manifest with specified channel type
 #examples: 
-#CHANTYPE1-tst-channel.c=1
+CHANTYPE2-bigfile.c=2
 CHANTYPE1-sequential.c=0
 CHANTYPE2-sequential.c=0
 CHANTYPE3-sequential.c=1
 #####################################################################
 
+VERBOSE_CLEAN=-v
 
 all: clean $(ZEROVM) $(TEST_NEXES) report
 
 resume:$(ZEROVM) $(TEST_NEXES)
 
 clean:
-	@rm -f *.o
-	@rm -f $(OUTPUT_LAST)
-	@rm -f $(OUTPUT_FAIL)
-	@rm -f $(TEST_OBJECTS) 
-	@rm -f $(TEST_STDOUTS)
-	@rm -f $(TEST_STDERRS)
-	@rm -f $(TEST_LOG_ZVM)
-	@rm -f $(TEST_NEXES)
-	@rm -f $(TEST_MANIFESTS)
-	@rm -f $(TEST_NVRAMS)
-	@rm -f $(TEST_LOG_DEBUG)
+	@find -name "*.scp" | xargs rm -f -v
+	@rm -f $(VERBOSE_CLEAN) $(OUTPUT_LAST)
+	@rm -f $(VERBOSE_CLEAN) $(OUTPUT_FAIL)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_OBJECTS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_STDOUTS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_STDERRS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_LOG_ZVM)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_NEXES)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_MANIFESTS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_NVRAMS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_LOG_DEBUG)
 
 $(ZEROVM):
 	$(error "$(ZEROVM) does not exist")
@@ -160,6 +163,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
 	@$(CC) -o $@ $(BASENAME).o $(LDFLAGS)
+#prepare scripts for debug purposes with GDB
+	@sed s@{NEXE_FULL_PATH}@$(CURDIR)/$(BASENAME).nexe@g $(ZRT_ROOT)/gdb_commands.template > $(CURDIR)/$(BASENAME).scp
 #prepare manifest
 	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g manifest_zrttests.template | \
 	 sed s@{ABS_PATH}@$(CURDIR)/@g | \
@@ -179,7 +184,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #$shell should could not be used to get test result from file because it unexpectadly
 #using contents of previosly saved test output, and it is the main reason why using awk;
 #parsing correct output retrieved via pipe
-	@setarch x86_64 -R $(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest \
+#Note that zerovm option -l6 is used because working with big file
+	@$(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest -l6 \
 	| $(PRINT_ERRCODE) > $(OUTPUT_LAST)
 	@cat $(OUTPUT_LAST)
 #save failed tests to displaytheir at report

@@ -1,21 +1,25 @@
+include ../../Makefile.env
+
 #CFLAGS+=-DHAS_LCHMOD
 #CFLAGS+=-DHAS_CHFLAGS
 #CFLAGS+=-DHAS_LCHFLAGS
 #CFLAGS+=-DHAS_TRUNCATE64
 #CFLAGS+=-DHAS_STAT64
-CFLAGS+=-I$(ZRT_ROOT)/lib 
 
-PNACL_TOOL=${NACL_SDK_ROOT}/toolchain/linux_x86_glibc
-CC = $(PNACL_TOOL)/bin/x86_64-nacl-gcc
 NAME=fstest
+NAME_TOOL=redirect_pipe/redirect_pipe
 
 
-all: $(NAME).nexe run
+all: $(NAME).nexe $(NAME_TOOL) run
 
 $(NAME).nexe: $(NAME).o
-	$(CC) -o $(NAME).nexe -s -static -T \
-	$(PNACL_TOOL)/x86_64-nacl/lib64/ldscripts/elf64_nacl.x.static -melf64_nacl -m64 \
-	$(NAME).o -L$(ZRT_ROOT)/lib -lzrt -lfs -lstdc++
+	$(CC) -o $(NAME).nexe $(NAME).o
+
+$(NAME_TOOL): $(NAME_TOOL).o
+	gcc -o $(NAME_TOOL) $(NAME_TOOL).o
+
+$(NAME_TOOL).o:
+	gcc -c -o $(NAME_TOOL).o -g $(NAME_TOOL).c 
 
 run: 
 	sed s@{ABS_PATH}@${CURDIR}/@g $(NAME).manifest.template | sed s@{NAME}@$(NAME)@g > $(NAME).manifest
@@ -23,4 +27,4 @@ run:
 	mkdir -p data
 
 clean:
-	@rm -f $(NAME).nexe $(NAME).o data/*.output data/*.log data/*.data *.manifest
+	@rm -f $(NAME).nexe $(NAME_TOOL) rm *.o data/*.output data/*.log data/*.data *.manifest

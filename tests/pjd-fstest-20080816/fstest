@@ -1,6 +1,7 @@
 #!/bin/bash
+source ../../run.env
 
-#It's executable script is wrapper around fstest.nexe
+#This an executable script is wrapper around fstest.nexe
 #that prepare nexe environment and launches zerovm in background
 #input parameters of script that was invoked by prove testsystem
 #is writing into STDIN input file of fstest.nexe.
@@ -10,14 +11,27 @@
 SCRIPT=$(readlink -f "$0")
 CURDIR=`dirname "$SCRIPT"`
 
-TEMP_FILE=data/newf1
-FIFO_FOR_INPUT=data/fstest.fifo.input
-FIFO_FOR_OUTPUT=data/fstest.fifo.output
-STDIN=data/fstest.stdin.data
-STDOUT=data/fstest.stdout.data
-STDERR=data/fstest.stderr.data
-ZEROVM_OUTPUT=data/zerovm.output
+REDIRECT_PIPE=./redirect_pipe/redirect_pipe
 
+###
+export REDIRECT_PIPE=./redirect_pipe/redirect_pipe
+export ZEROVM_FIFO_INPUT=data/fstest.fifo.input
+export ZEROVM_FIFO_OUTPUT=data/fstest.fifo.output
+export REDIRECT_TO_ZEROVM_FIFO_INPUT=data/fstest.stdin.data
+export REDIRECT_TO_ZEROVM_FIFO_OUTPUT=data/fstest.stderr.data
+export ZEROVM_SESSION_OUTPUT=data/zerovm.output
+
+###
+
+#pipes directly connected to zerovm
+ZEROVM_FIFO_INPUT=data/fstest.fifo.input
+ZEROVM_FIFO_OUTPUT=data/fstest.fifo.output
+
+#ipc file are using by redirecting pipes
+REDIRECT_TO_ZEROVM_FIFO_INPUT=data/fstest.stdin.data
+REDIRECT_TO_ZEROVM_FIFO_OUTPUT=data/fstest.stderr.data
+
+ZEROVM_SESSION_OUTPUT=data/zerovm.output
 NAME=fstest
 COMMAND_LINE="$@"
 
@@ -28,36 +42,35 @@ COMMAND_LINE="$@"
 p=`pgrep -f "zerovm -Mfstest.manifest"`
 if [ "$p" = "" ]
 then
-    rm -f ${FIFO_FOR_INPUT} ${FIFO_FOR_OUTPUT} ${STDOUT} ${STDIN} ${STDERR} ${TEMP_FILE}
-    mkfifo ${FIFO_FOR_INPUT} ${FIFO_FOR_OUTPUT}
-    setarch x86_64 -R ${ZEROVM_ROOT}/zerovm -M${NAME}.manifest -v4 > ${ZEROVM_OUTPUT} &
+    rm -f ${ZEROVM_FIFO_INPUT} ${ZEROVM_FIFO_OUTPUT} history.txt
+    mkfifo ${ZEROVM_FIFO_INPUT} ${ZEROVM_FIFO_OUTPUT} 
+#launch pipe redirector: send input file into zerovm stdin
+    touch ${REDIRECT_TO_ZEROVM_FIFO_INPUT}
+    $REDIRECT_PIPE -f ${REDIRECT_TO_ZEROVM_FIFO_INPUT} -r > ${ZEROVM_FIFO_INPUT} &
+#launch pipe redirector: send STDIN into output file
+    cat ${ZEROVM_FIFO_OUTPUT} | $REDIRECT_PIPE -f ${REDIRECT_TO_ZEROVM_FIFO_OUTPUT} -w &
     sleep 1
-    p=`pgrep -f "zerovm -Mfstest.manifest"`
+    ${ZEROVM} ${NAME}.manifest -v2 > ${ZEROVM_SESSION_OUTPUT} &
 fi
 
 #############################################
 # if fstest copy already running then write 
 # command line parameters into input channel
 #############################################
+
 #it is a way send to zerovm stdin any required data
 
 #STDIN file just a file for storing of history
-echo fstest "${COMMAND_LINE}" >> $STDIN
+echo fstest "${COMMAND_LINE}" >> history.txt
 #FIFO for input into zerovm
-echo fstest "${COMMAND_LINE}" > ${FIFO_FOR_INPUT} &
+echo fstest "${COMMAND_LINE}" > ${REDIRECT_TO_ZEROVM_FIFO_INPUT}
 
 #############################################
-# wait while zerovm write new data into stdout or stderr
+# wait while zerovm write new data into stderr
 # and print tails of these files
 #############################################
 
-#cat will wait while pipe data not available, it will be available when 
-#zerovm will get response back
-
-cat ${FIFO_FOR_OUTPUT} > ${TEMP_FILE}
-cat ${TEMP_FILE} >> ${STDERR}
-
-RESULT=`cat ${TEMP_FILE}`
+RESULT=`$REDIRECT_PIPE -f ${REDIRECT_TO_ZEROVM_FIFO_OUTPUT} -r`
 
 echo $RESULT
 
