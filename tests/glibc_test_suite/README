@@ -7,6 +7,13 @@ Libc test suite
 Run glibc tests for zerovm using only one thing:
 sh run_tests.sh
 
+prerequisites :
+Glibc uses localisation
+a)Need to build localization patcher:
+localization/locale_patcher/
+b)Build locales & patch & add separately to tar
+sh add_all_patched_zrt_locales.sh
+
 Some tests are using filesystem and to get it worked is used tarball
 archive ./singles/archive/glibc-fs.tar added to manifest file of every
 test, to be injected into nexes filesystem in memory; The main

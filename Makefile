@@ -103,7 +103,8 @@ test: test_suites zrt_tests
 ############## "make autotests" run zrt autotests
 autotests:
 	@echo ------------- RUN zrt $@ ------------
-	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite
+	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite clean
+	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite -j4
 
 ############## "make zrt_tests" Build test samples 
 test_suites: ${TEST_SUITES}

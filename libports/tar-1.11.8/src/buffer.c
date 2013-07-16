@@ -206,11 +206,11 @@ dupto (int from, int to, const char *msg)
 | ?  |
 `---*/
 
-#ifdef __MSDOS__
+#if defined(__native_client__) || defined(__MSDOS__)
 static void
 child_open (void)
 {
-  ERROR ((TAREXIT_FAILURE, 0, _("Cannot use compressed or remote archives")))
+    ERROR ((TAREXIT_FAILURE, 0, _("Cannot use compressed or remote archives")));
 }
 
 #else
@@ -1424,6 +1424,7 @@ tryagain:
 		break;
 
 	      case '!':
+#if 0 /*zerovm*/
 #ifdef __MSDOS__
 		spawnl (P_WAIT, getenv ("COMSPEC"), "-", 0);
 #else
@@ -1444,13 +1445,15 @@ tryagain:
 			    _("Cannot exec a shell %s"), p));
 
 		  default:
-		    wait (&status);
+		    /* zerovm
+		       wait (&status); */
 		    break;
 		  }
 
 		/* FIXME: I'm not sure if that's all that has to be done
 		   here.  (jk)  */
 
+#endif
 #endif
 		break;
 	      }

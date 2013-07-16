@@ -119,6 +119,10 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 		/*min allocated memory size*/
 		wanted_mem_block_size = MIN_MMAP_MEMORY_SIZE;
 	    }
+#ifndef USE_MALLOC
+ #define USE_MALLOC 1
+#endif //USE_MALLOC
+	    /*use allocation of non alligned memory*/
 	    ALLOC_MMAP_MEMORY( &alloc_addr, wanted_mem_block_size );
 	    if ( alloc_addr != NULL ){
 		errcode = 0;
@@ -153,6 +157,8 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
     /*if anonymous mapping requested then do it*/
     else if ( CHECK_FLAG(prot, PROT_READ|PROT_WRITE) &&
 	      CHECK_FLAG(flags, MAP_ANONYMOUS) && length >0 ){
+#undef USE_MALLOC
+	/*use allocation of alligned memory*/
 	ALLOC_MMAP_MEMORY( &alloc_addr, wanted_mem_block_size );
 	if ( alloc_addr != NULL )
 	    errcode = 0;

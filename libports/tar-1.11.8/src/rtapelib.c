@@ -244,6 +244,13 @@ _rmt_rexec (char *host, char *user)
 | number plus BIAS.  REMOTE_SHELL may be overriden.  On error, return -1.  |
 `-------------------------------------------------------------------------*/
 
+#ifdef __native_client__
+int
+__rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
+{
+    return -1;
+}
+#else
 int
 __rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
 {
@@ -411,6 +418,7 @@ __rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
   free (path_copy);
   return remote_pipe_number + bias;
 }
+#endif //__native_client__
 
 /*-------------------------------------------------------------------------.
 | Close remote tape connection FILE_DESCRIPTOR and shut down.  Return 0 if |

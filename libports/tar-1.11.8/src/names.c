@@ -79,6 +79,14 @@ finduname (char uname[TUNMLEN], int uid)
 | ?  |
 `---*/
 
+#ifdef __native_client__
+int
+finduid (char uname[TUNMLEN])
+{
+    saveuid = myuid;
+    return saveuid;
+}
+#else
 int
 finduid (char uname[TUNMLEN])
 {
@@ -100,6 +108,7 @@ finduid (char uname[TUNMLEN])
     }
   return saveuid;
 }
+#endif
 
 /*---.
 | ?  |
@@ -108,6 +117,7 @@ finduid (char uname[TUNMLEN])
 void
 findgname (char gname[TGNMLEN], int gid)
 {
+#ifndef __native_client__
   struct group *gr;
 #ifndef HAVE_GETGRGID
   extern struct group *getgrgid ();
@@ -123,6 +133,7 @@ findgname (char gname[TGNMLEN], int gid)
 	strncpy (savegname, gr->gr_name, TGNMLEN);
     }
   strncpy (gname, savegname, TGNMLEN);
+#endif
 }
 
 /*---.
@@ -132,6 +143,10 @@ findgname (char gname[TGNMLEN], int gid)
 int
 findgid (char gname[TUNMLEN])
 {
+#ifdef __native_client__
+    savegid = mygid;
+    return savegid;
+#else
   struct group *gr;
 
   if (gname[0] != savegname[0]	/* quick test w/o proc call */
@@ -149,6 +164,7 @@ findgid (char gname[TUNMLEN])
 	}
     }
   return savegid;
+#endif //__native_client__
 }
 
 #endif

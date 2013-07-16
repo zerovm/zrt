@@ -8,7 +8,7 @@ cd $CPWD
 
 #run tests
 cd singles
-make
+make -j4
 cd ..
 echo --------------------------------------------
 echo -n "Tests that were not run in section TODO: "

@@ -18,6 +18,7 @@
 
 
 void mmap_test(off_t offset);
+void mmap_test_align();
 
 int main(int argc, char**argv){
     /*create data file*/
@@ -28,13 +29,16 @@ int main(int argc, char**argv){
 
     /*test2: test mmap with not 0 offset*/
     mmap_test(10);
+
+    /*test3: test mmap address must be aligned for cases:
+      PROT_READ|PROT_WRITE, MAP_ANONYMOUS*/
+    mmap_test_align();
     return 0;
 }
 
 
 
-void mmap_test(off_t offset)
-{
+void mmap_test(off_t offset){
     int fd;
     char* data;
     MMAP_READONLY_SHARED_FILE(MMAP_FILE, offset, &fd, data)
@@ -48,4 +52,19 @@ void mmap_test(off_t offset)
 
     MUNMAP_FILE(data, filesize);
     CLOSE_FILE(fd);
+}
+
+void mmap_test_align(){
+    int32_t addr;
+    int ret;
+    int length = 100;
+    TEST_OPERATION_RESULT(
+			  (int)mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_ANONYMOUS, -1, 0),
+			  &addr, addr>0);
+    fprintf(stderr, "addr=%d\n", addr);
+    int pagesize = sysconf(_SC_PAGE_SIZE);
+    TEST_OPERATION_RESULT(
+    			  addr&pagesize,
+    			  &ret, ret==0);
+    
 }
