@@ -10,6 +10,12 @@ end
 define pstr
 printf "%s", (uint64_t)0x440a00000000+(uint64_t)$arg0
 end
+define pstruct
+p ($arg1)*((uint64_t)0x440a00000000+(uint64_t)&$arg0)
+end
+define pstructp
+p ($arg1)*((uint64_t)0x440a00000000+(uint64_t)$arg0)
+end
 set confirm off
 set output-radix 16
 b CreateSession
