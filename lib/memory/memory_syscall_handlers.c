@@ -24,7 +24,8 @@
 
 /*memory allocator uses posix_memalign for big allocations*/
 #define ALLOC_MMAP_MEMORY_POSIX_MEMALIGN(addr_p, memsize){		\
-    	size_t rounded_memsize = roundup_pow2(memsize);			\
+	size_t rounded_memsize = sysconf(_SC_PAGESIZE);			\
+    	/* size_t rounded_memsize = roundup_pow2(memsize); */		\
 	int err = posix_memalign(addr_p, rounded_memsize, memsize);	\
 	if ( err != 0 ){						\
 	    SET_ERRNO(err);						\
@@ -119,11 +120,8 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 		/*min allocated memory size*/
 		wanted_mem_block_size = MIN_MMAP_MEMORY_SIZE;
 	    }
-#ifndef USE_MALLOC
- #define USE_MALLOC 1
-#endif //USE_MALLOC
 	    /*use allocation of non alligned memory*/
-	    ALLOC_MMAP_MEMORY( &alloc_addr, wanted_mem_block_size );
+	    ALLOC_MMAP_MEMORY_MALLOC( &alloc_addr, wanted_mem_block_size );
 	    if ( alloc_addr != NULL ){
 		errcode = 0;
 		/*create maping in memory just copying file contents starting from offset
@@ -157,9 +155,8 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
     /*if anonymous mapping requested then do it*/
     else if ( CHECK_FLAG(prot, PROT_READ|PROT_WRITE) &&
 	      CHECK_FLAG(flags, MAP_ANONYMOUS) && length >0 ){
-#undef USE_MALLOC
 	/*use allocation of alligned memory*/
-	ALLOC_MMAP_MEMORY( &alloc_addr, wanted_mem_block_size );
+	ALLOC_MMAP_MEMORY_POSIX_MEMALIGN( &alloc_addr, wanted_mem_block_size );
 	if ( alloc_addr != NULL )
 	    errcode = 0;
 	else
