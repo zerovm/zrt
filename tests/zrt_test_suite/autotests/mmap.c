@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <error.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "channels/test_channels.h"
 
@@ -18,7 +19,7 @@
 
 
 void mmap_test(off_t offset);
-void mmap_test_align();
+void mmap_test_align(size_t length);
 
 int main(int argc, char**argv){
     /*create data file*/
@@ -32,7 +33,11 @@ int main(int argc, char**argv){
 
     /*test3: test mmap address must be aligned for cases:
       PROT_READ|PROT_WRITE, MAP_ANONYMOUS*/
-    mmap_test_align();
+    mmap_test_align(0x10000-1);
+    mmap_test_align(0x10000-1);
+    mmap_test_align(0x10000-1);
+    mmap_test_align(0x10000-1);
+    mmap_test_align(0x10000-1);
     return 0;
 }
 
@@ -54,17 +59,20 @@ void mmap_test(off_t offset){
     CLOSE_FILE(fd);
 }
 
-void mmap_test_align(){
+void mmap_test_align(size_t length){
     int32_t addr;
     int ret;
-    int length = 100;
+    fprintf(stderr, "length=(%d)0x%x\n", length, length);
     TEST_OPERATION_RESULT(
 			  (int)mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_ANONYMOUS, -1, 0),
 			  &addr, addr>0);
-    fprintf(stderr, "addr=%d\n", addr);
     int pagesize = sysconf(_SC_PAGE_SIZE);
+    int expected = addr&~(pagesize-1)&(pagesize-1);
+    fprintf(stderr, "addr=0x%x, pagesize=0x%x, expected=0x%x\n", addr, pagesize, expected);
     TEST_OPERATION_RESULT(
-    			  addr&pagesize,
+    			  expected,
     			  &ret, ret==0);
-    
+    /* TEST_OPERATION_RESULT( */
+    /* 			  munmap((void*)addr, length), */
+    /* 			  &ret, ret==0); */
 }
