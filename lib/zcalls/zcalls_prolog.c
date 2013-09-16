@@ -22,7 +22,7 @@
 #define STUB_ARG0 "stub"
 #define SET_ERRNO(err) errno=err
 
-//#define LOW_LEVEL_LOG_ENABLE
+#define LOW_LEVEL_LOG_ENABLE
 
 /*setup stub argv0 if user not specified explicitly nvram args*/
 #define CHECK_SET_ARGV0_STUB(args, args_buf, buf_size)		\
@@ -43,9 +43,20 @@
 #endif //LOW_LEVEL_LOG_ENABLE
 
 
-static int   s_prolog_doing_now;
-static void* s_tls_addr=NULL;
-static void* sbrk_default = NULL;
+/****************** static data*/
+static int     s_prolog_doing_now;
+static void*   s_tls_addr=NULL;
+static void*   sbrk_default = NULL;
+struct timeval s_cached_timeval;
+/****************** */
+
+
+static inline void update_cached_time()
+{
+    /* update time value
+     * update seconds because updating miliseconds has no effect*/
+    ++s_cached_timeval.tv_sec;
+}
 
 
 void zrt_zcall_prolog_init(){
@@ -67,15 +78,29 @@ void zrt_zcall_prolog_exit(int status){
 	zrt_zcall_enhanced_exit(status);
 }
 
+
 int  zrt_zcall_prolog_gettod(struct timeval *tvl){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    if ( s_prolog_doing_now ){
-	SET_ERRNO(ENOSYS);
-	return -1;
+    int ret=-1;
+    errno=0;
+
+    if(tvl == NULL) {
+	errno = EFAULT;
     }
-    else
-	return zrt_zcall_enhanced_gettod(tvl);
+    else{
+	/*retrieve and get cached time value*/
+	tvl->tv_usec = s_cached_timeval.tv_usec;
+	tvl->tv_sec  = s_cached_timeval.tv_sec;
+	ZRT_LOG(L_INFO, "tv_sec=%lld, tv_usec=%d", tvl->tv_sec, tvl->tv_usec );
+
+	/* update time value*/
+	update_cached_time();
+	ret=0;
+    }
+
+    return ret;
 }
+
 int  zrt_zcall_prolog_clock(clock_t *ticks){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     /*
@@ -374,7 +399,7 @@ int  zrt_zcall_prolog_tls_init(void *thread_ptr){
 }
 
 void * zrt_zcall_prolog_tls_get(void){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
+    //ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     /*very base implementation of tls handling*/
     return s_tls_addr ; /*valid tls*/
 }
@@ -395,9 +420,10 @@ int  zrt_zcall_prolog_getres(clockid_t clk_id, struct timespec *res){
 }
 int  zrt_zcall_prolog_gettime(clockid_t clk_id, struct timespec *tp){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
+    (void)clk_id;
+    tp->tv_sec = s_cached_timeval.tv_sec;
+    tp->tv_nsec = s_cached_timeval.tv_usec * 1000;
+    return 0;
 }
 
 int zrt_zcall_prolog_chdir(const char *path){
@@ -412,6 +438,14 @@ void zrt_zcall_prolog_zrt_setup(void){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     /*prolog initialization done and now main syscall handling should be processed by
      *enhanced syscall handlers*/
+
+    /*handle nvram time section*/
+#define HANDLE_ONLY_TIME_SECTION get_settime_observer()
+    struct NvramLoader* nvram = static_nvram();
+    if ( NULL != nvram->section_by_name( nvram, TIME_SECTION_NAME ) ){
+	nvram->handle(nvram, HANDLE_ONLY_TIME_SECTION, &s_cached_timeval, NULL, NULL);
+    }
+
     s_prolog_doing_now = 0; 
     __zrt_log_prolog_mode_enable(0);
     ZRT_LOG_DELIMETER;
@@ -464,7 +498,7 @@ void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size,
     nvram->add_observer(nvram, get_arg_observer() );
     /*if readed not null bytes and result non negative then doing parsing*/
     if ( nvram->read(nvram, DEV_NVRAM) > 0 ){
-	/*read and parse whole config strusture into NvramLoader object*/
+	/*read and parse whole nvram config file into NvramLoader object*/
         nvram->parse(nvram);
 	/*Go through parsed envs section and calculate buffer size
 	 needed to store environment variables into single buffer

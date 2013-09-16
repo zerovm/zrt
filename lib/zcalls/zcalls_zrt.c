@@ -51,7 +51,6 @@ extern char **environ;
 
 /****************** static data*/
 static struct NvramLoader      s_nvram;
-struct timeval                 s_cached_timeval;
 struct MountsInterface*        s_channels_mount=NULL;
 struct MountsInterface*        s_mem_mount=NULL;
 static struct MountsManager*   s_mounts_manager = NULL;
@@ -97,11 +96,6 @@ static void zrt_init( const struct UserManifest const* manifest ){
       FS structure, readdir from now can list /dev dir recursively from root */
     s_mem_mount->mkdir( "/dev", 0777 );
 
-#define HANDLE_ONLY_TIME_SECTION get_settime_observer()
-    /*nvram must be already parsed*/
-    if ( NULL != s_nvram.section_by_name( &s_nvram, TIME_SECTION_NAME ) ){
-	s_nvram.handle(&s_nvram, HANDLE_ONLY_TIME_SECTION, &s_cached_timeval, NULL, NULL);
-    }
     /*user main execution just after zrt initialization*/
 }
 
@@ -124,14 +118,6 @@ static void zrt_setup_finally(){
     ZRT_LOG_DELIMETER;
 }
 
-static inline void update_cached_time()
-{
-    /* update time value
-     * update seconds because updating miliseconds has no effect*/
-    ++s_cached_timeval.tv_sec;
-}
-
-
 /********************************************************************************
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
  * each nacl syscall must be implemented or, at least, mocked. no exclusions!
@@ -150,26 +136,6 @@ void zrt_zcall_enhanced_exit(int status){
     return; 
 }
 
-int  zrt_zcall_enhanced_gettod(struct timeval *tvl){
-    int ret=-1;
-    errno=0;
-
-    if(tvl == NULL) {
-        errno = EFAULT;
-    }
-    else{
-        /*retrieve and get cached time value*/
-        tvl->tv_usec = s_cached_timeval.tv_usec;
-        tvl->tv_sec  = s_cached_timeval.tv_sec;
-        ZRT_LOG(L_INFO, "tv_sec=%lld, tv_usec=%d", tvl->tv_sec, tvl->tv_usec );
-
-        /* update time value*/
-        update_cached_time();
-	ret=0;
-    }
-
-    return ret;
-}
 /* irt fdio *************************/
 int  zrt_zcall_enhanced_close(int handle){
     LOG_SYSCALL_START("handle=%d", handle);
@@ -242,6 +208,10 @@ int  zrt_zcall_enhanced_seek(int handle, off_t offset, int whence, off_t *new_of
 	    /*get new offset by pointer*/
 	    *new_offset = offset;
 	    ret=0;
+	}
+	else{
+	    /*return errno as error*/
+	    return errno;
 	}
     }
 
