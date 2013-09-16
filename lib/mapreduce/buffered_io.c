@@ -68,16 +68,22 @@ int buf_read (BufferedIORead* self, int handle, void* data, size_t size){
 	self->data.cursor = 0;
 	/*read into buffer from file descriptor*/  
 	int bytes = read(handle, self->data.buf + sizeinuse, self->data.bufmax-sizeinuse );
-	self->data.datasize = sizeinuse+bytes;
-	WRITE_FMT_LOG( "read to buffer %d bytes \n", bytes );
-	READ_IF_BUFFER_ENOUGH(self, data, size)
+	if ( bytes > 0 ){
+	    self->data.datasize = sizeinuse+bytes;
+	    WRITE_FMT_LOG( "read to buffer %d bytes \n", bytes );
+	    READ_IF_BUFFER_ENOUGH(self, data, size)
+	    else{
+		/*insufficient buffer space, so read part of data from buffer
+		  and rest of data directly from handle*/
+		int cached = self->buffered(self);
+		READ_IF_BUFFER_ENOUGH(self, data, cached );
+		bytes = read(handle, data+cached, size-cached);
+		WRITE_FMT_LOG( "direct read %d/%d bytes \n", bytes, size );
+	    }
+	}
 	else{
-	    /*insufficient buffer space, so read part of data from buffer
-	     and rest of data directly from handle*/
-	    int cached = self->buffered(self);
-	    READ_IF_BUFFER_ENOUGH(self, data, cached );
-	    bytes = read(handle, data+cached, size-cached);
-	    WRITE_FMT_LOG( "direct read %d/%d bytes \n", bytes, size );
+	    /*eof*/
+	    return -1;
 	}
     }
     return size;

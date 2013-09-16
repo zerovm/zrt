@@ -23,6 +23,13 @@
 
 #include "buffer.h"
 
+#define BUFFERED_READ_ASSERT(r_bytes_p, r_bio, r_desc, r_buf, r_size ){		\
+	int cur_read = r_bio->read( (r_bio), (r_desc), (void*)(r_buf), (r_size)); \
+	assert(cur_read>0);						\
+	*(r_bytes_p) += cur_read;					\
+    }
+
+
 static size_t 
 MapInputDataProvider( int fd, 
 		      char **input_buffer, 
@@ -72,6 +79,7 @@ MapInputDataProvider( int fd,
     ssize_t readed = read( fd, 
 			   *input_buffer, 
 			   requested_buf_size - rest_data_in_buffer );
+    assert(readed>0);
 
     WRITE_FMT_LOG("MapInputDataProvider OK return handled bytes=%u\n", 
 		  (uint32_t)(rest_data_in_buffer+readed) );
@@ -148,14 +156,16 @@ ReadHistogramFromNode( struct EachToOtherPattern *p_this,
     WRITE_FMT_LOG("ReadHistogramFromNode index=%d\n", index);
     /*histogram array should be empty before reading*/
     assert( !histogram->buffer.header.count );
-    read(fdr, &temp, sizeof(Histogram) );
+    if( read(fdr, &temp, sizeof(Histogram) ) <= 0 )
+	assert(0);
     *histogram = temp;
     /*alloc buffer and receive data*/
     int res = AllocBuffer( &histogram->buffer, 
 		 histogram->buffer.header.item_size, 
 		 temp.buffer.header.count );
     IF_ALLOC_ERROR(res);
-    read(fdr, histogram->buffer.data, histogram->buffer.header.buf_size );
+    if ( read(fdr, histogram->buffer.data, histogram->buffer.header.buf_size ) <= 0 )
+	assert(0);
     histogram->buffer.header.count = temp.buffer.header.count;
     WRITE_FMT_LOG("ReadHistogramFromNode count=%d\n", histogram->buffer.header.count);
 }
@@ -457,30 +467,30 @@ BufferedReadSingleMrItem( BufferedIORead* bio,
 			  int hashsize,
 			  int value_addr_is_data){
     int bytes=0;
+    int cur_read;
     /*key size*/
-    bytes += bio->read( bio, fdr, (void*)&item->key_data.size, sizeof(item->key_data.size));
+    BUFFERED_READ_ASSERT( &bytes, bio, fdr, (void*)&item->key_data.size, sizeof(item->key_data.size) );
     /*key data*/
     item->key_data.addr = (uintptr_t)malloc(item->key_data.size);
     item->own_key = EDataOwned;
-    bytes += bio->read( bio, fdr, (void*)item->key_data.addr, item->key_data.size);
-
+    BUFFERED_READ_ASSERT( &bytes, bio, fdr, (void*)item->key_data.addr, item->key_data.size );
     if ( value_addr_is_data ){
 	/*ElasticBufItemData::key_data::addr used as data, key_data::size not used*/
-	bytes += bio->read( bio, fdr, (void*)&item->value.addr, sizeof(item->value.addr) );
+	BUFFERED_READ_ASSERT( &bytes, bio, fdr, (void*)&item->value.addr, sizeof(item->value.addr) );
 	item->own_value = EDataNotOwned;
 	item->value.size = 0;
     }
     else{
 
 	/*value size*/
-	bytes += bio->read( bio, fdr, (void*)&item->value.size, sizeof(item->value.size));
+	BUFFERED_READ_ASSERT( &bytes, bio, fdr, (void*)&item->value.size, sizeof(item->value.size) );
 	/*value data*/
 	item->value.addr = (uintptr_t)malloc(item->value.size);
 	item->own_value=EDataOwned;
-	bytes += bio->read( bio, fdr, (void*)item->value.addr, item->value.size);
+	BUFFERED_READ_ASSERT( &bytes, bio, fdr, (void*)item->value.addr, item->value.size );
     }
     /*key hash*/
-    bytes += bio->read( bio, fdr, (void*)&item->key_hash, hashsize );
+    BUFFERED_READ_ASSERT( &bytes, bio, fdr, (void*)&item->key_hash, hashsize );
     return bytes;
 }
  
@@ -947,12 +957,13 @@ static exclude_flag_t
 RecvDataFromSingleMap( struct MapReduceUserIf *mif,
 		       int fdr,
 		       Buffer *map) {
-    exclude_flag_t excl_flag;
+    exclude_flag_t excl_flag=0;
     int items_count;
     char* recv_buffer;
     int bytes;
     /*read exact packet size and allocate buffer to read a whole data by single read i/o*/
-    read(fdr, &bytes, sizeof(int) );
+    if ( read(fdr, &bytes, sizeof(int) ) <= 0 )
+	assert(0);
     WRITE_FMT_LOG( "packet size=%d\n", bytes );
     if ( bytes > 0 ){
 	recv_buffer = malloc(bytes);
@@ -963,9 +974,9 @@ RecvDataFromSingleMap( struct MapReduceUserIf *mif,
 	/*read last data flag 0 | 1, if reducer receives 1 then it should
 	 * exclude sender map node from communications in further*/
 	bytes=0;
-	bytes += bio->read( bio, fdr, &excl_flag, sizeof(int) );
+	BUFFERED_READ_ASSERT( &bytes, bio, fdr, &excl_flag, sizeof(int) );
 	/*read items count*/
-	bytes += bio->read( bio, fdr, &items_count, sizeof(int));
+	BUFFERED_READ_ASSERT( &bytes, bio, fdr, &items_count, sizeof(int) );
 	WRITE_FMT_LOG( "readmap exclude flag=%d, items_count=%d\n", excl_flag, items_count );
 
 	/*alloc memory for all array cells expected to receive, if no items will recevied
