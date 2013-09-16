@@ -167,7 +167,7 @@ static int channel_handle(const char* path){
 }
 
 /*return 0 if specified mode is matches to chan AccessType*/
-static int check_channel_access_mode(const struct ZVMChannel *chan, int access_mode)
+static int check_channel_flags(const struct ZVMChannel *chan, int flags)
 {
     assert(chan);
 
@@ -175,12 +175,12 @@ static int check_channel_access_mode(const struct ZVMChannel *chan, int access_m
     int canberead = chan->limits[GetsLimit] && chan->limits[GetSizeLimit];
     int canbewrite = chan->limits[PutsLimit] && chan->limits[PutSizeLimit];
 
-    ZRT_LOG(L_INFO, "access_mode=%u, canberead=%d, canbewrite=%d", 
-	    access_mode, canberead, canbewrite );
+    ZRT_LOG(L_INFO, "flags=%s, canberead=%d, canbewrite=%d", 
+	    STR_FILE_OPEN_FLAGS(flags), canberead, canbewrite );
 
     /*reset permissions bits, that are not used currently*/
-    access_mode = access_mode & O_ACCMODE;
-    switch( access_mode ){
+    flags = flags & O_ACCMODE;
+    switch( flags ){
     case O_RDONLY:
         return canberead>0 ? 0: -1;
     case O_WRONLY:
@@ -230,7 +230,7 @@ static int open_channel( const char *name, int flags, int mode )
     }
 
     /*check access mode for opening channel, limits not checked*/
-    if( check_channel_access_mode( chan, flags ) != 0 ){
+    if( check_channel_flags( chan, flags ) != 0 ){
         ZRT_LOG(L_ERROR, "can't open channel, handle=%d ", handle );
         SET_ERRNO( EACCES );
         return -1;
@@ -685,13 +685,11 @@ static ssize_t channels_write(int fd, const void *buf, size_t nbyte){
         return -1;
     }
 
-    /*save maximum writable position for random access write only channels using 
-      this as synthetic size for channel mapped file. Here is works a single rule: 
-      maximum writable position can be used as size*/
+    /*Set maximum writable position for channels with random access on write using 
+      it as calculated synthetic size. For further calls: stat, fstat*/
     CHANNEL_ASSERT_IF_FAIL(fd);
     int8_t access_type = s_channels_list[fd].type;
-    if ( CHECK_FLAG(s_zrt_channels[fd]->flags, O_WRONLY ) &&
-	 (access_type == SGetRPut || access_type == RGetRPut) )
+    if ( access_type == SGetRPut || access_type == RGetRPut )
 	{
 	    s_zrt_channels[fd]->maxsize = channel_pos(fd, EPosGet, EPosWrite, 0);
 	    ZRT_LOG(L_EXTRA, "Set channel size=%lld", s_zrt_channels[fd]->maxsize );
@@ -796,7 +794,10 @@ static int channels_close(int fd){
     if (  CHECK_FILE_OPENED(fd) != 0  )	{
 	    s_zrt_channels[fd]->random_access_pos 
 		= s_zrt_channels[fd]->sequential_access_pos = 0;
+#define SAVE_SYNTHETIC_SIZE
+#ifndef SAVE_SYNTHETIC_SIZE
 	    s_zrt_channels[fd]->maxsize = 0;
+#endif
 	    s_zrt_channels[fd]->flags = -1;
 	    ZRT_LOG(L_EXTRA, "closed channel=%s", s_channels_list[fd].name );
 	    return 0;
