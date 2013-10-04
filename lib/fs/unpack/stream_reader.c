@@ -17,9 +17,8 @@
 #include "stream_reader.h"
 #include "mounts_interface.h"
 
-
 ssize_t stream_read(struct StreamReader* reader, void *buf, size_t nbyte){
-    return (*reader->mounts_interface->read)( reader->fd, buf, nbyte );
+    return reader->buffered_io_reader->read(reader->buffered_io_reader, reader->fd, buf, nbyte);
 }
 
 
@@ -32,6 +31,10 @@ struct StreamReader* alloc_stream_reader( struct MountsInterface* mounts_interfa
     }
 
     struct StreamReader* stream_reader = malloc( sizeof(struct StreamReader) );
+    stream_reader->buffer = malloc(BUFFER_IO_SIZE);
+    stream_reader->buffered_io_reader = 
+	AllocBufferedIORead( stream_reader->buffer, BUFFER_IO_SIZE, 
+			     mounts_interface->read /*override read for buffered io*/ );
     stream_reader->fd = fd;
     stream_reader->read = stream_read;
     stream_reader->mounts_interface = mounts_interface;
@@ -42,6 +45,8 @@ void free_stream_reader( struct StreamReader* stream_reader ){
     assert( stream_reader );
     ZRT_LOG( L_SHORT, "close channel fd=%d", stream_reader->fd );
     stream_reader->mounts_interface->close( stream_reader->fd );
+    free(stream_reader->buffered_io_reader);
+    free(stream_reader->buffer);
     free(stream_reader);
 }
 

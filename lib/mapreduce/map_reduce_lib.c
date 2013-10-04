@@ -348,7 +348,7 @@ MapInputDataLocalProcessing( struct MapReduceUserIf *mif,
     int res = AllocBuffer( &sort, MRITEM_SIZE(mif), 1024 /*granularity*/ );
     IF_ALLOC_ERROR(res);
 
-    WRITE_FMT_LOG("sbrk()=%p\n", sbrk(0) );
+    WRITE_FMT_LOG("sbrk()=%p\n", (void*)sbrk(0) );
     WRITE_FMT_LOG("======= new portion of data read: input buffer=%p, buf_size=%u\n", 
 		  buf, (uint32_t)buf_size );
     /*user Map process input data and allocate keys, values buffers*/
@@ -467,7 +467,6 @@ BufferedReadSingleMrItem( BufferedIORead* bio,
 			  int hashsize,
 			  int value_addr_is_data){
     int bytes=0;
-    int cur_read;
     /*key size*/
     BUFFERED_READ_ASSERT( &bytes, bio, fdr, (void*)&item->key_data.size, sizeof(item->key_data.size) );
     /*key data*/
@@ -611,7 +610,7 @@ MapSendToAllReducers( struct ChannelsConfigInterface *ch_if,
     void *send_buffer; 
     send_buffer= malloc(SEND_BUFFER_SIZE);
     IF_ALLOC_ERROR(send_buffer?0:SEND_BUFFER_SIZE);
-    BufferedIOWrite* bio = AllocBufferedIOWrite( send_buffer, SEND_BUFFER_SIZE);
+    BufferedIOWrite* bio = AllocBufferedIOWrite( send_buffer, SEND_BUFFER_SIZE, NULL);
     IF_ALLOC_ERROR( bio?0:SEND_BUFFER_SIZE );
 
     for( int i=0; i < basket_count; i++ ){
@@ -969,7 +968,7 @@ RecvDataFromSingleMap( struct MapReduceUserIf *mif,
 	recv_buffer = malloc(bytes);
 	IF_ALLOC_ERROR(recv_buffer?0:bytes);
 
-	BufferedIORead* bio = AllocBufferedIORead( recv_buffer, bytes);
+	BufferedIORead* bio = AllocBufferedIORead( recv_buffer, bytes, NULL);
 	IF_ALLOC_ERROR(bio?0:bytes);
 	/*read last data flag 0 | 1, if reducer receives 1 then it should
 	 * exclude sender map node from communications in further*/
@@ -1109,7 +1108,7 @@ ReduceNodeMain( struct MapReduceUserIf *mif,
 	}else{
 	    WRITE_LOG( "Combine function not defined and skipped" );
 	}
-	WRITE_FMT_LOG("sbrk()=%p\n", sbrk(0) );
+	WRITE_FMT_LOG("sbrk()=%p\n", (void*)sbrk(0) );
     }while( leave_map_nodes != 0 );
 
     /*do merge only once if Combine not defined*/

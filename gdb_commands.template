@@ -20,7 +20,7 @@ set confirm off
 set output-radix 16
 b CreateSession
 r
-b main
 add-symbol-file {NEXE_FULL_PATH} 0x440a00020000
+b main
 c
-d br
+

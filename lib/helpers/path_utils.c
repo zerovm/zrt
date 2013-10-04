@@ -7,7 +7,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h> //sbrk
 
+#include "zrtlog.h"
 #include "path_utils.h"
 
 /*if path starting with more than one slashes together 
@@ -40,8 +42,14 @@ char* alloc_absolute_path_from_relative( const char* path )
     /* some applications providing relative path, currently any of zrt filesystems 
      * does not support relative path, so make absolute path just insert '/' into
      * begin of relative path */
-    char* absolute_path = malloc( strlen(path) + 2 );
+    char* absolute_path = NULL;
     const char* tmp = NULL; 
+    if ( (absolute_path=malloc( strlen(path) + 2 )) == NULL ){
+	/*in some cases this code can be called from abort() function due malloc failure,
+	  so we need to check malloc result*/
+	ZRT_LOG(L_ERROR, "malloc failed, sbrk(0)=%p", sbrk(0) );
+	return NULL;
+    }
     /*transform . path into root /  */
     if ( strlen(path) == 1 && path[0] == '.' ){
         strcpy( absolute_path, "/\0" );

@@ -24,7 +24,7 @@
 
 static char block[512];
 
-#define WRITE_FILE( wrote_p, err_p, out_fd, data, datasize )		\
+#define WRITE_DATA_INTO_FS_IN_MEMORY( wrote_p, err_p, out_fd, data, datasize )		\
     *wrote_p = unpacker->observer->mounts->write(out_fd, block, datasize ); \
     if ( *wrote_p < datasize ){						\
 	*err_p=1;							\
@@ -84,9 +84,9 @@ static int extract_entry( struct UnpackInterface* unpacker,
             }
 	    int wrote;
             if (entry_size > sizeof(block)) {
-		WRITE_FILE( &wrote, &write_err, out_fd, block, sizeof(block) );
+		WRITE_DATA_INTO_FS_IN_MEMORY( &wrote, &write_err, out_fd, block, sizeof(block) );
             } else {
-		WRITE_FILE( &wrote, &write_err, out_fd, block, entry_size );
+		WRITE_DATA_INTO_FS_IN_MEMORY( &wrote, &write_err, out_fd, block, entry_size );
             }
 	    if ( write_err ){
 		return -1;

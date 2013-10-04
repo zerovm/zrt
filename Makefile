@@ -21,6 +21,7 @@ lib/helpers/printf_prolog.c \
 lib/helpers/conf_parser.c \
 lib/helpers/conf_keys.c \
 lib/helpers/path_utils.c \
+lib/helpers/buffered_io.c \
 lib/memory/memory_syscall_handlers.c \
 lib/nvram/nvram_loader.c \
 lib/nvram/observers/args_observer.c \
@@ -167,7 +168,10 @@ doc:
 ARCH=x86_64-nacl
 INCLUDE_DIR=$(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/include
 LIB_DIR=$(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
-install:
+uninstall:
+	rm -f $(INCLUDE_DIR)/mapreduce/buffered_io.h 
+
+install: uninstall
 	install -m 0644 lib/libzrt.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libmapreduce.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libnetworking.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
@@ -187,10 +191,10 @@ install:
 	install -m 0644 lib/mapreduce/map_reduce_lib.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/buffer.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/buffer.inl $(INCLUDE_DIR)/mapreduce
-	install -m 0644 lib/mapreduce/buffered_io.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/map_reduce_datatypes.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/mapreduce/elastic_mr_item.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
+	install -m 0644 lib/helpers/buffered_io.h $(INCLUDE_DIR)/helpers
 	install -m 0644 lib/liblua.a $(LIB_DIR)
 	install -m 0644 lib/libgtest.a $(LIB_DIR)
 	install -m 0644 lib/libtar.a $(LIB_DIR)

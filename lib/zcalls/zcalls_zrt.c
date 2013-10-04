@@ -357,6 +357,8 @@ void zrt_zcall_enhanced_zrt_setup(void){
     ZRT_LOG(L_BASE, "Time %s", ctime(&t) );
     ZRT_LOG(L_BASE, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
     ZRT_LOG(L_BASE, "user memory size = %u", setup->heap_size);
+    ZRT_LOG(L_BASE, "sbrk(0) = %p", sbrk(0));
+
     ZRT_LOG_DELIMETER;
 
     /*print environment variables*/

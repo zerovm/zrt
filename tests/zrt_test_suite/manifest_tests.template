@@ -16,10 +16,7 @@ Channel = {ABS_PATH}autotests/channels/forreadwrite, /dev/read-write, {CHANTYPE3
 =====================================================================
 Version = 20130611
 Program = {OUTFILE}.nexe
-==MemMax=33554432
-==MemMax=67108864
-==MemMax=134217728
 Memory={MEMMAX}, 0
-Timeout=10
+Timeout=1000
 
 
