@@ -30,6 +30,13 @@ struct StreamReader* alloc_stream_reader( struct MountsInterface* mounts_interfa
         return NULL;
     }
 
+    //
+    int err = mounts_interface->lseek(fd, 0, SEEK_SET);
+    if ( err != 0 ){
+	ZRT_LOG( L_ERROR, "nvram image must be seekable channel, err=%d", channel_name, err );
+	return NULL;
+    }
+
     struct StreamReader* stream_reader = malloc( sizeof(struct StreamReader) );
     stream_reader->buffer = malloc(BUFFER_IO_SIZE);
     stream_reader->buffered_io_reader = 

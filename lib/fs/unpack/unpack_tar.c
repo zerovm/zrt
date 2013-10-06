@@ -22,6 +22,8 @@
 
 
 #define DIRTYPE  '5'            /* directory */
+#define USTAR_STR  "ustar"
+#define USTAR_LEN  5
 
 typedef struct {
     char filename[100];
@@ -46,59 +48,57 @@ typedef struct {
 static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path ){
     ZRT_LOG(L_INFO, "%s", mount_path);
     char block[512];
-    char filename[256];
-    char dst_filename[MAXPATHLEN];
+    char dst_filename[MAXPATHLEN+1];
     TAR_HEADER *header = (TAR_HEADER*)block;
     int file_len;
     int len;
     int count;
+    char *backslash;
+
+    /*mount path will const for all files in loop, so add it at first*/
+    strcat(dst_filename, mount_path); 
 
     count = 0;
-    for (;;) {
-        len =  unpack_if->stream_reader->read( unpack_if->stream_reader, block, sizeof(block));
-        if (!len) break;
-        if (len != sizeof(block)) {
+    while( (len=unpack_if->stream_reader->read( unpack_if->stream_reader, block, sizeof(block)) ) > 0 ) {
+	if (len != sizeof(block)) {
             /*every file size should be aligned to 512bytes in generic case*/
-            ZRT_LOG(L_ERROR, "ret=%s", "EUnpackStateNotImplemented");
-            return EUnpackStateNotImplemented;
+            ZRT_LOG(L_ERROR, P_TEXT, "file block not aligned" );
+            return -EUnpackStateNotImplemented;
         }
 
-        memset(filename, 0, sizeof(filename));
-        if (memcmp(header->ustar, "ustar", 5) == 0) {
-            memcpy(filename, header->filename_prefix,
-                    sizeof(header->filename_prefix));
-        }
-        strcat(filename, header->filename);
+        if (memcmp(header->ustar, USTAR_STR, USTAR_LEN) == 0){
+	    //get file size
+	    if (sscanf(header->size, "%o", &file_len) != 1) {
+		ZRT_LOG(L_ERROR, "ret=%s", "unknown");
+		return -1;
+	    }
+	    //check filename
+	    if ( !strlen(header->filename) ) break;
+	    if ( (strlen(mount_path) > 0 && mount_path[strlen(mount_path)-1] == '/') )
+		backslash = "";
+	    else
+		backslash = "/";
+	    
+	    //construct full filename
+	    if ( MAXPATHLEN < snprintf(dst_filename, MAXPATHLEN+1, "%s%s%s",
+				       mount_path, backslash, header->filename ) ){
+		ZRT_LOG(L_ERROR, P_TEXT, "To big path readed from archive");
+		return -EUnpackToBigPath;
+	    }
 
-        if (!strlen(filename)) break;
-
-        /* Check that mount_path + "/" + filename + '\0' fits in MAXPATHLEN. */
-        int pathlen=0;
-        if ((pathlen=strlen(mount_path) + strlen(filename) + 2) > MAXPATHLEN) {
-            ZRT_LOG(L_ERROR, "to big path readed from archive. len=%d", pathlen);
-            return EUnpackToBigPath;
-        }
-
-        strcpy(dst_filename, mount_path);
-        if ( !(strlen(mount_path) == 1 && mount_path[0] == '/') ){
-            strcat(dst_filename, "/");
-        }
-        strcat(dst_filename, filename);
-
-        if (sscanf(header->size, "%o", &file_len) != 1) {
-	    ZRT_LOG(L_ERROR, "ret=%s", "unknown");
-            return -1;
-        }
-
-        TypeFlag type = ETypeFile;
-        if ( header->typeflag == DIRTYPE ){
-            type = ETypeDir;
-        }
-	/* Now item name is retrieved from archive, 
-	 * in case if item type is directory we just create it on filesystem,
-	 * in case of file it's ready to retrieve data and create it on filesystem */
-        unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len );
-        ++count;
+	    TypeFlag type = ETypeFile;
+	    if ( header->typeflag == DIRTYPE ){
+		type = ETypeDir;
+	    }
+	    /* Now item name is retrieved from archive, 
+	     * in case if item type is directory we just create it on filesystem,
+	     * in case of file it's ready to retrieve data and create it on filesystem */
+	    unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len );
+	    ++count;
+	}
+	else{
+	    ZRT_LOG(L_ERROR, P_TEXT, "skip tar empty block");
+	}
     }
     ZRT_LOG( L_SHORT, "created %d files", count );
     return count;

@@ -23,6 +23,7 @@
 #include "enum_strings.h"
 
 static char block[512];
+static struct ParsePathObserver s_path_observer;
 
 #define WRITE_DATA_INTO_FS_IN_MEMORY( wrote_p, err_p, out_fd, data, datasize )		\
     *wrote_p = unpacker->observer->mounts->write(out_fd, block, datasize ); \
@@ -54,15 +55,14 @@ static int extract_entry( struct UnpackInterface* unpacker,
 
     /*setup path parser observer
      *observers callback will be called for every paursed subdir extracted from full path*/
-    struct ParsePathObserver path_observer;
-    path_observer.callback_parse = callback_parse;
-    path_observer.anyobj = unpacker->observer->mounts;
-
-    /*run path parser*/
-    int parsed_dir_count = parse_path( &path_observer, name );
-    ZRT_LOG(L_INFO, "parsed_dir_count=%d", parsed_dir_count );
+    s_path_observer.callback_parse = callback_parse;
+    s_path_observer.anyobj = unpacker->observer->mounts;
 
     if ( type == ETypeDir ){
+	/* unpacker->observer->mounts->mkdir(name, 0); */
+	/*run path parser*/
+	int parsed_dir_count = parse_path( &s_path_observer, name );
+	ZRT_LOG(L_INFO, "parsed_dir_count=%d", parsed_dir_count );
 	create_dir_and_cache_name(name, strlen(name));
     }
     else{
