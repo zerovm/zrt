@@ -56,7 +56,14 @@
 			      stat(filepath, &st),	\
 			      &ret, ret==0);		\
     }
- 
+
+#define CHECK_PATH_NOT_EXIST(filepath){			\
+    	int ret;					\
+	struct stat st;					\
+	TEST_OPERATION_RESULT(				\
+			      stat(filepath, &st),	\
+			      &ret, ret!=0);		\
+    }
 
 #define GET_FILE_SIZE(filepath, filesize_p){		\
     	int ret;					\

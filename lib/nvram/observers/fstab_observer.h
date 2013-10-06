@@ -12,9 +12,13 @@
 #define FSTAB_PARAM_CHANNEL_KEY    "channel"
 #define FSTAB_PARAM_MOUNTPOINT_KEY "mountpoint"
 #define FSTAB_PARAM_ACCESS_KEY     "access"
+#define FSTAB_PARAM_WARMUP         "warmup"
 
 #define FSTAB_VAL_ACCESS_READ      "ro"  /*for injecting files into FS*/
 #define FSTAB_VAL_ACCESS_WRITE     "wo"  /*for copying files into image*/
+
+#define FSTAB_VAL_WARMUP_YES       "yes"
+#define FSTAB_VAL_WARMUP_NO        "no"
 
 #include "nvram_observer.h"
 

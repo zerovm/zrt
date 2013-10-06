@@ -36,9 +36,23 @@ CMDLINE-command_line.c=args=command_line.nexe argument_number_1 argument_number_
 ENV-environment.c=name=SafeWords, value=klaato_verada_nikto
 #####################################################################
 
+
 #####################################################################
 #mapping channels, set mode for zrt channel stat: pipe, chr, file
-MAPPING-lstat-stat-mapping.c=channel=/dev/stdin, mode=pipe {BR}channel=/dev/stdout, mode=char {BR}channel=/dev/stderr, mode=file
+MAPPING-lstat-stat-mapping.c =channel=/dev/stdin, mode=pipe {BR}
+MAPPING-lstat-stat-mapping.c+=channel=/dev/stdout, mode=char {BR}
+MAPPING-lstat-stat-mapping.c+=channel=/dev/stderr, mode=file
+#####################################################################
+
+#####################################################################
+#fstab, mount tar archive
+#using many tests for fstab for access=ro
+FSTAB-nvram.c =channel=/dev/mount/import.tar, mountpoint=/warm, access=ro, warmup=yes {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad, access=ro, bad=warmup {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, warmup=no {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, warmup=no {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad1, access=ro {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad2, access=re, warmup=no {BR}
 #####################################################################
 
 #####################################################################

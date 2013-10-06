@@ -12,6 +12,9 @@ name=usable, value=1\x2C2\x2C3/"1\x2C2\x2C3"
 [mapping]
 {MAPPING}
 
+[fstab]
+{FSTAB}
+
 [time]
 seconds=1337012520
 

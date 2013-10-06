@@ -27,6 +27,7 @@
 #define FSTAB_PARAM_CHANNEL_KEY_INDEX    0
 #define FSTAB_PARAM_MOUNTPOINT_KEY_INDEX 1
 #define FSTAB_PARAM_ACCESS_KEY_INDEX     2
+#define FSTAB_PARAM_WARMUP_KEY_INDEX     3
 
 /*temporarily added to allow writing to tar at exit*/
 static struct ParsedRecords s_export_tarrecords; 
@@ -57,16 +58,20 @@ void handle_fstab_record(struct MNvramObserver* observer,
     char* access = NULL;
     ALLOCA_PARAM_VALUE(record->parsed_params_array[FSTAB_PARAM_ACCESS_KEY_INDEX], 
 		      &access);
-    ZRT_LOG(L_SHORT, "fstab record: channel=%s, mount_path=%s, access=%s", 
-	    channel_alias, mount_path, access);
+    /*get param check*/
+    char* warmup = NULL;
+    ALLOCA_PARAM_VALUE(record->parsed_params_array[FSTAB_PARAM_WARMUP_KEY_INDEX], 
+		      &warmup);
+
+    ZRT_LOG(L_SHORT, "fstab record: channel=%s, mount_path=%s, access=%s, warmup=%s", 
+	    channel_alias, mount_path, access, warmup);
 
     /*for injecting files into FS*/
     if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) ){
 	/*
-	 * load filesystem from channel having which name is channel_alias. 
-	 * Content of filesystem is reading from tar image channel that points to 
-	 * supported archive, tar currently, read every file and add it contents 
-	 * into MemMount filesystem
+	 * inject contents into specified folder mount_path of filesystem, from channel name
+	 * channel_alias. Content of filesystem is reading from channel that points to 
+	 * supported archive, tar currently, read every file dir and add it into MemMount filesystem
 	 */
 	/*create stream reader linked to tar archive that contains filesystem image*/
 	struct StreamReader* stream_reader =
@@ -155,6 +160,8 @@ struct MNvramObserver* get_fstab_observer(){
     assert(FSTAB_PARAM_MOUNTPOINT_KEY_INDEX==key_index);
     key_index = self->keys.add_key(&self->keys, FSTAB_PARAM_ACCESS_KEY);
     assert(FSTAB_PARAM_ACCESS_KEY_INDEX==key_index);
+    key_index = self->keys.add_key(&self->keys, FSTAB_PARAM_WARMUP);
+    assert(FSTAB_PARAM_WARMUP_KEY_INDEX==key_index);
 
     /*setup functions*/
     s_fstab_observer.handle_nvram_record = handle_fstab_record;
