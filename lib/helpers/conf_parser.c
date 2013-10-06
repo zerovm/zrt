@@ -122,6 +122,7 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
     memset(&temp_keys_parsed, '\0', sizeof(temp_keys_parsed));
     enum ParsingStatus st = EStProcessing;
     enum ParsingStatus st_new = st;
+    int new_record_flag=0;
 
 #ifdef PARSER_DEBUG_LOG
     ZRT_LOG(L_INFO, P_TEXT, "parsing");
@@ -156,8 +157,11 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 #ifdef PARSER_DEBUG_LOG
 		ZRT_LOG(L_EXTRA, "cursor=%d EStToken", cursor);
 #endif
-		st_new = EStProcessing;
 		st = EStToken;
+		if ( text[cursor] == '\n' )
+		    new_record_flag = 1;
+		else
+		    st_new = EStProcessing;
 	    }
 	    else{
 		/*start processing of significant data*/
@@ -235,7 +239,7 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 				/*parsed item with the same key already saved, and new 
 				  one will be ignored*/
 #ifdef PARSER_DEBUG_LOG
-				ZRT_LOG(L_ERROR, P_TEXT, "last key duplicated, skipped");
+				ZRT_LOG(L_ERROR, P_TEXT, "last key duplicated, ");
 #endif
 			    }
 			    else{
@@ -285,6 +289,12 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 		    memset(&temp_keys_parsed, '\0', sizeof(temp_keys_parsed) );
                 }
             }
+	    if ( new_record_flag ){
+		new_record_flag=0;
+		/*free previosly parsed results, new record start*/
+		parsed_params_count=0;
+		memset(&temp_keys_parsed, '\0', sizeof(temp_keys_parsed) );
+	    }
 	    /*restore processing state*/
 	    st = st_new;
 #ifdef PARSER_DEBUG_LOG
