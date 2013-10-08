@@ -1,7 +1,12 @@
-
-/* minimal implementation of zcalls interface used in section of code
- * running between prolog and begin of zrt initialization.*/
-
+/* 
+ * zcalls_prolog.c
+ * Basic implementation of zcalls interface used in section of code
+ * running between prolog and begin of zrt initialization.
+ * Handlers in this file should not require a heap availability.
+ *
+ *  Created on: 25.02.2013
+ *      Author: YaroslavLitvinov
+*/
 
 #include <string.h>
 #include <stdlib.h>
@@ -30,7 +35,7 @@
 	memcpy(args_buf, STUB_ARG0, strlen(STUB_ARG0) );	\
 	args_buf[ strlen(STUB_ARG0) ] = '\0';			\
 	args[0] = args_buf;					\
-	ZRT_LOG(L_BASE, "arg[0] by default: %s", args[0] );	\
+	ZRT_LOG(L_BASE, "argv[0] by default: %s", args[0] );	\
     }
 
 #define FUNC_NAME __func__
@@ -50,7 +55,6 @@ static void*   sbrk_default = NULL;
 struct timeval s_cached_timeval;
 /****************** */
 
-
 static inline void update_cached_time()
 {
     /* update time value
@@ -66,6 +70,22 @@ void zrt_zcall_prolog_init(){
     s_prolog_doing_now = 1;
     if ( MANIFEST )
 	sbrk_default = MANIFEST->heap_ptr;
+
+    /*Folowing handlers does not require a heap*/
+#define HANDLE_ONLY_DEBUG_SECTION get_debug_observer()
+#define HANDLE_ONLY_TIME_SECTION get_settime_observer()
+    struct NvramLoader* nvram = static_nvram();
+    if ( !nvram_read_parse( nvram ) ){
+	/*handle debug section - verbosity*/
+	if ( NULL != nvram->section_by_name( nvram, DEBUG_SECTION_NAME ) ){
+	    ZRT_LOG(L_INFO, "%s", "nvram handle debug");
+	    nvram->handle(nvram, HANDLE_ONLY_DEBUG_SECTION, NULL, NULL, NULL );
+	}
+	/*handle time section*/
+	if ( NULL != nvram->section_by_name( nvram, TIME_SECTION_NAME ) ){
+	    nvram->handle(nvram, HANDLE_ONLY_TIME_SECTION, &s_cached_timeval, NULL, NULL);
+	}
+    }
 }
 
 void zrt_zcall_prolog_exit(int status){
@@ -438,14 +458,6 @@ void zrt_zcall_prolog_zrt_setup(void){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     /*prolog initialization done and now main syscall handling should be processed by
      *enhanced syscall handlers*/
-
-    /*handle nvram time section*/
-#define HANDLE_ONLY_TIME_SECTION get_settime_observer()
-    struct NvramLoader* nvram = static_nvram();
-    if ( NULL != nvram->section_by_name( nvram, TIME_SECTION_NAME ) ){
-	nvram->handle(nvram, HANDLE_ONLY_TIME_SECTION, &s_cached_timeval, NULL, NULL);
-    }
-
     s_prolog_doing_now = 0; 
     __zrt_log_prolog_mode_enable(0);
     ZRT_LOG_DELIMETER;
@@ -482,50 +494,34 @@ static int get_records_count_for_section_and_buffer_size_to_copy_contents
 	return 0;
 }
 
+
 /*nvram access from prolog*/
 void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size, 
 					       int *envs_buf_size, int *env_count){
     ZRT_LOG(L_INFO, "nvram object size %u bytes", sizeof(struct NvramLoader));
     struct NvramLoader* nvram = static_nvram();
-    construct_nvram_loader( nvram );
-    /*Get static observers object, their memory should not be freed
-     Must add here all observers to known nvram sections*/
-    nvram->add_observer(nvram, get_fstab_observer() );
-    nvram->add_observer(nvram, get_settime_observer() );
-    nvram->add_observer(nvram, get_debug_observer() );
-    nvram->add_observer(nvram, get_mapping_observer() );
-    nvram->add_observer(nvram, get_env_observer() );
-    nvram->add_observer(nvram, get_arg_observer() );
-    /*if readed not null bytes and result non negative then doing parsing*/
-    if ( nvram->read(nvram, DEV_NVRAM) > 0 ){
-	/*read and parse whole nvram config file into NvramLoader object*/
-        nvram->parse(nvram);
-	/*Go through parsed envs section and calculate buffer size
-	 needed to store environment variables into single buffer
-	 as into null terminated strings folowing each after other*/
-	*env_count = get_records_count_for_section_and_buffer_size_to_copy_contents
-	    (nvram, ENVIRONMENT_SECTION_NAME, envs_buf_size);
-	/*handle args section*/
-	get_records_count_for_section_and_buffer_size_to_copy_contents
-	    (nvram, ARGS_SECTION_NAME, args_buf_size);
-	/*reserve additional space  to be able add null termination chars for all
-	  available args, see args_observer.c: add_val_to_temp_buffer */
-	args_buf_size+= strlen(STUB_ARG0);
-	args_buf_size+= NVRAM_MAX_RECORDS_IN_SECTION; 
-    }
+    /* nvram must be read and parsed previously, just after warmup */
+
+    /*Go through parsed envs section and calculate buffer size
+      needed to store environment variables into single buffer
+      as into null terminated strings folowing each after other*/
+    *env_count = get_records_count_for_section_and_buffer_size_to_copy_contents
+	(nvram, ENVIRONMENT_SECTION_NAME, envs_buf_size);
+    /*handle args section*/
+    get_records_count_for_section_and_buffer_size_to_copy_contents
+	(nvram, ARGS_SECTION_NAME, args_buf_size);
+    /*reserve additional space  to be able add null termination chars for all
+      available args, see args_observer.c: add_val_to_temp_buffer */
+    args_buf_size+= strlen(STUB_ARG0);
+    args_buf_size+= NVRAM_MAX_RECORDS_IN_SECTION; 
+
 }
 
 void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_buf_size,
 					  char** envs, char* envs_buf, int envs_buf_size){
     #define HANDLE_ONLY_ENV_SECTION get_env_observer()
     #define HANDLE_ONLY_ARG_SECTION get_arg_observer()
-    #define HANDLE_ONLY_DEBUG_SECTION get_debug_observer()
     struct NvramLoader* nvram = static_nvram();
-    /*handle debug section - verbosity*/
-    if ( NULL != nvram->section_by_name( nvram, DEBUG_SECTION_NAME ) ){
-	ZRT_LOG(L_INFO, "%s", "nvram handle debug");
-	nvram->handle(nvram, HANDLE_ONLY_DEBUG_SECTION, NULL, NULL, NULL );
-    }
     /*handle "env" section*/
     if ( NULL != nvram->section_by_name( nvram, ENVIRONMENT_SECTION_NAME ) ){
 	ZRT_LOG(L_INFO, "%s", "nvram handle envs");

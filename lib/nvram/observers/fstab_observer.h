@@ -8,6 +8,8 @@
 #ifndef FSTAB_OBSERVER_H_
 #define FSTAB_OBSERVER_H_
 
+#include "nvram_observer.h"
+
 #define FSTAB_SECTION_NAME         "fstab"
 #define FSTAB_PARAM_CHANNEL_KEY    "channel"
 #define FSTAB_PARAM_MOUNTPOINT_KEY "mountpoint"
@@ -20,7 +22,9 @@
 #define FSTAB_VAL_WARMUP_YES       "yes"
 #define FSTAB_VAL_WARMUP_NO        "no"
 
-#include "nvram_observer.h"
+#define IS_NEED_TO_HANDLE_FSTAB_RECORD(warmup_stage_complete, warmup_record) \
+    !(warmup_stage_complete) && (warmup_record)? 1:			\
+    (warmup_stage_complete) && !(warmup_record)? 1 : 0
 
 /*get static interface object not intended to destroy after using*/
 struct MNvramObserver* get_fstab_observer();

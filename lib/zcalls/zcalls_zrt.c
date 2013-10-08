@@ -1,6 +1,9 @@
 /*
- * syscallbacks.c
- * Syscallbacks implementation used by zrt;
+ * zcalls_zrt.c
+ * Complete implementation of syscall handlers, available after 
+ * prolog stage fully passed, and heap memory is available;
+ * In case if enhanced syscall handler does not exist then use
+ * Basic handler, implemented at zcall_prolog.c;
  *
  *  Created on: 6.07.2012
  *      Author: YaroslavLitvinov
@@ -62,61 +65,10 @@ static int                     s_zrt_ready=0;
 struct NvramLoader*     static_nvram()      { return &s_nvram; }
 struct MountsInterface* transparent_mount() { return s_transparent_mount; }
 
-
-/***********************************************************
- *ZRT initializators
- ***********************************************************/
-
-/*first step zrt initializer*/
-static void zrt_init( const struct UserManifest const* manifest ){
-    /*manage mounted filesystems*/
-    s_mounts_manager = get_mounts_manager();
-
-    /*alloc filesystem based on channels*/
-    s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator,
-					     manifest->channels, manifest->channels_count );
-    /*alloc main filesystem that combines all filesystems mounts*/
-    s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
-
-    s_zrt_ready = 1;
-
-    /*open standard files to conform C*/
-    s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
-    s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
-    s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
-
-    /*create mem mount*/
-    s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
-
-    /*Mount filesystems*/
-    s_mounts_manager->mount_add( "/dev", s_channels_mount );
-    s_mounts_manager->mount_add( "/", s_mem_mount );
-
-    /*explicitly create /dev directory in memmount, it's required for consistent
-      FS structure, readdir from now can list /dev dir recursively from root */
-    s_mem_mount->mkdir( "/dev", 0777 );
-
-    /*user main execution just after zrt initialization*/
-}
-
-/*second step zrt initializer*/
-static void zrt_setup_finally(){
-#define HANDLE_ONLY_MAPPING_SECTION get_mapping_observer()
-    /*nvram must be already parsed*/
-    if ( NULL != s_nvram.section_by_name( &s_nvram, MAPPING_SECTION_NAME ) ){
-	s_nvram.handle(&s_nvram, HANDLE_ONLY_MAPPING_SECTION, NULL, NULL, NULL);
-    }
-
-#define HANDLE_ONLY_FSTAB_SECTION get_fstab_observer()
-    /*nvram must be already parsed*/
-    if ( NULL != s_nvram.section_by_name( &s_nvram, FSTAB_SECTION_NAME ) ){
-	s_nvram.handle(&s_nvram, HANDLE_ONLY_FSTAB_SECTION, 
-		       s_channels_mount, s_transparent_mount, NULL);
-    }
-
-    ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished");
-    ZRT_LOG_DELIMETER;
-}
+/*internal functions to be used in this module*/
+void zrt_internal_session_info();
+void zrt_internal_init( const struct UserManifest const* manifest );
+void zrt_internal_setup_finally();
 
 /********************************************************************************
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
@@ -294,7 +246,6 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
  * following 3 functions (sysbrk, mmap, munmap) is the part of the
  * new memory engine. the new allocate specified amount of ram before
  * user code start and then user can only obtain that allocated memory.
- * zrt lib will help user to do it transparently.
  */
 
 /* irt memory *************************/
@@ -339,54 +290,134 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
     return retcode;
 }
 
-/************************************************************************
-* zcalls_zrt_t implementation
-* Setup zrt
-*************************************************************************/
-void zrt_zcall_enhanced_zrt_setup(void){
+/***********************************************************
+ *ZRT initializators
+ ***********************************************************/
+
+void zrt_internal_session_info( const struct UserManifest const* manifest ){
     int i;
     char **envp = environ;
-    const struct UserManifest const *setup = MANIFEST;
-    s_memory_interface = get_memory_interface( setup->heap_ptr, setup->heap_size );
-
-    zrt_init( setup );
-
-    /* debug print */
-    ZRT_LOG(L_BASE, P_TEXT, "DEBUG INFORMATION");
     time_t t = time(NULL);
+
+   /* debug print */
+    ZRT_LOG(L_BASE, P_TEXT, "SESSION INFO :");
+
     ZRT_LOG(L_BASE, "Time %s", ctime(&t) );
-    ZRT_LOG(L_BASE, "user heap pointer address = 0x%x", (intptr_t)setup->heap_ptr);
-    ZRT_LOG(L_BASE, "user memory size = %u", setup->heap_size);
+    ZRT_LOG(L_BASE, "user heap pointer address = 0x%x", (intptr_t)manifest->heap_ptr);
+    ZRT_LOG(L_BASE, "user memory size = %u", manifest->heap_size);
     ZRT_LOG(L_BASE, "sbrk(0) = %p", sbrk(0));
 
     ZRT_LOG_DELIMETER;
 
-    /*print environment variables*/
+    /*get from system, print environment variables*/
     i=0;
     while( envp[i] ){
         ZRT_LOG(L_BASE, "envp[%d] = '%s'", i, envp[i]);
 	++i;
     }
 
-    ZRT_LOG(L_BASE, "channels count = %d", setup->channels_count);
+    ZRT_LOG(L_BASE, "channels count = %d", manifest->channels_count);
     ZRT_LOG_DELIMETER;
     /*print channels list*/
-    for(i = 0; i < setup->channels_count; ++i)
+    for(i = 0; i < manifest->channels_count; ++i)
     {
-        ZRT_LOG(L_BASE, "channel[%2d].name = '%s'", i, setup->channels[i].name);
+        ZRT_LOG(L_BASE, "channel[%2d].name = '%s'", i, manifest->channels[i].name);
         ZRT_LOG(L_BASE, "channel[%2d].type=%d, size=%lld", i, 
-		setup->channels[i].type, setup->channels[i].size);
+		manifest->channels[i].type, manifest->channels[i].size);
         ZRT_LOG(L_BASE, "channel[%2d].limits[GetsLimit=%7lld, GetSizeLimit=%7lld]", i, 
-		setup->channels[i].limits[GetsLimit], 
-		setup->channels[i].limits[GetSizeLimit]);
+		manifest->channels[i].limits[GetsLimit], 
+		manifest->channels[i].limits[GetSizeLimit]);
         ZRT_LOG(L_BASE, "channel[%2d].limits[PutsLimit=%7lld, PutSizeLimit=%7lld]", i, 
-		setup->channels[i].limits[PutsLimit],
-		setup->channels[i].limits[PutSizeLimit]);
+		manifest->channels[i].limits[PutsLimit],
+		manifest->channels[i].limits[PutSizeLimit]);
     }
     ZRT_LOG_DELIMETER;
     ZRT_LOG(L_SHORT, "_SC_PAGE_SIZE=%ld", sysconf(_SC_PAGE_SIZE));
+}
 
-    zrt_setup_finally();
+/*Basic 1st zrt initializer*/
+void zrt_zcall_enhanced_zrt_setup(void){
+    zrt_internal_init(MANIFEST);
+    zrt_internal_setup_finally();
+}
+
+
+/*2nd step zrt initializer*/
+void zrt_internal_init( const struct UserManifest const* manifest ){
+    /*init handlers for heap memory*/
+    s_memory_interface = get_memory_interface( manifest->heap_ptr, manifest->heap_size );
+
+    /*manage mounted filesystems*/
+    s_mounts_manager = get_mounts_manager();
+
+    /*alloc filesystem based on channels*/
+    s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator,
+					     manifest->channels, manifest->channels_count );
+    /*alloc main filesystem that combines all filesystems mounts*/
+    s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
+
+    s_zrt_ready = 1;
+
+    /*open standard files to conform C*/
+    s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
+    s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
+    s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
+
+    /*create mem mount*/
+    s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
+
+    /*Mount filesystems*/
+    s_mounts_manager->mount_add( "/dev", s_channels_mount );
+    s_mounts_manager->mount_add( "/", s_mem_mount );
+
+    /*explicitly create /dev directory in memmount, it's required for consistent
+      FS structure, readdir from now can list /dev dir recursively from root */
+    s_mem_mount->mkdir( "/dev", 0777 );
+
+    /*user main execution just after zrt initialization*/
+}
+
+/*3rd step zrt initializer, last step before main()*/
+void zrt_internal_setup_finally(){
+#define HANDLE_ONLY_MAPPING_SECTION get_mapping_observer()
+#define HANDLE_ONLY_FSTAB_SECTION get_fstab_observer()
+
+    int warmup_stage_complete = 0;
+    /*Code to be executed before warmup
+     ...*/
+
+    /* nvram must be read and parsed previously
+     * handle mapping section*/
+    struct NvramLoader* nvram = static_nvram();
+    if ( NULL != nvram->section_by_name( nvram, MAPPING_SECTION_NAME ) ){
+	nvram->handle(nvram, HANDLE_ONLY_MAPPING_SECTION, NULL, NULL, NULL);
+    }
+    /* handle fstab section*/
+    if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
+	nvram->handle(&s_nvram, HANDLE_ONLY_FSTAB_SECTION, 
+		       s_channels_mount, s_transparent_mount, 
+		       (void*)warmup_stage_complete);
+    }
+
+    /*zvm fork syscall here
+     ...*/
+
+    /*warmup complete*/
+    warmup_stage_complete = 1;
+
+    /*re-read nvram file because after warmup/fork his content can be changed.
+     *args, envs also should be applied. see zcalls_env_args_init_t  */
+    if ( !nvram_read_parse( nvram ) ){
+	/*Code to be executed after warmup*/
+	if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
+	    nvram->handle(nvram, HANDLE_ONLY_FSTAB_SECTION, 
+			  s_channels_mount, s_transparent_mount, 
+			  (void*)warmup_stage_complete);
+	}
+    }
+
+    zrt_internal_session_info(MANIFEST);
+    ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished");
 }
 
 int is_zrt_ready(){

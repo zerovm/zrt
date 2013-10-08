@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <assert.h>
 
 #include "zrt_defines.h"
@@ -22,6 +23,27 @@
 #define TIME_PARAM_SECONDS_KEY_INDEX    0
 
 static struct MNvramObserver s_settime_observer;
+
+/*convert string to unsingned int, to be used in prolog, not used locale */
+static uint strtouint_nolocale(const char* str, int base, int *err ){
+    #define CURRENT_CHAR str[idx]
+    int idx;
+    int numlen = strlen(str);
+    uint res = 0;
+    uint append=1;
+    for ( idx=numlen-1; idx >= 0; idx-- ){
+	if ( CURRENT_CHAR >= '0' && CURRENT_CHAR <= '9' ){
+	    if ( (res + append* (uint)(CURRENT_CHAR - '0')) < UINT_MAX )
+		res += append* (uint)(CURRENT_CHAR - '0');
+	    else{
+		*err = 1;
+		return 0;
+	    }
+	    append *= base;
+	}
+    }
+    return res;
+}
 
 void handle_time_record(struct MNvramObserver* observer,
 			struct ParsedRecord* record,
@@ -42,8 +64,9 @@ void handle_time_record(struct MNvramObserver* observer,
        to get time value in terminal: date +"%s"
        get time stamp from the environment, and cache it */
     if ( seconds != NULL ){
+	int err;
         time_cache->tv_usec = 0; /* msec not supported */
-        time_cache->tv_sec = atoi(seconds); /* convert into decimal value */
+	time_cache->tv_sec = strtouint_nolocale(seconds, 10, &err );
         ZRT_LOG(L_SHORT, "time_cache->tv_sec=%lld", time_cache->tv_sec );
     }
 }

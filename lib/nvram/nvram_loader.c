@@ -22,6 +22,13 @@
 #include "nvram_loader.h"
 #include "conf_parser.h"
 
+#include "observers/args_observer.h"
+#include "observers/debug_observer.h"
+#include "observers/environment_observer.h"
+#include "observers/fstab_observer.h"
+#include "observers/mapping_observer.h"
+#include "observers/nvram_observer.h"
+#include "observers/settime_observer.h"
 
 #define IS_VALID_POINTER_IN_RANGE(whole_data, whole_size, p) \
     (p != NULL && p >= whole_data && p < whole_data+whole_size )
@@ -207,6 +214,8 @@ int nvram_read(struct NvramLoader* nvram, const char* nvram_file_name){
     /*open nvram file and read a whole content in a single read operation*/
     int fd = open(nvram_file_name, O_RDONLY);
     if ( fd>0 ){
+	/*reset position to support second time read*/
+	lseek(fd, 0, SEEK_SET);
 	nvram->nvram_data_size = read( fd, nvram->nvram_data, NVRAM_MAX_FILE_SIZE);
 	close(fd);
 	ZRT_LOG(L_BASE, "nvram file size=%d", nvram->nvram_data_size);
@@ -288,4 +297,23 @@ struct NvramLoader* construct_nvram_loader(struct NvramLoader* nvram ){
     return nvram;
 }
 
+/*@return 0 if read ok*/
+int nvram_read_parse( struct NvramLoader* nvram ){
+    construct_nvram_loader( nvram );
+    /*Get static observers object, their memory should not be freed
+     Must add here all observers to known nvram sections*/
+    nvram->add_observer(nvram, get_fstab_observer() );
+    nvram->add_observer(nvram, get_settime_observer() );
+    nvram->add_observer(nvram, get_debug_observer() );
+    nvram->add_observer(nvram, get_mapping_observer() );
+    nvram->add_observer(nvram, get_env_observer() );
+    nvram->add_observer(nvram, get_arg_observer() );
+    /*if readed not null bytes and result non negative then doing parsing*/
+    if ( nvram->read(nvram, DEV_NVRAM) > 0 ){
+	/*parse whole nvram config file into NvramLoader object*/
+        nvram->parse(nvram);
+	return 0;
+    }
+    return -1;
+}
 

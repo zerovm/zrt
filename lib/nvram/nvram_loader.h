@@ -51,7 +51,11 @@ struct NvramLoader{
 };
 
 struct NvramLoader* construct_nvram_loader(struct NvramLoader* nvram_loader);
-
 void free_nvram_loader(struct NvramLoader* nvram);
+
+/* read nvram file, set all observers, parse;
+ * if adding new sections then changes needed here;
+ * @return 0 if read ok*/
+int nvram_read_parse( struct NvramLoader* nvram );
 
 #endif /* NVRAM_LOADER_H_ */
