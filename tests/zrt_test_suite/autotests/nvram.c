@@ -11,7 +11,8 @@
 #include "channels/test_channels.h"
 
 #define JOIN_STR(a,b) a b
-#define FILE_IN_TAR "/Makefile"
+
+#define FILE_IN_TAR "/tests/zrt_test_suite/Makefile"
 
 int main(int argc, char**argv){
     CHECK_PATH_EXISTANCE("/warm");
@@ -24,7 +25,7 @@ int main(int argc, char**argv){
     CHECK_PATH_EXISTANCE("/ok");
     CHECK_PATH_EXISTANCE( JOIN_STR("/ok", FILE_IN_TAR) );
 
-    //check file contents if at injecting one of file already exists
+    //check file contents if injecting one of file that already exists
     int sz1,sz2,ret;
     GET_FILE_SIZE(JOIN_STR("/warm", FILE_IN_TAR), &sz1);
     GET_FILE_SIZE(JOIN_STR("/ok", FILE_IN_TAR), &sz2);

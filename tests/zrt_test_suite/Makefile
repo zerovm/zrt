@@ -49,10 +49,10 @@ MAPPING-lstat-stat-mapping.c+=channel=/dev/stderr, mode=file
 #using many tests for fstab for access=ro
 FSTAB-nvram.c =channel=/dev/mount/import.tar, mountpoint=/warm, access=ro, warmup=yes {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad, access=ro, bad=warmup {BR}
-FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, warmup=no {BR}
-FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, warmup=no {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, warmup=yes {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, warmup=yes {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad1, access=ro {BR}
-FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad2, access=re, warmup=no {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad2, access=re, warmup=yes {BR}
 #####################################################################
 
 #####################################################################

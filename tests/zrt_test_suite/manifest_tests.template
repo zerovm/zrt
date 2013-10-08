@@ -5,7 +5,7 @@ Channel = /dev/null, /dev/stdin, 0, 0, 999999, 999999, 0, 0
 Channel = {OUTFILE}.stdout.std, /dev/stdout, 0, 0, 0, 0, 999999, 999999
 Channel = {OUTFILE}.stderr.std, /dev/stderr, 0, 0, 0, 0, 999999, 999999
 Channel = {OUTFILE}.zrtdebug.log, /dev/debug, 0, 0, 0, 0, 50999999, 50999999
-Channel = {OUTFILE}.nvram, /dev/nvram, 0, 0, 999999, 999999, 0, 0
+Channel = {OUTFILE}.nvram, /dev/nvram, 1, 0, 999999, 999999, 0, 0
 ==foo.tar must be created by main zrt Makefile in order to proper run some autotests
 Channel = {ABS_PATH}foo.tar, /dev/mount/import.tar, 1, 0, 9999999, 9999999, 0, 0
 Channel = {ABS_PATH}autotests/channels/forreading, /dev/readonly, {CHANTYPE1}, 0, 99999, 999999, 0, 0

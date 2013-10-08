@@ -44,7 +44,7 @@ typedef struct {
     char filename_prefix[155];
 } TAR_HEADER;
 
-
+/*unpacker for "ustar" tar archive*/
 static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path ){
     ZRT_LOG(L_INFO, "%s", mount_path);
     char block[512];
@@ -59,46 +59,43 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
     strcat(dst_filename, mount_path); 
 
     count = 0;
-    while( (len=unpack_if->stream_reader->read( unpack_if->stream_reader, block, sizeof(block)) ) > 0 ) {
+    while( (len=unpack_if->stream_reader->read( unpack_if->stream_reader, 
+						block, 
+						sizeof(block)) ) != 0 ) {
 	if (len != sizeof(block)) {
             /*every file size should be aligned to 512bytes in generic case*/
             ZRT_LOG(L_ERROR, P_TEXT, "file block not aligned" );
             return -EUnpackStateNotImplemented;
         }
 
-        if (memcmp(header->ustar, USTAR_STR, USTAR_LEN) == 0){
-	    //get file size
-	    if (sscanf(header->size, "%o", &file_len) != 1) {
-		ZRT_LOG(L_ERROR, "ret=%s", "unknown");
-		return -1;
-	    }
-	    //check filename
-	    if ( !strlen(header->filename) ) break;
-	    if ( (strlen(mount_path) > 0 && mount_path[strlen(mount_path)-1] == '/') )
-		backslash = "";
-	    else
-		backslash = "/";
+	//get file size
+	if (sscanf(header->size, "%o", &file_len) != 1) {
+	    ZRT_LOG(L_ERROR, "ret=%s", "unknown");
+	    return -1;
+	}
+	//check filename
+	if ( !strlen(header->filename) ) break;
+	if ( (strlen(mount_path) > 0 && mount_path[strlen(mount_path)-1] == '/') )
+	    backslash = "";
+	else
+	    backslash = "/";
 	    
-	    //construct full filename
-	    if ( MAXPATHLEN < snprintf(dst_filename, MAXPATHLEN+1, "%s%s%s",
-				       mount_path, backslash, header->filename ) ){
-		ZRT_LOG(L_ERROR, P_TEXT, "To big path readed from archive");
-		return -EUnpackToBigPath;
-	    }
+	//construct full filename
+	if ( MAXPATHLEN < snprintf(dst_filename, MAXPATHLEN+1, "%s%s%s",
+				   mount_path, backslash, header->filename ) ){
+	    ZRT_LOG(L_ERROR, P_TEXT, "To big path readed from archive");
+	    return -EUnpackToBigPath;
+	}
 
-	    TypeFlag type = ETypeFile;
-	    if ( header->typeflag == DIRTYPE ){
-		type = ETypeDir;
-	    }
-	    /* Now item name is retrieved from archive, 
-	     * in case if item type is directory we just create it on filesystem,
-	     * in case of file it's ready to retrieve data and create it on filesystem */
-	    unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len );
-	    ++count;
+	TypeFlag type = ETypeFile;
+	if ( header->typeflag == DIRTYPE ){
+	    type = ETypeDir;
 	}
-	else{
-	    ZRT_LOG(L_ERROR, P_TEXT, "skip tar empty block");
-	}
+	/* Now item name is retrieved from archive, 
+	 * in case if item type is directory we just create it on filesystem,
+	 * in case of file it's ready to retrieve data and create it on filesystem */
+	unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len );
+	++count;
     }
     ZRT_LOG( L_SHORT, "created %d files", count );
     return count;

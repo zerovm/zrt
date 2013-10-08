@@ -103,8 +103,8 @@ test: test_suites zrt_tests
 
 ############## "make autotests" run zrt autotests
 autotests:
-	rm -f tests/zrt_test_suite/foo.tar
-	tar -cf tests/zrt_test_suite/foo.tar Makefile
+	@rm -f tests/zrt_test_suite/foo.tar
+	@tar -cf tests/zrt_test_suite/foo.tar tests/zrt_test_suite/Makefile
 	@echo ------------- RUN zrt $@ ------------
 	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite clean
 	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite -j4

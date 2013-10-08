@@ -53,7 +53,8 @@ const char* strip_all(const char* str, int len, uint16_t* striped_len ){
     *striped_len = end-begin+1;
     /*self testing*/
     if ( *striped_len > len ){
-	ZRT_LOG(L_ERROR, "begin=%d, end=%d, striped_len=%d, fulllen=%d", begin, end, striped_len, len);
+	ZRT_LOG(L_ERROR, "begin=%d, end=%d, striped_len=%d, fulllen=%d", 
+		begin, end, striped_len, len);
 	assert(*striped_len<=len);
     }
     return MAX(0, str+begin);

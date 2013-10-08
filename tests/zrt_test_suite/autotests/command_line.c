@@ -3,6 +3,8 @@
 #include <assert.h>
 #include "zrt.h"
 
+extern const char *__progname;
+
 int main(int argc, char **argv)
 {
     int i;
@@ -35,6 +37,10 @@ int main(int argc, char **argv)
             res = strcmp(argv[i], "the_last_argument" );
             assert( res == 0 );
         }
+	else if ( i == 6 ){
+            res = strcmp(argv[0], __progname );
+	    assert( res == 0 );
+	}
     }
 
     return 0;

@@ -140,7 +140,7 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 		/*file size returned by fstat should be the same as readed bytes count*/
 		assert( copied_bytes == mmap_data_len );
 		ZRT_LOG(L_INFO, "file mmap OK, mmap_data_len=%lld, filesize=%lld", 
-			mmap_data_len, st.st_size );
+			(long long int)mmap_data_len, (long long int)st.st_size );
 	    }
 	    else{
 		errcode = errno;
