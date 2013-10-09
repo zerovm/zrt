@@ -401,6 +401,7 @@ void zrt_internal_setup_finally(){
 
     /*zvm fork syscall here
      ...*/
+    zvm_fork();
 
     /*warmup complete*/
     warmup_stage_complete = 1;

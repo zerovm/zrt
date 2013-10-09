@@ -29,8 +29,8 @@ COUNTER=0
 #get pipe from zerovm and parse output
 AWK_GET_ERRCODE=awk '{ \
 RESULT="FAIL"; \
-if (NR == 2) { RETCODE=$$1 } \
-if (NR == 5) { \
+if (NR == 3) { RETCODE=$$1 } \
+if (NR == 6) { \
 	if (RETCODE == 0) { RESULT="PASS" } \
 	else { RESULT="FAIL" } \
 	if ($$0 != "ok") { RESULT="FAIL" } \
