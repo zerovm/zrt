@@ -15,7 +15,7 @@
 #include <errno.h>
 
 #include "zrtlog.h"
-#include "stream_reader.h"
+#include "mounts_reader.h"
 #include "unpack_interface.h"
 #include "mounts_interface.h"
 #include "unpack_tar.h"
@@ -59,7 +59,7 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
     strcat(dst_filename, mount_path); 
 
     count = 0;
-    while( (len=unpack_if->stream_reader->read( unpack_if->stream_reader, 
+    while( (len=unpack_if->mounts_reader->read( unpack_if->mounts_reader, 
 						block, 
 						sizeof(block)) ) != 0 ) {
 	if (len != sizeof(block)) {
@@ -103,10 +103,10 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
 }
 
 
-struct UnpackInterface* alloc_unpacker_tar( struct StreamReader* stream_reader, struct UnpackObserver* observer ){
+struct UnpackInterface* alloc_unpacker_tar( struct MountsReader* mounts_reader, struct UnpackObserver* observer ){
     struct UnpackInterface* unpacker_tar = malloc( sizeof(struct UnpackInterface) );
     unpacker_tar->unpack = unpack_tar;
-    unpacker_tar->stream_reader = stream_reader;
+    unpacker_tar->mounts_reader = mounts_reader;
     unpacker_tar->observer = observer;
     return unpacker_tar;
 }

@@ -16,7 +16,7 @@
 
 #include "zrtlog.h"
 #include "unpack_interface.h"
-#include "stream_reader.h"
+#include "mounts_reader.h"
 #include "parse_path.h"
 #include "mounts_interface.h"
 #include "image_engine.h"
@@ -46,7 +46,7 @@ static int callback_parse(struct ParsePathObserver* this_p, const char *path, in
 
 //////////////////////////// unpack observer implementation //////////////////////////////
 
-/*unpack observer 1st parameter : main unpack interface that gives access to observer, stream and mounted fs*/
+/*unpack observer 1st parameter : main unpack interface that gives access to observer, mounts and mounted fs*/
 static int extract_entry( struct UnpackInterface* unpacker, 
 			  TypeFlag type, const char* name, int entry_size ){
     /*parse path and create directories recursively*/
@@ -66,20 +66,22 @@ static int extract_entry( struct UnpackInterface* unpacker,
 	create_dir_and_cache_name(name, strlen(name));
     }
     else{
-	int out_fd = unpacker->observer->mounts->open(name, O_WRONLY | O_CREAT, S_IRWXU);
+	/*Create new file, truncate it if exist*/
+	int out_fd = unpacker->observer->mounts->open(name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
 	if (out_fd < 0) {
 	    ZRT_LOG( L_ERROR, "create new file error, name=%s", name );
 	    return -1;
 	}
 
+	ZRT_LOG(L_SHORT, "save %7d B : %s", entry_size, name);
 	int should_write = entry_size;
 	int write_err = 0;
         /*read file by blocks*/
         while (entry_size > 0) {
-            int len = (*unpacker->stream_reader->read)( unpacker->stream_reader,
+            int len = (*unpacker->mounts_reader->read)( unpacker->mounts_reader,
                     block, sizeof(block) );
             if (len != sizeof(block)) {
-		ZRT_LOG(L_ERROR, "read error. current file can't be saved name=%s", name);
+		ZRT_LOG(L_ERROR, "read error. saving failed=%s", name);
                 return -1;
             }
 	    int wrote;
@@ -93,7 +95,6 @@ static int extract_entry( struct UnpackInterface* unpacker,
 	    }
             entry_size -= sizeof(block);
         }
-	ZRT_LOG(L_SHORT, "%7d B saved : %s", should_write, name);
 	unpacker->observer->mounts->close(out_fd);
     }
     return 0;

@@ -16,7 +16,7 @@
 
 #include "zrtlog.h"
 #include "unpack_tar.h" //tar unpacker
-#include "stream_reader.h"
+#include "mounts_reader.h"
 #include "fstab_observer.h"
 #include "nvram.h"
 #include "image_engine.h"
@@ -81,19 +81,20 @@ void handle_fstab_record(struct MNvramObserver* observer,
 	 * channel_alias. Content of filesystem is reading from channel that points to 
 	 * supported archive, tar currently, read every file dir and add it into MemMount filesystem
 	 */
-	/*create stream reader linked to tar archive that contains filesystem image*/
-	struct StreamReader* stream_reader =
-            alloc_stream_reader( channels_mount, channel_alias );
+	/*create mounts reader linked to tar archive that contains filesystem image,
+	 it call "read" from MountsInterface and don't call "read" function from posix layer*/
+	struct MountsReader* mounts_reader =
+            alloc_mounts_reader( channels_mount, channel_alias );
 
-	if ( stream_reader ){
+	if ( mounts_reader ){
 	    /*create image loader, passed 1st param: image alias, 2nd param: Root filesystem;
 	     * Root filesystem passed instead MemMount to reject adding of files into /dev folder;
 	     * For example if archive contains non empty /dev folder that contents will be ignored*/
 	    struct ImageInterface* image_loader =
                 alloc_image_loader( transparent_mount );
-	    /*create archive unpacker, channels_mount is useing to read channel stream*/
+	    /*create archive unpacker*/
 	    struct UnpackInterface* tar_unpacker =
-                alloc_unpacker_tar( stream_reader, image_loader->observer_implementation );
+                alloc_unpacker_tar( mounts_reader, image_loader->observer_implementation );
 
 	    /*read archive from linked channel and add all contents into Filesystem*/
 	    int count_files = image_loader->deploy_image( mount_path, tar_unpacker );
@@ -104,7 +105,7 @@ void handle_fstab_record(struct MNvramObserver* observer,
 
 	    free_unpacker_tar( tar_unpacker );
 	    free_image_loader( image_loader );
-	    free_stream_reader( stream_reader );
+	    free_mounts_reader( mounts_reader );
 	}
     }
 #ifdef FSTAB_SAVE_TAR_ENABLE

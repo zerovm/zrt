@@ -37,7 +37,7 @@ lib/fs/channels_mount.c \
 lib/fs/channels_readdir.c \
 lib/fs/transparent_mount.c \
 lib/fs/mem_mount_wraper.cc \
-lib/fs/unpack/stream_reader.c \
+lib/fs/unpack/mounts_reader.c \
 lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c \

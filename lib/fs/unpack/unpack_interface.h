@@ -8,7 +8,7 @@
 #ifndef UNPACK_INTERFACE_H_
 #define UNPACK_INTERFACE_H_
 
-struct StreamReader;
+struct MountsReader;
 struct UnpackInterface;
 
 typedef enum { EUnpackStateOk=0, EUnpackToBigPath=1, EUnpackStateNotImplemented=38 } UnpackState;
@@ -26,7 +26,7 @@ struct UnpackObserver{
 struct UnpackInterface{
     int (*unpack)( struct UnpackInterface* unpack_if, const char* mount_path );
     //data
-    struct StreamReader* stream_reader;
+    struct MountsReader* mounts_reader;
     struct UnpackObserver* observer;
 };
 
