@@ -55,24 +55,32 @@ debugging ZRT information will go into the debug channel If debug
 channel is not defined no debug info will available (apart from system
 logs). Debugging level are regulated by VERBOSITY environment
 variables and supports 1,2,3 values.
-2.2.3 Nvram channel, it is a config file for zerovm environment, has
+2.2.3 Nvram channel, it's a config file for tuning zvm session, has
 alias "/dev/nvram". Config syntax is allowing comments starting with
 "#", and sections names that are expected in square brackets. Single
 pair of key and value must be on single line and it's value should not
 contain carriage return. Escaping rules available if need to provide
 unsupported chars as value.
 List of supported nvram sections:
-2.2.3.1. Section [fstab]: allows at start of ZRT session importing of
-TAR archive contents with saving directory structure, into RW FS in
-memory. And exporting of RW FS contents into tar archive just at
-'exit' syscall handler. Keywords valid for fstab:
+2.2.3.1. Section [fstab]: Intended to import of TAR archive contents
+leaving directory structure, into ReadWrite FS in memory for ReadOnly
+mounts. And to export of Filesystem contents into tar archive at the
+end of session in 'exit' syscall handler. 
+Keywords are valid for fstab:
 - channel : zerovm channel alias, provided in manifest file
 - mountpoint : path in zrt filesystem, any directory path except '/dev/' 
 - access : ro / wo. 
-a) 'ro' value if you need to inject files into zrt;
-b) 'rw' value for saving contents of zrt filesystem into tar archive,
-uses of '/' root does not support for 'wo' access value;
-2.2.3.2. Section [env]: set list of environment vars, keywords are:
+  'ro' value if you need to inject files into zrt;
+  'rw' value for saving contents of zrt filesystem into tar archive,
+  uses of '/' root does not support for 'wo' access value;
+- removable : yes / no; In case if session forked by zfork() from zrt
+  API and for folowing fstab records with access=ro and removable=yes
+  then content of tar archive will reread and remount. It means that
+  old files will stay untouchable, new files/dirs will added and
+  existing files will be overwrited. This is also related to
+  [precache] section. if removable=no mount will occured only once.
+2.2.3.2. Section [env]: Add environment vars into main(), keywords
+are:
 - name : variable name
 - value : variable value
 Escaping of value are supported, rules the same as for args section.
@@ -97,12 +105,18 @@ args are:
 /dev/debug. To enable logging this channel must exist in zerovm
 manifest file. Arg is:
 - verbosity : decimal value 0,1,2,3 or 4 for maximum logging level.
-2.2.3.7. Example:
+2.2.3.7. Section [precache] : Instructs ZRT that we need to call
+zfork() before main, just after all nvram sections were processed /
+all tar archives injected into Filesystem;
+- precache : yes / no value; If yes - then zfork will called, if no
+  (default) - nothing happens;
+2.2.3.8. Example:
 [fstab] 
 #inject archive contents into zrt fs
-channel=/dev/mount/import.tar, mountpoint=/, access=ro
+channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=no
+channel=/dev/mount/scripts.tar, mountpoint=/, access=ro, removable=yes
 #save /singles folder contents into archive
-channel=/dev/mount/export.tar,  mountpoint=/singles, access=wo
+channel=/dev/mount/export.tar,  mountpoint=/singles, access=wo, removable=no
 [env]
 name=SOMEENV, value=some value
 [args]
@@ -117,3 +131,5 @@ channel=/dev/stderr, mode=file #REGULAR FILE
 seconds=1370454582 #since 1970
 [debug]
 verbosity=4
+[precache]
+precache=yes
