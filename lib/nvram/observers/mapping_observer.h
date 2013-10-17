@@ -8,6 +8,8 @@
 #ifndef MAPPING_OBSERVER_H_
 #define MAPPING_OBSERVER_H_
 
+#define HANDLE_ONLY_MAPPING_SECTION get_mapping_observer()
+
 #define MAPPING_SECTION_NAME         "mapping"
 #define MAPPING_PARAM_CHANNEL_KEY    "channel"
 #define MAPPING_PARAM_TYPE_KEY       "mode"

@@ -8,6 +8,8 @@
 #ifndef __ENVIRONMENT_OBSERVER_H__
 #define __ENVIRONMENT_OBSERVER_H__
 
+#define HANDLE_ONLY_ENV_SECTION get_env_observer()
+
 #define ENVIRONMENT_SECTION_NAME    "env"
 #define ENVIRONMENT_PARAM_NAME_KEY  "name"
 #define ENVIRONMENT_PARAM_VALUE_KEY "value"

@@ -8,6 +8,8 @@
 #ifndef SETTIME_OBSERVER_H_
 #define SETTIME_OBSERVER_H_
 
+#define HANDLE_ONLY_TIME_SECTION get_settime_observer()
+
 #define TIME_SECTION_NAME         "time"
 #define TIME_PARAM_SECONDS_KEY    "seconds"
 

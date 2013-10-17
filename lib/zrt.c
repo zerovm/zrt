@@ -73,7 +73,8 @@ static struct zcalls_init_t KZcalls_init = {
 };
 
 static struct zcalls_zrt_t KZcalls_zrt = {
-    zrt_zcall_prolog_zrt_setup
+    zrt_zcall_prolog_zrt_setup,
+    zrt_zcall_prolog_premain
 };
 
 static struct zcalls_env_args_init_t KZcalls_env_args_init = {

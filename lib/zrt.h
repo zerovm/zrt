@@ -33,6 +33,7 @@ struct timeval;
 struct timespec;
 struct NvramLoader;
 
+
 #define ZCALLS_INIT 1   /*use as type param in __query_zcalls*/
 struct zcalls_init_t{
     /*zcalls initializer, coming just after __zcalls_query*/
@@ -97,6 +98,7 @@ struct zcalls_init_t{
 #define ZCALLS_ZRT 2         /*use as type param in __query_zcalls*/
 struct zcalls_zrt_t{
     void (*zrt_setup)(void);
+    void (*zrt_premain)(void);
 };
 
 #define ZCALLS_NONSYSCALLS 3 /*use as type param in __query_zcalls*/

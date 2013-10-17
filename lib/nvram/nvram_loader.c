@@ -29,6 +29,7 @@
 #include "observers/mapping_observer.h"
 #include "observers/nvram_observer.h"
 #include "observers/settime_observer.h"
+#include "observers/precache_observer.h"
 
 #define IS_VALID_POINTER_IN_RANGE(whole_data, whole_size, p) \
     (p != NULL && p >= whole_data && p < whole_data+whole_size )
@@ -218,7 +219,7 @@ int nvram_read(struct NvramLoader* nvram, const char* nvram_file_name){
 	lseek(fd, 0, SEEK_SET);
 	nvram->nvram_data_size = read( fd, nvram->nvram_data, NVRAM_MAX_FILE_SIZE);
 	close(fd);
-	ZRT_LOG(L_BASE, "nvram file size=%d", nvram->nvram_data_size);
+	ZRT_LOG(L_BASE, "nvram file size=%d: \n%s", nvram->nvram_data_size, nvram->nvram_data);
     }
     return nvram->nvram_data_size;
 }
@@ -302,6 +303,7 @@ int nvram_read_parse( struct NvramLoader* nvram ){
     construct_nvram_loader( nvram );
     /*Get static observers object, their memory should not be freed
      Must add here all observers to known nvram sections*/
+    nvram->add_observer(nvram, get_precache_observer() );
     nvram->add_observer(nvram, get_fstab_observer() );
     nvram->add_observer(nvram, get_settime_observer() );
     nvram->add_observer(nvram, get_debug_observer() );

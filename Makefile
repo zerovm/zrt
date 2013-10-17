@@ -30,6 +30,7 @@ lib/nvram/observers/fstab_observer.c \
 lib/nvram/observers/settime_observer.c \
 lib/nvram/observers/debug_observer.c \
 lib/nvram/observers/mapping_observer.c \
+lib/nvram/observers/precache_observer.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
@@ -102,9 +103,15 @@ ${LIBPORTS}:
 test: test_suites zrt_tests
 
 ############## "make autotests" run zrt autotests
+TESTPATH=tests/zrt_test_suite
+TESTFILE=testfile.1234
+TARNAME=foo
 autotests:
-	@rm -f tests/zrt_test_suite/foo.tar
-	@tar -cf tests/zrt_test_suite/foo.tar tests/zrt_test_suite/Makefile
+	@rm -f ${TESTPATH}/${TARNAME}.tar ${TESTPATH}/${TARNAME}2.tar ${TESTPATH}/${TESTFILE}
+	@echo "mount" > ${TESTPATH}/${TESTFILE}
+	@tar -cf ${TESTPATH}/${TARNAME}.tar ${TESTPATH}/${TESTFILE}
+	@echo "remount" > ${TESTPATH}/${TESTFILE}
+	@tar -cf ${TESTPATH}/${TARNAME}2.tar ${TESTPATH}/${TESTFILE}
 	@echo ------------- RUN zrt $@ ------------
 	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite clean
 	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite -j4
@@ -179,8 +186,13 @@ install: uninstall
 	install -m 0644 lib/libmapreduce.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libnetworking.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libfs.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
+	install -m 0644 lib/liblua.a $(LIB_DIR)
+	install -m 0644 lib/libgtest.a $(LIB_DIR)
+	install -m 0644 lib/libtar.a $(LIB_DIR)
+	install -m 0644 lib/libsqlite3.a $(LIB_DIR)
 	install -d $(INCLUDE_DIR)/sqlite3 $(INCLUDE_DIR)/lua $(INCLUDE_DIR)/helpers \
 		$(INCLUDE_DIR)/networking $(INCLUDE_DIR)/mapreduce $(LIB_DIR)
+	install -m 0644 lib/zrtapi.h $(INCLUDE_DIR)
 	install -m 0644 libports/sqlite3/vfs_channel.h $(INCLUDE_DIR)/sqlite3
 	install -m 0644 libports/sqlite3/sqlite3.h $(INCLUDE_DIR)/sqlite3
 	install -m 0644 libports/sqlite3/sqlite3ext.h $(INCLUDE_DIR)/sqlite3
@@ -198,10 +210,6 @@ install: uninstall
 	install -m 0644 lib/mapreduce/elastic_mr_item.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
 	install -m 0644 lib/helpers/buffered_io.h $(INCLUDE_DIR)/helpers
-	install -m 0644 lib/liblua.a $(LIB_DIR)
-	install -m 0644 lib/libgtest.a $(LIB_DIR)
-	install -m 0644 lib/libtar.a $(LIB_DIR)
-	install -m 0644 lib/libsqlite3.a $(LIB_DIR)
 	install -m 0755 zvsh $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin
 	sed -i 's#$$ZEROVM_ROOT#$(ZVM_PREFIX)/bin#' $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin/zvsh
 

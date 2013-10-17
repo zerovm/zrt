@@ -77,6 +77,7 @@ const char* __zrt_log_syscall_stack_str(){
 }
 
 void __zrt_log_push_name( const char* name ){
+#ifdef LOG_FUNCTION_STACK_NAMES
     if ( !s_log_enabled ) return; /*logging switched off*/
     int len = strlen(name);
     if ( (strlen(s_nested_syscalls_str) + len + 3) < MAX_NESTED_SYSCALL_LEN ){
@@ -87,9 +88,11 @@ void __zrt_log_push_name( const char* name ){
     else{
 	assert(0);
     }
+#endif
 }
 
 void __zrt_log_pop_name( const char* expected_name ) {
+#ifdef LOG_FUNCTION_STACK_NAMES
     if ( !s_log_enabled ) return ; /*logging switched off*/
     char *s = strrchr(s_nested_syscalls_str, ' ');
     if ( s ){
@@ -101,6 +104,7 @@ void __zrt_log_pop_name( const char* expected_name ) {
 	}
         s[0] = '\0';
     }
+#endif
 }
 
 int32_t __zrt_log_write( int handle, const char* buf, int32_t size, int64_t offset){
@@ -114,6 +118,7 @@ int32_t __zrt_log_write( int handle, const char* buf, int32_t size, int64_t offs
     }
     else
 	return zvm_pwrite(handle, buf, size, offset);
+    return 0;
 }
 
 int __zrt_log_debug_get_buf(char **buf){

@@ -27,7 +27,7 @@
 #define FSTAB_PARAM_CHANNEL_KEY_INDEX    0
 #define FSTAB_PARAM_MOUNTPOINT_KEY_INDEX 1
 #define FSTAB_PARAM_ACCESS_KEY_INDEX     2
-#define FSTAB_PARAM_WARMUP_KEY_INDEX     3
+#define FSTAB_PARAM_REMOVABLE_KEY_INDEX     3
 
 /*temporarily added to allow writing to tar at exit*/
 static struct ParsedRecords s_export_tarrecords; 
@@ -45,8 +45,8 @@ void handle_fstab_record(struct MNvramObserver* observer,
     struct MountsInterface* channels_mount = (struct MountsInterface*)obj1;
     /*obj2 - whole filesystem interface*/
     struct MountsInterface* transparent_mount = (struct MountsInterface*)obj2;
-    /*handle record according to warmup state*/
-    int warmup_stage_complete = (int)obj3;
+    /*handle record according to removable state*/
+    int fstab_mount_stage = (int)obj3;
 
     /*get param*/
     char* channel_alias = NULL;
@@ -61,21 +61,19 @@ void handle_fstab_record(struct MNvramObserver* observer,
     ALLOCA_PARAM_VALUE(record->parsed_params_array[FSTAB_PARAM_ACCESS_KEY_INDEX], 
 		      &access);
     /*get param check*/
-    char* warmup = NULL;
-    ALLOCA_PARAM_VALUE(record->parsed_params_array[FSTAB_PARAM_WARMUP_KEY_INDEX], 
-		      &warmup);
-    int warmup_record = !strcasecmp( warmup, FSTAB_VAL_WARMUP_YES);
+    char* removable = NULL;
+    ALLOCA_PARAM_VALUE(record->parsed_params_array[FSTAB_PARAM_REMOVABLE_KEY_INDEX], 
+		      &removable);
+    int removable_record = !strcasecmp( removable, FSTAB_VAL_REMOVABLE_YES);
 
     ZRT_LOG(L_SHORT, 
-	    "fstab record handle now=%d: channel=%s, mount_path=%s, access=%s, warmup=%s",
-	    IS_NEED_TO_HANDLE_FSTAB_RECORD(warmup_stage_complete, warmup_record),
-	    channel_alias, mount_path, access, warmup);
+	    "fstab record handle now=%d: channel=%s, mount_path=%s, access=%s, removable=%s",
+	    IS_NEED_TO_HANDLE_FSTAB_RECORD(fstab_mount_stage, removable_record),
+	    channel_alias, mount_path, access, removable);
 
-    /* for injecting files into FS.
-     * handle if warmup state == 0 and warmup field == "yes", otherwise
-     * handle if warmup state == 1 and warmup field == "no". */
+    /* In case if we need to inject files into FS.*/
     if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) &&
-	 IS_NEED_TO_HANDLE_FSTAB_RECORD(warmup_stage_complete, warmup_record) ){
+	 IS_NEED_TO_HANDLE_FSTAB_RECORD(fstab_mount_stage, removable_record) ){
 	/*
 	 * inject contents into specified folder mount_path of filesystem, from channel name
 	 * channel_alias. Content of filesystem is reading from channel that points to 
@@ -169,8 +167,8 @@ struct MNvramObserver* get_fstab_observer(){
     assert(FSTAB_PARAM_MOUNTPOINT_KEY_INDEX==key_index);
     key_index = self->keys.add_key(&self->keys, FSTAB_PARAM_ACCESS_KEY);
     assert(FSTAB_PARAM_ACCESS_KEY_INDEX==key_index);
-    key_index = self->keys.add_key(&self->keys, FSTAB_PARAM_WARMUP);
-    assert(FSTAB_PARAM_WARMUP_KEY_INDEX==key_index);
+    key_index = self->keys.add_key(&self->keys, FSTAB_PARAM_REMOVABLE);
+    assert(FSTAB_PARAM_REMOVABLE_KEY_INDEX==key_index);
 
     /*setup functions*/
     s_fstab_observer.handle_nvram_record = handle_fstab_record;

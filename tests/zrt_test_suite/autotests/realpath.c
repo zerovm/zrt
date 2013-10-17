@@ -14,6 +14,8 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "helpers/path_utils.h"
+
 #include "channels/test_channels.h"
 
 int main(int argc, char **argv)
@@ -42,6 +44,14 @@ int main(int argc, char **argv)
     else{
 	fprintf(stderr, "realpath failed, errno=%d\n", errno );
     }
+
+    //test one of internal functions
+    char* abspath = alloc_absolute_path_from_relative( "/dev/tty" );
+    assert(abspath!=NULL);
+    free(abspath);
+
+    int fd = open("/dev/tty", 2306, 0);
+    close(fd);
 
     return !res;
 }

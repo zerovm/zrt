@@ -78,7 +78,7 @@ void handle_env_record(struct MNvramObserver* observer,
     char* envval = NULL;
     ALLOCA_PARAM_VALUE(record->parsed_params_array[ENV_PARAM_VALUE_KEY_INDEX], 
 		      &envval);
-    ZRT_LOG(L_SHORT, "env record: %s=%s", envname, envval);
+    ZRT_LOG(L_INFO, "env record: %s=%s", envname, envval);
     add_pair_to_temp_buffer(buffer, bufsize, index,
 			    envname, 
 			    record->parsed_params_array[ENV_PARAM_NAME_KEY_INDEX].vallen, 

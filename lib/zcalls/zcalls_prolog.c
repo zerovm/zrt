@@ -72,8 +72,6 @@ void zrt_zcall_prolog_init(){
 	sbrk_default = MANIFEST->heap_ptr;
 
     /*Folowing handlers does not require a heap*/
-#define HANDLE_ONLY_DEBUG_SECTION get_debug_observer()
-#define HANDLE_ONLY_TIME_SECTION get_settime_observer()
     struct NvramLoader* nvram = static_nvram();
     if ( !nvram_read_parse( nvram ) ){
 	/*handle debug section - verbosity*/
@@ -111,7 +109,7 @@ int  zrt_zcall_prolog_gettod(struct timeval *tvl){
 	/*retrieve and get cached time value*/
 	tvl->tv_usec = s_cached_timeval.tv_usec;
 	tvl->tv_sec  = s_cached_timeval.tv_sec;
-	ZRT_LOG(L_INFO, "tv_sec=%lld, tv_usec=%d", tvl->tv_sec, tvl->tv_usec );
+	ZRT_LOG(L_INFO, "tv_sec=%lld, tv_usec=%lld", tvl->tv_sec, (int64_t)tvl->tv_usec );
 
 	/* update time value*/
 	update_cached_time();
@@ -464,6 +462,14 @@ void zrt_zcall_prolog_zrt_setup(void){
     zrt_zcall_enhanced_zrt_setup();    
 }
 
+/* callback just before user main() */
+void zrt_zcall_prolog_premain(void){
+    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
+    zrt_zcall_enhanced_premain();
+    /*last prolog callback, next folowing main()*/
+}
+
+
 /*@return records count in fstab section*/
 static int get_records_count_for_section_and_buffer_size_to_copy_contents
 (
@@ -519,8 +525,6 @@ void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size,
 
 void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_buf_size,
 					  char** envs, char* envs_buf, int envs_buf_size){
-    #define HANDLE_ONLY_ENV_SECTION get_env_observer()
-    #define HANDLE_ONLY_ARG_SECTION get_arg_observer()
     struct NvramLoader* nvram = static_nvram();
     /*handle "env" section*/
     if ( NULL != nvram->section_by_name( nvram, ENVIRONMENT_SECTION_NAME ) ){

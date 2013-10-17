@@ -32,6 +32,9 @@
 #define P_UINT  "%u"
 #define P_LONGINT  "%lld"
 
+#define LOG_FUNCTION_STACK_NAMES
+//#undef  LOG_FUNCTION_STACK_NAMES
+
 #ifndef DEBUG
 #define DEBUG
 #endif

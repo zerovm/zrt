@@ -171,11 +171,11 @@ static int check_channel_flags(const struct ZVMChannel *chan, int flags)
 {
     assert(chan);
 
-    /*check read / write accasebility*/
+    /*check read / write ability*/
     int canberead = chan->limits[GetsLimit] && chan->limits[GetSizeLimit];
     int canbewrite = chan->limits[PutsLimit] && chan->limits[PutSizeLimit];
 
-    ZRT_LOG(L_INFO, "flags=%s, canberead=%d, canbewrite=%d", 
+    ZRT_LOG(L_EXTRA, "flags=%s, canberead=%d, canbewrite=%d", 
 	    STR_FILE_OPEN_FLAGS(flags), canberead, canbewrite );
 
     /*reset permissions bits, that are not used currently*/
@@ -197,7 +197,7 @@ static void debug_mes_zrt_channel_runtime( int handle ){
     if ( handle == 0 ) return;
     const struct ZrtChannelRt *zrt_chan_runtime = s_zrt_channels[handle];
     if (zrt_chan_runtime){
-        ZRT_LOG(L_INFO, 
+        ZRT_LOG(L_EXTRA, 
 		"handle=%d, flags=%s, sequential_access_pos=%llu, random_access_pos=%llu",
                 handle, STR_FILE_OPEN_FLAGS(zrt_chan_runtime->flags),
                 zrt_chan_runtime->sequential_access_pos, zrt_chan_runtime->random_access_pos );
@@ -1049,7 +1049,7 @@ struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_all
 
     /*this info will not be logged here because logs not yet created */
 #ifdef DEBUG
-    ZRT_LOG(L_EXTRA, "dirs count loaded from manifest=%d", s_manifest_dirs.dircount);
+    ZRT_LOG(L_EXTRA, "Based on manifest static directories count=%d", s_manifest_dirs.dircount);
     int i;
     for ( i=0; i < s_manifest_dirs.dircount; i++ ){
         ZRT_LOG( L_EXTRA, "dir[%d].handle=%d; .path=%20s; .nlink=%d", i,

@@ -13,6 +13,8 @@
 
 #include "nvram_observer.h"
 
+#define HANDLE_ONLY_ARG_SECTION get_arg_observer()
+
 /*get static interface object not intended to destroy after using*/
 struct MNvramObserver* get_arg_observer();
 

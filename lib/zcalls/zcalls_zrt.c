@@ -28,6 +28,7 @@
 
 #include "zvm.h"
 #include "zrt.h"
+#include "zrtapi.h"
 #include "zrt_defines.h"
 #include "zcalls.h"
 #include "zcalls_zrt.h"
@@ -35,12 +36,13 @@
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
-#include "stream_reader.h"
+#include "mounts_reader.h"
 #include "settime_observer.h"
 #include "path_utils.h"             /*alloc_absolute_path_from_relative*/
 #include "environment_observer.h"
 #include "fstab_observer.h"
 #include "mapping_observer.h"
+#include "precache_observer.h"
 #include "nvram_loader.h"
 #include "mounts_manager.h"
 #include "mem_mount_wraper.h"
@@ -310,14 +312,15 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
     ZRT_LOG_DELIMETER;
 
     /*get from system, print environment variables*/
+    ZRT_LOG(L_BASE, P_TEXT, "environment: ");
     i=0;
     while( envp[i] ){
         ZRT_LOG(L_BASE, "envp[%d] = '%s'", i, envp[i]);
 	++i;
     }
 
-    ZRT_LOG(L_BASE, "channels count = %d", manifest->channels_count);
     ZRT_LOG_DELIMETER;
+    ZRT_LOG(L_BASE, "%d channels :", manifest->channels_count);
     /*print channels list*/
     for(i = 0; i < manifest->channels_count; ++i)
     {
@@ -331,18 +334,36 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
 		manifest->channels[i].limits[PutsLimit],
 		manifest->channels[i].limits[PutSizeLimit]);
     }
-    ZRT_LOG_DELIMETER;
     ZRT_LOG(L_SHORT, "_SC_PAGE_SIZE=%ld", sysconf(_SC_PAGE_SIZE));
 }
 
-/*Basic 1st zrt initializer*/
+/*Basic zrt initializer*/
 void zrt_zcall_enhanced_zrt_setup(void){
+    int dofork = 0;
     zrt_internal_init(MANIFEST);
     zrt_internal_setup_finally();
+
+    /*check nvram section [precache] and call fork if needed*/
+    struct NvramLoader* nvram = static_nvram();
+    if ( NULL != nvram->section_by_name( nvram, PRECACHE_SECTION_NAME ) ){
+	/*return result via dofork pointer*/
+	nvram->handle(nvram, HANDLE_ONLY_PRECACHE_SECTION, &dofork, NULL, NULL);
+    }
+
+    if ( dofork ){
+	zfork();
+    }
 }
 
 
-/*2nd step zrt initializer*/
+void zrt_zcall_enhanced_premain(void){
+    zrt_internal_session_info(MANIFEST);
+    ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished!");
+    ZRT_LOG_DELIMETER;
+}
+
+
+/*1st step zrt initializer*/
 void zrt_internal_init( const struct UserManifest const* manifest ){
     /*init handlers for heap memory*/
     s_memory_interface = get_memory_interface( manifest->heap_ptr, manifest->heap_size );
@@ -377,17 +398,10 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     /*user main execution just after zrt initialization*/
 }
 
-/*3rd step zrt initializer, last step before main()*/
+/*2nd step zrt initializer, last step before main()*/
 void zrt_internal_setup_finally(){
-#define HANDLE_ONLY_MAPPING_SECTION get_mapping_observer()
-#define HANDLE_ONLY_FSTAB_SECTION get_fstab_observer()
-
-    int warmup_stage_complete = 0;
-    /*Code to be executed before warmup
+    /* nvram must be prepared (read, pasred)  to handle sections here
      ...*/
-
-    /* nvram must be read and parsed previously
-     * handle mapping section*/
     struct NvramLoader* nvram = static_nvram();
     if ( NULL != nvram->section_by_name( nvram, MAPPING_SECTION_NAME ) ){
 	nvram->handle(nvram, HANDLE_ONLY_MAPPING_SECTION, NULL, NULL, NULL);
@@ -396,35 +410,35 @@ void zrt_internal_setup_finally(){
     if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
 	nvram->handle(&s_nvram, HANDLE_ONLY_FSTAB_SECTION, 
 		       s_channels_mount, s_transparent_mount, 
-		       (void*)warmup_stage_complete);
+		       (void*) EFstabStageMountFirst );
     }
-
-    /*zvm fork syscall here
-     ...*/
-    zvm_fork();
-
-    /*warmup complete*/
-    warmup_stage_complete = 1;
-
-    /*re-read nvram file because after warmup/fork his content can be changed.
-     *args, envs also should be applied. see zcalls_env_args_init_t  */
-    if ( !nvram_read_parse( nvram ) ){
-	/*Code to be executed after warmup*/
-	if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
-	    nvram->handle(nvram, HANDLE_ONLY_FSTAB_SECTION, 
-			  s_channels_mount, s_transparent_mount, 
-			  (void*)warmup_stage_complete);
-	}
-    }
-
-    zrt_internal_session_info(MANIFEST);
-    ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished");
 }
 
 int is_zrt_ready(){
     return s_zrt_ready;
 }
 
+
+int zfork(){
+    ZRT_LOG(L_INFO, P_TEXT, "call zvm_fork");
+   /*zvm fork syscall here
+     ...*/
+    int res = zvm_fork();
+    ZRT_LOG(L_INFO, "zvm_fork res=%d", res);
+
+    /*re-read nvram file because after fork his content can be changed. */
+    struct NvramLoader* nvram = static_nvram();
+    if ( !nvram_read_parse( nvram ) ){
+    	/*Code to be executed after warmup*/
+    	if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
+    	    nvram->handle(nvram, HANDLE_ONLY_FSTAB_SECTION,
+    			  s_channels_mount, s_transparent_mount,
+    			  (void*) EFstabStageRemount);
+    	}
+    }
+    ZRT_LOG(L_SHORT, "zfork() res=%d ", res);
+    return res;
+}
 
 /*************************************************************************/
 

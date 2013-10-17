@@ -12,7 +12,7 @@
 
 #define JOIN_STR(a,b) a b
 
-#define FILE_IN_TAR "/tests/zrt_test_suite/Makefile"
+#define FILE_IN_TAR "/tests/zrt_test_suite/testfile.1234"
 
 int main(int argc, char**argv){
     CHECK_PATH_EXISTANCE("/warm");
