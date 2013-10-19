@@ -103,15 +103,7 @@ ${LIBPORTS}:
 test: test_suites zrt_tests
 
 ############## "make autotests" run zrt autotests
-TESTPATH=tests/zrt_test_suite
-TESTFILE=testfile.1234
-TARNAME=foo
 autotests:
-	@rm -f ${TESTPATH}/${TARNAME}.tar ${TESTPATH}/${TARNAME}2.tar ${TESTPATH}/${TESTFILE}
-	@echo "mount" > ${TESTPATH}/${TESTFILE}
-	@tar -cf ${TESTPATH}/${TARNAME}.tar ${TESTPATH}/${TESTFILE}
-	@echo "remount" > ${TESTPATH}/${TESTFILE}
-	@tar -cf ${TESTPATH}/${TARNAME}2.tar ${TESTPATH}/${TESTFILE}
 	@echo ------------- RUN zrt $@ ------------
 	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite clean
 	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite -j4
@@ -129,7 +121,6 @@ ${TEST_SAMPLES}:
 ################ "make clean" Cleaning libs, tests, samples 	
 clean: libclean clean_ports clean_test_suites
 	@rm -f lib/*.a
-	@rm -f tests/zrt_test_suite/foo.tar
 
 ################ "make clean" Cleaning libs 
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)

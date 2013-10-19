@@ -129,7 +129,7 @@
 #define CMP_MEM_DATA(data1, data2, datasize){				\
 	int ret;							\
 	fprintf(stderr, "CMP_MEM_DATA p1=%p, p2=%p, datasize=%lld\n",	\
-		data1, data2, datasize );				\
+		data1, data2, (long long int)datasize );				\
 	fflush(0);							\
 	TEST_OPERATION_RESULT(						\
 			      memcmp((char*)data1, (char*)data2, datasize), \

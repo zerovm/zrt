@@ -20,3 +20,6 @@ seconds=1337012520
 
 [debug]
 verbosity=4
+
+[precache]
+{PRECACHE}

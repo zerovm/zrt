@@ -11,6 +11,14 @@ DEF_CHANTYPE1=0
 DEF_CHANTYPE2=0
 DEF_CHANTYPE3=1
 
+#mount/remount tar archives
+TEST_TAR=$(CURDIR)/foo.tar
+TEST_TAR_MOUNT=$(CURDIR)/mount.tar
+TEST_TAR_REMOUNT=$(CURDIR)/remount.tar
+#file inside both archives
+TESTFILE=testfile.1234
+
+
 OUTPUT_LAST=last_test.output
 OUTPUT_FAIL=fail_tests.output
 TEST_INCLUDES=$(shell find $(TESTS_ROOT) -name "*.h")
@@ -27,20 +35,25 @@ TEST_LIST=$(basename $(TEST_SOURCES) )
 COUNTER=0
 
 #get pipe from zerovm and parse output
+#in case if has to many columns then mark it as error and merge 3 lines into output
 AWK_GET_ERRCODE=awk '{ \
 RESULT="FAIL"; \
-if (NR == 3) { RETCODE=$$1 } \
+if ( NR == 1 && NF > 1) { RETCODE=1; printf "%s %s",RESULT, $$0 } \
+if ( (NR == 2 || NR == 3 ) && NF > 1) { RETCODE=1; printf "%s", $$0 } \
+else if (NR == 3) { RETCODE=$$1 } \
 if (NR == 6) { \
 	if (RETCODE == 0) { RESULT="PASS" } \
 	else { RESULT="FAIL" } \
 	if ($$0 != "ok") { RESULT="FAIL" } \
-print RESULT,"zvmstatus=",$$0 } \
+	print RESULT,"zvmstatus=",$$0 \
+} \
 }'
 
 #save failed tests to display it in report
+#if string does not contain PASS, then output error
 AWK_HANDLE_FAIL=awk '{\
-if ( match($$0, "FAIL zvmstatus") != 0 ) {\
-	print test, $$0 \
+if ( match($$0, "PASS zvmstatus") == 0 ) {\
+	print testname, $$0 \
 	}\
 }' 
 
@@ -72,7 +85,7 @@ LDFLAGS+= -lmapreduce -lnetworking
 #uncomment below one if want to display clean files
 #VERBOSE_CLEAN=-v
 
-all: clean $(ZEROVM) $(TEST_NEXES) report
+all: clean prepare $(ZEROVM) $(TEST_NEXES) report
 
 resume:$(ZEROVM) $(TEST_NEXES)
 
@@ -88,6 +101,14 @@ clean:
 	@rm -f $(VERBOSE_CLEAN) $(TEST_MANIFESTS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_NVRAMS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_LOG_DEBUG)
+	@rm -f $(VERBOSE_CLEAN) $(MOUNT_TAR_NAME) $(REMOUNT_TAR_NAME) $(TEST_TAR)
+
+prepare:
+	@rm -f ${TEST_TAR_MOUNT} ${TEST_TAR_REMOUNT} ${TESTFILE}
+	@echo "mount" > ${TESTFILE}
+	@tar -cf ${TEST_TAR_MOUNT} ${TESTFILE}
+	@echo "remount" > ${TESTFILE}
+	@tar -cf ${TEST_TAR_REMOUNT} ${TESTFILE}
 
 $(ZEROVM):
 	$(error "$(ZEROVM) does not exist")
@@ -103,11 +124,13 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_ENV:=$(ENV-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_MAPPING:=$(MAPPING-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_FSTAB:=$(FSTAB-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_PRECACHE:=$(PRECACHE-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_FORK=$(FORK-$(NAMEONLY).c))
 #channels testing suport
 	$(eval SPECIFIC_TEST_CHANTYPE1:=$(firstword $(CHANTYPE1-$(NAMEONLY).c) $(DEF_CHANTYPE1)))
 	$(eval SPECIFIC_TEST_CHANTYPE2:=$(firstword $(CHANTYPE2-$(NAMEONLY).c) $(DEF_CHANTYPE2)))
 	$(eval SPECIFIC_TEST_CHANTYPE3:=$(firstword $(CHANTYPE3-$(NAMEONLY).c) $(DEF_CHANTYPE3)))
-	@echo "TEST RUN $@ "
+	@echo "RUN TEST $@ "
 #compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
 	@$(CC) -o $@ $(BASENAME).o $(LDFLAGS)
@@ -120,21 +143,37 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{CHANTYPE2}@$(SPECIFIC_TEST_CHANTYPE2)@g | \
 	 sed s@{CHANTYPE3}@$(SPECIFIC_TEST_CHANTYPE3)@g | \
 	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
+	 sed s@{JOB}@$(SPECIFIC_TEST_FORK)@g | \
+	 sed s@{TAR_MOUNT}@$(TEST_TAR)@g | \
 	 sed s@{MEMMAX}@$(MEMMAX)@g > $(CURDIR)/$(BASENAME).manifest
 #prepare nvram
 	@sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g nvram_tests.template | \
 	 sed s@{MAPPING}@"$(SPECIFIC_TEST_MAPPING)"@g | \
 	 sed s@{FSTAB}@"$(SPECIFIC_TEST_FSTAB)"@g | \
+	 sed s@{PRECACHE}@"$(SPECIFIC_TEST_PRECACHE)"@g | \
 	 sed s@{BR}@'\n'@g | \
 	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).nvram
 #Run test under zerovm and display returned error code
 #$shell should could not be used to get test result from file because it unexpectadly
 #using contents of previosly saved test output, and it is the main reason why using awk;
 #parsing correct output retrieved via pipe
-#Note that zerovm option -l6 is used because working with big file
-	@$(ZEROVM) -M$(CURDIR)/$(BASENAME).manifest -l6 \
+#Note that zerovm option -l6 is used because some tests can need big file support
+	@cp ${TEST_TAR_MOUNT} ${TEST_TAR};
+	@$(ZEROVM) $(CURDIR)/$(BASENAME).manifest -l6 -v2 \
 	| $(AWK_GET_ERRCODE) \
-	| $(AWK_HANDLE_FAIL) test="$@"  2>&1 | tee -a $(OUTPUT_FAIL)
+	| $(AWK_HANDLE_FAIL) testname="$@"  2>&1 | tee -a $(OUTPUT_FAIL)
+	$(eval FORKED_PID:=$(shell echo `pgrep -f $(CURDIR)/$(BASENAME).manifest`))
+#If session was forked by zfork() and socket file exist then restore forked session now
+#rewrite tar image to test remount
+	@if [ "${SPECIFIC_TEST_FORK}" != "" ] && [ -S "${SPECIFIC_TEST_FORK}" ] ; then \
+	rm -f ${TEST_TAR}; cp ${TEST_TAR_REMOUNT} ${TEST_TAR}; \
+	echo "RUN FORKED TEST $@ "; \
+	cat $(CURDIR)/$(BASENAME).manifest \
+	| python ../daemon_client.py "${SPECIFIC_TEST_FORK}" 2>&1 \
+	| $(AWK_GET_ERRCODE) \
+	| $(AWK_HANDLE_FAIL) testname="$@ FORK" | tee -a $(OUTPUT_FAIL) ; \
+	rm -f ${SPECIFIC_TEST_FORK} ; \
+	fi;
 
 report: $(OUTPUT_FAIL)
 #display tests resuts
