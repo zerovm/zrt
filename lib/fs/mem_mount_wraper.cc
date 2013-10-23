@@ -21,6 +21,7 @@ extern "C" {
 #include "mem_mount_wraper.h"
 extern "C" {
 #include "handle_allocator.h"
+#include "fstab_observer.h" /*lazy mount*/
 #include "fcntl_implem.h"
 #include "channels_mount.h"
 #include "enum_strings.h"
@@ -61,7 +62,7 @@ extern "C" {
 	    /*set file length on related node and update new length in stat*/ \
 	    node->set_len(length);					\
 	    ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d", \
-		    length, get_file_len(inode));			\
+		    (int)length, get_file_len(inode));			\
 	    /*file size truncated */							\
 	}								\
     }
@@ -147,17 +148,6 @@ static int fileflags(int fd){
     assert(0);
 }
 
-// static int handle_from_path(const char* path){
-//     struct stat st;
-//     int ret = s_mem_mount_cpp->GetNode( path, &st);
-//     if ( ret == 0 )
-// 	return s_mem_mount_cpp->Chown( st.st_ino, owner, group);
-//     else
-// 	return ret;
-// }
-
-
-
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data( int fd ){
     const struct flock* data = NULL;
@@ -189,6 +179,25 @@ static int set_flock_data( int fd, const struct flock* flock_data ){
     return 0; /*OK*/
 }
 
+/*@return 0 if success, -1 if we don't need to mount*/
+static int lazy_mount(const char* path){
+    struct stat st;
+    int ret = s_mem_mount_cpp->GetNode( path, &st);
+    if ( (ret == -1 && (errno==ENOENT||errno==ENOTDIR)) || 
+	 (ret ==  0 && S_ISDIR(st.st_mode)) ){
+	/*if it's time to do mount, then do all waiting mounts*/
+	FstabObserver* observer = get_fstab_observer();
+	struct FstabRecordContainer* record;
+	while( NULL != (record = observer->locate_postpone_mount( observer, path, 
+								  EFstabMountWaiting)) ){
+	    observer->mount_import(observer, record);
+	    return 0;
+	}
+    }
+    return -1;
+}
+
+
 static struct mount_specific_implem s_mount_specific_implem = {
     check_handle,
     path_handle,
@@ -201,24 +210,28 @@ static struct mount_specific_implem s_mount_specific_implem = {
 /*wraper implementation*/
 
 static int mem_chown(const char* path, uid_t owner, gid_t group){
+    lazy_mount(path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
     return s_mem_mount_cpp->Chown( st.st_ino, owner, group);
 }
 
 static int mem_chmod(const char* path, uint32_t mode){
+    lazy_mount(path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
     return s_mem_mount_cpp->Chmod( st.st_ino, mode);
 }
 
 static int mem_stat(const char* path, struct stat *buf){
+    lazy_mount(path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
     return s_mem_mount_cpp->Stat( st.st_ino, buf);
 }
 
 static int mem_mkdir(const char* path, uint32_t mode){
+    lazy_mount(path);
     int ret = s_mem_mount_cpp->GetNode( path, NULL);
     if ( ret == 0 || (ret == -1&&errno==ENOENT) )
 	return s_mem_mount_cpp->Mkdir( path, mode, NULL);
@@ -229,6 +242,7 @@ static int mem_mkdir(const char* path, uint32_t mode){
 
 
 static int mem_rmdir(const char* path){
+    lazy_mount(path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
 
@@ -390,6 +404,7 @@ static off_t mem_lseek(int fd, off_t offset, int whence){
 }
 
 static int mem_open(const char* path, int oflag, uint32_t mode){
+    lazy_mount(path);
     int ret = s_mem_mount_cpp->Open(path, oflag, mode);
 
     /* get node from memory FS for specified type, if no errors occured 
@@ -441,11 +456,11 @@ static int mem_fcntl(int fd, int cmd, ...){
     ino_t inode;
     ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    int ret;
     if ( is_dir(inode) ){
 	SET_ERRNO(EBADF);
 	return -1;
     }
+    return 0;
 }
 
 static int mem_remove(const char* path){
@@ -475,6 +490,7 @@ static int mem_ftruncate_size(int fd, off_t length){
 }
 
 int mem_truncate_size(const char* path, off_t length){
+    lazy_mount(path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
     
@@ -501,6 +517,8 @@ static int mem_dup2(int oldfd, int newfd){
 }
 
 static int mem_link(const char* oldpath, const char* newpath){
+    lazy_mount(oldpath);
+    lazy_mount(newpath);
     /*create new hardlink*/
     int ret = s_mem_mount_cpp->Link(oldpath, newpath);
     if ( ret == -1 ){

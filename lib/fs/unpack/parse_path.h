@@ -9,7 +9,7 @@
 #define PARSE_PATH_H_
 
 struct ParsePathObserver{
-    int (*callback_parse)(struct ParsePathObserver*, const char *path, int len);
+    void (*callback_parse)(struct ParsePathObserver*, const char *path, int len);
     //data
     void* anyobj;
 };

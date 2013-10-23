@@ -41,7 +41,7 @@ struct ParsedParam{
 	memcpy( *str_value_pp, parsed_param.val, parsed_param.vallen);	\
 	*str_value_pp[parsed_param.vallen] = '\0';			\
     }
-
+#define GET_PARAM_VALUE(record, index, value_p)  ALLOCA_PARAM_VALUE((record)->parsed_params_array[(index)], value_p)
 
 /*single parsed record*/
 struct ParsedRecord{
@@ -66,6 +66,12 @@ struct ParsedRecords{
  */
 struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 					 const char* text, int len, struct KeyList* key_list);
+
+/*copy record contents into result_record, keys & values will resides in heap.
+ @return pointer to result_record*/
+struct ParsedRecord* copy_record(const struct ParsedRecord* record, struct ParsedRecord* result_record);
+/*free malloced memory, note it's suitable only for copied records by copy_record*/
+void free_record_memories(struct ParsedRecord* record);
 
 const char* strip_all(const char* str, int len, uint16_t* striped_len );
 

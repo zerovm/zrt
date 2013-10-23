@@ -38,7 +38,7 @@
 #include "transparent_mount.h"
 #include "mounts_reader.h"
 #include "settime_observer.h"
-#include "path_utils.h"             /*alloc_absolute_path_from_relative*/
+#include "utils.h"             /*zrealpath*/
 #include "environment_observer.h"
 #include "fstab_observer.h"
 #include "mapping_observer.h"
@@ -70,7 +70,6 @@ struct MountsInterface* transparent_mount() { return s_transparent_mount; }
 /*internal functions to be used in this module*/
 void zrt_internal_session_info();
 void zrt_internal_init( const struct UserManifest const* manifest );
-void zrt_internal_setup_finally();
 
 /********************************************************************************
  * ZRT IMPLEMENTATION OF NACL SYSCALLS
@@ -84,7 +83,7 @@ void zrt_internal_setup_finally();
  */
 void zrt_zcall_enhanced_exit(int status){
     ZRT_LOG(L_SHORT, "status %d exiting...", status);
-    handle_tar_export();
+    get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
     return; 
@@ -210,11 +209,10 @@ int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newf
     
     /*reset mode bits, that is not actual for permissions*/
     mode&=(S_IRWXU|S_IRWXG|S_IRWXO);
-
-    char* absolute_path = alloc_absolute_path_from_relative( name );
+    char temp_path[PATH_MAX];
+    char* absolute_path = zrealpath( name, temp_path );
     APPLY_UMASK(&mode);
     int fd = s_transparent_mount->open( absolute_path, flags, mode );
-    free(absolute_path);
     /*get fd by pointer*/
     if ( fd >= 0 ){
 	*newfd  = fd;
@@ -233,10 +231,9 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
     errno = 0;
     VALIDATE_SYSCALL_PTR(pathname);
     VALIDATE_SYSCALL_PTR(stat);
-
-    char* absolute_path = alloc_absolute_path_from_relative(pathname);
+    char temp_path[PATH_MAX];
+    char* absolute_path = zrealpath(pathname, temp_path);
     int ret = s_transparent_mount->stat(absolute_path, stat);
-    free(absolute_path);
     if ( ret == 0 ){
 	ZRT_LOG_STAT(L_INFO, stat);
     }
@@ -339,19 +336,24 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
 
 /*Basic zrt initializer*/
 void zrt_zcall_enhanced_zrt_setup(void){
-    int dofork = 0;
-    zrt_internal_init(MANIFEST);
-    zrt_internal_setup_finally();
-
-    /*check nvram section [precache] and call fork if needed*/
     struct NvramLoader* nvram = static_nvram();
+    zrt_internal_init(MANIFEST);
+
+    if ( NULL != nvram->section_by_name( nvram, MAPPING_SECTION_NAME ) ){
+	nvram->handle(nvram, HANDLE_ONLY_MAPPING_SECTION, NULL, NULL, NULL);
+    }
+    if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
+	nvram->handle(&s_nvram, (struct MNvramObserver*)HANDLE_ONLY_FSTAB_SECTION, 
+		       s_channels_mount, s_transparent_mount, NULL );
+    }
+    /*check nvram section [precache] and call fork if needed*/
     if ( NULL != nvram->section_by_name( nvram, PRECACHE_SECTION_NAME ) ){
+	int dofork = 0;
 	/*return result via dofork pointer*/
 	nvram->handle(nvram, HANDLE_ONLY_PRECACHE_SECTION, &dofork, NULL, NULL);
-    }
-
-    if ( dofork ){
-	zfork();
+	if ( dofork ){
+	    zfork();
+	}
     }
 }
 
@@ -398,22 +400,6 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     /*user main execution just after zrt initialization*/
 }
 
-/*2nd step zrt initializer, last step before main()*/
-void zrt_internal_setup_finally(){
-    /* nvram must be prepared (read, pasred)  to handle sections here
-     ...*/
-    struct NvramLoader* nvram = static_nvram();
-    if ( NULL != nvram->section_by_name( nvram, MAPPING_SECTION_NAME ) ){
-	nvram->handle(nvram, HANDLE_ONLY_MAPPING_SECTION, NULL, NULL, NULL);
-    }
-    /* handle fstab section*/
-    if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
-	nvram->handle(&s_nvram, HANDLE_ONLY_FSTAB_SECTION, 
-		       s_channels_mount, s_transparent_mount, 
-		       (void*) EFstabStageMountFirst );
-    }
-}
-
 int is_zrt_ready(){
     return s_zrt_ready;
 }
@@ -426,14 +412,15 @@ int zfork(){
     int res = zvm_fork();
     ZRT_LOG(L_INFO, "zvm_fork res=%d", res);
 
+    /*update state for removable mounts, all removable mounts needs to be refreshed*/
+    get_fstab_observer()->reset(HANDLE_ONLY_FSTAB_SECTION);
+
     /*re-read nvram file because after fork his content can be changed. */
     struct NvramLoader* nvram = static_nvram();
     if ( !nvram_read_parse( nvram ) ){
-    	/*Code to be executed after warmup*/
     	if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
     	    nvram->handle(nvram, HANDLE_ONLY_FSTAB_SECTION,
-    			  s_channels_mount, s_transparent_mount,
-    			  (void*) EFstabStageRemount);
+    			  s_channels_mount, s_transparent_mount, NULL);
     	}
     }
     ZRT_LOG(L_SHORT, "zfork() res=%d ", res);

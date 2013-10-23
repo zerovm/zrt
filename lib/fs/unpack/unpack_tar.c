@@ -70,8 +70,8 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
 
 	//get file size
 	if (sscanf(header->size, "%o", &file_len) != 1) {
-	    ZRT_LOG(L_ERROR, "ret=%s", "unknown");
-	    return -1;
+	    ZRT_LOG(L_ERROR, P_TEXT, "unpack_tar: can't read item size");
+	    break;
 	}
 	//check filename
 	if ( !strlen(header->filename) ) break;
@@ -97,7 +97,7 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
 	unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len );
 	++count;
     }
-    ZRT_LOG( L_SHORT, "created %d files", count );
+    ZRT_LOG( L_SHORT, "unpacked items count: %d", count );
     return count;
 
 }

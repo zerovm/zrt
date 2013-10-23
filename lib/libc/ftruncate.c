@@ -27,7 +27,7 @@
 #include "mount_specific_implem.h"
 #include "mounts_manager.h"
 #include "mounts_interface.h"
-#include "path_utils.h"
+#include "utils.h"
 
 #define LSEEK_SET_ASSERT_IF_FAIL(fd, length){			\
 	/*set file size and test correctness of lseek result*/	\

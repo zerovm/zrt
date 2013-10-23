@@ -151,6 +151,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{MAPPING}@"$(SPECIFIC_TEST_MAPPING)"@g | \
 	 sed s@{FSTAB}@"$(SPECIFIC_TEST_FSTAB)"@g | \
 	 sed s@{PRECACHE}@"$(SPECIFIC_TEST_PRECACHE)"@g | \
+	 sed s@{SECONDS}@"seconds=$(shell date +%s)"@g | \
 	 sed s@{BR}@'\n'@g | \
 	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).nvram
 #Run test under zerovm and display returned error code
@@ -177,6 +178,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 
 report: $(OUTPUT_FAIL)
 #display tests resuts
+	@sleep 1
 	@echo --------------------------------------------
 	@echo $(COUNTER) tests was executed
 	@echo -n "Failed "

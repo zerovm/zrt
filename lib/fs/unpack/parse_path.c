@@ -53,11 +53,14 @@ int create_dir_and_cache_name( const char* dirpath, int len ){
 	    memset(s_cached_full_path, '\0', sizeof(s_cached_full_path));
 	    res = -1; /*new path handled, cache not saved*/
 	}
+	else{
+	    /*directory exist*/
+	    res = 0;
+	}
 	ZRT_LOG(L_EXTRA, "mkdir errno=%d, ret=%d: %s", errno, ret, s_cached_full_path);
     }
     else{
 	/*path already handled*/
-	ZRT_LOG(L_EXTRA, "already created dir: %s(len=%d)", dirpath, len);
     }
     return res;
 }

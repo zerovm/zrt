@@ -25,7 +25,9 @@ struct MNvramObserver{
     void (*handle_nvram_record)(struct MNvramObserver* observer,
 				struct ParsedRecord* record,
 				void* obj1, void* obj2, void* obj3);
-
+    /*private 
+     *Check all record params and return 0 if it's valid, return -1 if otherwise*/
+    int (*is_valid_record)(struct MNvramObserver* observer, struct ParsedRecord* record);
     /*it's a section name in nvram config file which corresponds to observer;
      *only if section name in config file will equal to folowing section name
      *then observer will handle data belonging to this section*/

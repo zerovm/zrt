@@ -25,7 +25,7 @@
 #include "zrt_check.h"
 #include "transparent_mount.h"
 #include "mounts_interface.h"
-#include "path_utils.h"
+#include "utils.h"
 #include "enum_strings.h"
 
 

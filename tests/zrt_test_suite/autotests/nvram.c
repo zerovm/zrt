@@ -3,7 +3,9 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <error.h>
 #include <errno.h>
@@ -11,24 +13,31 @@
 #include "channels/test_channels.h"
 
 #define JOIN_STR(a,b) a b
-
-#define FILE_IN_TAR "/tests/zrt_test_suite/testfile.1234"
+#define FILENAME getenv("FPATH")
 
 int main(int argc, char**argv){
+    char path[PATH_MAX];
+
     CHECK_PATH_EXISTANCE("/warm");
-    CHECK_PATH_EXISTANCE( JOIN_STR("/warm", FILE_IN_TAR) );
+    sprintf(path, "/warm/%s", FILENAME );
+    CHECK_PATH_EXISTANCE( path );
 
     CHECK_PATH_NOT_EXIST("/bad");
-    CHECK_PATH_NOT_EXIST( JOIN_STR("/bad", FILE_IN_TAR) );
+    sprintf(path, "/bad/%s", FILENAME );
+    CHECK_PATH_NOT_EXIST( path );
 
     //files injected twice here, need to check files validity
     CHECK_PATH_EXISTANCE("/ok");
-    CHECK_PATH_EXISTANCE( JOIN_STR("/ok", FILE_IN_TAR) );
+    sprintf(path, "/ok/%s", FILENAME );
+    CHECK_PATH_EXISTANCE( path );
 
     //check file contents if injecting one of file that already exists
     int sz1,sz2,ret;
-    GET_FILE_SIZE(JOIN_STR("/warm", FILE_IN_TAR), &sz1);
-    GET_FILE_SIZE(JOIN_STR("/ok", FILE_IN_TAR), &sz2);
+    sprintf(path, "/warm/%s", FILENAME );
+    GET_FILE_SIZE(path, &sz1);
+
+    sprintf(path, "/ok/%s", FILENAME );
+    GET_FILE_SIZE(path, &sz2);
     TEST_OPERATION_RESULT( sz1==sz2,
     			   &ret, ret!=0);
 

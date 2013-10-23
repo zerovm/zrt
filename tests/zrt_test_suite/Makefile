@@ -23,6 +23,7 @@ NVRAM=nvram_zrttests
 #where xxxxxxxxx is the source file name waiting cmd line arguments
 #examples:
 CMDLINE-command_line.c=args=command_line.nexe argument_number_1 argument_number_2 the_last_argument
+CMDLINE-nvram.c=args=nvram.nexe
 #####################################################################
 
 #####################################################################

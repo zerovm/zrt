@@ -24,7 +24,7 @@
 #include "zrt_check.h"
 #include "transparent_mount.h"
 #include "mounts_interface.h"
-#include "path_utils.h"
+#include "utils.h"
 #include "enum_strings.h"
 
 /*************************************************************************
@@ -41,7 +41,8 @@ int zrt_zcall_mkdir(const char* pathname, mode_t mode){
 
     errno=0;
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
-    char* absolute_path = alloc_absolute_path_from_relative( pathname );
+    char temp_path[PATH_MAX];
+    char* absolute_path = zrealpath( pathname, temp_path );
     int ret = transpar_mount->mkdir( absolute_path, mode );
     int errno_mkdir = errno; /*save mkdir errno before stat request*/
     /*print stat data of newly created directory*/
@@ -51,7 +52,6 @@ int zrt_zcall_mkdir(const char* pathname, mode_t mode){
 	ZRT_LOG_STAT(L_INFO, (&st));
     }
     /**/
-    free(absolute_path);
     if ( ret == -1 )
 	errno = errno_mkdir;/*restore mkdir errno after stat request completed*/
     else

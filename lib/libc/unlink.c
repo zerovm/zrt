@@ -24,7 +24,7 @@
 #include "zrt_check.h"
 #include "transparent_mount.h"
 #include "mounts_interface.h"
-#include "path_utils.h"
+#include "utils.h"
 
 /*************************************************************************
  * Implementation used by glibc, through zcall interface; It's not using weak alias;
@@ -40,9 +40,9 @@ int zrt_zcall_unlink(const char *pathname){
 
     errno=0;
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
-    char* absolute_path = alloc_absolute_path_from_relative(pathname);
+    char temp_path[PATH_MAX];
+    char* absolute_path = zrealpath(pathname, temp_path);
     int ret = transpar_mount->unlink(absolute_path);
-    free(absolute_path);
     LOG_SHORT_SYSCALL_FINISH(ret, "pathname=%s", pathname);
     return ret;
 }

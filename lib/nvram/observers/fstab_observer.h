@@ -9,8 +9,7 @@
 #define FSTAB_OBSERVER_H_
 
 #include "nvram_observer.h"
-
-enum { EFstabStageMountFirst, EFstabStageRemount };
+#include "conf_parser.h" //struct ParsedRecord
 
 #define HANDLE_ONLY_FSTAB_SECTION get_fstab_observer()
 
@@ -30,11 +29,39 @@ enum { EFstabStageMountFirst, EFstabStageRemount };
  * if fstab_stage value is equal to FSTAB_REMOUNT_STAGE then return 1 only 
  * in case if removable_record is 1 */
 #define IS_NEED_TO_HANDLE_FSTAB_RECORD(mount_stage, removable_record)	\
-    ((EFstabStageMountFirst)==(mount_stage))? 1:			\
-    ((EFstabStageRemount)==(mount_stage)) && 0!=(removable_record)? 1 : 0
+    ((EFstabMountWaiting)==(mount_stage))? 1:				\
+    ((EFstabMountComplete)==(mount_stage)) && 0!=(removable_record)? 1 : 0
+
+enum {EFstabMountWaiting, EFstabMountProcessing, EFstabMountComplete};
+struct FstabRecordContainer{
+    struct ParsedRecord mount;
+    int mount_status; /* EFstabMountWaiting, EFstabMountProcessing, EFstabMountComplete */
+};
+
+/*new fstab observer is derived from nvram observer*/
+struct FstabObserver {
+    struct MNvramObserver base;
+    /*derived function "handle_nvram_record(...)"*/
+    /*export fs contents into tar archive, in according to fstab record with access=rw*/
+    void (*mount_export)(struct FstabObserver* observer);
+    /*import tar archive  into maountpoint path, related to fstab record with access=ro*/
+    void (*mount_import)(struct FstabObserver* observer, 
+			 struct FstabRecordContainer* record);
+    /*Prepare fstab handler to be reused*/
+    void (*reset)(struct FstabObserver* observer);
+    /* Locate ParsedRecord with mountpoint and mount status matched
+     * @param alias 
+     * @param mount_status 
+     * @return index of matched record, -1 if not located*/
+    struct FstabRecordContainer* (*locate_postpone_mount)(struct FstabObserver* observer, 
+						  const char* alias, int mount_status);
+    /*new fields for postponed lazy mount, tar export at exit;
+     *expected that array will get new items during fstab handling*/
+    struct FstabRecordContainer* postpone_mounts_array;
+    int postpone_mounts_count;
+};
 
 /*get static interface object not intended to destroy after using*/
-struct MNvramObserver* get_fstab_observer();
-void handle_tar_export();
+struct FstabObserver* get_fstab_observer();
 
 #endif /* FSTAB_OBSERVER_H_ */

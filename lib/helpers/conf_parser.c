@@ -54,7 +54,7 @@ const char* strip_all(const char* str, int len, uint16_t* striped_len ){
     /*self testing*/
     if ( *striped_len > len ){
 	ZRT_LOG(L_ERROR, "begin=%d, end=%d, striped_len=%d, fulllen=%d", 
-		begin, end, striped_len, len);
+		begin, end, (int)*striped_len, len);
 	assert(*striped_len<=len);
     }
     return MAX(0, str+begin);
@@ -424,6 +424,34 @@ char str_hex_to_int_not_using_locale(char * two_digits_str)
     GET_VALIDATED_HEX_CHAR_TO_INT(two_digits_str[1], res);
     res |= temp;
     return res;
+}
+
+struct ParsedRecord* copy_record( const struct ParsedRecord* record, struct ParsedRecord* result_record ){
+    int i;
+    const struct ParsedParam* p_in;
+    struct ParsedParam* p_out;
+    for (i=0; i < NVRAM_MAX_KEYS_COUNT_IN_RECORD; i++){
+	p_in  = &record->parsed_params_array[i];
+	p_out = &result_record->parsed_params_array[i];
+	if ( p_in->val ){
+	    p_out->key_index = p_in->key_index;
+	    p_out->vallen    = p_in->vallen;
+	    p_out->val = malloc(p_in->vallen+1);
+	    memcpy(p_out->val, p_in->val, p_in->vallen);
+	    p_out->val[p_in->vallen] = '\0';
+	}
+    }
+    return result_record;
+}
+
+void free_record_memories(struct ParsedRecord* record){
+    int i;
+    struct ParsedParam* p;
+    for (i=0; i < NVRAM_MAX_KEYS_COUNT_IN_RECORD; i++){
+	p  = &record->parsed_params_array[i];
+	free(p->val);
+	p->val = NULL;
+    }
 }
 
 //end of file

@@ -1,5 +1,5 @@
 /*
- * path_utils.c
+ * utils.c
  *
  *  Created on: 25.12.2012
  *      Author: YaroslavLitvinov
@@ -8,9 +8,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h> //sbrk
+#include <limits.h>
 
 #include "zrtlog.h"
-#include "path_utils.h"
+#include "utils.h"
 
 /*if path starting with more than one slashes together 
   then return path starting from last of that slashes*/
@@ -31,20 +32,16 @@ static const char* absolute_path_starting_with_single_slash(const char* path){
     return path;
 }
 
-/*
- * alloc absolute path, for relative path just insert into beginning '/' char, 
- * for absolute path just alloc and return. user application can provide relative path, 
- * currently any of zrt filesystems does not supported relative path, so making absolute 
- * path is required.
- */
-char* alloc_absolute_path_from_relative( const char* path )
+char* zrealpath( const char* path, char* resolved_path )
 {
     /* some applications providing relative path, currently any of zrt filesystems 
      * does not support relative path, so make absolute path just insert '/' into
      * begin of relative path */
-    char* absolute_path = NULL;
+    char* absolute_path;
     const char* tmp = NULL; 
-    if ( (absolute_path=malloc( strlen(path) + 2 )) == NULL ){
+    if ( resolved_path != NULL )
+	absolute_path = resolved_path;
+    else if ( (absolute_path=malloc( strlen(path) + 2 )) == NULL ){
 	/*in some cases this code can be called from abort() function due malloc failure,
 	  so we need to check malloc result*/
 	ZRT_LOG(L_ERROR, "malloc failed, sbrk(0)=%p", sbrk(0) );
@@ -76,4 +73,23 @@ char* alloc_absolute_path_from_relative( const char* path )
 }
 
 
+uint strtouint_nolocale(const char* str, int base, int *err ){
+    #define CURRENT_CHAR str[idx]
+    int idx;
+    int numlen = strlen(str);
+    uint res = 0;
+    uint append=1;
+    for ( idx=numlen-1; idx >= 0; idx-- ){
+	if ( CURRENT_CHAR >= '0' && CURRENT_CHAR <= '9' ){
+	    if ( (res + append* (uint)(CURRENT_CHAR - '0')) < UINT_MAX )
+		res += append* (uint)(CURRENT_CHAR - '0');
+	    else{
+		*err = 1;
+		return 0;
+	    }
+	    append *= base;
+	}
+    }
+    return res;
+}
 

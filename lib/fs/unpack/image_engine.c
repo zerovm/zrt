@@ -37,11 +37,11 @@ static struct ParsePathObserver s_path_observer;
 //////////////////////////// parse path callback implementation //////////////////////////////
 
 /*directories handler, it's responsible to create existing directories at path*/
-static int callback_parse(struct ParsePathObserver* this_p, const char *path, int length){
+static void callback_parse(struct ParsePathObserver* this_p, const char *path, int length){
     /*do not handle short paths*/
     if ( length < 2 ) return 0;
     /*do not create dir if already cached*/
-    return create_dir_and_cache_name(path, length);
+    create_dir_and_cache_name(path, length);
 }
 
 //////////////////////////// unpack observer implementation //////////////////////////////

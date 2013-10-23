@@ -15,6 +15,7 @@
 
 #include "zrtlog.h"
 #include "settime_observer.h"
+#include "utils.h"
 #include "nvram.h"
 #include "conf_parser.h"
 #include "conf_keys.h"
@@ -23,27 +24,6 @@
 #define TIME_PARAM_SECONDS_KEY_INDEX    0
 
 static struct MNvramObserver s_settime_observer;
-
-/*convert string to unsingned int, to be used in prolog, not used locale */
-static uint strtouint_nolocale(const char* str, int base, int *err ){
-    #define CURRENT_CHAR str[idx]
-    int idx;
-    int numlen = strlen(str);
-    uint res = 0;
-    uint append=1;
-    for ( idx=numlen-1; idx >= 0; idx-- ){
-	if ( CURRENT_CHAR >= '0' && CURRENT_CHAR <= '9' ){
-	    if ( (res + append* (uint)(CURRENT_CHAR - '0')) < UINT_MAX )
-		res += append* (uint)(CURRENT_CHAR - '0');
-	    else{
-		*err = 1;
-		return 0;
-	    }
-	    append *= base;
-	}
-    }
-    return res;
-}
 
 void handle_time_record(struct MNvramObserver* observer,
 			struct ParsedRecord* record,

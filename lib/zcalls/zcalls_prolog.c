@@ -27,7 +27,7 @@
 #define STUB_ARG0 "stub"
 #define SET_ERRNO(err) errno=err
 
-#define LOW_LEVEL_LOG_ENABLE
+//#define LOW_LEVEL_LOG_ENABLE
 
 /*setup stub argv0 if user not specified explicitly nvram args*/
 #define CHECK_SET_ARGV0_STUB(args, args_buf, buf_size)		\

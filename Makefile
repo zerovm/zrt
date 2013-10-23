@@ -20,7 +20,7 @@ lib/enum_strings.c \
 lib/helpers/printf_prolog.c \
 lib/helpers/conf_parser.c \
 lib/helpers/conf_keys.c \
-lib/helpers/path_utils.c \
+lib/helpers/utils.c \
 lib/helpers/buffered_io.c \
 lib/memory/memory_syscall_handlers.c \
 lib/nvram/nvram_loader.c \

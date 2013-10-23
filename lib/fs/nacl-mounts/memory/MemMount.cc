@@ -142,7 +142,6 @@ int MemMount::Creat(const std::string& path, mode_t mode, struct stat *buf, MemD
 
 int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf,
 		    MemData* hardlink ) {
-    ZRT_LOG( L_INFO, "path=%s", path.c_str() );
     MemNode *parent;
     MemNode *child;
 
@@ -194,18 +193,19 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf,
 }
 
 int MemMount::GetNode(const std::string& path, struct stat *buf) {
-    ZRT_LOG(L_EXTRA, "path=%s", path.c_str());
     Path path_name(path);
     path_name.Last();
     /*if name too long*/
     if ( path_name.Last().length() > NAME_MAX ){
-        ZRT_LOG(L_ERROR, "namelen=%d, NAME_MAX=%d", path_name.Last().length(), NAME_MAX );
+        ZRT_LOG(L_ERROR, "path=%s, namelen=%d, NAME_MAX=%d", 
+		path.c_str(), path_name.Last().length(), NAME_MAX );
 	SET_ERRNO(ENAMETOOLONG);
         return -1;
     }
     /*if path too long*/
     if  ( path.length() > PATH_MAX ){
-        ZRT_LOG(L_ERROR, "path.length()=%d, PATH_MAX=%d", path.length(), PATH_MAX );
+        ZRT_LOG(L_ERROR, "path=%s, path.length()=%d, PATH_MAX=%d", 
+		path.c_str(), path.length(), PATH_MAX );
 	SET_ERRNO(ENAMETOOLONG);
         return -1;
     }
@@ -352,7 +352,6 @@ int MemMount::Link(const std::string& oldpath, const std::string& newpath){
     if ( oldnode->is_dir() ){
 	/*create  hardlink for directoy*/
 	ret = Mkdir(newpath, oldnode->mode(), NULL, hardlink );
-	MemNode *newnode_hardlink = GetMemNode(newpath);
     }
     else{
 	/*create hardlink file*/
@@ -516,7 +515,7 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
 }
 
 ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
-    ZRT_LOG(L_EXTRA, "slot=%d, offset=%lld, buf=%p, count=%u ", slot, offset, buf, count );
+    ZRT_LOG(L_EXTRA, "slot=%d, offset=%lld, buf=%p, count=%u ", (int)slot, offset, buf, count );
 
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
