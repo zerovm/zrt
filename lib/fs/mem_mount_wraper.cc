@@ -183,16 +183,13 @@ static int set_flock_data( int fd, const struct flock* flock_data ){
 static int lazy_mount(const char* path){
     struct stat st;
     int ret = s_mem_mount_cpp->GetNode( path, &st);
-    if ( (ret == -1 && (errno==ENOENT||errno==ENOTDIR)) || 
-	 (ret ==  0 && S_ISDIR(st.st_mode)) ){
-	/*if it's time to do mount, then do all waiting mounts*/
-	FstabObserver* observer = get_fstab_observer();
-	struct FstabRecordContainer* record;
-	while( NULL != (record = observer->locate_postpone_mount( observer, path, 
-								  EFstabMountWaiting)) ){
-	    observer->mount_import(observer, record);
-	    return 0;
-	}
+    /*if it's time to do mount, then do all waiting mounts*/
+    FstabObserver* observer = get_fstab_observer();
+    struct FstabRecordContainer* record;
+    while( NULL != (record = observer->locate_postpone_mount( observer, path, 
+							      EFstabMountWaiting)) ){
+	observer->mount_import(observer, record);
+	return 0;
     }
     return -1;
 }
