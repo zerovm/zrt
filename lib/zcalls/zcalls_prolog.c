@@ -518,8 +518,8 @@ void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size,
 	(nvram, ARGS_SECTION_NAME, args_buf_size);
     /*reserve additional space  to be able add null termination chars for all
       available args, see args_observer.c: add_val_to_temp_buffer */
-    args_buf_size+= strlen(STUB_ARG0);
-    args_buf_size+= NVRAM_MAX_RECORDS_IN_SECTION; 
+    *args_buf_size+= strlen(STUB_ARG0);
+    *args_buf_size+= NVRAM_MAX_RECORDS_IN_SECTION; 
 
 }
 
