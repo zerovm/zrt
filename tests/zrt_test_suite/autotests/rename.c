@@ -34,6 +34,8 @@ int main(int argc, char **argv)
 			  rename(TEST_FILE, nullstr),
 			  &ret, ret==-1&&errno==EFAULT );
 
+    CHECK_PATH_EXISTANCE(TEST_FILE);
+
     TEST_OPERATION_RESULT(
 			  rename(TEST_FILE, TEST_FILE "2"),
 			  &ret, ret==0 );

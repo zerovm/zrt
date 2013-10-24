@@ -34,6 +34,7 @@ class MemData {
     int flags_;      //flags_ has sence only for opened files
     uint32_t uid_;
     uint32_t gid_;
+    int hardinode_; //inode the same for all hardlinks
     struct flock flock_;
 };
 
@@ -100,7 +101,7 @@ class MemNode {
     // shared data 
     //////////////////////////////////////////////////////
 
-    MemData* hardlink_data() { return nodedata_; }
+    MemData* hardlink_data() { set_hardinode(slot_); return nodedata_; }
 
     // increase the hardlink count by one
     void increment_nlink(void) { ++nodedata_->nlink_; }
@@ -158,6 +159,10 @@ class MemNode {
     /*added by YaroslavLitvinov*/
     const struct flock* flock()const { return &nodedata_->flock_; }
     void set_flock(const struct flock* flock);
+
+    /*added by YaroslavLitvinov*/
+    int hardinode()const { return nodedata_->hardinode_; }
+    void set_hardinode(int hardinode) { nodedata_->hardinode_ = hardinode; }
 
     void TryUnlink(){ nodedata_->want_unlink_=1; }
     int  UnlinkisTrying()const{ return nodedata_->want_unlink_; }

@@ -44,9 +44,10 @@ extern "C" {
 	}								\
     }
 
-#define GET_STAT_BYPATH_OR_RAISE_ERROR(path, stat_p )  \
-    int ret = s_mem_mount_cpp->GetNode( path, stat_p); \
-    if ( ret != 0 ) return ret;
+#define GET_STAT_BYPATH_OR_RAISE_ERROR(path, stat_p ){		\
+	int ret = s_mem_mount_cpp->GetNode( path, stat_p);	\
+	if ( ret != 0 ) return ret;				\
+    }
 
 #define TRUNCATE_FILE(inode) {						\
 	MemNode* node = NODE_OBJECT_BYINODE(inode);			\
@@ -63,7 +64,7 @@ extern "C" {
 	    node->set_len(length);					\
 	    ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d", \
 		    (int)length, get_file_len(inode));			\
-	    /*file size truncated */							\
+	    /*file size truncated */					\
 	}								\
     }
 
@@ -183,6 +184,7 @@ static int set_flock_data( int fd, const struct flock* flock_data ){
 static int lazy_mount(const char* path){
     struct stat st;
     int ret = s_mem_mount_cpp->GetNode( path, &st);
+    (void)ret;
     /*if it's time to do mount, then do all waiting mounts*/
     FstabObserver* observer = get_fstab_observer();
     struct FstabRecordContainer* record;
@@ -224,7 +226,19 @@ static int mem_stat(const char* path, struct stat *buf){
     lazy_mount(path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
-    return s_mem_mount_cpp->Stat( st.st_ino, buf);
+    int ret = s_mem_mount_cpp->Stat( st.st_ino, buf);
+
+    /*fixes for hardlinks pseudo support, different hardlinks must have same inode,
+     *but internally all nodes have separeted inodes*/
+    if ( ret == 0 ){
+	MemNode* node = NODE_OBJECT_BYINODE(st.st_ino);
+	assert(node!=NULL);
+	/*patch inode if it has hardlinks*/
+	if ( node->hardinode() > 0 )
+	    buf->st_ino = (ino_t)node->hardinode();
+    }
+
+    return ret;
 }
 
 static int mem_mkdir(const char* path, uint32_t mode){
