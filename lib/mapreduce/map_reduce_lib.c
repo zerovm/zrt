@@ -167,7 +167,10 @@ ReadHistogramFromNode( struct EachToOtherPattern *p_this,
     if ( read(fdr, histogram->buffer.data, histogram->buffer.header.buf_size ) <= 0 )
 	assert(0);
     histogram->buffer.header.count = temp.buffer.header.count;
-    WRITE_FMT_LOG("ReadHistogramFromNode count=%d\n", histogram->buffer.header.count);
+    WRITE_FMT_LOG("ReadHistogramFromNode count=%d, step=%d/%d\n", 
+		  histogram->buffer.header.count, 
+		  histogram->step_hist_common,
+		  histogram->step_hist_last );
 }
 
 /************************************************************************
@@ -207,56 +210,74 @@ GetReducersDividerArrayBasedOnSummarizedHistograms( struct MapReduceUserIf *mif,
 						    int histograms_count, 
 						    Buffer *divider_array ){
 int CalculateItemsCountBasedOnHistograms(Histogram *histograms, int histograms_count );
-int SearchMinimumHashAmongCurrentItemsOfAllHistograms( struct MapReduceUserIf *mif,
-						       Histogram *histograms, 
-						       int *current_indexes_array,
-						       int histograms_count );
+int SelectNextHistogramWithMinimalHash( struct MapReduceUserIf *mif,
+					Histogram *histograms, 
+					int *current_indexes_array,
+					int histograms_count );
 
     WRITE_LOG("Create dividers list");
     assert(divider_array);
     int dividers_count_max = divider_array->header.buf_size / divider_array->header.item_size;
+    WRITE_FMT_LOG( "dividers_count_max=%d, histograms_count=%d\n", 
+		   dividers_count_max, histograms_count );
     assert(dividers_count_max != 0);
+
     size_t size_all_histograms_data = 0;
     size_all_histograms_data = 
 	CalculateItemsCountBasedOnHistograms(histograms, histograms_count );
-    /*calculate block size divider for single reducer*/
+    /*calculate size of block items for single reducer*/
     size_t generic_divider_block_size = size_all_histograms_data / dividers_count_max;
     size_t current_divider_block_size = 0;
+    WRITE_FMT_LOG( "generic_divider_block_size=%d\n", (int)generic_divider_block_size );
 
     /*start histograms processing*/
-    int indexes[dividers_count_max];
-    memset( &indexes, '\0', sizeof(indexes) );
+    int minimal_indexes[histograms_count];
+    memset( minimal_indexes, '\0', sizeof(minimal_indexes) );
     int histogram_index_with_minimal_hash = 0;
     
-    /*calculate dividers in loop, last divider item must be added after loop 
-      with maximum value as possible*/
+    /*calculate dividers in loop, last divider item must be added outside loop 
+      and should have most positive usingned value as possible "0xFFFFFFFF"*/
     while( divider_array->header.count+1 < dividers_count_max ){
 	histogram_index_with_minimal_hash = 
-	    SearchMinimumHashAmongCurrentItemsOfAllHistograms( mif,
-							       histograms, 
-							       indexes, 
-							       histograms_count );
+	    SelectNextHistogramWithMinimalHash( mif,
+						histograms, 
+						minimal_indexes, 
+						histograms_count );
+	struct Histogram* histogram = NULL;
 	if ( histogram_index_with_minimal_hash == -1 ){
 	    /*error - no more items in histograms, leave loop*/
 	    break;
 	}
+	else{
+	    GET_HISTOGRAM_BY_NODE(mif, histogram_index_with_minimal_hash, histogram);
+	}
+	const int min_item_index = minimal_indexes[histogram_index_with_minimal_hash];
+	/*get hash*/
+	const char* hash = BufferItemPointer( &histogram->buffer, min_item_index );
+
 	/*increase current divider block size*/
-	if ( BOUNDS_OK(indexes[histogram_index_with_minimal_hash], 
-		       histograms[histogram_index_with_minimal_hash].buffer.header.count-1)){
-	    current_divider_block_size += histograms[histogram_index_with_minimal_hash]
-		.step_hist_common;
+	if ( BOUNDS_OK(min_item_index, histogram->buffer.header.count-1)){
+	    current_divider_block_size += histogram->step_hist_common;
+
+#if 0
+	    WRITE_FMT_LOG("hash=%s, histogram_index_with_minimal_hash=%d, histogram_index=%d, divider_size=%d, minimal histogram=%d\n", 
+			  PRINTABLE_HASH(mif, hash),
+			  histogram_index_with_minimal_hash, 
+			  min_item_index, 
+			  current_divider_block_size,
+			  histogram->step_hist_common );
+#endif
 	}
 	else{
-	    current_divider_block_size += histograms[histogram_index_with_minimal_hash]
-		.step_hist_last;
+	    current_divider_block_size += histogram->step_hist_last;
+#if 0
+	    WRITE_FMT_LOG("minimal histogram=%d\n", histogram->step_hist_last);
+#endif
 	}
 
 	if ( current_divider_block_size >= generic_divider_block_size ){
-	    int min_item_index = indexes[histogram_index_with_minimal_hash];
-	    Histogram* min_item_hist = &histograms[histogram_index_with_minimal_hash];
-	    const uint8_t* divider_hash	
-		= (const uint8_t*)BufferItemPointer(&min_item_hist->buffer, 
-						    min_item_index);
+	    WRITE_FMT_LOG("current_divider_block_size=%d\n", current_divider_block_size);
+	    const char* divider_hash = hash;
 	    /*add located divider value to dividers array*/
 	    AddBufferItem( divider_array, divider_hash );
 	    current_divider_block_size=0;
@@ -267,7 +288,7 @@ int SearchMinimumHashAmongCurrentItemsOfAllHistograms( struct MapReduceUserIf *m
 			   PRINTABLE_HASH(mif, divider_hash) );
 	    fflush(0);
 	}
-	indexes[histogram_index_with_minimal_hash]++;
+	minimal_indexes[histogram_index_with_minimal_hash]++;
 	/*while pre last divider processing*/
     }
 
@@ -311,21 +332,22 @@ CalculateItemsCountBasedOnHistograms(Histogram *histograms, int hist_count ){
 
 
 int
-SearchMinimumHashAmongCurrentItemsOfAllHistograms( struct MapReduceUserIf *mif,
-						   Histogram *histograms, 
-						   int *current_indexes_array,
-						   int histograms_count){ 
+SelectNextHistogramWithMinimalHash( struct MapReduceUserIf *mif,
+				    Histogram *histograms, 
+				    int *current_indexes_array,
+				    int histograms_count){ 
     int res = -1;
     const uint8_t* current_hash;
     const uint8_t* minimal_hash = NULL;
+    struct Histogram* histogram = NULL;
     /*found minimal value among currently indexed histogram values*/
     for ( int i=0; i < histograms_count; i++ ){ /*loop for histograms*/
 	/*check bounds of current histogram*/
 	if ( BOUNDS_OK(current_indexes_array[i],
 		       histograms[i].buffer.header.count) ){
 	    /*get minimal value among currently indexed histogram values*/ 
-	    current_hash = (const uint8_t*)BufferItemPointer( &histograms[i].buffer,
-							      current_indexes_array[i]);
+	    const char* current_hash = BufferItemPointer( &histograms[i].buffer, current_indexes_array[i] );
+
 	    if ( !minimal_hash || 
 		 HASH_CMP( mif, current_hash, minimal_hash ) <= 0 ){
 		res = i;
@@ -399,9 +421,10 @@ MapCreateHistogramSendEachToOtherCreateDividersList( struct ChannelsConfigInterf
     //generate histogram with offset
     int current_node_index = ch_if->ownnodeid-1;
 
-    struct Histogram* histogram = &mif->data.histograms_list[current_node_index];
+    struct Histogram* histogram = NULL;
+    GET_HISTOGRAM_BY_NODE(mif, current_node_index, histogram);
 
-    size_t hist_step = map->header.count / 100 / map_nodes_count;
+    size_t hist_step = map->header.count / map_nodes_count / 100;
     /*save histogram for own data always into current_node_index-pos of histograms array*/
     GetHistogram( mif, map, hist_step, histogram );
 
@@ -420,7 +443,7 @@ MapCreateHistogramSendEachToOtherCreateDividersList( struct ChannelsConfigInterf
     };
     StartEachToOtherCommunication( &histogram_from_all_to_all_pattern, EMapNode );
 
-    /*Preallocate buffer space and exactly for items count=reduce_nodes_count */
+    /*Preallocate buffer space exactly for expected items count=reduce_nodes_count */
     int res = AllocBuffer( &mif->data.dividers_list, HASH_SIZE(mif), reduce_nodes_count);
     IF_ALLOC_ERROR(res);
     /*From now every map node contain histograms from all map nodes, summarize histograms,

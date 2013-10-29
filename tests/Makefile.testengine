@@ -158,9 +158,9 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #$shell should could not be used to get test result from file because it unexpectadly
 #using contents of previosly saved test output, and it is the main reason why using awk;
 #parsing correct output retrieved via pipe
-#Note that zerovm option -l6 is used because some tests can need big file support
+#todo: check  big file support without -l option
 	@cp ${TEST_TAR_MOUNT} ${TEST_TAR};
-	@$(ZEROVM) $(CURDIR)/$(BASENAME).manifest -P -l6 \
+	@$(ZEROVM) $(CURDIR)/$(BASENAME).manifest -P \
 	| $(AWK_GET_ERRCODE) \
 	| $(AWK_HANDLE_FAIL) testname="$@"  2>&1 | tee -a $(OUTPUT_FAIL)
 	$(eval FORKED_PID:=$(shell echo `pgrep -f $(CURDIR)/$(BASENAME).manifest`))

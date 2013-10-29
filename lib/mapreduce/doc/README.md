@@ -6,7 +6,7 @@ Mapreduce library is small library written in C to provide interface for
 ZeroVM mapreduce framework. Framework consists of several zerovm sessions
 (both map and reduce nodes), connected to each other via network channels.
 
-It requres user to define map, reduce, compare functions to perform a mapreduce
+It requires user to define map, reduce, compare functions to perform a mapreduce
 job. 
 
 Variable-length keys and values are used in mapreduce framework. Fixed-length

@@ -42,6 +42,9 @@ typedef int exclude_flag_t;
 #define MAP_NODE_NO_EXCLUDE 0
 #define MAP_NODE_EXCLUDE 1
 
+#define GET_HISTOGRAM_BY_NODE(mif_p, node_index, histogram_p)			\
+    (histogram_p) = &(mif)->data.histograms_list[node_index];
+
 #define PRINTABLE_HASH(mif_p, hash)					\
     ((mif_p)!=NULL && (mif_p)->DebugHashAsString != NULL)?		\
     (mif_p)->DebugHashAsString( (char*)alloca((mif_p)->data.hash_size*2+1), \
