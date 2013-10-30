@@ -169,6 +169,9 @@ TestHistogramGetDividers(struct MapReduceUserIf* mif, int count, const char* tes
     int ret;
     HASH_TYPE maxhash=~0; //0xffff
     Histogram *histograms = alloca(sizeof(Histogram)*count);
+    mif->data.histograms_list = histograms;
+    mif->data.histograms_count = count;
+
     Buffer* array_of_buffers = alloca(sizeof(Buffer)*count);
     Buffer* divider_hashes = malloc(sizeof(Buffer));
     AllocBuffer( divider_hashes, sizeof(HASH_TYPE), 
