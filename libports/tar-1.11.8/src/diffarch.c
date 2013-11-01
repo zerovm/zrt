@@ -611,7 +611,7 @@ diff_sparse_files (int filesize)
       while (buf_size < numbytes)
 	{
 	  buf_size *= 2;
-	  buf = (char *) xrealloc (buf, buf_size * sizeof (char));
+	  buf = (char *) tar_realloc (buf, buf_size * sizeof (char));
 	}
       while (numbytes > RECORDSIZE)
 	{
@@ -739,7 +739,7 @@ fill_in_sparse_array (void)
 
 		  sp_array_size *= 2;
 		  sparsearray = (struct sp_array *)
-		    xrealloc (sparsearray,
+		    tar_realloc (sparsearray,
 			      sp_array_size * sizeof (struct sp_array));
 		}
 

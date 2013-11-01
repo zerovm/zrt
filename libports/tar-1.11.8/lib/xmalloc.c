@@ -90,7 +90,7 @@ xmalloc (n)
    If P is NULL, run xmalloc.  */
 
 VOID *
-xrealloc (p, n)
+tar_realloc (p, n)
      VOID *p;
      size_t n;
 {

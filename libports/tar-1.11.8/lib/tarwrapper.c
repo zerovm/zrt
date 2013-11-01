@@ -143,7 +143,7 @@ name_add (const char *name)
 	{
 	    allocated_names *= 2;
 	    name_array = (const char **)
-		xrealloc (name_array, sizeof (const char *) * allocated_names);
+		tar_realloc (name_array, sizeof (const char *) * allocated_names);
 	}
     name_array[names++] = name;
 }
@@ -206,7 +206,7 @@ read_name_from_file (void)
 	    if (counter == name_buffer_length)
 		{
 		    name_buffer_length += NAMSIZ;
-		    name_buffer = xrealloc (name_buffer, name_buffer_length + 2);
+		    name_buffer = tar_realloc (name_buffer, name_buffer_length + 2);
 		}
 	    name_buffer[counter++] = c;
 	}
@@ -215,7 +215,7 @@ read_name_from_file (void)
     if (counter == name_buffer_length)
 	{
 	    name_buffer_length += NAMSIZ;
-	    name_buffer = xrealloc (name_buffer, name_buffer_length + 2);
+	    name_buffer = tar_realloc (name_buffer, name_buffer_length + 2);
 	}
     name_buffer[counter] = '\0';
     return 1;
@@ -377,7 +377,7 @@ name_gather (void)
 		    if (namebuf->length >= namelen)
 			{
 			    namebuf = (struct name *)
-				xrealloc (namebuf, sizeof (struct name) + namebuf->length);
+				tar_realloc (namebuf, sizeof (struct name) + namebuf->length);
 			    namelen = namebuf->length;
 			}
 		    strncpy (namebuf->name, p, (size_t) namebuf->length);
@@ -762,7 +762,7 @@ add_exclude (char *name)
 	    char **tmp_ptr;
 
 	    old_x_buffer = x_buffer;
-	    x_buffer = (char *) xrealloc (x_buffer, (size_t) (size_x_buffer + 1024));
+	    x_buffer = (char *) tar_realloc (x_buffer, (size_t) (size_x_buffer + 1024));
 	    free_x_buffer = 1024;
 	    for (tmp_ptr = exclude; tmp_ptr < exclude + size_exclude; tmp_ptr++)
 		*tmp_ptr = x_buffer + ((*tmp_ptr) - old_x_buffer);
@@ -777,7 +777,7 @@ add_exclude (char *name)
 	    if (free_re_exclude == 0)
 		{
 		    re_exclude = (char **)
-			xrealloc (re_exclude, (size_re_exclude + 32) * sizeof (char *));
+			tar_realloc (re_exclude, (size_re_exclude + 32) * sizeof (char *));
 		    free_re_exclude += 32;
 		}
 	    re_exclude[size_re_exclude] = x_buffer + size_x_buffer;
@@ -789,7 +789,7 @@ add_exclude (char *name)
 	    if (free_exclude == 0)
 		{
 		    exclude = (char **)
-			xrealloc (exclude, (size_exclude + 32) * sizeof (char *));
+			tar_realloc (exclude, (size_exclude + 32) * sizeof (char *));
 		    free_exclude += 32;
 		}
 	    exclude[size_exclude] = x_buffer + size_x_buffer;
@@ -1324,7 +1324,7 @@ decode_options (int argc, char *const *argv)
 			    {
 				allocated_archive_names *= 2;
 				archive_name_array = (const char **)
-				    xrealloc (archive_name_array,
+				    tar_realloc (archive_name_array,
 					      sizeof (const char *) * allocated_archive_names);
 			    }
 			archive_name_array[archive_names++] = buf;
@@ -1378,7 +1378,7 @@ decode_options (int argc, char *const *argv)
 			{
 			    allocated_archive_names *= 2;
 			    archive_name_array = (const char **)
-				xrealloc (archive_name_array,
+				tar_realloc (archive_name_array,
 					  sizeof (const char *) * allocated_archive_names);
 			}
 		    archive_name_array[archive_names++] = optarg;

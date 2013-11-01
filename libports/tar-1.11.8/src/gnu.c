@@ -348,7 +348,7 @@ get_dir_contents (char *p, int device)
 	  if ((int) NAMLEN (d) + len >= bufsiz)
 	    {
 	      bufsiz += NAMSIZ;
-	      namebuf = (char *) xrealloc (namebuf, (size_t) (bufsiz + 2));
+	      namebuf = (char *) tar_realloc (namebuf, (size_t) (bufsiz + 2));
 	    }
 	  strcpy (namebuf + len, d->d_name);
 #ifdef AIX
@@ -512,7 +512,7 @@ add_dir_name (char *p, int device)
 	      if (len + sublen >= buflen)
 		{
 		  buflen += NAMSIZ;
-		  namebuf = (char *) xrealloc (namebuf, (size_t) (buflen + 1));
+		  namebuf = (char *) tar_realloc (namebuf, (size_t) (buflen + 1));
 		}
 	      strcpy (namebuf + len, p_buf + 1);
 	      addname (namebuf);
