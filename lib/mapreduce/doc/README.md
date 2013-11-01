@@ -2,23 +2,27 @@
 
 ## Introduction
 
-Mapreduce library is small library written in C to provide interface for
-ZeroVM mapreduce framework. Framework consists of several zerovm sessions
-(both map and reduce nodes), connected to each other via network channels.
+Mapreduce library is small library written in C to provide interface
+for ZeroVM mapreduce framework. Framework consists of several zerovm
+sessions (both map and reduce nodes), connected to each other via
+network channels.
 
-It requires user to define map, reduce, compare functions to perform a mapreduce
-job. 
+It requires user to define map, reduce, combine & compare functions to
+perform a mapreduce job.
 
-Variable-length keys and values are used in mapreduce framework. Fixed-length
-keys and values could be used, though. It's user's responsibility to decide what
-type keys and values to be used.
+Variable-length keys and values are used in mapreduce framework, and
+they are can be binary data. Fixed-length keys and values could be
+used, though. It's user's responsibility to decide what kind of keys
+and values to be used. Also user responsible to set hash size for
+internal hash representation.
 
 ## Fundamental data types
 
-Mapreduce framework operates on raw data buffer deeply inside. This "buffer" 
-can be thought as vector of mapreduce items (_ElasticBufItemData_ type). _Buffer_
-consists of header with buf_size, item_size, item_count fields and raw data pointer.
-Each item is simply a chunk of raw data.
+Mapreduce framework operates on raw data buffer deeply inside. This
+"buffer" can be thought as vector of mapreduce items
+(_ElasticBufItemData_ type). _Buffer_ consists of header with
+buf_size, item_size, item_count fields and raw data pointer.  Each
+item is simply a chunk of raw data.
 
 	typedef struct BufferHeader {
 		// size of buffer in bytes
@@ -35,12 +39,14 @@ Each item is simply a chunk of raw data.
 		char *data;
 	} Buffer;
 
-Items has fixed size. Items count should be less than `buf_size/item_size`. Buffer
-has to be reallocated if item appending is necessary.
+Buffer item has fixed size, but it is must be predefined on library
+initialization step, size of item depends on hash size and can be vary
+for different applications.  Items count should be less than
+`buf_size/item_size`. Buffer has to be reallocated if item appending
+is necessary.
 
-User has to define mapreduce item size at initialization.
-
-Mapreduce item used for variable-length keys and values defined as following:
+Mapreduce item used for variable-length keys and values defined as
+following:
 
 	// Mapreduce item size must be defined manually due to variable hash size
 	typedef struct ElasticBufItemData {
@@ -63,41 +69,48 @@ Mapreduce item used for variable-length keys and values defined as following:
 			int       size;
 	} BinaryData;
 
-Due to key/value variable length all data is allocated on the heap. It could be
-allocated by framework (and passed to Map function, see later) or by user itself.
-Flags `own_key/own_value` are used to indicate whenever user has to free data manually
-in user defined functions.
-If data is small enough to fit addr field (4/8 bytes) one can use it without 
-allocating data on the heap. In this case one ought to set key/value size to 0 to
-indicate "Value Addr is Data" mode is enabled. 
-Hash field has fixed length, defined at initialization. 
+Due to key/value variable length all data is allocated on the heap. It
+could be allocated by framework (and passed to Map function, see
+later) or by user itself.  Flags `own_key/own_value` are used to
+indicate whenever user has to free data manually in user defined
+functions.
+If data is small enough to fit addr field (4/8 bytes) one can use it
+without allocating data on the heap. In this case one ought to set
+key/value size to 0 to indicate "Value Addr is Data" mode is enabled.
+Hash field has fixed length, defined at initialization.
 ![Buffer and mapreduce items](buffer.png)
 
 ## Framework overview
 
-Mapreduce framework consists of nameserver, map nodes and reduce nodes. 
-These nodes essentially are ZeroVM instances, controlled by mapreduce framework.
-Nameserver is used as "manager". (need to specify what is it, what it does)
+Mapreduce framework consists of nameserver, map nodes and reduce
+nodes.  These nodes essentially are ZeroVM instances, controlled by
+mapreduce framework.  Nameserver is used as "manager". (need to
+specify what is it, what it does)
 
-Nodes are connected via network channels (see ZeroVM doc). Each map node has separate
-read and write channels to other map nodes. It also has write channels to each
-reduce node. Reduce nodes have only read channels to each map node.
+Nodes are connected via network channels (see ZeroVM doc). Each map
+node has separate read and write channels to other map nodes. It also
+has write channels to each reduce node. Reduce nodes have only read
+channels to each map node.
 
 ## Data flow
 
-Each map node has some input (regular file, typically). Mapreduce library reads
-input chunk by chunk (chunk size is defined in ENV variable MAP\_CHUNK\_SIZE), passing
-each chunk (as pointer to data) to user-defined Map function . This function parses
-data and fills output buffer with appropriate mapreduce items.
+Each map node has some input (regular file, typically). Mapreduce
+library reads input chunk by chunk (chunk size is defined in ENV
+variable MAP\_CHUNK\_SIZE), passing each chunk (as pointer to data) to
+user-defined Map function . This function parses data and fills output
+buffer with appropriate mapreduce items.
 
-After user-defined map step, items are sorted by hash. Next, these items could 
-be combined (if user-defined Combine is present) before network transfer.
+After user-defined map step, items are sorted by hash internally by MR
+library. Next, these items could be combined (if user-defined Combine
+is present) before network transfer.
 
-Data is transfered over the network to reduce nodes. Reduce nodes receive input data,
-combining it if possible (due to several map nodes are present). 
-Then user-defined reduce function is called with input buffer (vector of mapreduce items). 
-These items are the same as output of map function if combine is not present. 
-They are "combined", otherwise. Reduce node should perform last "reduce" step and print output.
+Data is transfered over the network to reduce nodes. Reduce nodes
+receive input data, combining it if possible (due to several map nodes
+are present).  Then user-defined reduce function is called with input
+buffer (vector of mapreduce items).  These items are the same as
+output of map function if combine is not present.  They are
+"combined", otherwise. Reduce node should perform last "reduce" step
+and print output.
 
 ## Usage
 
@@ -135,14 +148,19 @@ See documented source code sample below:
 
 	int Map(const char *data, size_t size, int last_chunk,  Buffer *map_buffer);
 
-Map function must parse input `data` with given `size` and fill in `map_buffer` with 
-mapreduce items. `last_chunk` flag indicates that last portion of data.
+Map function must parse input `data` with given `size` and fill in
+`map_buffer` with mapreduce items. `last_chunk` flag indicates that
+last portion of data.
 
-User could create mapreduce items pointing to existing data (somewhere in `data`)
-and set `own_key`, `own_value` to 0. One could also malloc some data on the heap,
-fill it with arbitrary data and set `own_whatever` to 1. 
-It's user responsibility to alloc `map_buffer` raw data to make it store necessary
-item count.
+User could create mapreduce items pointing to existing data (somewhere
+in `data`) and set `own_key`, `own_value` to 0. One could also malloc
+some data on the heap, fill it with arbitrary data and set
+`own_whatever` to 1.
+It's for user responsibility to alloc `map_buffer` raw data to make it
+store necessary item count. Also user must provide hash for every MR
+item, and for this purpose he can use any own HASH function. MapReduce
+framework does not handle any collisions in hash table, so just keep
+in mind to use hash of enough size.
 
 Function must return byte count processed.
 
@@ -150,30 +168,31 @@ Function must return byte count processed.
 
 	int Reduce(const Buffer *reduced_buffer);
 
-Reduce funtion gets `reduced_buffer` (vector of mapreduce items) as input. It performs
-"reduce" step for given data. Reduce function must free data, pointed by mapreduce
-items with `own_key`,`own_value` flags set.
+Reduce funtion gets `reduced_buffer` (vector of mapreduce items) as
+input. It performs "reduce" step for given data. Reduce function must
+free data, pointed by mapreduce items with `own_key`,`own_value` flags
+set.
 
 ### Combine
 
 	int Combine(const Buffer *map_buffer, Buffer *reduce_buffer);
 
-This function is not required. It performs "in-place" reduce at map node in order
-to compress data before network transfer. It also combines input data for reduce 
-nodes before actual reduce step.`map_buffer` is input data, `reduce_buffer`
-is output data. 
-User must free data, pointed by mapreduce items with `own_key`,`own_value` flags 
-set in `map_buffer`.
+This function is not required. It performs "in-place" reduce at map
+node in order to compress data before network transfer. It also
+combines input data for reduce nodes before actual reduce
+step.`map_buffer` is input data, `reduce_buffer` is output data.
+User must free data, pointed by mapreduce items with
+`own_key`,`own_value` flags set in `map_buffer`.
 
 ### ComparatorElasticBufItemByHashQSort
 
 	ComparatorElasticBufItemByHashQSort(const void *p1, const void *p2);
 
-Function used by mapreduce library to sort items with qsort. This step is performed
-at map nodes after user-defined Map function is called. 
+Function used by mapreduce library to sort items with qsort. This step
+is performed at map nodes after user-defined Map function is called.
 
-p1 and p2 are pointers to hash. Hash size is fixed and is known to user _apriori_
-(user sets hash size himself at init).
+p1 and p2 are pointers to hash. Hash size is fixed and is known to
+user _apriori_ (user sets hash size himself at init).
 
 Function must return +1 if p1 > p2, -1 if p1 < p2, 0 if p1 == p2
 
@@ -181,8 +200,7 @@ Function must return +1 if p1 > p2, -1 if p1 < p2, 0 if p1 == p2
 
 	ComparatorHash(const void *h1, const void *h2);
 
-Function is used to compare hashes for two mapreduce items. Actually, this 
-comparator is never used by framework itself.
+Function is used to compare hashes for two mapreduce items.
 
 h1 and h2 are pointers to hash as in ComparatorElasticBufItemByHashQSort.
 
@@ -192,12 +210,15 @@ Function must return +1 if h1 > h2, -1 if h1 < h2, 0 if h1 == h2
 
 ![Item and hash size](item_size.png)
 
-Mapreduce item consists of 8 byte `key` field (4 byte addr and 4 byte size),
-8 byte `value` field(4 byte addr and 4 byte size), 1 byte `own_key` flag, 1 byte
-`own_value` flag and hash with user-defined size.
+Mapreduce item consists of 8 byte `key` field (4 byte addr and 4 byte
+size), 8 byte `value` field(4 byte addr and 4 byte size), 1 byte
+`own_key` flag, 1 byte `own_value` flag and hash with user-defined
+size. 
 
-So, mapreduce size must not be less than 18 + hash size bytes. For example, given 
-hash size 10 bytes mapreduce item size would be 28 bytes.
+So, mapreduce item size must not be less than 18 + hash size bytes. For
+example, given hash size 10 bytes mapreduce item size would be 28
+bytes. It's recommended to use sizeof statement to get MR item size
+from compiler.
 
 One could use key and value fields as pointers to some memory with arbitrary size.
 In this case `addr` field points to memory address, `size` holds memory area size.
@@ -213,4 +234,5 @@ This section has not been written yet.
 
 ## Examples
 
-See terasort and wordcount directories in zerovm-samples [repository](https://github.com/zerovm/zerovm-ports).
+See terasort and wordcount directories in zerovm-samples
+[repository](https://github.com/zerovm/zerovm-ports).
