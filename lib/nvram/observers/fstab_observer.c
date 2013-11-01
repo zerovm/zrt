@@ -178,15 +178,25 @@ void handle_mount_import(struct FstabObserver* observer, struct FstabRecordConta
     }
 }
 
-void handle_reset(struct FstabObserver* observer){
+void handle_reset_removable(struct FstabObserver* observer){
     struct FstabRecordContainer* record_container;
     int i;
     for ( i=0; i < observer->postpone_mounts_count; i++ ){
-	record_container = &observer->postpone_mounts_array[i];
-	free_record_memories(&record_container->mount);
+	if ( (record_container = &observer->postpone_mounts_array[i]) != NULL ){
+	    /*get all params*/
+	    char* channel_alias = NULL;
+	    char* mount_path = NULL;
+	    char* access = NULL;
+	    char* removable = NULL;
+	    GET_FSTAB_PARAMS(&record_container->mount, &channel_alias, &mount_path, &access, &removable);
+	    int removable_record = !strcasecmp( removable, FSTAB_VAL_REMOVABLE_YES);
+
+	    /* In case if we need to inject files into FS.*/
+	    if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) && removable_record != 0 ){
+		record_container->mount_status = EFstabMountWaiting;
+	    }
+	}
     }
-    free(observer->postpone_mounts_array), observer->postpone_mounts_array = NULL;
-    observer->postpone_mounts_count = 0;
 }
 
 struct FstabRecordContainer* 
@@ -234,7 +244,7 @@ struct FstabObserver* get_fstab_observer(){
     s_fstab_observer.base.is_valid_record = handle_is_valid_record;
     s_fstab_observer.mount_export = handle_mount_export;
     s_fstab_observer.mount_import = handle_mount_import;
-    s_fstab_observer.reset = handle_reset;
+    s_fstab_observer.reset_removable = handle_reset_removable;
     s_fstab_observer.locate_postpone_mount = handle_locate_postpone_mount;
     s_fstab_observer.postpone_mounts_array = NULL;
     s_fstab_observer.postpone_mounts_count = 0;

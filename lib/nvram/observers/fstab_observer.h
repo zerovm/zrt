@@ -47,8 +47,8 @@ struct FstabObserver {
     /*import tar archive  into maountpoint path, related to fstab record with access=ro*/
     void (*mount_import)(struct FstabObserver* observer, 
 			 struct FstabRecordContainer* record);
-    /*Prepare fstab handler to be reused*/
-    void (*reset)(struct FstabObserver* observer);
+    /*Say to removable mounts that they need to be remounted*/
+    void (*reset_removable)(struct FstabObserver* observer);
     /* Locate ParsedRecord with mountpoint and mount status matched
      * @param alias 
      * @param mount_status 

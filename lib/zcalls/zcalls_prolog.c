@@ -55,6 +55,10 @@ static void*   sbrk_default = NULL;
 struct timeval s_cached_timeval;
 /****************** */
 
+struct timeval* static_timeval() { 
+    return &s_cached_timeval; 
+}
+
 static inline void update_cached_time()
 {
     /* update time value

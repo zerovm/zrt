@@ -43,6 +43,7 @@
 #include "fstab_observer.h"
 #include "mapping_observer.h"
 #include "precache_observer.h"
+#include "debug_observer.h"
 #include "nvram_loader.h"
 #include "mounts_manager.h"
 #include "mem_mount_wraper.h"
@@ -413,15 +414,20 @@ int zfork(){
     ZRT_LOG(L_INFO, "zvm_fork res=%d", res);
 
     /*update state for removable mounts, all removable mounts needs to be refreshed*/
-    get_fstab_observer()->reset(HANDLE_ONLY_FSTAB_SECTION);
+    get_fstab_observer()->reset_removable(HANDLE_ONLY_FSTAB_SECTION);
 
     /*re-read nvram file because after fork his content can be changed. */
     struct NvramLoader* nvram = static_nvram();
     if ( !nvram_read_parse( nvram ) ){
-    	if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
-    	    nvram->handle(nvram, HANDLE_ONLY_FSTAB_SECTION,
-    			  s_channels_mount, s_transparent_mount, NULL);
-    	}
+	/*handle debug section - verbosity*/
+	if ( NULL != nvram->section_by_name( nvram, DEBUG_SECTION_NAME ) ){
+	    ZRT_LOG(L_INFO, "%s", "nvram handle debug");
+	    nvram->handle(nvram, HANDLE_ONLY_DEBUG_SECTION, NULL, NULL, NULL );
+	}
+	/*handle time section*/
+	if ( NULL != nvram->section_by_name( nvram, TIME_SECTION_NAME ) ){
+	    nvram->handle(nvram, HANDLE_ONLY_TIME_SECTION, static_timeval(), NULL, NULL);
+	}
     }
     ZRT_LOG(L_SHORT, "zfork() res=%d ", res);
     return res;

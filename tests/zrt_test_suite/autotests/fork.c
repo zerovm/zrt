@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 #include <error.h>
 #include <errno.h>
 #include <assert.h>
@@ -37,8 +38,15 @@ char* read_file_contents( const char* name, int* datalen ){
 int main(int argc, char **argv)
 {
     int res;
-    int datalen;
+    int datalen, datalen1;
     int i;
+    char testpath[PATH_MAX];
+    snprintf(testpath, sizeof(testpath), "/test/%s", FILENAME );
+    printf("%s\n", testpath);
+
+    char* contents1 = read_file_contents( testpath, &datalen1 );
+    CMP_MEM_DATA(MOUNT_CONTENTS, contents1, strlen(MOUNT_CONTENTS) );
+
     char* contents = read_file_contents( FILENAME, &datalen );
     CMP_MEM_DATA(MOUNT_CONTENTS, contents, strlen(MOUNT_CONTENTS) );
 
@@ -51,8 +59,14 @@ int main(int argc, char **argv)
     
     res = zfork();
     free(contents);
+    free(contents1);
+    contents1 = read_file_contents( testpath, &datalen1 );
+    CMP_MEM_DATA(MOUNT_CONTENTS, contents1, strlen(MOUNT_CONTENTS) );
+
     contents = read_file_contents( FILENAME, &datalen );
     CMP_MEM_DATA(REMOUNT_CONTENTS, contents, strlen(REMOUNT_CONTENTS) );
+
     free(contents);
+    free(contents1);
     return 0;
 }

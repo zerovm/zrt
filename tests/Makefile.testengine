@@ -186,6 +186,7 @@ report: $(OUTPUT_FAIL)
 	@echo " tests:"
 	@cat $(OUTPUT_FAIL)
 	@rm -f $(OUTPUT_FAIL) $(OUTPUT_LAST)
+	@pkill zerovm | true
 
 $(OUTPUT_FAIL):
 #has no output fail if this rule is active

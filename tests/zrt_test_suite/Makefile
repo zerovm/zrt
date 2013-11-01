@@ -61,6 +61,7 @@ FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, removab
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad1, access=ro {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad2, access=re, removable=yes {BR}
 FSTAB-fork.c =channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=yes {BR}
+FSTAB-fork.c +=channel=/dev/mount/import.tar, mountpoint=/test, access=ro, removable=no {BR}
 #####################################################################
 
 #####################################################################

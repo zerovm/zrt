@@ -26,6 +26,10 @@
 
 /*@return nvram must be accessible from zcalls_prolog.c */
 struct NvramLoader*     static_nvram();
+
+/*timeval must be accessible from both zcalls_zrt, zcalls_prolog*/
+struct timeval*         static_timeval();
+
 /*get static object from zrtsyscalls.c*/
 struct MountsInterface* transparent_mount();
 
