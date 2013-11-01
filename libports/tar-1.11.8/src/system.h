@@ -450,5 +450,5 @@ char *strstr __P ((const char *, const char *));
 #endif
 
 voidstar xmalloc __P ((size_t));
-voidstar xrealloc __P ((voidstar, size_t));
+voidstar tar_realloc __P ((voidstar, size_t));
 char *xstrdup __P ((const char *));

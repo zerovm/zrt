@@ -2635,7 +2635,7 @@ regex_compile (pattern, size, syntax, bufp)
 					    * sizeof (fail_stack_elt_t));
 	else
 	  fail_stack.stack
-	    = (fail_stack_elt_t *) xrealloc (fail_stack.stack,
+	    = (fail_stack_elt_t *) tar_realloc (fail_stack.stack,
 					     (fail_stack.size
 					      * sizeof (fail_stack_elt_t)));
 #else /* not emacs */

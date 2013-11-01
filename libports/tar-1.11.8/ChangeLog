@@ -1062,7 +1062,7 @@ Mon Aug  1 15:49:46 1994  Francois Pinard  (pinard@icule)
 	* src/tar.c (main): Move the initialization of
 	archive_name_array at beginning, taken from options routine.
 	Free it at end of main.
-	(options): Use xrealloc instead of ck_malloc for archive_name,
+	(options): Use tar_realloc instead of ck_malloc for archive_name,
 	for the already saved names to be preserved.
 	Reported by Per Bojsen.
 
@@ -1384,11 +1384,11 @@ Sat Jul  2 00:26:54 1994  Francois Pinard  (pinard@icule)
 
 	* src/port.c (xmalloc): Delete function, do not mask the true one.
 	* src/port.c (ck_malloc): Use xmalloc, waiting for annihilation.
-	* src/port.c (ck_realloc): Use xrealloc, waiting for annihilation.
+	* src/port.c (ck_realloc): Use tar_realloc, waiting for annihilation.
 	* lib/xmalloc.c: New file, from elsewhere.
 	* lib/Makefile.in: Adjusted.
 	* src/*: Begin switching from ck_malloc (or even pure malloc) to
-	xmalloc.  Same for ck_realloc (pure realloc) to xrealloc.
+	xmalloc.  Same for ck_realloc (pure realloc) to tar_realloc.
 	Doing this correctly is a delicate matter, which I'll continue
 	without reporting it anymore, while doing other modifications.
 

@@ -107,7 +107,7 @@ autotests:
 	@echo ------------- RUN zrt $@ ------------
 	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite clean
 	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite -j4
-	@pkill zerovm
+	@./kill_daemons.sh
 
 ############## "make zrt_tests" Build test samples 
 test_suites: ${TEST_SUITES}

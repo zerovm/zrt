@@ -233,7 +233,7 @@ Removing leading / from absolute path names in the archive")));
 
 		      sp_array_size *= 2;
 		      sparsearray = (struct sp_array *)
-			xrealloc (sparsearray,
+			tar_realloc (sparsearray,
 				  sp_array_size * (sizeof (struct sp_array)));
 		    }
 		  /* Compare to 0, or use !(int)..., for Pyramid's dumb

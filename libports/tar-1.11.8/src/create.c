@@ -441,7 +441,7 @@ deal_with_sparse (char *name, union record *header)
 	  /* Realloc the scratch area, since we've run out of room.  */
 
 	  sparsearray = (struct sp_array *)
-	    xrealloc (sparsearray,
+	    tar_realloc (sparsearray,
 		      2 * sp_array_size * sizeof (struct sp_array));
 	  sp_array_size *= 2;
 	}
@@ -1310,7 +1310,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 	  if ((int) NAMLEN (d) + len >= buflen)
 	    {
 	      buflen = len + NAMLEN (d);
-	      namebuf = (char *) xrealloc (namebuf, (size_t) (buflen + 1));
+	      namebuf = (char *) tar_realloc (namebuf, (size_t) (buflen + 1));
 #if 0
 	      namebuf[len] = '\0';
 	      ERROR ((0, 0, _("File name %s%s too long"), namebuf, d->d_name));

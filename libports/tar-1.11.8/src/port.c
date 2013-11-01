@@ -531,7 +531,7 @@ add_buffer (char *bb, const char *p, int n)
   if (b->length + n > b->allocated)
     {
       b->allocated = b->length + n + MIN_ALLOCATE;
-      b->b = (char *) xrealloc (b->b, (size_t) b->allocated);
+      b->b = (char *) tar_realloc (b->b, (size_t) b->allocated);
     }
   memcpy (b->b + b->length, p, (size_t) n);
   b->length += n;

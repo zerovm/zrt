@@ -40,7 +40,7 @@ char *getcwd ();
 #define PATH_INCR 32
 
 char *xmalloc ();
-char *xrealloc ();
+char *tar_realloc ();
 void free ();
 
 /* Return the current directory, newly allocated, arbitrarily long.
@@ -63,7 +63,7 @@ xgetcwd ()
   while ((ret = getcwd (cwd, path_max)) == NULL && errno == ERANGE)
     {
       path_max += PATH_INCR;
-      cwd = xrealloc (cwd, path_max);
+      cwd = tar_realloc (cwd, path_max);
       errno = 0;
     }
 
