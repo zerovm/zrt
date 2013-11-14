@@ -12,6 +12,7 @@
 #include <stdio.h> //snprintf
 #include "printf_prolog.h" //tfp_sprintf
 #include "channels_reserved.h"
+#include "zrtlogbase.h"
 
 /*log levels*/
 #define L_BASE   1   /*log only base zrt data*/

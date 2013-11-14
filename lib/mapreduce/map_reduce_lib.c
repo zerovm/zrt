@@ -277,7 +277,7 @@ int SelectNextHistogramWithMinimalHash( struct MapReduceUserIf *mif,
 
 	if ( current_divider_block_size >= generic_divider_block_size ){
 	    WRITE_FMT_LOG("current_divider_block_size=%d\n", current_divider_block_size);
-	    const char* divider_hash = hash;
+	    const uint8_t* divider_hash = (const uint8_t*)hash;
 	    /*add located divider value to dividers array*/
 	    AddBufferItem( divider_array, divider_hash );
 	    current_divider_block_size=0;
@@ -339,14 +339,13 @@ SelectNextHistogramWithMinimalHash( struct MapReduceUserIf *mif,
     int res = -1;
     const uint8_t* current_hash;
     const uint8_t* minimal_hash = NULL;
-    struct Histogram* histogram = NULL;
     /*found minimal value among currently indexed histogram values*/
     for ( int i=0; i < histograms_count; i++ ){ /*loop for histograms*/
 	/*check bounds of current histogram*/
 	if ( BOUNDS_OK(current_indexes_array[i],
 		       histograms[i].buffer.header.count) ){
 	    /*get minimal value among currently indexed histogram values*/ 
-	    const char* current_hash = BufferItemPointer( &histograms[i].buffer, current_indexes_array[i] );
+	    current_hash = (const uint8_t*)BufferItemPointer( &histograms[i].buffer, current_indexes_array[i] );
 
 	    if ( !minimal_hash || 
 		 HASH_CMP( mif, current_hash, minimal_hash ) <= 0 ){

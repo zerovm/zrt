@@ -25,6 +25,9 @@ static char s_logbuf[LOG_BUFFER_SIZE];
 
 static char s_nested_syscalls_str[MAX_NESTED_SYSCALL_LEN] = "\0";
 
+/*it's accessing from zrtlogbase.h*/
+LOG_BASE_ENABLE;
+
 static void tfp_printf_putc(void* someobj, char ch){
     if ( s_buffered_len < LOG_BUFFER_SIZE )
 	s_logbuf[s_buffered_len++] = ch;

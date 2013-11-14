@@ -12,7 +12,7 @@ DEF_CHANTYPE2=0
 DEF_CHANTYPE3=1
 
 #mount/remount tar archives
-TEST_TAR=$(CURDIR)/foo.tar
+TEST_TAR=foo.tar
 TEST_TAR_MOUNT=$(CURDIR)/mount.tar
 TEST_TAR_REMOUNT=$(CURDIR)/remount.tar
 #file inside both archives
@@ -30,6 +30,7 @@ TEST_STDOUTS=$(addsuffix .stdout.std, $(basename $(TEST_SOURCES) ) )
 TEST_STDERRS=$(addsuffix .stderr.std, $(basename $(TEST_SOURCES) ) )
 TEST_LOG_ZVM=$(addsuffix .zerovm.log, $(basename $(TEST_SOURCES) ) )
 TEST_LOG_DEBUG=$(addsuffix .zrtdebug.log, $(basename $(TEST_SOURCES) ) )
+TEST_TARS=$(addsuffix $(TEST_TAR), $(basename $(TEST_SOURCES) ) )
 TEST_NEXES=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
 TEST_LIST=$(basename $(TEST_SOURCES) )
 COUNTER=0
@@ -101,7 +102,8 @@ clean:
 	@rm -f $(VERBOSE_CLEAN) $(TEST_MANIFESTS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_NVRAMS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_LOG_DEBUG)
-	@rm -f $(VERBOSE_CLEAN) $(MOUNT_TAR_NAME) $(REMOUNT_TAR_NAME) $(TEST_TAR)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_TARS)
+	@rm -f $(VERBOSE_CLEAN) $(MOUNT_TAR_NAME) $(REMOUNT_TAR_NAME)
 
 prepare:
 	@rm -f ${TEST_TAR_MOUNT} ${TEST_TAR_REMOUNT} ${TESTFILE}
@@ -130,6 +132,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_CHANTYPE1:=$(firstword $(CHANTYPE1-$(NAMEONLY).c) $(DEF_CHANTYPE1)))
 	$(eval SPECIFIC_TEST_CHANTYPE2:=$(firstword $(CHANTYPE2-$(NAMEONLY).c) $(DEF_CHANTYPE2)))
 	$(eval SPECIFIC_TEST_CHANTYPE3:=$(firstword $(CHANTYPE3-$(NAMEONLY).c) $(DEF_CHANTYPE3)))
+#tar mount/remount support
+	$(eval SPECIFIC_TEST_MOUNT=$(CURDIR)/$(BASENAME).$(TEST_TAR))
 	@echo "RUN TEST $@ "
 #compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
@@ -159,7 +163,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #using contents of previosly saved test output, and it is the main reason why using awk;
 #parsing correct output retrieved via pipe
 #todo: check  big file support without -l option
-	@cp -f ${TEST_TAR_MOUNT} ${TEST_TAR};
+	@cp -f ${TEST_TAR_MOUNT} $(SPECIFIC_TEST_MOUNT);
 	@$(ZEROVM) $(CURDIR)/$(BASENAME).manifest -P \
 	| $(AWK_GET_ERRCODE) \
 	| $(AWK_HANDLE_FAIL) testname="$@"  2>&1 | tee -a $(OUTPUT_FAIL)
@@ -167,7 +171,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #If session was forked by zfork() and socket file exist then restore forked session now
 #rewrite tar image to test remount
 	@if [ "${SPECIFIC_TEST_FORK}" != "" ] && [ -S "${SPECIFIC_TEST_FORK}" ] ; then \
-	rm -f ${TEST_TAR}; cp -f ${TEST_TAR_REMOUNT} ${TEST_TAR}; \
+	rm -f ${SPECIFIC_TEST_MOUNT}; cp -f ${TEST_TAR_REMOUNT} ${SPECIFIC_TEST_MOUNT}; \
 	echo "RUN FORKED TEST $@ "; \
 	cat $(CURDIR)/$(BASENAME).manifest \
 	| python ../daemon_client.py "${SPECIFIC_TEST_FORK}" 2>&1 \

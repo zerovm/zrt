@@ -142,7 +142,7 @@ int  zrt_zcall_enhanced_write(int handle, const void *buf, size_t count, size_t 
 	ret=0;
     }
     LOG_INFO_SYSCALL_FINISH( ret, "bytes_wrote=%d, handle=%d count=%u", 
-			      bytes_wrote, handle, count);
+			     bytes_wrote, handle, count);
     if ( log_state )
 	__zrt_log_enable(log_state); /*restore log state*/
     return ret;
@@ -268,18 +268,18 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
     		      *addr, length, prot, flags, fd, off);
 
     retcode = s_memory_interface->mmap(s_memory_interface, *addr, length, prot,
-    		  flags, fd, off);
+				       flags, fd, off);
     if ( retcode > 0 ){
 	*addr = (void*)retcode;
 	retcode=0;
     }
   
     LOG_INFO_SYSCALL_FINISH( retcode,
-    		       "addr=%p length=%u prot=%s flags=%s fd=%u off=%lld",
+			     "addr=%p length=%u prot=%s flags=%s fd=%u off=%lld",
 			     *addr, length, 
 			     STR_ALLOCA_COPY(STR_MMAP_PROT_FLAGS(prot)), 
 			     STR_ALLOCA_COPY(STR_MMAP_FLAGS(flags)),
-    		       fd, off);
+			     fd, off);
     return retcode;
 }
 
@@ -299,40 +299,37 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
     char **envp = environ;
     time_t t = time(NULL);
 
-   /* debug print */
-    ZRT_LOG(L_BASE, P_TEXT, "SESSION INFO :");
-
-    ZRT_LOG(L_BASE, "Time %s", ctime(&t) );
-    ZRT_LOG(L_BASE, "user heap pointer address = 0x%x", (intptr_t)manifest->heap_ptr);
-    ZRT_LOG(L_BASE, "user memory size = %u", manifest->heap_size);
-    ZRT_LOG(L_BASE, "sbrk(0) = %p", sbrk(0));
-
-    ZRT_LOG_DELIMETER;
+    LOG_DEBUG(ELogTitle, "ZVM SESSION INFO", "=======")
+    LOG_DEBUG(ELogAddress, (intptr_t)manifest->heap_ptr, "ZVM Manifest heap pointer" )
+    LOG_DEBUG(ELogSize, manifest->heap_size, "ZVM Manifest heap size" )
 
     /*get from system, print environment variables*/
-    ZRT_LOG(L_BASE, P_TEXT, "environment: ");
+    LOG_DEBUG(ELogTime, ctime(&t), "System time" )
+    LOG_DEBUG(ELogSize, sysconf(_SC_PAGE_SIZE), "Page size _SC_PAGE_SIZE" )
+    LOG_DEBUG(ELogCount, (int)manifest->heap_size / sysconf(_SC_PAGE_SIZE), "Memory pages count"  )
+    LOG_DEBUG(ELogAddress, sbrk(0), "sbrk(0)" )
+
+    LOG_DEBUG(ELogTitle, "Environment variables", "======")
     i=0;
     while( envp[i] ){
         ZRT_LOG(L_BASE, "envp[%d] = '%s'", i, envp[i]);
 	++i;
     }
 
-    ZRT_LOG_DELIMETER;
-    ZRT_LOG(L_BASE, "%d channels :", manifest->channels_count);
+    LOG_DEBUG(ELogCount, manifest->channels_count, "channels list")
     /*print channels list*/
     for(i = 0; i < manifest->channels_count; ++i)
-    {
-        ZRT_LOG(L_BASE, "channel[%2d].name = '%s'", i, manifest->channels[i].name);
-        ZRT_LOG(L_BASE, "channel[%2d].type=%d, size=%lld", i, 
-		manifest->channels[i].type, manifest->channels[i].size);
-        ZRT_LOG(L_BASE, "channel[%2d].limits[GetsLimit=%7lld, GetSizeLimit=%7lld]", i, 
-		manifest->channels[i].limits[GetsLimit], 
-		manifest->channels[i].limits[GetSizeLimit]);
-        ZRT_LOG(L_BASE, "channel[%2d].limits[PutsLimit=%7lld, PutSizeLimit=%7lld]", i, 
-		manifest->channels[i].limits[PutsLimit],
-		manifest->channels[i].limits[PutSizeLimit]);
-    }
-    ZRT_LOG(L_SHORT, "_SC_PAGE_SIZE=%ld", sysconf(_SC_PAGE_SIZE));
+	{
+	    ZRT_LOG(L_BASE, "channel[%2d].name = '%s'", i, manifest->channels[i].name);
+	    ZRT_LOG(L_BASE, "channel[%2d].type=%d, size=%lld", i, 
+		    manifest->channels[i].type, manifest->channels[i].size);
+	    ZRT_LOG(L_BASE, "channel[%2d].limits[GetsLimit=%7lld, GetSizeLimit=%7lld]", i, 
+		    manifest->channels[i].limits[GetsLimit], 
+		    manifest->channels[i].limits[GetSizeLimit]);
+	    ZRT_LOG(L_BASE, "channel[%2d].limits[PutsLimit=%7lld, PutSizeLimit=%7lld]", i, 
+		    manifest->channels[i].limits[PutsLimit],
+		    manifest->channels[i].limits[PutSizeLimit]);
+	}
 }
 
 /*Basic zrt initializer*/
@@ -345,7 +342,7 @@ void zrt_zcall_enhanced_zrt_setup(void){
     }
     if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
 	nvram->handle(&s_nvram, (struct MNvramObserver*)HANDLE_ONLY_FSTAB_SECTION, 
-		       s_channels_mount, s_transparent_mount, NULL );
+		      s_channels_mount, s_transparent_mount, NULL );
     }
     /*check nvram section [precache] and call fork if needed*/
     if ( NULL != nvram->section_by_name( nvram, PRECACHE_SECTION_NAME ) ){
@@ -368,6 +365,8 @@ void zrt_zcall_enhanced_premain(void){
 
 /*1st step zrt initializer*/
 void zrt_internal_init( const struct UserManifest const* manifest ){
+    ITEMS_CREATOR;
+
     /*init handlers for heap memory*/
     s_memory_interface = get_memory_interface( manifest->heap_ptr, manifest->heap_size );
 
@@ -408,8 +407,8 @@ int is_zrt_ready(){
 
 int zfork(){
     ZRT_LOG(L_INFO, P_TEXT, "call zvm_fork");
-   /*zvm fork syscall here
-     ...*/
+    /*zvm fork syscall here
+      ...*/
     int res = zvm_fork();
     ZRT_LOG(L_INFO, "zvm_fork res=%d", res);
 

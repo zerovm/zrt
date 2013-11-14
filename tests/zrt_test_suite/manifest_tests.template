@@ -3,11 +3,11 @@
 =====================================================================
 Channel = /dev/null, /dev/stdin, 0, 0, 999999, 999999, 0, 0
 Channel = {OUTFILE}.stdout.std, /dev/stdout, 0, 0, 0, 0, 999999, 999999
-Channel = {OUTFILE}.stderr.std, /dev/stderr, 0, 0, 0, 0, 999999, 999999
+Channel = {OUTFILE}.stderr.std, /dev/stderr, 0, 0, 0, 0, 9999999, 9999999
 Channel = {OUTFILE}.zrtdebug.log, /dev/debug, 0, 0, 0, 0, 50999999, 50999999
 Channel = {OUTFILE}.nvram, /dev/nvram, 1, 0, 999999, 999999, 0, 0
 ==foo.tar must be created by main zrt Makefile in order to proper run some autotests
-Channel = {TAR_MOUNT}, /dev/mount/import.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {OUTFILE}.{TAR_MOUNT}, /dev/mount/import.tar, 1, 0, 9999999, 9999999, 0, 0
 Channel = {ABS_PATH}autotests/channels/forreading, /dev/readonly, {CHANTYPE1}, 0, 99999, 999999, 0, 0
 Channel = {ABS_PATH}autotests/channels/forwriting, /dev/writeonly, {CHANTYPE2}, 0, 0, 0, 99999999999, 9999999999
 Channel = {ABS_PATH}autotests/channels/forreadwrite, /dev/read-write, {CHANTYPE3}, 0, 99999, 99999, 99999, 99999

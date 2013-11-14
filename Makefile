@@ -22,6 +22,7 @@ lib/helpers/conf_parser.c \
 lib/helpers/conf_keys.c \
 lib/helpers/utils.c \
 lib/helpers/buffered_io.c \
+lib/helpers/bitarray.c \
 lib/memory/memory_syscall_handlers.c \
 lib/nvram/nvram_loader.c \
 lib/nvram/observers/args_observer.c \
