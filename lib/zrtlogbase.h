@@ -5,7 +5,7 @@
 #define MAX_ITEMS_SIZE 10
 
 /*Log Items*/
-typedef enum {ELogLength=0, ELogAddress, ELogSize, ELogTitle, ELogTime, ELogCount} log_item;
+typedef enum {ELogLength=0, ELogAddress, ELogSize, ELogTitle, ELogTime, ELogCount, ELogIndex} log_item;
 
 extern char* s_log_items[MAX_ITEMS_SIZE];
 extern int   s_log_items_count;
@@ -21,7 +21,11 @@ extern int   s_log_items_count;
 	int len;							\
 	if( debug_handle > 0 ){						\
 	    assert( s_log_items[item_id] );				\
-	    len = snprintf(buf__123, LOG_BUFFER_SIZE, s_log_items[item_id], comment, (void*)(value) ); \
+	    len = snprintf(buf__123, LOG_BUFFER_SIZE, "%s:%d " #value" ", \
+			   __FILE__, __LINE__);				\
+	    __zrt_log_write(debug_handle, buf__123, len, 0);		\
+	    len = snprintf(buf__123, LOG_BUFFER_SIZE,			\
+			   s_log_items[item_id], comment, (void*)(value) ); \
 	    __zrt_log_write(debug_handle, buf__123, len, 0);		\
 	}								\
     }
@@ -40,24 +44,26 @@ extern int   s_log_items_count;
 	}								\
     }
 
-#define ITEM(itemid, value, name, format){				\
+#define ITEM(itemid, name, format){					\
 	assert(s_log_items_count == itemid);				\
 	char buf[MAX_TEMP_BUFFER_SIZE];					\
 	int  buf_length = snprintf(buf, MAX_TEMP_BUFFER_SIZE,		\
-				   " L_BASE %s:%d %s "#name"=%s\n",		\
-				   __FILE__, __LINE__, "%-30s", format ); \
+				   "%s "#name"=%s\n",			\
+				   "%-30s", format );			\
 	s_log_items[itemid] = memcpy( malloc(buf_length), buf, buf_length); \
-	++s_log_items_count;						\
-    }
+    }									\
+	++s_log_items_count
+    
 
 /*put items creator of ITEM macroses into zrtlog.c*/
-#define ITEMS_CREATOR						\
-    ITEM(ELogLength,     value, length,     "%d" )		\
-    ITEM(ELogAddress,    value, address,    "0x%x" )		\
-    ITEM(ELogSize,       value, size,       "%d" )		\
-    ITEM(ELogTitle,      value, =======,    "%s" )		\
-    ITEM(ELogTime,       value, time,       "%s" )		\
-    ITEM(ELogCount,      value, count,      "%d" )
+#define ITEMS_CREATOR				\
+    ITEM(ELogLength,     length,     "%d" );	\
+    ITEM(ELogAddress,    address,    "0x%x" );	\
+    ITEM(ELogSize,       size,       "%d" );	\
+    ITEM(ELogTitle,      =======,    "%s" );	\
+    ITEM(ELogTime,       time,       "%s" );	\
+    ITEM(ELogCount,      count,      "%d" );	\
+    ITEM(ELogIndex,      index,      "%d" );
 
 
 

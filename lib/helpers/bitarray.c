@@ -4,25 +4,28 @@
 #include <assert.h>
 
 static int search_emptybit_sequence_begin(struct BitArrayImplem* this, int len_of_sequence){
-    int i, j, search_seq_len;
+    int i, j, search_seq_len=0;
     assert(len_of_sequence);
     for ( i=0; i < this->array_size; i++ ){
 	/*if at least one bit non setted, then locate it*/
 	if ( this->array[i] != 0xFF ){
-	    search_seq_len = 0;
-	    for ( j=i*8; j < this->array_size*8 && search_seq_len < len_of_sequence; j++ ){
-		if ( !this->get_bit(this, j) )
+	    for ( j=0; j < 8 && search_seq_len < len_of_sequence; j++ ){
+		if ( !this->get_bit(this, i*8+j) )
 		    search_seq_len++;
 		else
 		    search_seq_len=0;
 	    }
+
 	    /*if search complete*/
 	    if ( search_seq_len == len_of_sequence ){
-		int matched_index = j-1;
 		/*update default search pos*/
-		this->array_search_pos = matched_index/8;
+		this->array_search_pos = i;
+		int matched_index = i*8+(j-1);
 		return matched_index-len_of_sequence+1;
 	    }
+	}
+	else{
+	    search_seq_len = 0;
 	}
     }
     return -1;

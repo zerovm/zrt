@@ -32,7 +32,10 @@ int main(int argc, char**argv){
     uint32_t rounded_up_heap_addr = ROUND_UP( (uint32_t)MANIFEST->heap_ptr, sysconf(_SC_PAGESIZE) );
     int rounded_up_heap_size = MANIFEST->heap_size;
     rounded_up_heap_size -= rounded_up_heap_addr - (uint32_t)MANIFEST->heap_ptr;
+    int rounded_up_heap_end_addr = rounded_up_heap_addr+rounded_up_heap_size-pagesize;
 
+    LOG_STDERR(ELogAddress, rounded_up_heap_addr, "heap first page" )
+    LOG_STDERR(ELogAddress, rounded_up_heap_end_addr, "heap last page" )
     LOG_STDERR(ELogSize,    pagesize, "memory page size" )
     LOG_STDERR(ELogSize,    rounded_up_heap_size, "memory heap size" )
 
@@ -48,16 +51,26 @@ int main(int argc, char**argv){
     /*test3: test mmap address must be aligned for cases:
       PROT_READ|PROT_WRITE, MAP_ANONYMOUS*/
     void* addr;
+    void* addr2;
     addr = mmap_test_align(0x10000-1, EXPECTED_TRUE);
     mmap_test_unmap( addr, ROUND_UP(0x10000-1, pagesize));
     /*It is not an error if the indicated range does not contain any mapped pages.*/
     mmap_test_unmap( addr, ROUND_UP(0x10000-1, pagesize));
 
-    /*It's expected that we have no memory mappings currently in ZRT, 
-      and trying to allocate all available memory*/
-    for ( int i=0; i<rounded_up_heap_size; i+=pagesize ){
-	mmap_test_align(pagesize, EXPECTED_TRUE);
-    }
+#define MANY_PAGES_FOR_ALLOC 0x20
+    addr = mmap_test_align(pagesize, EXPECTED_TRUE);
+    addr2 = mmap_test_align(pagesize*MANY_PAGES_FOR_ALLOC, EXPECTED_TRUE);
+    LOG_STDERR(ELogAddress, addr2, "maped memory" )
+    LOG_STDERR(ELogAddress, addr+pagesize*MANY_PAGES_FOR_ALLOC, "expected maped memory" )
+    int ret;
+    TEST_OPERATION_RESULT((addr+pagesize*MANY_PAGES_FOR_ALLOC)==addr2, &ret, ret==1 );
+    void* prev_addr;
+    addr = NULL;
+    do{
+	prev_addr = addr;
+	addr = mmap_test_align(pagesize, EXPECTED_TRUE);
+	assert(prev_addr < addr);
+    }while( addr != (void*)rounded_up_heap_end_addr);
 
     mmap_test_align(pagesize, EXPECTED_FALSE);
     /*unmap some memory page*/

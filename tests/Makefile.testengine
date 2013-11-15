@@ -88,8 +88,6 @@ LDFLAGS+= -lmapreduce -lnetworking
 
 all: clean prepare $(ZEROVM) $(TEST_NEXES) report
 
-resume:$(ZEROVM) $(TEST_NEXES)
-
 clean:
 	@find -name "*.scp" | xargs rm -f $(VERBOSE_CLEAN)
 	@rm -f $(VERBOSE_CLEAN) $(OUTPUT_LAST)
@@ -182,7 +180,6 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 
 report: $(OUTPUT_FAIL)
 #display tests resuts
-	@sleep 1
 	@echo --------------------------------------------
 	@echo $(COUNTER) tests was executed
 	@echo -n "Failed "
@@ -190,7 +187,6 @@ report: $(OUTPUT_FAIL)
 	@echo " tests:"
 	@cat $(OUTPUT_FAIL)
 	@rm -f $(OUTPUT_FAIL) $(OUTPUT_LAST)
-	@$(ZRT_ROOT)/kill_daemons.sh
 
 $(OUTPUT_FAIL):
 #has no output fail if this rule is active

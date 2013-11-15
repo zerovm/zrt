@@ -25,31 +25,43 @@
 
 
 /***************mmap emulation *************/
-#define PAGE_SIZE (1024*64)
+#define PAGE_SIZE (1024*4)
 static struct BitArrayImplem s_bit_array_implem;
 static unsigned char map_chunks_bit_array[PAGE_SIZE/8];
 
 static void* alloc_memory_pseudo_mmap(struct BitArrayImplem* bit_array_implem, 
 				      struct MemoryInterface* mem_if_p, 
 				      size_t memsize){ 
+    int i;
     void* ret_addr = NULL;
     int right_index_bound = mem_if_p->heap_size / PAGE_SIZE;
+    int map_chunks_sequence_count = ROUND_UP(memsize, PAGE_SIZE)/PAGE_SIZE;
     int index = bit_array_implem
-	->search_emptybit_sequence_begin(bit_array_implem,
-					ROUND_UP(memsize, PAGE_SIZE)/PAGE_SIZE ); 
+	->search_emptybit_sequence_begin(bit_array_implem, map_chunks_sequence_count ); 
+
+    if ( index == 4095 ){
+	int i=2;
+    }
+
     if ( index != -1 && index < right_index_bound ){	
-	bit_array_implem->toggle_bit(bit_array_implem, index);
-	ret_addr = mem_if_p->heap_ptr + index*PAGE_SIZE;
-	assert( ret_addr < mem_if_p->heap_ptr+mem_if_p->heap_size );
-	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%lld) ret addr=%p", memsize, ret_addr ); 
+	for ( i=0; i < map_chunks_sequence_count; i++ ){
+	    int current_chunk_index = index+i;
+	    LOG_DEBUG(ELogIndex, current_chunk_index, "mark chunk as used" )
+    	    bit_array_implem->toggle_bit(bit_array_implem, current_chunk_index);
+	    ret_addr = mem_if_p->heap_ptr + current_chunk_index*PAGE_SIZE;
+	    assert( ret_addr < mem_if_p->heap_ptr+mem_if_p->heap_size );
+	}
+	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%lu) ret addr=%p", memsize, ret_addr ); 
     }
     else{
-	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%lld) failed", memsize );
+	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%lu) failed", memsize );
     }
+    if ( ret_addr == 0x1210000 ){
+	ret_addr;
+    }
+
     return ret_addr;
 }
-
-
 
 
 /*return aligned value that multiple of the power of 2*/
@@ -177,11 +189,18 @@ memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
 	int c = addr - this->heap_ptr;
 	int munmap_begin_chunk_index = (addr - this->heap_ptr)/PAGE_SIZE;
 	int munmap_chnuks_count = ROUND_UP(length,PAGE_SIZE)/PAGE_SIZE;
+	LOG_DEBUG(ELogIndex, munmap_begin_chunk_index, "" )
+	LOG_DEBUG(ELogCount, munmap_chnuks_count, "" )
+
 	/*unmap region chunk by chunk*/
 	for ( i=munmap_begin_chunk_index; i < munmap_begin_chunk_index+munmap_chnuks_count ; i++ ){
-	    if (s_bit_array_implem.get_bit( &s_bit_array_implem, i) != 0 ){
-		LOG_DEBUG(ELogAddress, addr, "indicated address does not contain maped region" )
+	    int bit = s_bit_array_implem.get_bit( &s_bit_array_implem, i);
+	    ZRT_LOG(L_SHORT, "bit index=%d value=%d", i, bit);
+	    if ( bit == 1 ){
 		s_bit_array_implem.toggle_bit( &s_bit_array_implem, i);
+	    }
+	    else{
+		LOG_DEBUG(ELogAddress, addr, "indicated address does not contain maped region" )
 	    }
 	}
     }
@@ -218,10 +237,11 @@ struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size
     /*check if we have valid PAGE_SIZE macro*/
     assert( sysconf(_SC_PAGESIZE) == PAGE_SIZE );
 
-    ZRT_LOG(L_BASE, "Heap memory [start=0x%x, size=0x%x]", addr_uint, heap_size );
+    ZRT_LOG(L_BASE, "Heap memory [1st page addr=0x%x, last page addr=0x%x, size=0x%x]", 
+	    addr_uint, addr_uint+heap_size-sysconf(_SC_PAGESIZE), heap_size );
 
     /*init array used to store status of chunks for mmap/munmap*/
-    init_bit_array( &s_bit_array_implem, map_chunks_bit_array, PAGE_SIZE/8 );
+    init_bit_array( &s_bit_array_implem, map_chunks_bit_array, heap_size/PAGE_SIZE/8 );
 
     KMemoryInterface.init(&KMemoryInterface, (void*)addr_uint, heap_size);
     return &KMemoryInterface;

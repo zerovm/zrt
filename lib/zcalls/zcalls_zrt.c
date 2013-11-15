@@ -306,7 +306,7 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
     /*get from system, print environment variables*/
     LOG_DEBUG(ELogTime, ctime(&t), "System time" )
     LOG_DEBUG(ELogSize, sysconf(_SC_PAGE_SIZE), "Page size _SC_PAGE_SIZE" )
-    LOG_DEBUG(ELogCount, (int)manifest->heap_size / sysconf(_SC_PAGE_SIZE), "Memory pages count"  )
+    LOG_DEBUG(ELogCount, (int)(manifest->heap_size / sysconf(_SC_PAGE_SIZE)), "Memory pages count"  )
     LOG_DEBUG(ELogAddress, sbrk(0), "sbrk(0)" )
 
     LOG_DEBUG(ELogTitle, "Environment variables", "======")

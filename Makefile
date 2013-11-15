@@ -59,7 +59,7 @@ LIBPORTS= \
 libports/gtest/libgtest.a \
 libports/lua-5.2.1/liblua.a \
 libports/tar-1.11.8/libtar.a \
-libports/sqlite3/libsqlite3.a 
+libports/sqlite3/libsqlite3.a
 
 ################# samples to build
 UNSTABLE_SAMPLES=
