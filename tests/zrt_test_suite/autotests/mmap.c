@@ -48,7 +48,7 @@ int main(int argc, char**argv){
     /*test2: test mmap with not 0 offset*/
     mmap_test_file_mapping(10);
 
-    /*test3: test mmap address must be aligned for cases:
+    /*test3: test mmap address must be aligned to page size.
       PROT_READ|PROT_WRITE, MAP_ANONYMOUS*/
     void* addr;
     void* addr2;
@@ -58,14 +58,15 @@ int main(int argc, char**argv){
     mmap_test_unmap( addr, ROUND_UP(0x10000-1, pagesize));
 
 #define MANY_PAGES_FOR_ALLOC 0x20
-    addr = mmap_test_align(pagesize, EXPECTED_TRUE);
     addr2 = mmap_test_align(pagesize*MANY_PAGES_FOR_ALLOC, EXPECTED_TRUE);
-    LOG_STDERR(ELogAddress, addr2, "maped memory" )
-    LOG_STDERR(ELogAddress, addr+pagesize*MANY_PAGES_FOR_ALLOC, "expected maped memory" )
+    addr = mmap_test_align(pagesize, EXPECTED_TRUE);
+    LOG_STDERR(ELogAddress, addr, "maped big block of memory" )
+    LOG_STDERR(ELogAddress, addr2+pagesize*MANY_PAGES_FOR_ALLOC, "expected next maped memory address" )
     int ret;
-    TEST_OPERATION_RESULT((addr+pagesize*MANY_PAGES_FOR_ALLOC)==addr2, &ret, ret==1 );
+    TEST_OPERATION_RESULT((addr2+pagesize*MANY_PAGES_FOR_ALLOC)==addr, &ret, ret==1 );
     void* prev_addr;
     addr = NULL;
+    /*alloc all map pages*/
     do{
 	prev_addr = addr;
 	addr = mmap_test_align(pagesize, EXPECTED_TRUE);
@@ -76,6 +77,9 @@ int main(int argc, char**argv){
     /*unmap some memory page*/
     mmap_test_unmap( (void*)(rounded_up_heap_addr+rounded_up_heap_size/2), pagesize );
     mmap_test_align(pagesize, EXPECTED_TRUE);
+
+    /*we need to free some memory to properly run some code inside of exit handler*/
+    mmap_test_unmap((void*)rounded_up_heap_addr, rounded_up_heap_size);
 
     return 0;
 }
