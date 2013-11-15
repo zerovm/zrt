@@ -25,7 +25,7 @@
 
 
 /***************mmap emulation *************/
-#define PAGE_SIZE (1024*4)
+#define PAGE_SIZE (1024*64)
 static struct BitArrayImplem s_bit_array_implem;
 static unsigned char map_chunks_bit_array[PAGE_SIZE/8];
 
