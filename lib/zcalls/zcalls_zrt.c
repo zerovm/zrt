@@ -203,25 +203,27 @@ int  zrt_zcall_enhanced_getdents(int fd, struct dirent *dirent_buf, size_t count
 }
 
 int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newfd){
-    int ret=-1;
     LOG_SYSCALL_START("name=%s flags=%d mode=%o(octal)", name, flags, mode );
+    char* absolute_path;
+    char temp_path[PATH_MAX];
+    int ret=-1;
     errno=0;
     VALIDATE_SYSCALL_PTR(name);
     
     /*reset mode bits, that is not actual for permissions*/
     mode&=(S_IRWXU|S_IRWXG|S_IRWXO);
-    char temp_path[PATH_MAX];
-    char* absolute_path = zrealpath( name, temp_path );
     APPLY_UMASK(&mode);
-    int fd = s_transparent_mount->open( absolute_path, flags, mode );
-    /*get fd by pointer*/
-    if ( fd >= 0 ){
-	*newfd  = fd;
-	ret =0;
+    if ( (absolute_path = zrealpath(name, temp_path)) != NULL ){
+	if ( (ret = s_transparent_mount->open( absolute_path, flags, mode )) >= 0 ){
+	    /*get fd by pointer*/
+	    *newfd  = ret;
+	    ret =0;
+	}
     }
+
     LOG_SHORT_SYSCALL_FINISH( ret, 
-			      "newfd=%d, name=%s, flags=%s, mode=%s", 
-			      fd, name, 
+			      "*newfd=%d, name=%s, flags=%s, mode=%s", 
+			      *newfd, name, 
 			      STR_ALLOCA_COPY(STR_FILE_OPEN_FLAGS(flags)),
 			      STR_ALLOCA_COPY(STR_STAT_ST_MODE(mode)));
     return ret;
@@ -229,14 +231,17 @@ int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newf
 
 int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
     LOG_SYSCALL_START("pathname=%s stat=%p", pathname, stat);
+    char* absolute_path;
+    char temp_path[PATH_MAX];
+    int ret=-1;
     errno = 0;
     VALIDATE_SYSCALL_PTR(pathname);
     VALIDATE_SYSCALL_PTR(stat);
-    char temp_path[PATH_MAX];
-    char* absolute_path = zrealpath(pathname, temp_path);
-    int ret = s_transparent_mount->stat(absolute_path, stat);
-    if ( ret == 0 ){
-	ZRT_LOG_STAT(L_INFO, stat);
+
+    if ( (absolute_path = realpath(pathname, temp_path)) != NULL ){
+	if ( (ret = s_transparent_mount->stat(absolute_path, stat)) == 0 ){
+	    ZRT_LOG_STAT(L_INFO, stat);
+	}
     }
     LOG_SHORT_SYSCALL_FINISH( ret, "pathname=%s", pathname);
     return ret;

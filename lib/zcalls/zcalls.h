@@ -137,6 +137,7 @@ int zrt_zcall_fchmod(int fd, mode_t mode);
 int zrt_zcall_chown(const char *path, uid_t owner, gid_t group);
 int zrt_zcall_fchown(int fd, uid_t owner, gid_t group);
 int zrt_zcall_ftruncate(int fd, off_t length);
+int zrt_zcall_stat_realpath(const char *abspathname, struct stat *stat);
 
 #endif //__ZCALLS_H__
 

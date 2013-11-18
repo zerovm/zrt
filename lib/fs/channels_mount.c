@@ -552,7 +552,6 @@ static int channels_chmod(const char* path, uint32_t mode){
 static int channels_stat(const char* path, struct stat *buf){
     errno = 0;
     ZRT_LOG(L_EXTRA, "path=%s", path);
-    struct stat *sbuf = (struct stat *)buf;
 
     if(path == NULL){
         SET_ERRNO(EFAULT);
@@ -562,11 +561,11 @@ static int channels_stat(const char* path, struct stat *buf){
     struct dir_data_t *dir = NULL;
     int handle = channel_handle(path);
     if ( handle != -1 ){
-        set_stat( sbuf, handle);
+        set_stat( buf, handle);
         return 0;
     }
     else if ( (dir=match_dir_in_directory_list(&s_manifest_dirs, path, strlen(path))) ){
-        set_stat( sbuf, dir->handle);
+        set_stat( buf, dir->handle);
         return 0;
     }
     else{

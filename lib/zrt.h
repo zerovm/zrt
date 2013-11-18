@@ -113,6 +113,7 @@ struct zcalls_nonsyscalls_t{
     int  (*chown)(const char *path, uid_t owner, gid_t group);
     int  (*fchown)(int fd, uid_t owner, gid_t group);
     int  (*ftruncate)(int fd, off_t length);
+    int  (*stat_realpath) (const char *abspathname, struct stat *stat);
 };
 
 #define ZCALLS_ENV_ARGS_INIT 4         /*use as type param in __query_zcalls*/

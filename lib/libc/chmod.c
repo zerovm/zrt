@@ -33,19 +33,23 @@
 
 int zrt_zcall_chmod(const char *path, mode_t mode){
     CHECK_EXIT_IF_ZRT_NOT_READY;
-
+    char* absolute_path;
+    char temp_path[PATH_MAX];
+    int ret=-1;
+    errno=0;
     LOG_SYSCALL_START("path=%s mode=%o(octal)", path, mode);
 
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
-    errno=0;
     ZRT_LOG(L_SHORT, "path=%s, mode=%u", path, mode );
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
     APPLY_UMASK(&mode);
-    char temp_path[PATH_MAX];
-    char* absolute_path = zrealpath(path, temp_path);
-    int ret = transpar_mount->chmod(absolute_path, mode);
+
+    if ( (absolute_path = realpath(path, temp_path)) != NULL ){
+	ret = transpar_mount->chmod(absolute_path, mode);
+    }
+
     LOG_SHORT_SYSCALL_FINISH(ret, "path=%s mode=%o(octal)", path, mode);
     return ret;
 }

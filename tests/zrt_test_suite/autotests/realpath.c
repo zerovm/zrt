@@ -18,34 +18,47 @@
 
 #include "channels/test_channels.h"
 
+static char* res;
+static char resolved_path[PATH_MAX];
+
+void test_relative_path(const char* relative_path, const char* abs_path){
+    int ret;
+
+   /*create file not using absolute name, note filenam is TEST_FILE+1*/
+    CREATE_FILE(relative_path, "some data", sizeof("some data"));
+
+    TEST_OPERATION_RESULT( realpath( relative_path, resolved_path),
+			   &res, res!=NULL );
+
+    /*realpath & abspath must be equal*/
+    TEST_OPERATION_RESULT(strcmp(res, abs_path), &ret, ret==0);
+    /*check file existance using abs_path*/
+    CHECK_PATH_EXISTANCE(abs_path);
+}
+
 int main(int argc, char **argv)
 {
-    char resolved_path[PATH_MAX];
-    char* res;
-
+    /*test bad cases*/
     TEST_OPERATION_RESULT( realpath( NULL, resolved_path),
 			   &res, res==NULL&&errno==EINVAL );
 
     TEST_OPERATION_RESULT( realpath( "", resolved_path),
 			   &res, res==NULL&&errno==ENOENT );
 
-    /*create file not using absolute name, note filenam eis TEST_FILE+1*/
-    CREATE_FILE(TEST_FILE+1, "some data", sizeof("some data"));
+    CREATE_EMPTY_DIR("/dev/mount/../../dir");
+    /*test fs in memory*/
+    test_relative_path("/dir/../foo1", "/foo1");
+    test_relative_path("foo", "/foo");
+    test_relative_path("/dir/../foo1", "/foo1");
 
-    TEST_OPERATION_RESULT( realpath( TEST_FILE, resolved_path),
-			   &res, res!=NULL );
+    struct stat buf;
+    int res = stat("/dir/../foo1", &buf);
+    assert(res==0);
 
-    int64_t size = sizeof(TEST_FILE);
-    CMP_MEM_DATA(res, TEST_FILE, size);
-    
-    if ( res ){
-	fprintf(stderr, "realpath =%s, %s\n", res, resolved_path);
-    }
-    else{
-	fprintf(stderr, "realpath failed, errno=%d\n", errno );
-    }
+    /*test channels fs: /dev/nvram*/
+    CHECK_PATH_EXISTANCE("/dev/mount/../nvram");
 
-    return !res;
+    return 0;
 }
 
 

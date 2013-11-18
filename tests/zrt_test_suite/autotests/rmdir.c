@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 			  stat(DIR_NAME, &st),
 			  &ret, ret==0&&st.st_nlink==2 );
     TEST_OPERATION_RESULT(
-			  rmdir(DIR_NAME),
+			  rmdir("/dev/../"DIR_NAME),
 			  &ret, ret==-1&&errno==ENOTEMPTY );
 
     #define FULL_DIR_FILE DIR_NAME "/" DIR_FILE

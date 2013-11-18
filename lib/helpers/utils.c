@@ -13,63 +13,48 @@
 #include "zrtlog.h"
 #include "utils.h"
 
-/*if path starting with more than one slashes together 
-  then return path starting from last of that slashes*/
-static const char* absolute_path_starting_with_single_slash(const char* path){
-    int i;
-    int len = strlen(path);
-    /*search last '/' in path starting with several slashes together*/
-    for (i=0; i < len; i++){
-	/*if it not last item processing*/
-	if ( i+1 < len ){
-	    if ( path[i] == '/' && path[i+1] != '/' )
-		return &path[i];
-	}
-	/* end of path reached*/
-	else
-	    return &path[i];
+#define MERGE_PATH_COMPONENTS(path1, path2, result){		\
+	int path1len = strlen(path1);				\
+	strcpy(result, path1);					\
+	strncpy(result+path1len, path2, PATH_MAX-path1len);	\
     }
-    return path;
-}
+
 
 char* zrealpath( const char* path, char* resolved_path )
 {
-    /* some applications providing relative path, currently any of zrt filesystems 
-     * does not support relative path, so make absolute path just insert '/' into
-     * begin of relative path */
-    char* absolute_path;
-    const char* tmp = NULL; 
-    if ( resolved_path != NULL )
-	absolute_path = resolved_path;
-    else if ( (absolute_path=malloc( strlen(path) + 2 )) == NULL ){
-	/*in some cases this code can be called from abort() function due malloc failure,
-	  so we need to check malloc result*/
-	ZRT_LOG(L_ERROR, "malloc failed, sbrk(0)=%p", sbrk(0) );
-	return NULL;
+    char temp_path[PATH_MAX];
+    char* last_component;
+    char* absbasepath;
+    /*exclude last path component from path param*/
+    /**/
+    //    do{
+    last_component=strrchr(path, '/');
+    //    }
+    //    while ( last_component==(path+pathlen) && last_component!=path )
+    /*if last_component resides in root*/
+    if ( last_component != path && last_component!= NULL ){
+	int basepathlen = (int)(last_component - path);
+	strncpy(temp_path, path, basepathlen);
+	if ( basepathlen < PATH_MAX )
+	    temp_path[basepathlen] = '\0';
+
+	/*combine absolute base path and last path component*/
+	if ( (absbasepath = realpath(temp_path, resolved_path)) != NULL ){
+	    MERGE_PATH_COMPONENTS(absbasepath, last_component, resolved_path);
+	    return resolved_path;
+	}
+	else 
+	    return NULL;
     }
-    /*transform . path into root /  */
-    if ( strlen(path) == 1 && path[0] == '.' ){
-        strcpy( absolute_path, "/\0" );
+    else if ( last_component == NULL ){
+	char* rootpath = getcwd(temp_path, PATH_MAX);
+	MERGE_PATH_COMPONENTS(rootpath, path, resolved_path);
+	return resolved_path;
     }
-    /*transform ./ path into root / */
-    else if ( strlen(path) == 2 && path[0] == '.' && path[1] == '/' ){
-        strcpy( absolute_path, "/\0" );
-    }
-    /*if relative path is detected then transform it to absolute*/
-    else if ( strlen(path) > 1 && path[0] != '/' ){
-        strcpy( absolute_path, "/\0" );
-        strcat(absolute_path, path);
-    }
-    /*normalization of global path
-     *if path has more than one '/' slashes together then path should be used
-     *as absolute path starting from single '/' slash */
-    else if ( (tmp=absolute_path_starting_with_single_slash(path)) != path ){
-	strcpy(absolute_path, tmp);
-    }
-    else{
-        strcpy(absolute_path, path);
-    }
-    return absolute_path;
+    else
+	return path;
+
+    return resolved_path;
 }
 
 

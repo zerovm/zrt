@@ -32,7 +32,11 @@
 
 int zrt_zcall_link(const char *oldpath, const char *newpath){
     CHECK_EXIT_IF_ZRT_NOT_READY;
-
+    char* absolute_path1;
+    char* absolute_path2;
+    char temp_path1[PATH_MAX];
+    char temp_path2[PATH_MAX];
+    int ret=-1;
     LOG_SYSCALL_START("oldpath=%s, newpath=%s", oldpath, newpath);
 
     struct MountsInterface* transpar_mount = transparent_mount();
@@ -41,12 +45,11 @@ int zrt_zcall_link(const char *oldpath, const char *newpath){
     errno=0;
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(oldpath);
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(newpath);
-    char* absolute_path1 = zrealpath(oldpath, NULL);
-    char* absolute_path2 = zrealpath(newpath, NULL);
+    if ( (absolute_path1 = realpath(oldpath, temp_path1)) != NULL &&
+	 (absolute_path2 = zrealpath(newpath, temp_path2)) != NULL){
+	ret = transpar_mount->link(absolute_path1, absolute_path2);
+    }
 
-    int ret = transpar_mount->link(absolute_path1, absolute_path2);
-    free(absolute_path1);
-    free(absolute_path2);
     LOG_SHORT_SYSCALL_FINISH(ret, "oldpath=%s, newpath=%s", oldpath, newpath);
     return ret;
 }

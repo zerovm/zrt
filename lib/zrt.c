@@ -92,7 +92,8 @@ static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
     zrt_zcall_fchmod,
     zrt_zcall_chown,
     zrt_zcall_fchown,
-    zrt_zcall_ftruncate
+    zrt_zcall_ftruncate,
+    zrt_zcall_stat_realpath
 };
 #endif //ZLIBC_STUB
 

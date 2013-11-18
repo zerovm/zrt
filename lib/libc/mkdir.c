@@ -33,29 +33,19 @@
 
 int zrt_zcall_mkdir(const char* pathname, mode_t mode){
     CHECK_EXIT_IF_ZRT_NOT_READY;
-
+    char* absolute_path;
+    char temp_path[PATH_MAX];
+    int ret=-1;
+    errno=0;
     LOG_SYSCALL_START("pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
     
     struct MountsInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
-    errno=0;
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
-    char temp_path[PATH_MAX];
-    char* absolute_path = zrealpath( pathname, temp_path );
-    int ret = transpar_mount->mkdir( absolute_path, mode );
-    int errno_mkdir = errno; /*save mkdir errno before stat request*/
-    /*print stat data of newly created directory*/
-    struct stat st;
-    int ret2 = transpar_mount->stat(absolute_path, &st);
-    if ( ret2 == 0 ){
-	ZRT_LOG_STAT(L_INFO, (&st));
+    if ( (absolute_path = zrealpath(pathname, temp_path)) != NULL ){
+	ret = transpar_mount->mkdir(absolute_path, mode);
     }
-    /**/
-    if ( ret == -1 )
-	errno = errno_mkdir;/*restore mkdir errno after stat request completed*/
-    else
-	errno =0; /*rest errno if OK*/
 
     LOG_SHORT_SYSCALL_FINISH(ret, "pathname=%s, mode=%o(octal)", pathname, (uint32_t)mode);
     return ret;

@@ -25,8 +25,13 @@ int main(int argc, char **argv)
     TEST_OPERATION_RESULT(
 			  mkdir(DIR_NAME, S_IRWXU),
 			  &ret, ret==-1&&errno==EEXIST );
+    TEST_OPERATION_RESULT(
+			  mkdir("/dev/../"DIR_NAME, S_IRWXU),
+			  &ret, ret==-1&&errno==EEXIST );
+
 
     CHECK_PATH_EXISTANCE("/" DIR_NAME);
+    CHECK_PATH_EXISTANCE("/dev/../"DIR_NAME);
     return 0;
 }
 

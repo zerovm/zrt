@@ -30,7 +30,7 @@ TEST_STDOUTS=$(addsuffix .stdout.std, $(basename $(TEST_SOURCES) ) )
 TEST_STDERRS=$(addsuffix .stderr.std, $(basename $(TEST_SOURCES) ) )
 TEST_LOG_ZVM=$(addsuffix .zerovm.log, $(basename $(TEST_SOURCES) ) )
 TEST_LOG_DEBUG=$(addsuffix .zrtdebug.log, $(basename $(TEST_SOURCES) ) )
-TEST_TARS=$(addsuffix $(TEST_TAR), $(basename $(TEST_SOURCES) ) )
+TEST_TARS=$(addsuffix .$(TEST_TAR), $(basename $(TEST_SOURCES) ) )
 TEST_NEXES=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
 TEST_LIST=$(basename $(TEST_SOURCES) )
 COUNTER=0
@@ -179,6 +179,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	fi;
 
 report: $(OUTPUT_FAIL)
+#wait for tests completion before results display
+	@sleep 1
 #display tests resuts
 	@echo --------------------------------------------
 	@echo $(COUNTER) tests was executed

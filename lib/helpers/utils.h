@@ -9,13 +9,12 @@
 #define __HELPERS_UTILS_H__
 
 /*
- * create absolute path, for relative path just insert into beginning
- * '/' char, user application can provide relative path, currently any
- * of zrt filesystems does not support relative path, so making
- * absolute path is required. It is not using stat() function opposite
- * to realpath from libc.  In some cases it's better.  
+ * analog of realpath, that allows non existant file/dir as a last 
+ * component path. 
  * @param resolved_path if not NULL then result will be copied here, 
  * if it's NULL then it uses malloc.
+ * @return -1 If some path components are absent on disk excluding last
+ * component part.
  */
 char* zrealpath( const char* path, char* resolved_path );
 
