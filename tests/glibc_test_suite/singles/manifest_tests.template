@@ -12,19 +12,19 @@ Channel = {OUTFILE}.nvram, /dev/nvram, 0, 0, 999999, 999999, 0, 0
 == and setup commandline and environments
 =====================================================================
 
-Channel = {ABS_PATH}mounts/tmp_dir.tar, /dev/mount/tmp, 0, 0, 9999999, 9999999, 0, 0
+Channel = {ABS_PATH}mounts/tmp_dir.tar, /dev/mount/tmp, 1, 0, 9999999, 9999999, 0, 0
 ===== add localisations separatedly 
-Channel = {MOUNTS_PATH}locales/de_DE.UTF-8.tar, /dev/mount/de_DE.UTF-8.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/cs_CZ.UTF-8.tar, /dev/mount/cs_CZ.UTF-8.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/en_US.ISO-8859-1.tar, /dev/mount/en_US.ISO-8859-1.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/de_DE.ISO-8859-1.tar, /dev/mount/de_DE.ISO-8859-1.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/tr_TR.UTF-8.tar, /dev/mount/tr_TR.UTF-8.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/en_US.UTF-8.tar, /dev/mount/en_US.UTF-8.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/fa_IR.UTF-8.tar, /dev/mount/fa_IR.UTF-8.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/ja_JP.EUC-JP.tar, /dev/mount/ja_JP.EUC-JP.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/zh_TW.EUC-TW.tar, /dev/mount/zh_TW.EUC-TW.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/en_US.ANSI_X3.4-1968.tar, /dev/mount/en_US.ANSI_X3.4-1968.tar, 0, 0, 9999999, 9999999, 0, 0
-Channel = {MOUNTS_PATH}locales/hr_HR.ISO-8859-2.tar, /dev/mount/hr_HR.ISO-8859-2.tar, 0, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/de_DE.UTF-8.tar, /dev/mount/de_DE.UTF-8.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/cs_CZ.UTF-8.tar, /dev/mount/cs_CZ.UTF-8.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/en_US.ISO-8859-1.tar, /dev/mount/en_US.ISO-8859-1.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/de_DE.ISO-8859-1.tar, /dev/mount/de_DE.ISO-8859-1.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/tr_TR.UTF-8.tar, /dev/mount/tr_TR.UTF-8.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/en_US.UTF-8.tar, /dev/mount/en_US.UTF-8.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/fa_IR.UTF-8.tar, /dev/mount/fa_IR.UTF-8.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/ja_JP.EUC-JP.tar, /dev/mount/ja_JP.EUC-JP.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/zh_TW.EUC-TW.tar, /dev/mount/zh_TW.EUC-TW.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/en_US.ANSI_X3.4-1968.tar, /dev/mount/en_US.ANSI_X3.4-1968.tar, 1, 0, 9999999, 9999999, 0, 0
+Channel = {MOUNTS_PATH}locales/hr_HR.ISO-8859-2.tar, /dev/mount/hr_HR.ISO-8859-2.tar, 1, 0, 9999999, 9999999, 0, 0
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some

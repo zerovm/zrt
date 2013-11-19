@@ -166,7 +166,7 @@ diff_archive (void)
 
       if (diff_fd < 0 && !flag_absolute_names)
 	{
-	  char *tmpbuf = xmalloc (strlen (current_file_name) + 2);
+	  char *tmpbuf = tar_xmalloc (strlen (current_file_name) + 2);
 
 	  *tmpbuf = '/';
 	  strcpy (tmpbuf + 1, current_file_name);
@@ -588,7 +588,7 @@ diff_sparse_files (int filesize)
   /* FIXME: `datarec' might be used uninitialized in this function.
      Reported by Bruno Haible.  */
 
-  buf = (char *) xmalloc (buf_size * sizeof (char));
+  buf = (char *) tar_xmalloc (buf_size * sizeof (char));
 
   fill_in_sparse_array ();
 
@@ -701,7 +701,7 @@ fill_in_sparse_array (void)
      long, but can change in this routine if necessary.  */
 
   sp_array_size = 10;
-  sparsearray = (struct sp_array *) xmalloc (sp_array_size * sizeof (struct sp_array));
+  sparsearray = (struct sp_array *) tar_xmalloc (sp_array_size * sizeof (struct sp_array));
 
   /* There are at most five of these structures in the header itself;
      read these in first.  */

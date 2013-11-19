@@ -196,7 +196,7 @@ Removing leading / from absolute path names in the archive")));
 
     case LF_SPARSE:
       sp_array_size = 10;
-      sparsearray = (struct sp_array *) xmalloc (sp_array_size * sizeof (struct sp_array));
+      sparsearray = (struct sp_array *) tar_xmalloc (sp_array_size * sizeof (struct sp_array));
       for (i = 0; i < SPARSE_IN_HDR; i++)
 	{
 	  sparsearray[i].offset =
@@ -337,7 +337,7 @@ Removing leading / from absolute path names in the archive")));
 	     REAL interesting unless we do this.  */
 
 	  namelen_bis = strlen (CURRENT_FILE_NAME) + 1;
-	  name = (char *) xmalloc ((sizeof (char)) * namelen_bis);
+	  name = (char *) tar_xmalloc ((sizeof (char)) * namelen_bis);
 	  memcpy (name, CURRENT_FILE_NAME, (size_t) namelen_bis);
 	  size = hstat.st_size;
 	  extract_sparse_file (fd, &size, hstat.st_size, name);
@@ -643,7 +643,7 @@ Removing leading / from absolute path names in the archive")));
       if (!flag_modified)
 	{
 	  tmp = ((struct saved_dir_info *)
-		 xmalloc (sizeof (struct saved_dir_info)));
+		 tar_xmalloc (sizeof (struct saved_dir_info)));
 
 	  tmp->path = xstrdup (CURRENT_FILE_NAME);
 	  tmp->mode = hstat.st_mode;

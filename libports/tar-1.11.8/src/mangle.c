@@ -55,7 +55,7 @@ extract_mangle (void)
   int copied;
 
   size = hstat.st_size;
-  buf = to = xmalloc ((size_t) (size + 1));
+  buf = to = tar_xmalloc ((size_t) (size + 1));
   buf[size] = '\0';
   while (size > 0)
     {

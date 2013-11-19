@@ -369,7 +369,7 @@ junk_archive (void)
 
     if (write_archive_to_stdout)
 	write_archive_to_stdout = 0;
-    new_block = (union record *) xmalloc ((size_t) blocksize);
+    new_block = (union record *) tar_xmalloc ((size_t) blocksize);
 
     /* Save away records before this one in this block.  */
 

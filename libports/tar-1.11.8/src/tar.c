@@ -266,7 +266,7 @@ name_next (int change_dirs)
 	    {
 	      free (name_buffer);
 	      name_buffer_length = strlen (source);
-	      name_buffer = xmalloc (name_buffer_length + 2);
+	      name_buffer = tar_xmalloc (name_buffer_length + 2);
 	    }
 	  strcpy (name_buffer, source);
 
@@ -334,7 +334,7 @@ name_gather (void)
       if (!namelen)
 	{
 	  namelen = NAMSIZ;
-	  namebuf = (struct name *) xmalloc (sizeof (struct name) + NAMSIZ);
+	  namebuf = (struct name *) tar_xmalloc (sizeof (struct name) + NAMSIZ);
 	}
       p = name_next (0);
       if (p)
@@ -389,7 +389,7 @@ addname (const char *name)
 	ERROR ((TAREXIT_FAILURE, 0, _("Missing file name after -C")));
       if (chdir_name[0] != '/')
 	{
-	  char *path = xmalloc (PATH_MAX);
+	  char *path = tar_xmalloc (PATH_MAX);
 #ifdef HAVE_GETCWD
 	  if (!getcwd (path, PATH_MAX))
 	    ERROR ((TAREXIT_FAILURE, 0, _("Could not get current directory")));
@@ -406,7 +406,7 @@ addname (const char *name)
     }
 
   i = name ? strlen (name) : 0;
-  p = (struct name *) xmalloc ((unsigned) (sizeof (struct name) + i));
+  p = (struct name *) tar_xmalloc ((unsigned) (sizeof (struct name) + i));
   p->next = (struct name *) NULL;
   if (name)
     {
@@ -684,7 +684,7 @@ new_name (char *path, char *name)
 {
   char *path_buf;
 
-  path_buf = (char *) xmalloc (strlen (path) + strlen (name) + 2);
+  path_buf = (char *) tar_xmalloc (strlen (path) + strlen (name) + 2);
   sprintf (path_buf, "%s/%s", path, name);
   return path_buf;
 }
@@ -727,7 +727,7 @@ add_exclude (char *name)
 
   if (x_buffer == 0)
     {
-      x_buffer = (char *) xmalloc ((size_t) (size_buf + 1024));
+      x_buffer = (char *) tar_xmalloc ((size_t) (size_buf + 1024));
       free_x_buffer = 1024;
     }
   else if (free_x_buffer <= size_buf)
@@ -1111,7 +1111,7 @@ decode_options (int argc, char *const *argv)
       /* Allocate a new argument array, and copy program name in it.  */
 
       new_argc = argc - 1 + strlen (argv[1]);
-      new_argv = (char **) xmalloc (new_argc * sizeof (char *));
+      new_argv = (char **) tar_xmalloc (new_argc * sizeof (char *));
       in = argv;
       out = new_argv;
       *out++ = *in++;
@@ -1579,15 +1579,15 @@ main (int argc, char **argv)
 
   allocated_archive_names = 10;
   archive_name_array = (const char **)
-    xmalloc (sizeof (const char *) * allocated_archive_names);
+    tar_xmalloc (sizeof (const char *) * allocated_archive_names);
   archive_names = 0;
 
   allocated_names = 10;
   name_array = (const char **)
-    xmalloc (sizeof (const char *) * allocated_names);
+    tar_xmalloc (sizeof (const char *) * allocated_names);
   names = 0;
 
-  name_buffer = xmalloc (NAMSIZ + 2);
+  name_buffer = tar_xmalloc (NAMSIZ + 2);
   name_buffer_length = NAMSIZ;
 
   /* Decode options.  */
@@ -1637,7 +1637,7 @@ You may not specify more than one of the r, c, t, x, or d options")));
 	  const char *err;
 
 	  label_pattern = (struct re_pattern_buffer *)
-	    xmalloc (sizeof *label_pattern);
+	    tar_xmalloc (sizeof *label_pattern);
  	  memset (label_pattern, 0, sizeof *label_pattern);
 	  err = re_compile_pattern (flag_volhdr, (int) strlen (flag_volhdr),
 				    label_pattern);
@@ -1657,7 +1657,7 @@ You may not specify more than one of the r, c, t, x, or d options")));
 	  const char *err;
 
 	  label_pattern = (struct re_pattern_buffer *)
-	    xmalloc (sizeof *label_pattern);
+	    tar_xmalloc (sizeof *label_pattern);
  	  memset (label_pattern, 0, sizeof *label_pattern);
 	  err = re_compile_pattern (flag_volhdr, (int) strlen (flag_volhdr),
 				    label_pattern);

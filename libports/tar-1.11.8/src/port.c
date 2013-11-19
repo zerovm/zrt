@@ -469,7 +469,7 @@ ck_malloc (size_t size)
 {
   if (!size)
     size++;
-  return xmalloc (size);
+  return tar_xmalloc (size);
 }
 
 /* Implement a variable sized buffer of 'stuff'.  We don't know what it
@@ -494,9 +494,9 @@ init_buffer (void)
 {
   struct buffer *b;
 
-  b = (struct buffer *) xmalloc (sizeof (struct buffer));
+  b = (struct buffer *) tar_xmalloc (sizeof (struct buffer));
   b->allocated = MIN_ALLOCATE;
-  b->b = (char *) xmalloc (MIN_ALLOCATE);
+  b->b = (char *) tar_xmalloc (MIN_ALLOCATE);
   b->length = 0;
   return (char *) b;
 }
@@ -657,7 +657,7 @@ quote_copy_string (const char *string)
 
 	      n = (from_here - string) - 1;
 	      copying++;
-	      copy_buf = (char *) xmalloc (n + 5 + strlen (from_here) * 4);
+	      copy_buf = (char *) tar_xmalloc (n + 5 + strlen (from_here) * 4);
 	      memcpy (copy_buf, string, (size_t) n);
 	      to_there = copy_buf + n;
 	    }
@@ -677,7 +677,7 @@ quote_copy_string (const char *string)
 
 	      n = (from_here - string) - 1;
 	      copying++;
-	      copy_buf = (char *) xmalloc (n + 5 + strlen (from_here) * 4);
+	      copy_buf = (char *) tar_xmalloc (n + 5 + strlen (from_here) * 4);
 	      memcpy (copy_buf, string, (size_t) n);
 	      to_there = copy_buf + n;
 	    }

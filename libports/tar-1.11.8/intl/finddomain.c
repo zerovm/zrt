@@ -42,7 +42,7 @@ extern struct loaded_domain *_nl_loaded_domains;
 
 /* Prototypes for library functions.  */
 char *xgetcwd ();
-void *xmalloc ();
+void *tar_xmalloc ();
 
 /* Prototypes for local functions.  */
 static const char *category_to_name __P((int category));
@@ -120,7 +120,7 @@ _nl_find_domain (domainname, category)
      used.  Create an absolute file name.  */
   filename_len = strlen (dirname) + 1 + strlen (categoryvalue) + 1
 		 + strlen (categoryname) + 1 + strlen (domainname) + 4;
-  filename = (char *) xmalloc (filename_len);
+  filename = (char *) tar_xmalloc (filename_len);
   sprintf (filename, "%s/%s/%s/%s.mo", dirname, categoryvalue,
 	   categoryname, domainname);
 

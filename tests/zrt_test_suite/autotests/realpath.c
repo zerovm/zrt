@@ -24,8 +24,7 @@ static char resolved_path[PATH_MAX];
 void test_relative_path(const char* relative_path, const char* abs_path){
     int ret;
 
-   /*create file not using absolute name, note filenam is TEST_FILE+1*/
-    CREATE_FILE(relative_path, "some data", sizeof("some data"));
+    CHECK_PATH_EXISTANCE(relative_path);
 
     TEST_OPERATION_RESULT( realpath( relative_path, resolved_path),
 			   &res, res!=NULL );
@@ -45,18 +44,19 @@ int main(int argc, char **argv)
     TEST_OPERATION_RESULT( realpath( "", resolved_path),
 			   &res, res==NULL&&errno==ENOENT );
 
-    CREATE_EMPTY_DIR("/dev/mount/../../dir");
-    /*test fs in memory*/
-    test_relative_path("/dir/../foo1", "/foo1");
-    test_relative_path("foo", "/foo");
-    test_relative_path("/dir/../foo1", "/foo1");
+    /*create dir, file not using absolute name, note filenam is TEST_FILE+1*/
+    CREATE_EMPTY_DIR("/dev/mount/../../dir"); //it means /dir
+    CREATE_FILE("/foo1", "some data", sizeof("some data"));
 
-    struct stat buf;
-    int res = stat("/dir/../foo1", &buf);
-    assert(res==0);
-
-    /*test channels fs: /dev/nvram*/
-    CHECK_PATH_EXISTANCE("/dev/mount/../nvram");
+    /*test relative path, all path components must be exist*/
+    test_relative_path("/dir/../foo1", "/foo1");
+    test_relative_path("foo1", "/foo1");
+    test_relative_path("/dir/../foo1", "/foo1");
+    test_relative_path("/dev/..", "/");
+    test_relative_path("/dev/.", "/dev");
+    test_relative_path("/dev/../", "/");
+    test_relative_path("/dev/./", "/dev");
+    test_relative_path("/dev/mount/../nvram", "/dev/nvram");
 
     return 0;
 }

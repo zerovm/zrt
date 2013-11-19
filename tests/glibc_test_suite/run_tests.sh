@@ -9,12 +9,15 @@ cd $CPWD
 
 #run tests
 cd singles
+make clean
 make -j4
 cd ..
 echo --------------------------------------------
-echo -n "Tests that were not run in section TODO: "
+echo -n "Skiped tests need to be divided to valid-invalid lists, in section XCHECK: "
+find ./singles/xcheck -name "*.c" | wc -l
+echo -n "Skiped tests in section TODO: "
 find ./todo -name "*.c" | wc -l
-echo -n "Tests that were not run in section XFAIL: "
+echo -n "Skiped tests require depedencies XFAIL: "
 find ./singles/xfail -name "*.c" | wc -l
-echo -n "Tests that were not run in section XEXCLUDED: "
+echo -n "Skiped tests by NACL, in section XEXCLUDED: "
 find ./singles/xexcluded -name "*.c" | wc -l

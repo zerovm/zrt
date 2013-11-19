@@ -35,7 +35,7 @@ extern const char _nl_default_dirname[];
 extern struct binding *_nl_domain_bindings;
 
 /* Prototypes for library functions.  */
-void *xmalloc ();
+void *tar_xmalloc ();
 char *xstrdup ();
 
 
@@ -85,7 +85,7 @@ bindtextdomain (domainname, dirname)
     {
       /* We have to create a new binding.  */
       struct binding *new_binding =
-	(struct binding *) xmalloc (sizeof (*new_binding));
+	(struct binding *) tar_xmalloc (sizeof (*new_binding));
 
 
       new_binding->domainname = xstrdup (domainname);
