@@ -61,7 +61,7 @@ add_dir (char *name, dev_t dev, ino_t ino, const char *text)
 {
   struct dirname *dp;
 
-  dp = (struct dirname *) xmalloc (sizeof (struct dirname));
+  dp = (struct dirname *) tar_xmalloc (sizeof (struct dirname));
   dp->next = dir_list;
   dir_list = dp;
 
@@ -87,7 +87,7 @@ read_dir_file (void)
   static char *path = 0;
 
   if (path == 0)
-    path = xmalloc (PATH_MAX);
+    path = tar_xmalloc (PATH_MAX);
   time (&this_time);
   if (gnu_dumpfile[0] != '/')
     {
@@ -318,7 +318,7 @@ get_dir_contents (char *p, int device)
   errno = 0;
   dirp = opendir (p);
   bufsiz = strlen (p) + NAMSIZ;
-  namebuf = xmalloc ((size_t) (bufsiz + 2));
+  namebuf = tar_xmalloc ((size_t) (bufsiz + 2));
   if (!dirp)
     {
       ERROR ((0, errno, _("Cannot open directory %s"), p));
@@ -433,12 +433,12 @@ get_dir_contents (char *p, int device)
 	      n_strs++;
 	      p_buf += tmp;
 	    }
-	  vec = (char **) xmalloc (sizeof (char *) * (n_strs + 1));
+	  vec = (char **) tar_xmalloc (sizeof (char *) * (n_strs + 1));
 	  for (p_vec = vec, p_buf = buf; *p_buf; p_buf += strlen (p_buf) + 1)
 	    *p_vec++ = p_buf;
 	  *p_vec = 0;
 	  qsort ((voidstar) vec, n_strs, sizeof (char *), dirent_cmp);
-	  new_buf = (char *) xmalloc ((size_t) (p_buf - buf + 2));
+	  new_buf = (char *) tar_xmalloc ((size_t) (p_buf - buf + 2));
 	  for (p_vec = vec, p_buf = new_buf; *p_vec; p_vec++)
 	    {
 	      char *p_tmp;
@@ -496,7 +496,7 @@ add_dir_name (char *p, int device)
     {
       len = strlen (p);
       buflen = NAMSIZ <= len ? len + NAMSIZ : NAMSIZ;
-      namebuf = xmalloc ((size_t) (buflen + 1));
+      namebuf = tar_xmalloc ((size_t) (buflen + 1));
 
       strcpy (namebuf, p);
       if (namebuf[len - 1] != '/')

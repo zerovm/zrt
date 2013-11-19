@@ -178,9 +178,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	rm -f ${SPECIFIC_TEST_FORK} ; \
 	fi;
 
-report: $(OUTPUT_FAIL)
-#wait for tests completion before results display
-	@sleep 1
+#completion of nexe rules is prerequisite for report
+report: $(TEST_NEXES) $(OUTPUT_FAIL)
 #display tests resuts
 	@echo --------------------------------------------
 	@echo $(COUNTER) tests was executed

@@ -46,7 +46,7 @@ int _nl_msg_cat_cntr;
 
 
 /* Prototypes for library functions.  */
-void *xmalloc ();
+void *tar_xmalloc ();
 
 /* Load the message catalogs specified by FILENAME.  If it is no valid
    message catalog return null.  */
@@ -64,7 +64,7 @@ _nl_load_msg_cat (filename)
      non-existing or illegal file have the DATA member set to null.
      This helps subsequent calls to detect this situation without
      trying to load.  */
-  retval = (struct loaded_domain *) xmalloc (sizeof (*retval));
+  retval = (struct loaded_domain *) tar_xmalloc (sizeof (*retval));
   /* Note: FILENAME is allocated in finddomain and can be used here.  */
   retval->filename = filename;
   retval->data = NULL;
@@ -126,7 +126,7 @@ _nl_load_msg_cat (filename)
       off_t to_read;
       char *read_ptr;
 
-      data = (struct mo_file_header *) xmalloc (st.st_size);
+      data = (struct mo_file_header *) tar_xmalloc (st.st_size);
 
       to_read = st.st_size;
       read_ptr = (char *) data;

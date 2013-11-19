@@ -2631,7 +2631,7 @@ regex_compile (pattern, size, syntax, bufp)
 #ifdef emacs
 	if (! fail_stack.stack)
 	  fail_stack.stack
-	    = (fail_stack_elt_t *) xmalloc (fail_stack.size 
+	    = (fail_stack_elt_t *) tar_xmalloc (fail_stack.size 
 					    * sizeof (fail_stack_elt_t));
 	else
 	  fail_stack.stack

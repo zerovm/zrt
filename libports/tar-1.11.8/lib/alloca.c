@@ -69,17 +69,17 @@ typedef char *pointer;
 #define	NULL	0
 
 /* Different portions of Emacs need to call different versions of
-   malloc.  The Emacs executable needs alloca to call xmalloc, because
+   malloc.  The Emacs executable needs alloca to call tar_xmalloc, because
    ordinary malloc isn't protected from input signals.  On the other
    hand, the utilities in lib-src need alloca to call malloc; some of
-   them are very simple, and don't have an xmalloc routine.
+   them are very simple, and don't have an tar_xmalloc routine.
 
-   Non-Emacs programs expect this to call use xmalloc.
+   Non-Emacs programs expect this to call use tar_xmalloc.
 
    Callers below should use malloc.  */
 
 #ifndef emacs
-#define malloc xmalloc
+#define malloc tar_xmalloc
 #endif
 extern pointer malloc ();
 

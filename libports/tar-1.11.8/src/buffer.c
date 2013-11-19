@@ -631,7 +631,7 @@ open_tar_archive (int reading)
 
 	  if (flag_multivol)
 	    {
-	      ptr = xmalloc (strlen (flag_volhdr) + 20);
+	      ptr = tar_xmalloc (strlen (flag_volhdr) + 20);
 	      sprintf (ptr, "%s Volume %d", flag_volhdr, 1);
 	    }
 	  else
@@ -991,7 +991,7 @@ error_loop:
 #if 0
 	      char *ptr;
 
-	      ptr = (char *) xmalloc (strlen (flag_volhdr) + 20);
+	      ptr = (char *) tar_xmalloc (strlen (flag_volhdr) + 20);
 	      sprintf (ptr, "%s Volume %d", flag_volhdr, volno);
 #endif
 	      if (re_match (label_pattern, cursor->header.arch_name,
@@ -1416,7 +1416,7 @@ tryagain:
 		  for (r = q; *r; r++)
 		    if (*r == '\n')
 		      *r = '\0';
-		  r = (char *) xmalloc ((size_t) (strlen (q) + 2));
+		  r = (char *) tar_xmalloc ((size_t) (strlen (q) + 2));
 		  strcpy (r, q);
 		  p = r;
 		  *archive_name_cursor = p;

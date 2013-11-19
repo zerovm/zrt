@@ -364,7 +364,7 @@ init_sparsearray (void)
   /* Make room for our scratch space -- initially is 10 elts long.  */
 
   sparsearray = (struct sp_array *)
-    xmalloc (sp_array_size * sizeof (struct sp_array));
+    tar_xmalloc (sp_array_size * sizeof (struct sp_array));
   for (i = 0; i < sp_array_size; i++)
     {
       sparsearray[i].offset = 0;
@@ -616,7 +616,7 @@ create_archive (void)
 
   if (flag_gnudump)
     {
-      char *buf = xmalloc (PATH_MAX);
+      char *buf = tar_xmalloc (PATH_MAX);
       char *q, *bufp;
 
       collect_and_sort_names ();
@@ -842,7 +842,7 @@ dump_file (char *p, int curdev, int toplevel)
       /* Not found.  Add it to the list of possible links.  */
 
       lp = (struct link *)
-	xmalloc ((size_t) (sizeof (struct link) + strlen (p)));
+	tar_xmalloc ((size_t) (sizeof (struct link) + strlen (p)));
       lp->ino = hstat.st_ino;
       lp->dev = hstat.st_dev;
       strcpy (lp->name, p);
@@ -1172,7 +1172,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 
       len = strlen (p);
       buflen = len + NAMSIZ;
-      namebuf = xmalloc ((size_t) (buflen + 1));
+      namebuf = tar_xmalloc ((size_t) (buflen + 1));
       strncpy (namebuf, p, (size_t) buflen);
       while (len >= 1 && namebuf[len - 1] == '/')
 	len--;			/* delete trailing slashes */

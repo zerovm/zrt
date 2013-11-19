@@ -77,7 +77,7 @@ textdomain (domainname)
 		 + sizeof ("/LC_MESSAGES/") - 1 + sizeof (PACKAGE) - 1
 		 + sizeof (".cat");
 
-  new_name = (char *) xmalloc (new_name_len);
+  new_name = (char *) tar_xmalloc (new_name_len);
 
   sprintf (new_name, "%s/%s/LC_MESSAGES/%s.cat", DEF_MSG_DOM_DIR, lang,
 	   PACKAGE);
@@ -133,7 +133,7 @@ bindtextdomain (domainname, dirname)
   if (old_val != NULL && old_val[0] != '\0')
     new_val_len += strlen (old_val);
 
-  new_val = (char *) xmalloc (new_val_len);
+  new_val = (char *) tar_xmalloc (new_val_len);
 
 # ifdef HAVE_SETENV
 #  if __STDC__

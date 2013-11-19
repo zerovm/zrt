@@ -44,6 +44,7 @@ main (void)
   if (p != NULL)
     merror ("malloc (-1) succeeded.");
 
+  /*malloc errno is ENOMEM, but secondary it's trying mmap and errno is ENOSYS*/
   if (p == NULL && save != ENOMEM){
     printf("errno=%d", save);
     merror ("errno is not set correctly");

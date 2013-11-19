@@ -24,7 +24,7 @@
 #else
 #include <strings.h>
 #endif
-char *xmalloc ();
+char *tar_xmalloc ();
 
 /* Return a newly allocated copy of STRING.  */
 
@@ -32,5 +32,5 @@ char *
 xstrdup (string)
      char *string;
 {
-  return strcpy (xmalloc (strlen (string) + 1), string);
+  return strcpy (tar_xmalloc (strlen (string) + 1), string);
 }

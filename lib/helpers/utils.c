@@ -25,14 +25,17 @@ char* zrealpath( const char* path, char* resolved_path )
     char temp_path[PATH_MAX];
     char* last_component;
     char* absbasepath;
+    char* res=NULL;
     /*exclude last path component from path param*/
-    /**/
-    //    do{
     last_component=strrchr(path, '/');
-    //    }
-    //    while ( last_component==(path+pathlen) && last_component!=path )
-    /*if last_component resides in root*/
-    if ( last_component != path && last_component!= NULL ){
+    /*if path it's a dir without trailing backslash '/' */
+    if ( last_component!= NULL && 
+	 (!strcmp(last_component, "/..") || !strcmp(last_component, "/.")) ){
+	if ( (absbasepath = realpath(path, resolved_path)) != NULL )
+	    res = resolved_path;
+    }
+    /*if path has trailing backslash and it's not a root*/
+    else if ( last_component != path && last_component!= NULL ){
 	int basepathlen = (int)(last_component - path);
 	strncpy(temp_path, path, basepathlen);
 	if ( basepathlen < PATH_MAX )
@@ -41,20 +44,21 @@ char* zrealpath( const char* path, char* resolved_path )
 	/*combine absolute base path and last path component*/
 	if ( (absbasepath = realpath(temp_path, resolved_path)) != NULL ){
 	    MERGE_PATH_COMPONENTS(absbasepath, last_component, resolved_path);
-	    return resolved_path;
+	    res = resolved_path;
 	}
-	else 
-	    return NULL;
     }
+    /*if path has no trailing backslash*/
     else if ( last_component == NULL ){
 	char* rootpath = getcwd(temp_path, PATH_MAX);
 	MERGE_PATH_COMPONENTS(rootpath, path, resolved_path);
-	return resolved_path;
+	res = resolved_path;
     }
-    else
-	return path;
+    else{
+	strcpy(resolved_path, path);
+	res = resolved_path;
+    }
 
-    return resolved_path;
+    return res;
 }
 
 

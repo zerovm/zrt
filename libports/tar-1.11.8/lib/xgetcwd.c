@@ -39,7 +39,7 @@ char *getcwd ();
 /* Amount to increase buffer size by in each try. */
 #define PATH_INCR 32
 
-char *xmalloc ();
+char *tar_xmalloc ();
 char *tar_realloc ();
 void free ();
 
@@ -57,7 +57,7 @@ xgetcwd ()
   path_max = (unsigned) PATH_MAX;
   path_max += 2;		/* The getcwd docs say to do this. */
 
-  cwd = xmalloc (path_max);
+  cwd = tar_xmalloc (path_max);
 
   errno = 0;
   while ((ret = getcwd (cwd, path_max)) == NULL && errno == ERANGE)
