@@ -205,7 +205,7 @@ install: uninstall
 	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
 	install -m 0644 lib/helpers/buffered_io.h $(INCLUDE_DIR)/helpers
 #	install -m 0755 zvsh $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin
-	sed -i 's#$$ZEROVM_ROOT#$(ZVM_PREFIX)/bin#' $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin/zvsh
+#	sed -i 's#$$ZEROVM_ROOT#$(ZVM_PREFIX)/bin#' $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin/zvsh
 
 .PHONY: install
 
