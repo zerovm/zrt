@@ -450,7 +450,7 @@ static void set_stat(struct stat *stat, int fd)
         assert(d);
         nlink = d->nlink;
         ino = INODE_FROM_HANDLE(d->handle);
-        permissions = S_IRUSR | S_IFDIR;
+        permissions = S_IRUSR | S_IFDIR | S_IXUSR;
 	blksize = DEV_DIRECTORY_BLK_SIZE;
 	size = DEV_DIRECTORY_SIZE;
     }
@@ -732,7 +732,7 @@ static int channels_getdents(int fd, void *buf, unsigned int buf_size){
 	    /*dir handle*/						\
 	    struct dir_data_t *d = match_handle_in_directory_list( &s_manifest_dirs, fd ); \
 	    assert(d);							\
-	    *(mode_p) = S_IRUSR | S_IFDIR;				\
+	    *(mode_p) = S_IRUSR | S_IFDIR | S_IXUSR;			\
 	}
 
     errno=0;
@@ -1063,11 +1063,9 @@ struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_all
 
 uint* channel_mode(const char* channel_name){
     int handle = channel_handle(channel_name);
-    if (handle > 0)
+    if (handle >= 0)
 	return &s_channels_mode[handle];
     else
 	return NULL;
-
-    
 }
 
