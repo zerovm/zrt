@@ -56,6 +56,8 @@ int main(int argc, char **argv)
     test_relative_path("/dev/.", "/dev");
     test_relative_path("/dev/../", "/");
     test_relative_path("/dev/./", "/dev");
+    test_relative_path("/dev/../dev", "/dev");
+    test_relative_path("/dev/../dev/", "/dev");
     test_relative_path("/dev/mount/../nvram", "/dev/nvram");
 
     return 0;

@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <error.h>
@@ -23,11 +24,14 @@
 #define DATASIZE_FOR_MMAP DATASIZE_FOR_FILE
 
 
+void sbrk_mmap_test();
 void mmap_test_file_mapping(off_t offset);
 void mmap_test_unmap(void* unmap_addr, size_t length);
 void* mmap_test_align(size_t length, int result_expected);
 
 int main(int argc, char**argv){
+    sbrk_mmap_test();
+
     int pagesize = sysconf(_SC_PAGE_SIZE);
     uint32_t rounded_up_heap_addr = ROUND_UP( (uint32_t)MANIFEST->heap_ptr, sysconf(_SC_PAGESIZE) );
     int rounded_up_heap_size = MANIFEST->heap_size;
@@ -133,4 +137,29 @@ void mmap_test_unmap(void* unmap_addr, size_t length){
     TEST_OPERATION_RESULT(
 			  (int)munmap(unmap_addr, length),
 			  &ret, ret==0);
+}
+
+void sbrk_mmap_test(){
+#define MALLOC_SIZE 0x40000
+#define MMAP_SIZE 0x40000
+    int i;
+    int ret;
+
+    // try to allocate memory via malloc
+    void* ptr = malloc(MALLOC_SIZE * sizeof(int));
+    // filling with bytes
+    for (i=0;i<MALLOC_SIZE;++i)
+        ((int*)ptr)[i] = 0xDEAD;
+    printf("Allocated via malloc\n");
+
+    // now allocating via mmap
+    void *mmap_ptr = mmap(NULL, MMAP_SIZE * sizeof(int), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
+    for (i=0;i<MMAP_SIZE;++i) 
+        ((int*)mmap_ptr)[i] = 0xCAFE;
+    printf("Allocated via anon mmap\n");
+
+    for (i=0;i<MALLOC_SIZE;++i) {
+	TEST_OPERATION_RESULT(((int*)ptr)[i] != 0xDEAD, &ret, ret==0 );
+    }
+    return;
 }

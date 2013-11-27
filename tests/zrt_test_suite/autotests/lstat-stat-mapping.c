@@ -64,13 +64,13 @@ int main(int argc, char**argv){
 			  &ret, ret==0&&
 			  ((st.st_mode&S_IWUSR)!=S_IWUSR)&&
 			  ((st.st_mode&S_IRUSR)==S_IRUSR)&&
-			  S_ISFIFO(st.st_mode));
+			  S_ISCHR(st.st_mode));
     TEST_OPERATION_RESULT(
 			  stat("/dev/stdout", &st),
 			  &ret, ret==0&&
 			  ((st.st_mode&S_IWUSR)==S_IWUSR)&&
 			  ((st.st_mode&S_IRUSR)!=S_IRUSR)&&
-			  S_ISCHR(st.st_mode));
+			  S_ISFIFO(st.st_mode));
     TEST_OPERATION_RESULT(
 			  stat("/dev/stderr", &st),
 			  &ret, ret==0&&

@@ -45,8 +45,8 @@ ENV-nvram.c=name=FPATH, value=${TESTFILE}
 #####################################################################
 #generate nvram file,
 #mapping channels, set mode for zrt channel stat: pipe, chr, file
-MAPPING-lstat-stat-mapping.c =channel=/dev/stdin, mode=pipe {BR}
-MAPPING-lstat-stat-mapping.c+=channel=/dev/stdout, mode=char {BR}
+MAPPING-lstat-stat-mapping.c =channel=/dev/stdin, mode=char {BR}
+MAPPING-lstat-stat-mapping.c+=channel=/dev/stdout, mode=pipe {BR}
 MAPPING-lstat-stat-mapping.c+=channel=/dev/stderr, mode=file
 #####################################################################
 
