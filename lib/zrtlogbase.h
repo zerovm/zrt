@@ -59,7 +59,7 @@ extern int   s_log_items_count;
 #define ITEMS_CREATOR				\
     ITEM(ELogLength,     length,     "%d" );	\
     ITEM(ELogAddress,    address,    "0x%x" );	\
-    ITEM(ELogSize,       size,       "%d" );	\
+    ITEM(ELogSize,       size,       "%u" );	\
     ITEM(ELogTitle,      =======,    "%s" );	\
     ITEM(ELogTime,       time,       "%s" );	\
     ITEM(ELogCount,      count,      "%d" );	\

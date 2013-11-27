@@ -25,25 +25,27 @@
 
 
 /***************mmap emulation *************/
-#define MAX_HEAP_SIZE 1024*1024*1024*4
+#define ONE_GB_HEAP_SIZE (1024*1024*1024)
 #define PAGE_SIZE (1024*64)
+#define CHUNK_ARRAY_SIZE ( (4*(ONE_GB_HEAP_SIZE/PAGE_SIZE))/8 )
 static struct BitArrayImplem s_bit_array_implem;
-static unsigned char map_chunks_bit_array[MAX_HEAP_SIZE/PAGE_SIZE/8];
+static unsigned char map_chunks_bit_array[CHUNK_ARRAY_SIZE];
 
 static void* alloc_memory_pseudo_mmap(struct BitArrayImplem* bit_array_implem, 
 				      struct MemoryInterface* mem_if_p, 
 				      size_t memsize){ 
     int i;
     void* ret_addr = NULL;
-    int right_index_bound = mem_if_p->heap_size / PAGE_SIZE;
+    int right_index_bound = mem_if_p->heap_mmap_size_aligned / PAGE_SIZE;
     int map_chunks_sequence_count = ROUND_UP(memsize, PAGE_SIZE)/PAGE_SIZE;
     int index = bit_array_implem
 	->search_emptybit_sequence_begin(bit_array_implem, map_chunks_sequence_count ); 
 
     if ( index != -1 && index < right_index_bound ){	
 	/*addr of block memory must be addr of first chunk*/
-	ret_addr = mem_if_p->heap_ptr + index*PAGE_SIZE;
-	assert( ret_addr < mem_if_p->heap_ptr+mem_if_p->heap_size );
+	ret_addr = mem_if_p->heap_mmap_ptr_aligned + index*PAGE_SIZE;
+	assert( ret_addr < 
+		mem_if_p->heap_mmap_ptr_aligned + mem_if_p->heap_mmap_size_aligned );
 
 	/*set chunk bits corresponding to block of memory*/
 	for ( i=0; i < map_chunks_sequence_count; i++ ){
@@ -51,15 +53,11 @@ static void* alloc_memory_pseudo_mmap(struct BitArrayImplem* bit_array_implem,
 	    LOG_DEBUG(ELogIndex, current_chunk_index, "mark chunk as used" );
     	    bit_array_implem->toggle_bit(bit_array_implem, current_chunk_index);
 	}
-	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%lu) ret addr=%p", memsize, ret_addr ); 
+	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%u) ret addr=%p", memsize, ret_addr ); 
     }
     else{
-	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%lu) failed", memsize );
+	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%u) failed", memsize );
     }
-    if ( ret_addr == 0xef90000 ){
-	int r = 0;
-    }
-
     return ret_addr;
 }
 
@@ -81,26 +79,29 @@ size_t bit_mask_after_hi(size_t x)
 }
 
 static void
-init(struct MemoryInterface* this, void *heap_ptr, uint32_t heap_size){
-    this->heap_ptr = heap_ptr;
-    this->heap_size = heap_size;
-    this->brk = heap_ptr;  /*brk by default*/
+memory_init(struct MemoryInterface* this, 
+	    void *sbrk_heap_ptr, void *mmap_heap_ptr, uint32_t mmap_heap_size){
+    this->heap_sbrk_ptr = sbrk_heap_ptr;
+    this->heap_mmap_ptr_aligned = mmap_heap_ptr;
+    this->heap_mmap_size_aligned = mmap_heap_size;
+    this->heap_sbrk_brk = sbrk_heap_ptr;  /*brk by default*/
 }
 
 
 /**/
 static int32_t 
-sysbrk(struct MemoryInterface* this, void *addr){
+memory_sysbrk(struct MemoryInterface* this, void *addr){
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
-    if ( addr < this->heap_ptr ){
+    if ( addr < this->heap_sbrk_ptr ){
 	errno=0;
-	return (intptr_t)this->brk; /*return current brk*/
+	return (intptr_t)this->heap_sbrk_brk; /*return current brk*/
     }
-    else if ( addr <= this->heap_ptr+this->heap_size ){
+    /*sbrk does not intersect mmap region*/
+    else if ( addr < this->heap_mmap_ptr_aligned ){
 	errno=0;
-	this->brk = addr;
-	return (intptr_t)this->brk;
+	this->heap_sbrk_brk = addr;
+	return (intptr_t)this->heap_sbrk_brk;
     }
     else{
 	SET_ERRNO(ENOMEM);
@@ -181,13 +182,12 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 static int
 memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
     errno=0;
-    void* end_range   = this->heap_ptr+this->heap_size;
+    void* end_range = this->heap_mmap_ptr_aligned + this->heap_mmap_size_aligned;
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
-    if ( addr >= this->heap_ptr && addr <= end_range ){
+    if ( addr >= this->heap_mmap_ptr_aligned && addr <= end_range ){
 	int i;
-	int c = addr - this->heap_ptr;
-	int munmap_begin_chunk_index = (addr - this->heap_ptr)/PAGE_SIZE;
+	int munmap_begin_chunk_index = (addr - this->heap_mmap_ptr_aligned)/PAGE_SIZE;
 	int munmap_chnuks_count = ROUND_UP(length,PAGE_SIZE)/PAGE_SIZE;
 	LOG_DEBUG(ELogIndex, munmap_begin_chunk_index, "" )
 	LOG_DEBUG(ELogCount, munmap_chnuks_count, "" )
@@ -206,15 +206,15 @@ memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
     }
     else{
 	ZRT_LOG(L_ERROR, "Can't do unmap addr=%p is not in range [%p-%p]", 
-		addr, this->heap_ptr, end_range );
+		addr, this->heap_mmap_ptr_aligned, end_range );
     }
     return 0;
 }
 
 
 static struct MemoryInterface KMemoryInterface = {
-    init,
-    sysbrk,
+    memory_init,
+    memory_sysbrk,
     memory_mmap,
     memory_munmap
 };
@@ -226,10 +226,14 @@ struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size
     assert(roundup_pow2( 63 )== 64);
     assert(roundup_pow2( 66 )== 128);
     assert(roundup_pow2( 536860612 )== 536870912);
-    /**/
+    /*Prepare ranges for sbrk and mmap*/
 
-    /*If we want to manage pages of heap memory it's required to roundup heap_ptr
-      because it's not aligned to page boundary, recalculate heap size and validate it*/
+    /*setup sbrk region here, that's very low range, but allow us to
+      use unaligned memory we have below alligned mmap range.*/
+    
+    /*Mmap operates by alligned on pagesize memories, so it's required
+      to roundup not necessarily aligned input params heap_ptr,
+      heap_size.*/
     uint32_t addr_uint =  ROUND_UP( (uint32_t)heap_ptr, sysconf(_SC_PAGESIZE) );
     heap_size -= addr_uint - (uint32_t)heap_ptr;
     assert( ROUND_UP( (uint32_t)addr_uint, sysconf(_SC_PAGESIZE) ) == addr_uint );
@@ -249,6 +253,6 @@ struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size
 
     init_bit_array( &s_bit_array_implem, map_chunks_bit_array, array_items_count );
 
-    KMemoryInterface.init(&KMemoryInterface, (void*)addr_uint, heap_size);
+    KMemoryInterface.init(&KMemoryInterface, heap_ptr, (void*)addr_uint, heap_size);
     return &KMemoryInterface;
 }

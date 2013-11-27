@@ -214,6 +214,7 @@ int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newf
     mode&=(S_IRWXU|S_IRWXG|S_IRWXO);
     APPLY_UMASK(&mode);
     if ( (absolute_path = zrealpath(name, temp_path)) != NULL ){
+	ZRT_LOG(L_SHORT, "absolute_path=%s", absolute_path);
 	if ( (ret = s_transparent_mount->open( absolute_path, flags, mode )) >= 0 ){
 	    /*get fd by pointer*/
 	    *newfd  = ret;
