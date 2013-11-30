@@ -1,0 +1,9 @@
+making contexts
+swapping contexts
+start f2
+&on_stack=0x1fb09f
+start f1(a0=1,a1=2,a2=3,a3=fffffffc)
+finish f2
+finish f1
+back at main program
+test succeeded
