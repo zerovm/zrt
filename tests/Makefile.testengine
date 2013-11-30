@@ -86,7 +86,7 @@ LDFLAGS+= -lmapreduce -lnetworking
 #uncomment below one if want to display removed files list during clean
 #VERBOSE_CLEAN=-v
 
-all: clean prepare $(ZEROVM) $(TEST_NEXES) report
+all: prepare $(ZEROVM) $(TEST_NEXES) report
 
 clean:
 	@find -name "*.scp" | xargs rm -f $(VERBOSE_CLEAN)
@@ -101,7 +101,7 @@ clean:
 	@rm -f $(VERBOSE_CLEAN) $(TEST_NVRAMS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_LOG_DEBUG)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_TARS)
-	@rm -f $(VERBOSE_CLEAN) $(MOUNT_TAR_NAME) $(REMOUNT_TAR_NAME)
+	@rm -f $(VERBOSE_CLEAN) $(MOUNT_TAR_NAME) $(REMOUNT_TAR_NAME) $(TEST_TAR_MOUNT) $(TEST_TAR_REMOUNT) $(TESTFILE)
 
 prepare:
 	@rm -f ${TEST_TAR_MOUNT} ${TEST_TAR_REMOUNT} ${TESTFILE}
