@@ -83,7 +83,7 @@ LDFLAGS+= -lcrypt
 #networking mapreduce
 LDFLAGS+= -lmapreduce -lnetworking
 
-#uncomment below one if want to display clean files
+#uncomment below one if want to display removed files list during clean
 #VERBOSE_CLEAN=-v
 
 all: clean prepare $(ZEROVM) $(TEST_NEXES) report
@@ -165,7 +165,6 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	@$(ZEROVM) $(CURDIR)/$(BASENAME).manifest -P \
 	| $(AWK_GET_ERRCODE) \
 	| $(AWK_HANDLE_FAIL) testname="$@"  2>&1 | tee -a $(OUTPUT_FAIL)
-	$(eval FORKED_PID:=$(shell echo `pgrep -f $(CURDIR)/$(BASENAME).manifest`))
 #If session was forked by zfork() and socket file exist then restore forked session now
 #rewrite tar image to test remount
 	@if [ "${SPECIFIC_TEST_FORK}" != "" ] && [ -S "${SPECIFIC_TEST_FORK}" ] ; then \
@@ -180,6 +179,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 
 #completion of nexe rules is prerequisite for report
 report: $(TEST_NEXES) $(OUTPUT_FAIL)
+	$(eval FAILED_TESTS_COUNT:=$(shell echo `cat $(OUTPUT_FAIL) | wc -l`))
 #display tests resuts
 	@echo --------------------------------------------
 	@echo $(COUNTER) tests was executed
@@ -188,6 +188,7 @@ report: $(TEST_NEXES) $(OUTPUT_FAIL)
 	@echo " tests:"
 	@cat $(OUTPUT_FAIL)
 	@rm -f $(OUTPUT_FAIL) $(OUTPUT_LAST)
+	@exit $(FAILED_TESTS_COUNT)
 
 $(OUTPUT_FAIL):
 #has no output fail if this rule is active
