@@ -11,6 +11,30 @@
 
 #include <stddef.h> //size_t 
 
+#define MAX_MEMORY_CAPACITY_IN_GB 4
+#define ONE_GB_HEAP_SIZE (1024*1024*1024)
+#define PAGE_SIZE (1024*64)
+#define MAX_MMAP_PAGES_COUNT ( MAX_MEMORY_CAPACITY_IN_GB*(ONE_GB_HEAP_SIZE/PAGE_SIZE) )
+
+#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
+#define NO_ADDR_OVERLAP(low_addr, high_addr) (low_addr) < (high_addr) ? 1 : 0
+#define HEAP_MAX_ADDR(heapptr_p, heapsize)  (heapptr_p+heapsize)
+
+#define MMAP_REGION_SIZE_ALIGNED_(heapptr_p, brk_p, heapsize)	\
+    (ROUND_UP(heapsize - ((brk_p) - (heapptr_p)), PAGE_SIZE))
+
+#define MMAP_REGION_SIZE_ALIGNED(memory_if_p)			\
+    MMAP_REGION_SIZE_ALIGNED_(memory_if_p->heap_start_ptr,	\
+			      memory_if_p->heap_brk,		\
+			      memory_if_p->heap_size )
+
+#define MMAP_LOWEST_PAGE_ADDR(memory_if_p)				\
+    (HEAP_MAX_ADDR(memory_if_p->heap_start_ptr, memory_if_p->heap_size) - MMAP_REGION_SIZE_ALIGNED(memory_if_p))
+
+#define MMAP_HIGHEST_PAGE_ADDR(memory_if_p)				\
+    (HEAP_MAX_ADDR(memory_if_p->heap_start_ptr, memory_if_p->heap_size) - PAGE_SIZE)
+
+
 /* Low level memory management functions, here are syscalls
  * implementation.  Note that all member functions has
  * 'MemoryInterface* this' param, and it can't be a NULL, because it
@@ -18,24 +42,21 @@
  * also it's makes available to call another object functions;*/
 struct MemoryInterface{
     /*Low level memory allocators initializer.  Whole heap memory
-     *already preallocated/mmaped by zerovm, just before untrusted
-     *session starts. But we want to be able to use both SBRK and MMAP
-     *allocators. So to avoid overlaping of different memory ranges
-     *divide heap memory into 2 parts: sbrk range resides on lowest
-     *addresses, mmap range - on highest addresses.  
-     *Memory range I - SBRK : [sbrk_heap_ptr, mmap_heap_ptr): 
-     *sbrk memory ends up where mmap region starts.  
-     *Memory range II- MMAP : [mmap_heap_ptr,mmap_heap_ptr+mmap_heap_size] 
-     @param sbrk_heap_ptr start of mmap region 
-     @param mmap_heap_ptr start of mmap region 
-     @param mmap_heap_size size mmap range*/
-    void (*init)(struct MemoryInterface* this, void *sbrk_heap_ptr, 
-		 void *mmap_heap_ptr, uint32_t mmap_heap_size);
+     already preallocated/mmaped by zerovm, it is happened just before
+     untrusted session starts. As we have a single address space
+     for both sbrk, mmap allocators we need to avoid intersection of
+     sbrk and mmap memory ranges.  Strategy is : sbrk range starting
+     from beginning of heap memory and mmap range starting from end of
+     memory range. At the moment of allocation if ranges are become
+     overlaped then get ENOMEM errro; 
+     @param heap_ptr 
+     @param heap_size */
+    void (*init)(struct MemoryInterface* this, void *heap_ptr, uint32_t heap_size, void *brk);
     int (*sysbrk)(struct MemoryInterface* this, void *addr);
     
     /* MMAP emulation in user-space implementation.
-     *  @param addr ignored
-     * @param length length of the mapping, it's used when fd vale is not real
+     * @param addr ignored
+     * @param length length of the mapping, it's used when fd value is not exist
      * and MAP_ANONYMOUS flag is set;
      * @prot 
      * case1: if correct fd values is passed then PROT_READ only supported, another 
@@ -56,12 +77,12 @@ struct MemoryInterface{
     int (*munmap)(struct MemoryInterface* this, void *addr, size_t length);
 
     //data
-    void*    heap_sbrk_ptr; /*sbrk memory ends up where mmap region starts*/
-    void*    heap_sbrk_brk;
-    void*    heap_mmap_ptr_aligned;
-    uint32_t heap_mmap_size_aligned;
+    void*    heap_start_ptr; /*heap memory left bound*/
+    void*    heap_brk;       /*current brk pointer*/
+    uint32_t heap_size;      /*entire heap size*/
+    void*    heap_lowest_mmap_addr;
 };
 
-struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size );
+struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size, void *brk );
 
 #endif //__MEMORY_SYSCALL_HANDLERS_H__

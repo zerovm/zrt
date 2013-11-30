@@ -60,7 +60,8 @@ LIBPORTS= \
 libports/gtest/libgtest.a \
 libports/lua-5.2.1/liblua.a \
 libports/tar-1.11.8/libtar.a \
-libports/sqlite3/libsqlite3.a
+libports/sqlite3/libsqlite3.a \
+libports/context-switch/libcontext.a
 
 ################# samples to build
 UNSTABLE_SAMPLES=
@@ -184,6 +185,7 @@ install: uninstall
 	install -m 0644 lib/libgtest.a $(LIB_DIR)
 	install -m 0644 lib/libtar.a $(LIB_DIR)
 	install -m 0644 lib/libsqlite3.a $(LIB_DIR)
+	install -m 0644 lib/libcontext.a $(LIB_DIR)
 	install -d $(INCLUDE_DIR)/sqlite3 $(INCLUDE_DIR)/lua $(INCLUDE_DIR)/helpers \
 		$(INCLUDE_DIR)/networking $(INCLUDE_DIR)/mapreduce $(LIB_DIR)
 	install -m 0644 lib/zrtapi.h $(INCLUDE_DIR)

@@ -30,6 +30,9 @@ struct NvramLoader*     static_nvram();
 /*timeval must be accessible from both zcalls_zrt, zcalls_prolog*/
 struct timeval*         static_timeval();
 
+/*save brk value before memory syscall handlers was setted up*/
+void*                   static_prolog_brk();
+
 /*get static object from zrtsyscalls.c*/
 struct MountsInterface* transparent_mount();
 

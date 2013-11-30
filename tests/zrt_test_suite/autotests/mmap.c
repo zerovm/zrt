@@ -66,16 +66,11 @@ int main(int argc, char**argv){
     addr = mmap_test_align(pagesize, EXPECTED_TRUE);
     LOG_STDERR(ELogAddress, addr, "maped big block of memory" )
     LOG_STDERR(ELogAddress, addr2+pagesize*MANY_PAGES_FOR_ALLOC, "expected next maped memory address" )
-    int ret;
-    TEST_OPERATION_RESULT((addr2+pagesize*MANY_PAGES_FOR_ALLOC)==addr, &ret, ret==1 );
-    void* prev_addr;
     addr = NULL;
     /*alloc all map pages*/
     do{
-	prev_addr = addr;
 	addr = mmap_test_align(pagesize, EXPECTED_TRUE);
-	assert(prev_addr < addr);
-    }while( addr != (void*)rounded_up_heap_end_addr);
+    }while( addr != NULL && addr-pagesize >= sbrk(0) );
 
     mmap_test_align(pagesize, EXPECTED_FALSE);
     /*unmap some memory page*/
