@@ -59,6 +59,10 @@ struct timeval* static_timeval() {
     return &s_cached_timeval; 
 }
 
+void* static_prolog_brk() { 
+    return sbrk_default; 
+}
+
 static inline void update_cached_time()
 {
     /* update time value

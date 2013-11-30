@@ -304,6 +304,7 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
     int i;
     char **envp = environ;
     time_t t = time(NULL);
+    int pages_count = (int)(manifest->heap_size / sysconf(_SC_PAGE_SIZE));
 
     LOG_DEBUG(ELogTitle, "ZVM SESSION INFO", "=======")
     LOG_DEBUG(ELogAddress, (intptr_t)manifest->heap_ptr, "ZVM Manifest heap pointer" )
@@ -312,7 +313,8 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
     /*get from system, print environment variables*/
     LOG_DEBUG(ELogTime, ctime(&t), "System time" )
     LOG_DEBUG(ELogSize, sysconf(_SC_PAGE_SIZE), "Page size _SC_PAGE_SIZE" )
-    LOG_DEBUG(ELogCount, (int)(manifest->heap_size / sysconf(_SC_PAGE_SIZE)), "Memory pages count"  )
+    LOG_DEBUG(ELogCount, pages_count, "Memory pages count"  )
+    LOG_DEBUG(ELogAddress, manifest->heap_ptr + manifest->heap_size, "Heap highest page" )
     LOG_DEBUG(ELogAddress, sbrk(0), "sbrk(0)" )
 
     LOG_DEBUG(ELogTitle, "Environment variables", "======")
@@ -374,7 +376,8 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     ITEMS_CREATOR;
 
     /*init handlers for heap memory*/
-    s_memory_interface = get_memory_interface( manifest->heap_ptr, manifest->heap_size );
+    s_memory_interface = get_memory_interface( manifest->heap_ptr, manifest->heap_size,
+					       static_prolog_brk() );
 
     /*manage mounted filesystems*/
     s_mounts_manager = get_mounts_manager();

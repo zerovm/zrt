@@ -21,39 +21,55 @@
 #include "memory_syscall_handlers.h"
 #include "bitarray.h"
 
-#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
-
+#define MEMORY_PAGE_FROM_INDEX(memory_if_p, index) ( MMAP_HIGHEST_PAGE_ADDR(memory_if_p) - index*PAGE_SIZE)
 
 /***************mmap emulation *************/
-#define ONE_GB_HEAP_SIZE (1024*1024*1024)
-#define PAGE_SIZE (1024*64)
-#define CHUNK_ARRAY_SIZE ( (4*(ONE_GB_HEAP_SIZE/PAGE_SIZE))/8 )
+
+/*map_chunks_bit_array is used for bitarray, were are only 1bit per
+ *1page needed.  here reserved memory for max available pages count.*/
+static unsigned char s_map_chunks_bit_array[(MAX_MMAP_PAGES_COUNT)/8]; 
 static struct BitArrayImplem s_bit_array_implem;
-static unsigned char map_chunks_bit_array[CHUNK_ARRAY_SIZE];
+static const uint32_t s_page_size = PAGE_SIZE;
+
 
 static void* alloc_memory_pseudo_mmap(struct BitArrayImplem* bit_array_implem, 
 				      struct MemoryInterface* mem_if_p, 
 				      size_t memsize){ 
     int i;
     void* ret_addr = NULL;
-    int right_index_bound = mem_if_p->heap_mmap_size_aligned / PAGE_SIZE;
-    int map_chunks_sequence_count = ROUND_UP(memsize, PAGE_SIZE)/PAGE_SIZE;
-    int index = bit_array_implem
-	->search_emptybit_sequence_begin(bit_array_implem, map_chunks_sequence_count ); 
+    int map_pages_requested = ROUND_UP(memsize, s_page_size)/s_page_size;
 
-    if ( index != -1 && index < right_index_bound ){	
-	/*addr of block memory must be addr of first chunk*/
-	ret_addr = mem_if_p->heap_mmap_ptr_aligned + index*PAGE_SIZE;
-	assert( ret_addr < 
-		mem_if_p->heap_mmap_ptr_aligned + mem_if_p->heap_mmap_size_aligned );
+    /*search for sequence of free pages starting from end*/
+    int mmap_index = bit_array_implem
+	->search_emptybit_sequence_begin(bit_array_implem, map_pages_requested); 
+    int mmap_low_page_index = mmap_index+ map_pages_requested-1;
 
-	/*set chunk bits corresponding to block of memory*/
-	for ( i=0; i < map_chunks_sequence_count; i++ ){
-	    int current_chunk_index = index+i;
-	    LOG_DEBUG(ELogIndex, current_chunk_index, "mark chunk as used" );
-    	    bit_array_implem->toggle_bit(bit_array_implem, current_chunk_index);
+    /*if indexes of map pages seems to be valid*/
+    if ( mmap_index != -1 ){	
+	void* high_page_memory_addr = MEMORY_PAGE_FROM_INDEX(mem_if_p, mmap_index);
+	void* low_page_memory_addr = MEMORY_PAGE_FROM_INDEX(mem_if_p, mmap_low_page_index);
+	ZRT_LOG(L_BASE, "mmap_index=%d, mmap_low_page_index=%d", 
+		mmap_index, mmap_low_page_index);
+	ZRT_LOG(L_BASE, "pages low_addr=%p, high_addr=%p ", 
+		low_page_memory_addr, high_page_memory_addr);
+	/*it's only allowed to return mmap pages which address upper
+	 *than brk pointer; */
+	if ( low_page_memory_addr >= mem_if_p->heap_brk &&
+	     high_page_memory_addr <= MEMORY_PAGE_FROM_INDEX(mem_if_p, mmap_index) ){
+	    ret_addr = low_page_memory_addr;
+	    /*additional checks*/
+	    assert( ret_addr >= mem_if_p->heap_brk );
+	    assert(low_page_memory_addr <= high_page_memory_addr);
+	    
+	    /*mark map chunks corresponding to returning block of memory*/
+	    int current_chunk_index;
+	    for ( i=0; i < map_pages_requested; i++ ){
+		current_chunk_index = mmap_index+i;
+		LOG_DEBUG(ELogIndex, current_chunk_index, "mark chunk as used" );
+		bit_array_implem->toggle_bit(bit_array_implem, current_chunk_index);
+	    }
+	    ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%u) ret addr=%p", memsize, ret_addr ); 
 	}
-	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%u) ret addr=%p", memsize, ret_addr ); 
     }
     else{
 	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%u) failed", memsize );
@@ -80,11 +96,11 @@ size_t bit_mask_after_hi(size_t x)
 
 static void
 memory_init(struct MemoryInterface* this, 
-	    void *sbrk_heap_ptr, void *mmap_heap_ptr, uint32_t mmap_heap_size){
-    this->heap_sbrk_ptr = sbrk_heap_ptr;
-    this->heap_mmap_ptr_aligned = mmap_heap_ptr;
-    this->heap_mmap_size_aligned = mmap_heap_size;
-    this->heap_sbrk_brk = sbrk_heap_ptr;  /*brk by default*/
+	    void *heap_ptr, uint32_t heap_size, void *brk){
+    this->heap_start_ptr = heap_ptr;
+    this->heap_size = heap_size;
+    this->heap_brk = brk;  /*current brk*/
+    this->heap_lowest_mmap_addr = MMAP_HIGHEST_PAGE_ADDR(this);
 }
 
 
@@ -93,15 +109,15 @@ static int32_t
 memory_sysbrk(struct MemoryInterface* this, void *addr){
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
-    if ( addr < this->heap_sbrk_ptr ){
+    if ( addr < this->heap_start_ptr ){
 	errno=0;
-	return (intptr_t)this->heap_sbrk_brk; /*return current brk*/
+	return (intptr_t)this->heap_brk; /*return current brk*/
     }
     /*sbrk does not intersect mmap region*/
-    else if ( addr < this->heap_mmap_ptr_aligned ){
+    else if ( addr < this->heap_lowest_mmap_addr ){
 	errno=0;
-	this->heap_sbrk_brk = addr;
-	return (intptr_t)this->heap_sbrk_brk;
+	this->heap_brk = addr;
+	return (intptr_t)this->heap_brk;
     }
     else{
 	SET_ERRNO(ENOMEM);
@@ -111,7 +127,7 @@ memory_sysbrk(struct MemoryInterface* this, void *addr){
 
 static int32_t
 memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot, 
-     int flags, int fd, off_t offset){
+	    int flags, int fd, off_t offset){
     void* alloc_addr = NULL;
     int errcode = 0;
     off_t wanted_mem_block_size = length;
@@ -119,7 +135,7 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
      * passed seems to be correct then try to map file into memory*/
     if ( CHECK_FLAG(prot, PROT_READ) && fd > 0 ){
 	/*doing simple mmap, get stat for file descriptor, allocate memory
-	 and just read file into memory*/
+	  and just read file into memory*/
 	struct stat st;
 	/*fstat is checking fd passed and get file size*/
 	if ( !fstat(fd, &st) ){
@@ -171,8 +187,12 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 	errcode = ENOSYS;
     }
     
-    if ( errcode == 0 )
+    if ( errcode == 0 ){
+	/*update lowest mmap addr, for future check sbrk/mmap intersections*/
+	if ( alloc_addr < this->heap_lowest_mmap_addr )
+	    this->heap_lowest_mmap_addr = alloc_addr;
 	return (intptr_t)alloc_addr;
+    }
     else{
 	errno = errcode;
 	return (intptr_t)MAP_FAILED;
@@ -182,15 +202,14 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 static int
 memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
     errno=0;
-    void* end_range = this->heap_mmap_ptr_aligned + this->heap_mmap_size_aligned;
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
-    if ( addr >= this->heap_mmap_ptr_aligned && addr <= end_range ){
+    if ( addr >= MMAP_LOWEST_PAGE_ADDR(this) && addr <= MMAP_HIGHEST_PAGE_ADDR(this) ){
 	int i;
-	int munmap_begin_chunk_index = (addr - this->heap_mmap_ptr_aligned)/PAGE_SIZE;
+	int munmap_begin_chunk_index = (MMAP_HIGHEST_PAGE_ADDR(this) - addr) / s_page_size;
 	int munmap_chnuks_count = ROUND_UP(length,PAGE_SIZE)/PAGE_SIZE;
-	LOG_DEBUG(ELogIndex, munmap_begin_chunk_index, "" )
-	LOG_DEBUG(ELogCount, munmap_chnuks_count, "" )
+	LOG_DEBUG(ELogIndex, munmap_begin_chunk_index, "" );
+	LOG_DEBUG(ELogCount, munmap_chnuks_count, "" );
 
 	/*unmap region chunk by chunk*/
 	for ( i=munmap_begin_chunk_index; i < munmap_begin_chunk_index+munmap_chnuks_count ; i++ ){
@@ -201,12 +220,12 @@ memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
 	    }
 	    else{
 		LOG_DEBUG(ELogAddress, addr, "indicated address does not contain maped region" )
-	    }
+		    }
 	}
     }
     else{
 	ZRT_LOG(L_ERROR, "Can't do unmap addr=%p is not in range [%p-%p]", 
-		addr, this->heap_mmap_ptr_aligned, end_range );
+		addr, MMAP_LOWEST_PAGE_ADDR(this), MMAP_HIGHEST_PAGE_ADDR(this) );
     }
     return 0;
 }
@@ -219,40 +238,28 @@ static struct MemoryInterface KMemoryInterface = {
     memory_munmap
 };
 
-struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size ){
+struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size, void *brk ){
     /*round up tests*/
     assert(roundup_pow2( 0 )== 0);
     assert(roundup_pow2( 4 )== 4);
     assert(roundup_pow2( 63 )== 64);
     assert(roundup_pow2( 66 )== 128);
     assert(roundup_pow2( 536860612 )== 536870912);
-    /*Prepare ranges for sbrk and mmap*/
-
-    /*setup sbrk region here, that's very low range, but allow us to
-      use unaligned memory we have below alligned mmap range.*/
-    
-    /*Mmap operates by alligned on pagesize memories, so it's required
-      to roundup not necessarily aligned input params heap_ptr,
-      heap_size.*/
-    uint32_t addr_uint =  ROUND_UP( (uint32_t)heap_ptr, sysconf(_SC_PAGESIZE) );
-    heap_size -= addr_uint - (uint32_t)heap_ptr;
-    assert( ROUND_UP( (uint32_t)addr_uint, sysconf(_SC_PAGESIZE) ) == addr_uint );
-    assert( ROUND_UP( (uint32_t)heap_size, sysconf(_SC_PAGESIZE) ) == heap_size );
     /*check if we have valid PAGE_SIZE macro*/
-    assert( sysconf(_SC_PAGESIZE) == PAGE_SIZE );
+    assert( s_page_size == PAGE_SIZE );
+    /*check align for right bound of heap*/
+    uint32_t heap_max_addr = (uint32_t)HEAP_MAX_ADDR(heap_ptr,heap_size);
+    assert( heap_max_addr == ROUND_UP(heap_max_addr, s_page_size) );
 
-    ZRT_LOG(L_BASE, "Mmap memory is: [1st page addr=0x%x, last page addr=0x%x, size=0x%x, pages count=%d]", 
-	    addr_uint, addr_uint+heap_size-sysconf(_SC_PAGESIZE), heap_size, heap_size/PAGE_SIZE );
+    int mmap_pages_count = MMAP_REGION_SIZE_ALIGNED_(heap_ptr, brk, heap_size) / s_page_size;
 
-    /*init array used to store status of chunks for mmap/munmap*/
-    int array_items_count = heap_size/PAGE_SIZE/8;
-    array_items_count += (heap_size/PAGE_SIZE)%8>0?1:0;
+    /*init array used to store status of chunks for mmap/munmap.
+     *keep in mind that pages quantity can be not multiple on 8*/
+    int bit_array_size = mmap_pages_count/8; bit_array_size += mmap_pages_count%8>0?1:0;
+    LOG_DEBUG(ELogSize, bit_array_size, "bitarray actual size in bytes" );
 
-    LOG_DEBUG(ELogSize, array_items_count, "bitarray actual size in bytes" )
-    assert(array_items_count*8 >=heap_size/PAGE_SIZE);
+    init_bit_array( &s_bit_array_implem, s_map_chunks_bit_array, bit_array_size );
 
-    init_bit_array( &s_bit_array_implem, map_chunks_bit_array, array_items_count );
-
-    KMemoryInterface.init(&KMemoryInterface, heap_ptr, (void*)addr_uint, heap_size);
+    KMemoryInterface.init(&KMemoryInterface, heap_ptr, heap_size, brk);
     return &KMemoryInterface;
 }
