@@ -2,15 +2,8 @@ include $(ZRT_ROOT)/Makefile.env
 ARCH=x86_64-nacl
 # ARCH=x86_64-linux-gnu
 
-CC=${ARCH}-gcc
-AR=${ARCH}-ar
-CXX=${ARCH}-g++
-RANLIB=${ARCH}-ranlib
-
 CFLAGS=-Wno-long-long -msse4.1 -m64 -g
 
-ZVM_PREFIX_ABSPATH = $(abspath $(ZVM_PREFIX))
-ZEROVM=${ZVM_PREFIX_ABSPATH}/bin/zerovm -QPs
 
 LDFLAGS=
 CFLAGS+=
