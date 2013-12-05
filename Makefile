@@ -16,6 +16,7 @@ lib/libc/chmod.c \
 lib/libc/chown.c \
 lib/libc/ftruncate.c \
 lib/libc/stat_realpath.c \
+lib/libc/getsysstats.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/printf_prolog.c \

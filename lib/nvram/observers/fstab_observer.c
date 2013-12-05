@@ -96,7 +96,6 @@ void handle_fstab_record(struct MNvramObserver* observer,
 }
 
 void handle_mount_export(struct FstabObserver* observer){
-#ifdef FSTAB_SAVE_TAR_ENABLE
     struct FstabRecordContainer* record;
     int i;
     for ( i=0; i < observer->postpone_mounts_count; i++ ){
@@ -116,7 +115,6 @@ void handle_mount_export(struct FstabObserver* observer){
 		    res, mount_path, channel_alias);
 	}
     }
-#endif //FSTAB_SAVE_TAR_ENABLE
 }
 
 void handle_mount_import(struct FstabObserver* observer, struct FstabRecordContainer* record){

@@ -11,6 +11,8 @@
 
 #include <stddef.h> //size_t 
 
+#include "bitarray.h"
+
 #define MAX_MEMORY_CAPACITY_IN_GB 4
 #define ONE_GB_HEAP_SIZE (1024*1024*1024)
 #define PAGE_SIZE (1024*64)
@@ -76,13 +78,25 @@ struct MemoryInterface{
      * unmap memory range, in practice memory will released at specified addr*/
     int (*munmap)(struct MemoryInterface* this, void *addr, size_t length);
 
+    /*result for sysconf(_SC_PHYS_PAGES)*/
+    long int (*get_phys_pages)(struct MemoryInterface* this);
+    /*result for sysconf(_SC_AVPHYS_PAGES)*/
+    long int (*get_avphys_pages)(struct MemoryInterface* this);
+
     //data
     void*    heap_start_ptr; /*heap memory left bound*/
     void*    heap_brk;       /*current brk pointer*/
     uint32_t heap_size;      /*entire heap size*/
     void*    heap_lowest_mmap_addr;
+    //
+    /*map_chunks_bit_array is used for bitarray, were are only 1bit per
+     *1page needed.  here reserved memory for max available pages count.*/
+    unsigned char map_chunks_bit_array[(MAX_MMAP_PAGES_COUNT)/8]; 
+    //
+    struct BitArray bitarray;
 };
 
-struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size, void *brk );
+struct MemoryInterface* init_memory_interface( void *heap_ptr, uint32_t heap_size, void *brk );
+struct MemoryInterface* memory_interface_instance();
 
 #endif //__MEMORY_SYSCALL_HANDLERS_H__

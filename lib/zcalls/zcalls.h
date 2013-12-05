@@ -138,6 +138,8 @@ int zrt_zcall_chown(const char *path, uid_t owner, gid_t group);
 int zrt_zcall_fchown(int fd, uid_t owner, gid_t group);
 int zrt_zcall_ftruncate(int fd, off_t length);
 int zrt_zcall_stat_realpath(const char *abspathname, struct stat *stat);
+int zrt_zcall_get_phys_pages();
+int zrt_zcall_get_avphys_pages();
 
 #endif //__ZCALLS_H__
 

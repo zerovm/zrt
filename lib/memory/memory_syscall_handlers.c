@@ -25,23 +25,15 @@
 
 /***************mmap emulation *************/
 
-/*map_chunks_bit_array is used for bitarray, were are only 1bit per
- *1page needed.  here reserved memory for max available pages count.*/
-static unsigned char s_map_chunks_bit_array[(MAX_MMAP_PAGES_COUNT)/8]; 
-static struct BitArrayImplem s_bit_array_implem;
-static const uint32_t s_page_size = PAGE_SIZE;
-
-
-static void* alloc_memory_pseudo_mmap(struct BitArrayImplem* bit_array_implem, 
-				      struct MemoryInterface* mem_if_p, 
+static void* alloc_memory_pseudo_mmap(struct MemoryInterface* mem_if_p, 
 				      size_t memsize){ 
     int i;
     void* ret_addr = NULL;
-    int map_pages_requested = ROUND_UP(memsize, s_page_size)/s_page_size;
+    struct BitArrayPublicInterface* bitarray= (struct BitArrayPublicInterface*)&mem_if_p->bitarray;
+    int map_pages_requested = ROUND_UP(memsize, PAGE_SIZE)/PAGE_SIZE;
 
     /*search for sequence of free pages starting from end*/
-    int mmap_index = bit_array_implem
-	->search_emptybit_sequence_begin(bit_array_implem, map_pages_requested); 
+    int mmap_index = bitarray->search_emptybit_sequence_begin(bitarray, 0, map_pages_requested); 
     int mmap_low_page_index = mmap_index+ map_pages_requested-1;
 
     /*if indexes of map pages seems to be valid*/
@@ -66,7 +58,7 @@ static void* alloc_memory_pseudo_mmap(struct BitArrayImplem* bit_array_implem,
 	    for ( i=0; i < map_pages_requested; i++ ){
 		current_chunk_index = mmap_index+i;
 		LOG_DEBUG(ELogIndex, current_chunk_index, "mark chunk as used" );
-		bit_array_implem->toggle_bit(bit_array_implem, current_chunk_index);
+		bitarray->toggle_bit(bitarray, current_chunk_index);
 	    }
 	    ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%u) ret addr=%p", memsize, ret_addr ); 
 	}
@@ -141,7 +133,7 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 	if ( !fstat(fd, &st) ){
 	    /*min amount of memory here is PAGE_SIZE*/
 	    wanted_mem_block_size = st.st_size == 0 ? PAGE_SIZE : st.st_size;
-	    alloc_addr = alloc_memory_pseudo_mmap( &s_bit_array_implem, this, wanted_mem_block_size );
+	    alloc_addr = alloc_memory_pseudo_mmap( this, wanted_mem_block_size );
 	    if ( alloc_addr != NULL ){
 		errcode = 0;
 		/*create maping in memory just copying file contents starting from offset
@@ -175,7 +167,7 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
     /*if anonymous mapping requested then do it*/
     else if ( CHECK_FLAG(prot, PROT_READ|PROT_WRITE) &&
 	      CHECK_FLAG(flags, MAP_ANONYMOUS) && length >0 ){
-	alloc_addr = alloc_memory_pseudo_mmap( &s_bit_array_implem, this, wanted_mem_block_size );
+	alloc_addr = alloc_memory_pseudo_mmap( this, wanted_mem_block_size );
 	if ( alloc_addr != NULL )
 	    errcode = 0;
 	else
@@ -206,17 +198,18 @@ memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
       would be returned as heap bound*/
     if ( addr >= MMAP_LOWEST_PAGE_ADDR(this) && addr <= MMAP_HIGHEST_PAGE_ADDR(this) ){
 	int i;
-	int munmap_begin_chunk_index = (MMAP_HIGHEST_PAGE_ADDR(this) - addr) / s_page_size;
+	int munmap_begin_chunk_index = (MMAP_HIGHEST_PAGE_ADDR(this) - addr) / PAGE_SIZE;
 	int munmap_chnuks_count = ROUND_UP(length,PAGE_SIZE)/PAGE_SIZE;
 	LOG_DEBUG(ELogIndex, munmap_begin_chunk_index, "" );
 	LOG_DEBUG(ELogCount, munmap_chnuks_count, "" );
 
+	struct BitArrayPublicInterface* bitarray = (struct BitArrayPublicInterface*)&this->bitarray;
 	/*unmap region chunk by chunk*/
 	for ( i=munmap_begin_chunk_index; i < munmap_begin_chunk_index+munmap_chnuks_count ; i++ ){
-	    int bit = s_bit_array_implem.get_bit( &s_bit_array_implem, i);
+	    int bit = bitarray->get_bit( bitarray, i);
 	    ZRT_LOG(L_SHORT, "bit index=%d value=%d", i, bit);
 	    if ( bit == 1 ){
-		s_bit_array_implem.toggle_bit( &s_bit_array_implem, i);
+		bitarray->toggle_bit( bitarray, i);
 	    }
 	    else{
 		LOG_DEBUG(ELogAddress, addr, "indicated address does not contain maped region" )
@@ -231,14 +224,35 @@ memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
 }
 
 
+static long int memory_get_phys_pages(struct MemoryInterface* this){
+    /*all pages count provided by zerovm (memory rounded up to page size)*/
+    uint32_t beginaddr = ROUND_UP((uint32_t)this->heap_start_ptr, PAGE_SIZE);
+    uint32_t endaddr = (uint32_t)MMAP_HIGHEST_PAGE_ADDR(this);
+
+    return (endaddr - beginaddr)/PAGE_SIZE + 1;
+}
+
+static long int memory_get_avphys_pages(struct MemoryInterface* this){
+    /*all pages count we have in mmap memory region.  
+      TODO: Currently it's not a count of available 
+      pages, needed to calculate count.*/
+    return MMAP_REGION_SIZE_ALIGNED(this)/PAGE_SIZE;
+}
+
 static struct MemoryInterface KMemoryInterface = {
     memory_init,
     memory_sysbrk,
     memory_mmap,
-    memory_munmap
+    memory_munmap,
+    memory_get_phys_pages,
+    memory_get_avphys_pages
 };
 
-struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size, void *brk ){
+struct MemoryInterface* memory_interface_instance(){
+    return &KMemoryInterface;
+}
+
+struct MemoryInterface* init_memory_interface( void *heap_ptr, uint32_t heap_size, void *brk ){
     /*round up tests*/
     assert(roundup_pow2( 0 )== 0);
     assert(roundup_pow2( 4 )== 4);
@@ -246,20 +260,25 @@ struct MemoryInterface* get_memory_interface( void *heap_ptr, uint32_t heap_size
     assert(roundup_pow2( 66 )== 128);
     assert(roundup_pow2( 536860612 )== 536870912);
     /*check if we have valid PAGE_SIZE macro*/
-    assert( s_page_size == PAGE_SIZE );
+    assert( PAGE_SIZE == sysconf(_SC_PAGE_SIZE) );
     /*check align for right bound of heap*/
     uint32_t heap_max_addr = (uint32_t)HEAP_MAX_ADDR(heap_ptr,heap_size);
-    assert( heap_max_addr == ROUND_UP(heap_max_addr, s_page_size) );
+    assert( heap_max_addr == ROUND_UP(heap_max_addr, PAGE_SIZE) );
 
-    int mmap_pages_count = MMAP_REGION_SIZE_ALIGNED_(heap_ptr, brk, heap_size) / s_page_size;
+    int mmap_pages_count = MMAP_REGION_SIZE_ALIGNED_(heap_ptr, brk, heap_size) / PAGE_SIZE;
 
     /*init array used to store status of chunks for mmap/munmap.
      *keep in mind that pages quantity can be not multiple on 8*/
     int bit_array_size = mmap_pages_count/8; bit_array_size += mmap_pages_count%8>0?1:0;
     LOG_DEBUG(ELogSize, bit_array_size, "bitarray actual size in bytes" );
 
-    init_bit_array( &s_bit_array_implem, s_map_chunks_bit_array, bit_array_size );
-
+    struct BitArrayPublicInterface* bitarray 
+	= CONSTRUCT_L(BIT_ARRAY) ( KMemoryInterface.map_chunks_bit_array, 
+				   bit_array_size, 
+				   &KMemoryInterface.bitarray );
+    (void)bitarray;
+    
     KMemoryInterface.init(&KMemoryInterface, heap_ptr, heap_size, brk);
     return &KMemoryInterface;
 }
+

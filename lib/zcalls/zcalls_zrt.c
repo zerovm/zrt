@@ -61,7 +61,6 @@ struct MountsInterface*        s_channels_mount=NULL;
 struct MountsInterface*        s_mem_mount=NULL;
 static struct MountsManager*   s_mounts_manager = NULL;
 static struct MountsInterface* s_transparent_mount = NULL;
-static struct MemoryInterface* s_memory_interface = NULL;
 static int                     s_zrt_ready=0;
 /****************** */
 
@@ -258,7 +257,8 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
 int  zrt_zcall_enhanced_sysbrk(void **newbrk){
     int ret=-1;
     LOG_SYSCALL_START("*newbrk=%p", *newbrk);
-    int32_t retaddr = s_memory_interface->sysbrk(s_memory_interface, *newbrk );
+    struct MemoryInterface* memif = memory_interface_instance();
+    int32_t retaddr = memif->sysbrk(memif, *newbrk );
     if ( retaddr != -1 ){
 	/*get new address via pointer*/
 	*newbrk = (void*)retaddr;
@@ -273,7 +273,8 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
     LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u off=%lld",
     		      *addr, length, prot, flags, fd, off);
 
-    retcode = s_memory_interface->mmap(s_memory_interface, *addr, length, prot,
+    struct MemoryInterface* memif = memory_interface_instance();
+    retcode = memif->mmap(memif, *addr, length, prot,
 				       flags, fd, off);
     if ( retcode > 0 ){
 	*addr = (void*)retcode;
@@ -291,7 +292,8 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
 
 int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
     LOG_SYSCALL_START("addr=%p, len=%u", addr, len);
-    int32_t retcode = s_memory_interface->munmap(s_memory_interface, addr, len);
+    struct MemoryInterface* memif = memory_interface_instance();
+    int32_t retcode = memif->munmap(memif, addr, len);
     LOG_INFO_SYSCALL_FINISH( retcode, "addr=%p, len=%u", addr, len);
     return retcode;
 }
@@ -376,8 +378,7 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     ITEMS_CREATOR;
 
     /*init handlers for heap memory*/
-    s_memory_interface = get_memory_interface( manifest->heap_ptr, manifest->heap_size,
-					       static_prolog_brk() );
+    init_memory_interface( manifest->heap_ptr, manifest->heap_size, static_prolog_brk() );
 
     /*manage mounted filesystems*/
     s_mounts_manager = get_mounts_manager();
