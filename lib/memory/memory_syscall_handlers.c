@@ -62,6 +62,10 @@ static void* alloc_memory_pseudo_mmap(struct MemoryInterface* mem_if_p,
 	    }
 	    ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%u) ret addr=%p", memsize, ret_addr ); 
 	}
+	else{
+	    ZRT_LOG(L_SHORT, "ignore returned low mmap page addr=%p intersects with brk=%p", 
+		    low_page_memory_addr, mem_if_p->heap_brk );
+	}
     }
     else{
 	ZRT_LOG(L_SHORT, "PSEUDO_MMAP(%u) failed", memsize );

@@ -276,7 +276,7 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
     struct MemoryInterface* memif = memory_interface_instance();
     retcode = memif->mmap(memif, *addr, length, prot,
 				       flags, fd, off);
-    if ( retcode > 0 ){
+    if ( retcode != MAP_FAILED ){
 	*addr = (void*)retcode;
 	retcode=0;
     }
