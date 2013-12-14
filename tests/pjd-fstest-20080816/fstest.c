@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
+ * Copyright (c) 2013, LiteStack, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,0 +1,3 @@
+tests in this folder possible are slow on some platforms due to Hardware/OS restriction.
+At least run these tests when testing whole toolchain build.
+For bigfile.c  see https://github.com/zerovm/zrt/issues/65

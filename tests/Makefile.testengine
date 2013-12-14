@@ -6,17 +6,23 @@ endif
 #Note2: RELEASE VERSION OF ZEROVM
 #Given Makefile - test runner using release build of zerovm
 
-#default types of channels we specifying from make
-DEF_CHANTYPE1=0
-DEF_CHANTYPE2=0
-DEF_CHANTYPE3=1
-
 #mount/remount tar archives
 TEST_TAR=foo.tar
 TEST_TAR_MOUNT=$(CURDIR)/mount.tar
 TEST_TAR_REMOUNT=$(CURDIR)/remount.tar
-#file inside both archives
-TESTFILE=testfile.1234
+#file for both TAR archives
+TESTFILE=test.1234
+OUTFILE=$(CURDIR)/$(BASENAME)
+#channels test file, 
+CHANNEL_TEST_FILE_CONTENTS="something something something something "
+
+#default types of channels we specifying from make
+DEF_CHANTYPE1=0
+DEF_CHANTYPE2=0
+DEF_CHANTYPE3=1
+CHANNEL_READONLY=$(OUTFILE).readonly.channel
+CHANNEL_WRITEONLY=$(OUTFILE).writeonly.channel
+CHANNEL_READWRITE=$(OUTFILE).read-write.channel
 
 
 OUTPUT_LAST=last_test.output
@@ -33,22 +39,8 @@ TEST_LOG_DEBUG=$(addsuffix .zrtdebug.log, $(basename $(TEST_SOURCES) ) )
 TEST_TARS=$(addsuffix .$(TEST_TAR), $(basename $(TEST_SOURCES) ) )
 TEST_NEXES=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
 TEST_LIST=$(basename $(TEST_SOURCES) )
+TEST_CHANNELS=$(shell find $(TESTS_ROOT) -name "*.channel")
 COUNTER=0
-
-#get pipe from zerovm and parse output
-#in case if has to many columns then mark it as error and merge 3 lines into output
-AWK_GET_ERRCODE=awk '{ \
-RESULT="FAIL"; \
-if ( NR == 1 && NF > 1) { RETCODE=1; printf "%s %s",RESULT, $$0 } \
-if ( (NR == 2 || NR == 3 ) && NF > 1) { RETCODE=1; printf "%s", $$0 } \
-else if (NR == 3) { RETCODE=$$1 } \
-if (NR == 6) { \
-	if (RETCODE == 0) { RESULT="PASS" } \
-	else { RESULT="FAIL" } \
-	if ($$0 != "ok") { RESULT="FAIL" } \
-	print RESULT,"zvmstatus=",$$0 \
-} \
-}'
 
 #save failed tests to display it in report
 #if string does not contain PASS, then output error
@@ -66,7 +58,7 @@ CFLAGS+=-std=gnu99
 CFLAGS+=-D_GNU_SOURCE
 CFLAGS+=-Wno-long-long -m64
 CFLAGS+=-Werror-implicit-function-declaration
-CFLAGS+=-I.. -I. 
+CFLAGS+=-I.. -I. -Iframework
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
 
@@ -101,14 +93,16 @@ clean:
 	@rm -f $(VERBOSE_CLEAN) $(TEST_NVRAMS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_LOG_DEBUG)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_TARS)
-	@rm -f $(VERBOSE_CLEAN) $(MOUNT_TAR_NAME) $(REMOUNT_TAR_NAME) $(TEST_TAR_MOUNT) $(TEST_TAR_REMOUNT) $(TESTFILE)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_CHANNELS)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_TAR_MOUNT) $(TEST_TAR_REMOUNT)
 
 prepare:
-	@rm -f ${TEST_TAR_MOUNT} ${TEST_TAR_REMOUNT} ${TESTFILE}
-	@echo "mount" > ${TESTFILE}
-	@tar -cf ${TEST_TAR_MOUNT} ${TESTFILE}
-	@echo "remount" > ${TESTFILE}
-	@tar -cf ${TEST_TAR_REMOUNT} ${TESTFILE}
+	$(eval TMPDIR:=$(shell mktemp -d))
+	@echo "mount" > $(TMPDIR)/$(TESTFILE)
+	@tar -cf    ${TEST_TAR_MOUNT} -C $(TMPDIR) $(TESTFILE)
+	@echo "remount" > $(TMPDIR)/$(TESTFILE)
+	@tar -cf ${TEST_TAR_REMOUNT} -C $(TMPDIR) ${TESTFILE}
+	@rm -fr $(TMPDIR)
 
 $(ZEROVM):
 	$(error "$(ZEROVM) does not exist")
@@ -130,6 +124,10 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_CHANTYPE1:=$(firstword $(CHANTYPE1-$(NAMEONLY).c) $(DEF_CHANTYPE1)))
 	$(eval SPECIFIC_TEST_CHANTYPE2:=$(firstword $(CHANTYPE2-$(NAMEONLY).c) $(DEF_CHANTYPE2)))
 	$(eval SPECIFIC_TEST_CHANTYPE3:=$(firstword $(CHANTYPE3-$(NAMEONLY).c) $(DEF_CHANTYPE3)))
+#prepare channel files
+	@echo $(CHANNEL_TEST_FILE_CONTENTS) > $(CHANNEL_READONLY)
+	@echo $(CHANNEL_TEST_FILE_CONTENTS) > $(CHANNEL_WRITEONLY)
+	@echo $(CHANNEL_TEST_FILE_CONTENTS) > $(CHANNEL_READWRITE)
 #tar mount/remount support
 	$(eval SPECIFIC_TEST_MOUNT=$(CURDIR)/$(BASENAME).$(TEST_TAR))
 	@echo "RUN TEST $@ "
@@ -139,7 +137,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #prepare scripts for debug purposes with GDB
 	@sed s@{NEXE_FULL_PATH}@$(CURDIR)/$(BASENAME).nexe@g $(ZRT_ROOT)/gdb_commands.template > $(CURDIR)/$(BASENAME).scp
 #prepare manifest
-	@sed s@{OUTFILE}@$(CURDIR)/$(BASENAME)@g manifest_tests.template | \
+	@sed s@{OUTFILE}@$(OUTFILE)@g manifest_tests.template | \
 	 sed s@{ABS_PATH}@$(CURDIR)/@g | \
 	 sed s@{CHANTYPE1}@$(SPECIFIC_TEST_CHANTYPE1)@g | \
 	 sed s@{CHANTYPE2}@$(SPECIFIC_TEST_CHANTYPE2)@g | \
@@ -162,8 +160,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #parsing correct output retrieved via pipe
 #todo: check  big file support without -l option
 	@cp -f ${TEST_TAR_MOUNT} $(SPECIFIC_TEST_MOUNT);
-	@$(ZEROVM) $(CURDIR)/$(BASENAME).manifest -P \
-	| $(AWK_GET_ERRCODE) \
+	@$(ZEROVM) $(CURDIR)/$(BASENAME).manifest -P -v3 \
+	| $(AWK_GET_ZEROVM_APP_RETURN_CODE) \
 	| $(AWK_HANDLE_FAIL) testname="$@"  2>&1 | tee -a $(OUTPUT_FAIL)
 #If session was forked by zfork() and socket file exist then restore forked session now
 #rewrite tar image to test remount
@@ -172,13 +170,13 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	echo "RUN FORKED TEST $@ "; \
 	cat $(CURDIR)/$(BASENAME).manifest \
 	| python ../daemon_client.py "${SPECIFIC_TEST_FORK}" 2>&1 \
-	| $(AWK_GET_ERRCODE) \
+	| $(AWK_GET_ZEROVM_APP_RETURN_CODE) \
 	| $(AWK_HANDLE_FAIL) testname="$@ FORK" | tee -a $(OUTPUT_FAIL) ; \
 	rm -f ${SPECIFIC_TEST_FORK} ; \
 	fi;
 
 #completion of nexe rules is prerequisite for report
-report: $(TEST_NEXES) $(OUTPUT_FAIL)
+report: $(TEST_NEXES) #$(OUTPUT_FAIL)
 	$(eval FAILED_TESTS_COUNT:=$(shell echo `cat $(OUTPUT_FAIL) | wc -l`))
 #display tests resuts
 	@echo --------------------------------------------
@@ -190,6 +188,6 @@ report: $(TEST_NEXES) $(OUTPUT_FAIL)
 	@rm -f $(OUTPUT_FAIL) $(OUTPUT_LAST)
 	@exit $(FAILED_TESTS_COUNT)
 
-$(OUTPUT_FAIL):
+#$(OUTPUT_FAIL):
 #has no output fail if this rule is active
-	$(error Nothing output)
+#	$(error Nothing output)

@@ -65,24 +65,18 @@ libports/sqlite3/libsqlite3.a \
 libports/context-switch/libcontext.a
 
 ################# samples to build
-UNSTABLE_SAMPLES=
-TEST_SAMPLES=file_stat bigfile
-TEST_SUITES=lua_test_suite
+TEST_SUITES=lua_test_suite glibc_test_suite
 
 ################# flags set
 CFLAGS += -Werror-implicit-function-declaration
 CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 
-################# "make all" Build libs 
+################# "make all" Build zrt & run minimal tests set
+all: build autotests
 
-#debug: LDFLAGS+=-lgcov -fprofile-arcs
-#debug: CFLAGS+=-Wdisabled-optimization -fprofile-arcs -ftest-coverage -fdump-rtl-all -fdump-ipa-all 
-#debug: prepare ${LIBS} ${LIBZRT} autotests
-
-all: notests autotests
-
-notests: doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
+build: doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
+	@make -C locale/locale_patched
 
 #build zrt0 to be used as stub inside of zlibc
 zlibc_dep: CFLAGS+=-DZLIBC_STUB
@@ -103,65 +97,68 @@ ${LIBPORTS}:
 	@echo move $@ library to final folder
 	@mv -f $@ lib	
 
-############## "make test" Build & Run all tests
-test: test_suites zrt_tests
-
-############## "make autotests" run zrt autotests
-autotests:
-	@echo ------------- RUN zrt $@ ------------
-	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite clean
-	@TESTS_ROOT=$@ make -Ctests/zrt_test_suite -j4
+############## "make test" Run all test suites available for ZRT
+check: build
+	@echo ------------- RUN zrt tests ------------
+#zrt tests
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite -j4
+#glibc tests
+	@sh tests/glibc_test_suite/run_tests.sh
+#lua tests
+	@make -Ctests/lua_test_suite
 	@./kill_daemons.sh
 
-############## "make zrt_tests" Build test samples 
-test_suites: ${TEST_SUITES}
-${TEST_SUITES}: 	
+lua_test_suite: build
 	@make -Ctests/$@
 
-############## "make zrt_tests" Build test samples 
-zrt_tests: ${TEST_SAMPLES}
-${TEST_SAMPLES}: 	
-	@make -Ctests/zrt_test_suite/functional/$@
+glibc_test_suite: build
+	tar -cf tests/glibc_test_suite/mounts/tmp_dir.tar -C tests/glibc_test_suite/mounts/glibc-fs tmp
+#run tests
+	make -C tests/glibc_test_suite clean
+	make -C tests/glibc_test_suite -j4
 
-################ "make clean" Cleaning libs, tests, samples 	
-clean: libclean clean_ports clean_test_suites
-	@rm -f lib/*.a
+zrt_test_suite: build
+#Run different groups of zrt tests sequentially
+	@echo ------------- RUN zrt $@ ------------
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite -j4
+
+############## "make autotests" run zrt autotests
+autotests possible_slow_autotests: build
+	@echo ------------- RUN zrt $@ ------------
+	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite clean prepare
+	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite -j4
+	@./kill_daemons.sh
 
 ################ "make clean" Cleaning libs 
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 LIBPORTS_CLEAN =$(foreach smpl, ${LIBPORTS}, $(smpl).clean)
 
-libclean: ${LIBS_CLEAN}
+################ "make clean" Cleaning libs, tests, samples         
+clean: libclean clean_ports testclean
+	@rm -f lib/*.a
+
+libclean: ${LIBS_CLEAN} testclean clean_ports
 ${LIBS_CLEAN}: cleandep
 	@rm -f $(LIBZRT_OBJECTS)
 	@rm -f $(LIBS) $(LIBZRT)
 	@make -C$(dir $@) clean 
-	@TESTS_ROOT=autotests make -Ctests/zrt_test_suite clean
 
 clean_ports: ${LIBPORTS_CLEAN}
 ${LIBPORTS_CLEAN}:
 	@make -C$(dir $@) clean 
 	@rm -f $(LIBPORTS)
 
+testclean: 
+	@make -C locale/locale_patched clean
+	@make -Ctests/glibc_test_suite clean
+	@make -Ctests/lua_test_suite clean
+	@TESTS_ROOT=tests/autotests make -Ctests/zrt_test_suite clean
+	@TESTS_ROOT=tests/possible_slow_autotests make -Ctests/zrt_test_suite clean
+
 cleandep:
 	@rm -f ${LIBDEP_OBJECTS}
-
-################ "make clean_samples" Cleaning samples 
-SAMPLES_CLEAN =$(foreach smpl, ${SAMPLES}, $(smpl).clean)
-TEST_SAMPLES_CLEAN=$(foreach smpl, ${TEST_SAMPLES}, $(smpl).clean)
-
-clean_samples: ${SAMPLES_CLEAN} ${TEST_SAMPLES_CLEAN}
-${SAMPLES_CLEAN}:
-	@make -Csamples/$(basename $@) clean
-${TEST_SAMPLES_CLEAN}:
-	@make -Ctests/zrt_test_suite/functional/$(basename $@) clean
-
-################ "make clean_test_suites" Cleaning test suites
-TESTS_CLEAN=$(foreach suite, ${TEST_SUITES}, $(suite).clean)
-
-clean_test_suites: ${TESTS_CLEAN}
-${TESTS_CLEAN}:
-	@make -Ctests/$(basename $@) clean
 
 ################ "make doc" Generate doc file concatenating all READMEs
 README_GEN=README.gen
@@ -207,8 +204,6 @@ install: uninstall
 	install -m 0644 lib/mapreduce/elastic_mr_item.h $(INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
 	install -m 0644 lib/helpers/buffered_io.h $(INCLUDE_DIR)/helpers
-#	install -m 0755 zvsh $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin
-#	sed -i 's#$$ZEROVM_ROOT#$(ZVM_PREFIX)/bin#' $(ZVM_DESTDIR)$(ZVM_PREFIX)/bin/zvsh
 
 .PHONY: install
 

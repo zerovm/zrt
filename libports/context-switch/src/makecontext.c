@@ -1,5 +1,6 @@
 /* Create new context.
    Copyright (C) 2002, 2004, 2005, 2008 Free Software Foundation, Inc.
+   Copyright (c) 2013, LiteStack, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2002.
 
@@ -17,6 +18,7 @@
    License along with the GNU C Library; if not, write to the Free
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
    02111-1307 USA.  */
+
 
 #include <stdarg.h>
 #include <stdint.h>

@@ -1,14 +1,26 @@
 /*
- *  Here is defined query_zcalls entry point to ZRT code from ZLIBC.
- *  The zcall interfaces initialization does here;
- *  Created on: Feb 22, 2013
- *      Author: YaroslavLitvinov
+ * Here is defined query_zcalls the entry point to ZRT code from LIBC. The zcall interfaces initialization does here;
+ *
+ * Copyright (c) 2013, LiteStack, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 //#define ZLIBC_STUB
 /* Define ZLIBC_STUB to create empty implementation of zcalls interface.
  * It's needed while building ZLIBC to cut off the rest of ZRT library code.
  * For generic ZRT using it is should no be defined;*/
+
 
 
 #ifndef ZLIBC_STUB

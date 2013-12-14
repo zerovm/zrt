@@ -1,0 +1,17 @@
+Since localisation support it is an experimental feature that may not
+work. You can try to create localisation here are using same method to
+generate localisation files. Here is a file 'locales', in current
+folder. Which hold a list of experimental locales.
+> make
+Just run make, and it's create quiet process of building patcher,
+creation of localisation for system environment, and applying patch to
+it, to be compatible with glibc locale file version.
+TODO: Instead of patch, skeep locale version check inside of glibc.
+
+Under construction...
+Get localisation files by building locale sources [in progress]
+~/git/zrt/tools/locale_compiled/localedef/mounts/locales_i18n.tar
+
+
+
+
