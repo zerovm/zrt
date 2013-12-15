@@ -418,6 +418,8 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     /*explicitly create /dev directory in memmount, it's required for consistent
       FS structure, readdir from now can list /dev dir recursively from root */
     s_mem_mount->mkdir( "/dev", 0777 );
+    /*add directories here that can be expected by some user applications */
+    s_mem_mount->mkdir( "/tmp", 0777 );
 
     /*user main execution just after zrt initialization*/
 }

@@ -80,6 +80,28 @@ int main(int argc, char**argv){
     CLOSE_FILE(fd1);
     CLOSE_FILE(fd2);
 
+    {
+	//https://github.com/zerovm/zrt/issues/67
+	/*Correct flow: unlink returned error and set errno to EBUSY,
+	  because file is still opened and not yet closed. Just after
+	  closing of file do check of file existance and now file
+	  removed completely.*/
+	#define TMP_TEST_FILE "@test_1_tmp"
+	char name[] = TMP_TEST_FILE;
+	/*open file, now it's referenced and it's means that file in use*/
+	int fd = open(name, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
+	TEST_OPERATION_RESULT( 
+			      fd>=0&&errno==0,
+			      &ret, ret!=0);
+	/*try to unlink file that in use */
+	TEST_OPERATION_RESULT( unlink(name), &ret, ret==-1&&errno==EBUSY);
+	/*file still exist*/
+	CHECK_PATH_EXISTANCE( TMP_TEST_FILE );
+	close(fd);
+	/*after closing file successfully unlinked*/
+	CHECK_PATH_NOT_EXIST( TMP_TEST_FILE );
+    }
+
     return 0;
 }
 
