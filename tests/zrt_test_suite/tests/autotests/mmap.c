@@ -155,7 +155,6 @@ void sbrk_mmap_test(){
 #define MALLOC_SIZE 0x40000
 #define MMAP_SIZE 0x40000
     int i;
-    int ret;
 
     // try to allocate memory via malloc
     void* ptr = malloc(MALLOC_SIZE * sizeof(int));
@@ -171,7 +170,7 @@ void sbrk_mmap_test(){
     printf("Allocated via anon mmap\n");
 
     for (i=0;i<MALLOC_SIZE;++i) {
-	TEST_OPERATION_RESULT(((int*)ptr)[i] != 0xDEAD, &ret, ret==0 );
+	assert( ((int*)ptr)[i] == 0xDEAD );
     }
     return;
 }
