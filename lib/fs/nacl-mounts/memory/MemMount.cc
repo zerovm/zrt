@@ -399,17 +399,29 @@ int MemMount::UnlinkInternal(MemNode *node) {
         return -1;
     }
 
+#define POSTPONE_DELETE_FILE_INUSE
+
+#ifdef POSTPONE_DELETE_FILE_INUSE
     /*if file not used then delete it*/
     if ( !node->use_count() ){
+#endif //POSTPONE_DELETE_FILE_INUSE
+
 	parent->RemoveChild(inode);
 	slots_.Free(inode);
 	ZRT_LOG(L_SHORT, "file inode=%d removed", inode);
-	errno=0;
-	return 0;
+
+
+#ifdef POSTPONE_DELETE_FILE_INUSE
     }
-    node->TryUnlink(); /*autotry to remove it at file close*/
-    SET_ERRNO(EBUSY);
-    return -1;
+    else{
+	/*set some wrong name, to do file unaccessible*/
+	node->set_name("//some deleted file//");
+	node->TryUnlink(); /*autotry to remove it at file close*/
+    }
+#endif //POSTPONE_DELETE_FILE_INUSE
+
+    errno=0;
+    return 0; //return no error if file exist and ref count not 0
 }
 
 
@@ -500,6 +512,8 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
 	     bytes_read + sizeof(DIRENT) <= buf_size;
 	 ++it) {
 	MemNode *node = slots_.At(*it);
+	/*unlinked file must not be available for filesystem*/
+	if ( node->UnlinkisTrying() ) continue;
 	node->stat(&st);
 	ZRT_LOG(L_SHORT, "getdents entity: %s", node->name().c_str());
 	/*format in buf dirent structure, of variable size, and save current file data;

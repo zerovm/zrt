@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include <dirent.h>     /* Defines DT_* constants */
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,6 +30,78 @@
 #include "macro_tests.h"
 
 #define TEST_FILE2 (TEST_FILE "2")
+#define TMP_TEST_FILE "@test_1_tmp"
+
+int match_file_inode_in_dir(const char *dirpath, const char* fname) {
+    struct dirent *entry;
+    DIR *dp;
+    dp = opendir(dirpath);
+
+    if (dp == NULL) {
+        perror("opendir: Path does not exist or could not be read.");
+        return -1;
+    }
+
+    while ( (entry = readdir(dp))){
+	if ( !strcmp(fname, entry->d_name) ) return entry->d_ino;
+    }
+
+    closedir(dp);
+    return -1; //no inode located
+}
+
+void test_zrt_issue_67(const char* name){
+    //https://github.com/zerovm/zrt/issues/67
+    /*Since unlink returns no error if file in use, then unlinked
+      file should not be available for getdents/stat; but must be
+      available for fstat/read/write and another functions that
+      get fd/FILE as argument.*/
+    int ret;
+    struct stat st;
+    /*open file, now it's referenced and it's means that file in use*/
+    int fd = open(name, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
+    TEST_OPERATION_RESULT( 
+			  fd>=0&&errno==0,
+			  &ret, ret!=0);
+
+    /*file can be accessed as dir item via getdents */
+    TEST_OPERATION_RESULT( 	match_file_inode_in_dir("/", name),
+				&ret, ret!=-1);
+
+    /*try to unlink file that in use - file removing is postponed */
+    TEST_OPERATION_RESULT( unlink(name), &ret, ret==0&&errno==0);
+
+    /*can be accessed by fd via fstat*/
+    TEST_OPERATION_RESULT( fstat(fd, &st), &ret, ret==0&&errno==0);
+    /*can't be accessed by name via stat*/
+    CHECK_PATH_NOT_EXIST( name );
+    /*can't be accessed as dir item via getdents */
+    TEST_OPERATION_RESULT( 	match_file_inode_in_dir("/", name),
+				&ret, ret==-1);
+
+    errno=0;
+    TEST_OPERATION_RESULT( write(fd, name, 2), &ret, ret==2&&errno==0 )
+	printf("res=%d err=%d\n", ret, errno);
+
+    /*create file with the same name as unlink'ing now, it should be valid*/
+    {
+	int fd2 = open(name, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
+	TEST_OPERATION_RESULT( 
+			      fd2>=0&&errno==0,
+			      &ret, ret!=0);
+	CHECK_PATH_EXISTANCE( name );
+
+	close(fd2);
+    }
+
+    close(fd);
+    /*file closed, from now it should not be available at all*/
+
+    /*can't be accessed by fd via fstat*/
+    TEST_OPERATION_RESULT( fstat(fd, &st), &ret, ret==-1&&errno==EBADF);
+}
+
+
 
 int main(int argc, char**argv){
     CREATE_FILE(TEST_FILE, DATA_FOR_FILE, DATASIZE_FOR_FILE);
@@ -80,27 +153,8 @@ int main(int argc, char**argv){
     CLOSE_FILE(fd1);
     CLOSE_FILE(fd2);
 
-    {
-	//https://github.com/zerovm/zrt/issues/67
-	/*Correct flow: unlink returned error and set errno to EBUSY,
-	  because file is still opened and not yet closed. Just after
-	  closing of file do check of file existance and now file
-	  removed completely.*/
-	#define TMP_TEST_FILE "@test_1_tmp"
-	char name[] = TMP_TEST_FILE;
-	/*open file, now it's referenced and it's means that file in use*/
-	int fd = open(name, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
-	TEST_OPERATION_RESULT( 
-			      fd>=0&&errno==0,
-			      &ret, ret!=0);
-	/*try to unlink file that in use */
-	TEST_OPERATION_RESULT( unlink(name), &ret, ret==-1&&errno==EBUSY);
-	/*file still exist*/
-	CHECK_PATH_EXISTANCE( TMP_TEST_FILE );
-	close(fd);
-	/*after closing file successfully unlinked*/
-	CHECK_PATH_NOT_EXIST( TMP_TEST_FILE );
-    }
+    test_zrt_issue_67(TMP_TEST_FILE);
+    test_zrt_issue_67(TMP_TEST_FILE);
 
     return 0;
 }
