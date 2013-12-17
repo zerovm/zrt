@@ -35,9 +35,45 @@
 
 #define MEMORY_PAGE_FROM_INDEX(memory_if_p, index) ( MMAP_HIGHEST_PAGE_ADDR(memory_if_p) - index*PAGE_SIZE)
 
+
+#define NO_ADDR_OVERLAP(low_addr, high_addr) (low_addr) < (high_addr) ? 1 : 0
+#define HEAP_MAX_ADDR(heapptr_p, heapsize)  (heapptr_p+heapsize)
+
+#define MMAP_REGION_SIZE_ALIGNED_(heapptr_p, brk_p, heapsize)	\
+    (ROUND_UP(heapsize - ((brk_p) - (heapptr_p)), PAGE_SIZE))
+
+#define MMAP_REGION_SIZE_ALIGNED(memory_if_p)			\
+    MMAP_REGION_SIZE_ALIGNED_(memory_if_p->heap_start_ptr,	\
+			      memory_if_p->heap_brk,		\
+			      memory_if_p->heap_size )
+
+#define MMAP_LOWEST_PAGE_ADDR(memory_if_p)				\
+    (HEAP_MAX_ADDR(memory_if_p->heap_start_ptr, memory_if_p->heap_size) - MMAP_REGION_SIZE_ALIGNED(memory_if_p))
+
+#define MMAP_HIGHEST_PAGE_ADDR(memory_if_p)				\
+    (HEAP_MAX_ADDR(memory_if_p->heap_start_ptr, memory_if_p->heap_size) - PAGE_SIZE)
+
+
+#define SELF_CHECK							\
+    /*round up tests*/							\
+    assert(roundup_pow2( 0 )== 0);					\
+    assert(roundup_pow2( 4 )== 4);					\
+    assert(roundup_pow2( 63 )== 64);					\
+    assert(roundup_pow2( 66 )== 128);					\
+    assert(roundup_pow2( 536860612 )== 536870912);			\
+    /*check if we have valid PAGE_SIZE macro*/				\
+    assert( PAGE_SIZE == sysconf(_SC_PAGE_SIZE) );			\
+    /*check align for right bound of heap*/				\
+    uint32_t heap_max_addr = (uint32_t)HEAP_MAX_ADDR(heap_ptr,heap_size); \
+    assert( heap_max_addr == ROUND_UP(heap_max_addr, PAGE_SIZE) );
+
+
+
 /***************mmap emulation *************/
 
-static void* alloc_memory_pseudo_mmap(struct MemoryInterface* mem_if_p, 
+static struct MemoryManager KMemoryManager;
+
+static void* alloc_memory_pseudo_mmap(struct MemoryManager* mem_if_p, 
 				      size_t memsize){ 
     int i;
     void* ret_addr = NULL;
@@ -103,18 +139,40 @@ size_t bit_mask_after_hi(size_t x)
 }
 
 static void
-memory_init(struct MemoryInterface* this, 
+memory_init(struct MemoryManager* this, 
 	    void *heap_ptr, uint32_t heap_size, void *brk){
+    /*save data into this object*/
     this->heap_start_ptr = heap_ptr;
     this->heap_size = heap_size;
     this->heap_brk = brk;  /*current brk*/
     this->heap_lowest_mmap_addr = MMAP_HIGHEST_PAGE_ADDR(this);
+
+  SELF_CHECK;
+
+    /*test*/
+    int temp;
+    /*constants*/
+    const int mmap_pages_count = MMAP_REGION_SIZE_ALIGNED_(heap_ptr, brk, heap_size) / PAGE_SIZE;
+    /*init array used to store status of chunks for mmap/munmap.
+     *keep in mind that pages quantity can be not multiple on 8*/
+    const int bit_array_size = mmap_pages_count/8 + ( mmap_pages_count%8>0?1:0 ); 
+    temp=mmap_pages_count/8; temp += mmap_pages_count%8>0?1:0;
+    LOG_DEBUG(ELogSize, bit_array_size, "bitarray actual size in bytes" );
+    /*remove it if working*/
+    assert(bit_array_size==temp);
+
+    /*Create and init bit array
+      set (1)external array as storage, (2)array size and 
+      (3)bitarray pointer to get resulted object*/
+    CONSTRUCT_L(BIT_ARRAY) ( this->map_chunks_bit_array, /*(1)*/
+			     bit_array_size,             /*(2)*/
+			     &this->bitarray );          /*(3)*/
 }
 
 
 /**/
 static int32_t 
-memory_sysbrk(struct MemoryInterface* this, void *addr){
+memory_sysbrk(struct MemoryManager* this, void *addr){
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
     if ( addr < this->heap_start_ptr ){
@@ -134,7 +192,7 @@ memory_sysbrk(struct MemoryInterface* this, void *addr){
 }
 
 static int32_t
-memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot, 
+memory_mmap(struct MemoryManager* this, void *addr, size_t length, int prot, 
 	    int flags, int fd, off_t offset){
     void* alloc_addr = NULL;
     int errcode = 0;
@@ -208,7 +266,7 @@ memory_mmap(struct MemoryInterface* this, void *addr, size_t length, int prot,
 }
 
 static int
-memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
+memory_munmap(struct MemoryManager* this, void *addr, size_t length){
     errno=0;
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
@@ -240,7 +298,7 @@ memory_munmap(struct MemoryInterface* this, void *addr, size_t length){
 }
 
 
-static long int memory_get_phys_pages(struct MemoryInterface* this){
+static long int memory_get_phys_pages(struct MemoryManager* this){
     /*all pages count provided by zerovm (memory rounded up to page size)*/
     uint32_t beginaddr = ROUND_UP((uint32_t)this->heap_start_ptr, PAGE_SIZE);
     uint32_t endaddr = (uint32_t)MMAP_HIGHEST_PAGE_ADDR(this);
@@ -248,53 +306,32 @@ static long int memory_get_phys_pages(struct MemoryInterface* this){
     return (endaddr - beginaddr)/PAGE_SIZE + 1;
 }
 
-static long int memory_get_avphys_pages(struct MemoryInterface* this){
+static long int memory_get_avphys_pages(struct MemoryManager* this){
     /*all pages count we have in mmap memory region.  
       TODO: Currently it's not a count of available 
       pages, needed to calculate count.*/
     return MMAP_REGION_SIZE_ALIGNED(this)/PAGE_SIZE;
 }
 
-static struct MemoryInterface KMemoryInterface = {
-    memory_init,
-    memory_sysbrk,
-    memory_mmap,
-    memory_munmap,
-    memory_get_phys_pages,
-    memory_get_avphys_pages
-};
 
-struct MemoryInterface* memory_interface_instance(){
-    return &KMemoryInterface;
+struct MemoryManagerPublicInterface* memory_interface_instance(){
+    return (struct MemoryManagerPublicInterface*)&KMemoryManager;
 }
 
-struct MemoryInterface* init_memory_interface( void *heap_ptr, uint32_t heap_size, void *brk ){
-    /*round up tests*/
-    assert(roundup_pow2( 0 )== 0);
-    assert(roundup_pow2( 4 )== 4);
-    assert(roundup_pow2( 63 )== 64);
-    assert(roundup_pow2( 66 )== 128);
-    assert(roundup_pow2( 536860612 )== 536870912);
-    /*check if we have valid PAGE_SIZE macro*/
-    assert( PAGE_SIZE == sysconf(_SC_PAGE_SIZE) );
-    /*check align for right bound of heap*/
-    uint32_t heap_max_addr = (uint32_t)HEAP_MAX_ADDR(heap_ptr,heap_size);
-    assert( heap_max_addr == ROUND_UP(heap_max_addr, PAGE_SIZE) );
+struct MemoryManagerPublicInterface* memory_interface_construct( void *heap_ptr, uint32_t heap_size, void *brk ){
+    /*init static variable */
+    struct MemoryManager* this = &KMemoryManager;
 
-    int mmap_pages_count = MMAP_REGION_SIZE_ALIGNED_(heap_ptr, brk, heap_size) / PAGE_SIZE;
+    /*set functions*/
+    this->public.init = (void*)memory_init;
+    this->public.sysbrk = (void*)memory_sysbrk;
+    this->public.mmap	= (void*)memory_mmap;
+    this->public.munmap = (void*)memory_munmap;
+    this->public.get_phys_pages =    (void*)memory_get_phys_pages;
+    this->public.get_avphys_pages = (void*)memory_get_avphys_pages;
 
-    /*init array used to store status of chunks for mmap/munmap.
-     *keep in mind that pages quantity can be not multiple on 8*/
-    int bit_array_size = mmap_pages_count/8; bit_array_size += mmap_pages_count%8>0?1:0;
-    LOG_DEBUG(ELogSize, bit_array_size, "bitarray actual size in bytes" );
-
-    struct BitArrayPublicInterface* bitarray 
-	= CONSTRUCT_L(BIT_ARRAY) ( KMemoryInterface.map_chunks_bit_array, 
-				   bit_array_size, 
-				   &KMemoryInterface.bitarray );
-    (void)bitarray;
-    
-    KMemoryInterface.init(&KMemoryInterface, heap_ptr, heap_size, brk);
-    return &KMemoryInterface;
+    /*call init function*/
+    this->public.init( (struct MemoryManagerPublicInterface*)this, 
+		       heap_ptr, heap_size, brk);
+    return (struct MemoryManagerPublicInterface*)this;
 }
-

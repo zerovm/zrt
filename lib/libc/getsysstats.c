@@ -43,7 +43,7 @@ int zrt_zcall_get_phys_pages(){
     errno=0;
     LOG_SYSCALL_START(P_TEXT, "");    
 
-    struct MemoryInterface* memif = memory_interface_instance();
+    struct MemoryManagerPublicInterface* memif = memory_interface_instance();
     long int ret = memif->get_phys_pages(memif);
     LOG_SHORT_SYSCALL_FINISH( ret, "get_phys_pages=%ld", ret );
     return ret;
@@ -55,7 +55,7 @@ int zrt_zcall_get_avphys_pages(){
     errno=0;
     LOG_SYSCALL_START(P_TEXT, "");    
 
-    struct MemoryInterface* memif = memory_interface_instance();
+    struct MemoryManagerPublicInterface* memif = memory_interface_instance();
     long int ret = memif->get_phys_pages(memif);
     LOG_SHORT_SYSCALL_FINISH( ret, "get_avphys_pages=%ld", ret);
     return ret;

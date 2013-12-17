@@ -269,7 +269,7 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
 int  zrt_zcall_enhanced_sysbrk(void **newbrk){
     int ret=-1;
     LOG_SYSCALL_START("*newbrk=%p", *newbrk);
-    struct MemoryInterface* memif = memory_interface_instance();
+    struct MemoryManagerPublicInterface* memif = memory_interface_instance();
     int32_t retaddr = memif->sysbrk(memif, *newbrk );
     if ( retaddr != -1 ){
 	/*get new address via pointer*/
@@ -285,7 +285,7 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
     LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u off=%lld",
     		      *addr, length, prot, flags, fd, off);
 
-    struct MemoryInterface* memif = memory_interface_instance();
+    struct MemoryManagerPublicInterface* memif = memory_interface_instance();
     retcode = memif->mmap(memif, *addr, length, prot,
 				       flags, fd, off);
     if ( retcode != MAP_FAILED ){
@@ -304,7 +304,7 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
 
 int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
     LOG_SYSCALL_START("addr=%p, len=%u", addr, len);
-    struct MemoryInterface* memif = memory_interface_instance();
+    struct MemoryManagerPublicInterface* memif = memory_interface_instance();
     int32_t retcode = memif->munmap(memif, addr, len);
     LOG_INFO_SYSCALL_FINISH( retcode, "addr=%p, len=%u", addr, len);
     return retcode;
@@ -389,8 +389,12 @@ void zrt_zcall_enhanced_premain(void){
 void zrt_internal_init( const struct UserManifest const* manifest ){
     ITEMS_CREATOR;
 
-    /*init handlers for heap memory*/
-    init_memory_interface( manifest->heap_ptr, manifest->heap_size, static_prolog_brk() );
+    /*construct memory manager and pass zerovm MANIFEST members:
+      (1)heap start address, (2)heap size, (3)existing brk address got
+      from zcalls_prolog interface*/
+    CONSTRUCT_L(MEMORY_MANAGER) ( manifest->heap_ptr, 
+				  manifest->heap_size, 
+				  static_prolog_brk() );
 
     /*manage mounted filesystems*/
     s_mounts_manager = get_mounts_manager();

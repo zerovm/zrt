@@ -19,7 +19,7 @@
 #ifndef __BITARRAY_H__
 #define __BITARRAY_H__
 
-#include "zrt_defines.h"
+#include "zrt_defines.h" //CONSTRUCT_L
 
 /*name of constructor*/
 #define BIT_ARRAY bit_array_construct 

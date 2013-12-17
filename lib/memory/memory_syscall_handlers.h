@@ -24,36 +24,25 @@
 
 #include "bitarray.h"
 
+#include "zrt_defines.h" //CONSTRUCT_L
+
 #define MAX_MEMORY_CAPACITY_IN_GB 4
 #define ONE_GB_HEAP_SIZE (1024*1024*1024)
 #define PAGE_SIZE (1024*64)
 #define MAX_MMAP_PAGES_COUNT ( MAX_MEMORY_CAPACITY_IN_GB*(ONE_GB_HEAP_SIZE/PAGE_SIZE) )
 
-#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
-#define NO_ADDR_OVERLAP(low_addr, high_addr) (low_addr) < (high_addr) ? 1 : 0
-#define HEAP_MAX_ADDR(heapptr_p, heapsize)  (heapptr_p+heapsize)
-
-#define MMAP_REGION_SIZE_ALIGNED_(heapptr_p, brk_p, heapsize)	\
-    (ROUND_UP(heapsize - ((brk_p) - (heapptr_p)), PAGE_SIZE))
-
-#define MMAP_REGION_SIZE_ALIGNED(memory_if_p)			\
-    MMAP_REGION_SIZE_ALIGNED_(memory_if_p->heap_start_ptr,	\
-			      memory_if_p->heap_brk,		\
-			      memory_if_p->heap_size )
-
-#define MMAP_LOWEST_PAGE_ADDR(memory_if_p)				\
-    (HEAP_MAX_ADDR(memory_if_p->heap_start_ptr, memory_if_p->heap_size) - MMAP_REGION_SIZE_ALIGNED(memory_if_p))
-
-#define MMAP_HIGHEST_PAGE_ADDR(memory_if_p)				\
-    (HEAP_MAX_ADDR(memory_if_p->heap_start_ptr, memory_if_p->heap_size) - PAGE_SIZE)
+/*name of constructor*/
+#define MEMORY_MANAGER memory_interface_construct
 
 
 /* Low level memory management functions, here are syscalls
  * implementation.  Note that all member functions has
- * 'MemoryInterface* this' param, and it can't be a NULL, because it
+ * 'MemoryManagerPublicInterface* this' param, and it can't be a NULL, because it
  * used as 'this' pointer and need to access data that object hold,
  * also it's makes available to call another object functions;*/
-struct MemoryInterface{
+
+
+struct MemoryManagerPublicInterface{
     /*Low level memory allocators initializer.  Whole heap memory
      already preallocated/mmaped by zerovm, it is happened just before
      untrusted session starts. As we have a single address space
@@ -64,8 +53,8 @@ struct MemoryInterface{
      overlaped then get ENOMEM errro; 
      @param heap_ptr 
      @param heap_size */
-    void (*init)(struct MemoryInterface* this, void *heap_ptr, uint32_t heap_size, void *brk);
-    int (*sysbrk)(struct MemoryInterface* this, void *addr);
+    void (*init)(struct MemoryManagerPublicInterface* this, void *heap_ptr, uint32_t heap_size, void *brk);
+    int (*sysbrk)(struct MemoryManagerPublicInterface* this, void *addr);
     
     /* MMAP emulation in user-space implementation.
      * @param addr ignored
@@ -80,19 +69,24 @@ struct MemoryInterface{
      * case3: for any another prot flag will returned error, and ENOSYS set to errno;
      * @param flags see above MAP_ANONYMOUS flag using;
      */
-    int32_t (*mmap)(struct MemoryInterface* this, void *addr, size_t length, int prot, 
+    int32_t (*mmap)(struct MemoryManagerPublicInterface* this, void *addr, size_t length, int prot, 
 		    int flags, int fd, off_t offset);
     
     /* MUNMAP emulation in user-space implementation.
      * @param addr should be actual address starting map region
      * @param length ignored  
      * unmap memory range, in practice memory will released at specified addr*/
-    int (*munmap)(struct MemoryInterface* this, void *addr, size_t length);
+    int (*munmap)(struct MemoryManagerPublicInterface* this, void *addr, size_t length);
 
     /*result for sysconf(_SC_PHYS_PAGES)*/
-    long int (*get_phys_pages)(struct MemoryInterface* this);
+    long int (*get_phys_pages)(struct MemoryManagerPublicInterface* this);
     /*result for sysconf(_SC_AVPHYS_PAGES)*/
-    long int (*get_avphys_pages)(struct MemoryInterface* this);
+    long int (*get_avphys_pages)(struct MemoryManagerPublicInterface* this);
+};
+
+struct MemoryManager{
+    //base, it is must be a first member
+    struct MemoryManagerPublicInterface public;
 
     //data
     void*    heap_start_ptr; /*heap memory left bound*/
@@ -107,7 +101,10 @@ struct MemoryInterface{
     struct BitArray bitarray;
 };
 
-struct MemoryInterface* init_memory_interface( void *heap_ptr, uint32_t heap_size, void *brk );
-struct MemoryInterface* memory_interface_instance();
+struct MemoryManagerPublicInterface* memory_interface_construct( void *heap_ptr, uint32_t heap_size, void *brk );
+/*MemoryManager object internally it's a static variable, so we can
+  just get instance */
+struct MemoryManagerPublicInterface* memory_interface_instance();
+
 
 #endif //__MEMORY_SYSCALL_HANDLERS_H__
