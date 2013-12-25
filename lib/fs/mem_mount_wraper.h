@@ -29,7 +29,7 @@ struct HandleAllocator;
 
 /*todo: nlink support*/
 
-struct MountsInterface* alloc_mem_mount( struct HandleAllocator* handle_allocator );
+struct MountsPublicInterface* alloc_mem_mount( struct HandleAllocator* handle_allocator );
 
 #ifdef __cplusplus
 }

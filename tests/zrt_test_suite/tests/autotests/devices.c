@@ -32,15 +32,156 @@
 void test_readonly_channel(const char* name);
 void test_writeonly_channel(const char* name);
 
+void test_emu_devices_for_reading();
+void test_emu_devices_for_writing();
+
 #define BUFFER_LEN 0x1000
 char s_buffer[BUFFER_LEN];
 
 int main(int argc, char**argv){
+    test_emu_devices_for_reading();
     test_readonly_channel(CHANNEL_NAME_READONLY);
     test_writeonly_channel(CHANNEL_NAME_WRITEONLY);
     return 0;
 }
 
+void test_emu_devices_for_writing(){
+    int ret;
+    char* emu_channel_name;
+    char buf[10000];
+    int fd;
+
+    /*test emulated channels*/
+    emu_channel_name = "/dev/zero";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDWR), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  write(fd, buf, sizeof(buf)), 
+			  &ret, ret == sizeof(buf) );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+    emu_channel_name = "/dev/null";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDWR), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  write(fd, buf, sizeof(buf)), 
+			  &ret, ret == sizeof(buf) );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+    emu_channel_name = "/dev/full";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDWR), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  write(fd, buf, sizeof(buf)), 
+			  &ret, ret==-1&&errno==ENOSPC );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+    emu_channel_name = "/dev/random";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDWR), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  write(fd, buf, sizeof(buf)), 
+			  &ret, ret == sizeof(buf) );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+    emu_channel_name = "/dev/urandom";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDONLY), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  write(fd, buf, sizeof(buf)), 
+			  &ret, ret == sizeof(buf) );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+}
+
+
+void test_emu_devices_for_reading(){
+    int ret;
+    char* emu_channel_name;
+    char buf[10000];
+    int fd;
+
+    /*test emulated channels*/
+    emu_channel_name = "/dev/zero";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDWR), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  read(fd, buf, sizeof(buf)), 
+			  &ret, ret == sizeof(buf) );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+    emu_channel_name = "/dev/null";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDWR), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  read(fd, buf, sizeof(buf)), 
+			  &ret, ret == 0 );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+    emu_channel_name = "/dev/full";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDWR), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  read(fd, buf, sizeof(buf)), 
+			  &ret, ret == sizeof(buf) );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+    emu_channel_name = "/dev/random";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDWR), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  read(fd, buf, sizeof(buf)), 
+			  &ret, ret == sizeof(buf) );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+
+    emu_channel_name = "/dev/urandom";
+    TEST_OPERATION_RESULT(
+			  open(emu_channel_name, O_RDONLY), 
+			  &ret, ret != -1 );
+    fd = ret;
+    TEST_OPERATION_RESULT(
+			  read(fd, buf, sizeof(buf)), 
+			  &ret, ret == sizeof(buf) );
+    TEST_OPERATION_RESULT(
+			  close(fd), 
+			  &ret, ret != -1 );
+}
 
 void test_readonly_channel(const char* name){
     int ret;

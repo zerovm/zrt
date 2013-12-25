@@ -35,10 +35,10 @@
 #include "enum_strings.h"
 
 
-int fcntl_implem(struct mount_specific_implem* implem, int fd, int cmd, ...){
+int fcntl_implem(struct MountSpecificImplemPublicInterface* this, int fd, int cmd, ...){
     int rc=0;
     /* check fd */
-    if( implem->check_handle(fd) == 0 ){
+    if( this->check_handle(this, fd) == 0 ){
         SET_ERRNO( EBADF );
         return -1;
     }
@@ -95,7 +95,7 @@ int fcntl_implem(struct mount_specific_implem* implem, int fd, int cmd, ...){
 	break;
     }
     case F_GETFL:
-	rc = implem->fileflags(fd);
+	rc = this->fileflags(this, fd);
 	break;	
     default:
 	SET_ERRNO(ENOSYS);

@@ -47,12 +47,12 @@ int zrt_zcall_stat_realpath(const char* abspathname, struct stat *stat){
 
     LOG_SYSCALL_START("abspathname=%p, stat=%p", abspathname, stat);
     
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     errno=0;
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(abspathname);
-    int ret = transpar_mount->stat(abspathname, stat);
+    int ret = transpar_mount->stat(transpar_mount, abspathname, stat);
 
     LOG_SHORT_SYSCALL_FINISH(ret, "abspathname=%s", abspathname);
     return ret;

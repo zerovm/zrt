@@ -23,15 +23,15 @@
 
 #define MAX_HANDLES_COUNT 1000
 
-struct MountsInterface;
+struct MountsPublicInterface;
 
 /*interface*/
 struct HandleAllocator{
-    int (*allocate_handle)(struct MountsInterface* mount_fs);
-    int (*allocate_reserved_handle)( struct MountsInterface* mount_fs, int handle );
+    int (*allocate_handle)(struct MountsPublicInterface* mount_fs);
+    int (*allocate_reserved_handle)( struct MountsPublicInterface* mount_fs, int handle );
     int (*free_handle)(int handle);
 
-    struct MountsInterface* (*mount_interface)(int handle);
+    struct MountsPublicInterface* (*mount_interface)(int handle);
 
     /* get inode
      * @return errcode, 0 ok, -1 not found*/

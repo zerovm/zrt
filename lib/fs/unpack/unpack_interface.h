@@ -29,7 +29,7 @@ struct UnpackObserver{
     /*new entry extracted from archive*/
     int (*extract_entry)( struct UnpackInterface*, TypeFlag type, const char* name, int entry_size );
     //data
-    struct MountsInterface* mounts;
+    struct MountsPublicInterface* mounts;
 };
 
 

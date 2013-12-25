@@ -103,6 +103,13 @@ int buf_read (BufferedIORead* self, int handle, void* data, size_t size){
 }
 
 
+static ssize_t read_override (int handle, void* data, size_t size){
+}
+
+static ssize_t write_override (int handle, const void* data, size_t size){
+}
+
+
 BufferedIOWrite* AllocBufferedIOWrite(void* buf, size_t size,
 				      ssize_t (*f) (int handle, const void* data, size_t size) ){
     ZRT_LOG( L_SHORT, "AllocBufferedIOWrite buf=%p, size=%d \n", buf, size );

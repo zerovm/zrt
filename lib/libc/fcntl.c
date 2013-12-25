@@ -63,7 +63,7 @@ int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
     LOG_SYSCALL_START("fd=%d cmd=%d", fd, cmd);
     errno=0;
 
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     va_list args;
@@ -71,10 +71,10 @@ int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
     if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
 	struct flock* input_lock = va_arg(args, struct flock*);
 	ZRT_LOG(L_SHORT, "flock=%p", input_lock );
-	ret = transpar_mount->fcntl(fd, cmd, input_lock);
+	ret = transpar_mount->fcntl(transpar_mount, fd, cmd, input_lock);
     }
     else if ( cmd == F_GETFL ){
-	ret = transpar_mount->fcntl(fd, cmd);
+	ret = transpar_mount->fcntl(transpar_mount, fd, cmd);
 	ZRT_LOG(L_INFO, "flags    =%s", byte_to_binary(ret) );
 	ZRT_LOG(L_INFO, "O_ACCMODE=%s", byte_to_binary(O_ACCMODE) );
 	ZRT_LOG(L_INFO, "O_RDONLY =%s", byte_to_binary(O_RDONLY) );

@@ -68,24 +68,33 @@
 extern char **environ;
 
 /****************** static data*/
+#define CHANNEL_SIZE_LIMIT 999999999
+#define CHANNEL_OPS_LIMIT  999999999
+static struct ZVMChannel s_emu_channels[] 
+= { {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/null"},
+    {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/full"},
+    {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/zero"},
+    {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/random"},
+    {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/urandom"}};
+
 static struct NvramLoader      s_nvram;
-struct MountsInterface*        s_channels_mount=NULL;
-struct MountsInterface*        s_mem_mount=NULL;
+struct MountsPublicInterface*        s_channels_mount=NULL;
+struct MountsPublicInterface*        s_mem_mount=NULL;
 static struct MountsManager*   s_mounts_manager = NULL;
-static struct MountsInterface* s_transparent_mount = NULL;
+static struct MountsPublicInterface* s_transparent_mount = NULL;
 static int                     s_zrt_ready=0;
 /****************** */
 
 struct NvramLoader*     static_nvram()      { return &s_nvram; }
-struct MountsInterface* transparent_mount() { return s_transparent_mount; }
+struct MountsPublicInterface* transparent_mount() { return s_transparent_mount; }
 
 /*internal functions to be used in this module*/
 void zrt_internal_session_info();
 void zrt_internal_init( const struct UserManifest const* manifest );
 
 /********************************************************************************
- * ZRT IMPLEMENTATION OF NACL SYSCALLS
- * each nacl syscall must be implemented or, at least, mocked. no exclusions!
+ * ZRT IMPLEMENTATION OF ZCALLS
+ * each zsyscall must be implemented or, at least, mocked. no exclusions!
  *********************************************************************************/
 
 /* irt basic *************************/
@@ -106,7 +115,7 @@ int  zrt_zcall_enhanced_close(int handle){
     LOG_SYSCALL_START("handle=%d", handle);
     errno = 0;
 
-    int ret = s_transparent_mount->close(handle);
+    int ret = s_transparent_mount->close(s_transparent_mount,handle);
     LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
 }
@@ -125,7 +134,7 @@ int  zrt_zcall_enhanced_read(int handle, void *buf, size_t count, size_t *nread)
     errno = 0;
     VALIDATE_SYSCALL_PTR(buf);
 
-    int32_t bytes_read = s_transparent_mount->read(handle, buf, count);
+    int32_t bytes_read = s_transparent_mount->read(s_transparent_mount,handle, buf, count);
     if ( bytes_read >= 0 ){
 	/*get read bytes by pointer*/
 	*nread = bytes_read;
@@ -146,7 +155,7 @@ int  zrt_zcall_enhanced_write(int handle, const void *buf, size_t count, size_t 
     LOG_SYSCALL_START("handle=%d buf=%p count=%u", handle, buf, count);
     VALIDATE_SYSCALL_PTR(buf);
 
-    int32_t bytes_wrote = s_transparent_mount->write(handle, buf, count);
+    int32_t bytes_wrote = s_transparent_mount->write(s_transparent_mount,handle, buf, count);
     if ( bytes_wrote >= 0 ){
 	/*get wrote bytes by pointer*/
 	*nwrote = bytes_wrote;
@@ -168,7 +177,7 @@ int  zrt_zcall_enhanced_seek(int handle, off_t offset, int whence, off_t *new_of
 	SET_ERRNO(EINVAL);
     }
     else{
-	offset = s_transparent_mount->lseek(handle, offset, whence);
+	offset = s_transparent_mount->lseek(s_transparent_mount,handle, offset, whence);
 	if ( offset != -1 ){
 	    /*get new offset by pointer*/
 	    *new_offset = offset;
@@ -190,7 +199,7 @@ int  zrt_zcall_enhanced_fstat(int handle, struct stat *st){
     errno = 0;
     VALIDATE_SYSCALL_PTR(stat);
 
-    int ret = s_transparent_mount->fstat( handle, st);
+    int ret = s_transparent_mount->fstat(s_transparent_mount, handle, st);
     if ( ret == 0 ){
 	ZRT_LOG_STAT(L_INFO, st);
     }
@@ -204,7 +213,7 @@ int  zrt_zcall_enhanced_getdents(int fd, struct dirent *dirent_buf, size_t count
     errno=0;
     VALIDATE_SYSCALL_PTR(dirent_buf);
 
-    int32_t bytes_readed = s_transparent_mount->getdents(fd, (char*)dirent_buf, count);
+    int32_t bytes_readed = s_transparent_mount->getdents(s_transparent_mount, fd, (char*)dirent_buf, count);
     if ( bytes_readed >= 0 ){
 	*nread = bytes_readed;
 	ret=0;
@@ -226,7 +235,7 @@ int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newf
     APPLY_UMASK(&mode);
     if ( (absolute_path = zrealpath(name, temp_path)) != NULL ){
 	ZRT_LOG(L_SHORT, "absolute_path=%s", absolute_path);
-	if ( (ret = s_transparent_mount->open( absolute_path, flags, mode )) >= 0 ){
+	if ( (ret = s_transparent_mount->open(s_transparent_mount, absolute_path, flags, mode )) >= 0 ){
 	    /*get fd by pointer*/
 	    *newfd  = ret;
 	    ret =0;
@@ -251,7 +260,7 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
     VALIDATE_SYSCALL_PTR(stat);
 
     if ( (absolute_path = realpath(pathname, temp_path)) != NULL ){
-	if ( (ret = s_transparent_mount->stat(absolute_path, stat)) == 0 ){
+	if ( (ret = s_transparent_mount->stat(s_transparent_mount, absolute_path, stat)) == 0 ){
 	    ZRT_LOG_STAT(L_INFO, stat);
 	}
     }
@@ -288,7 +297,7 @@ int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, in
     struct MemoryManagerPublicInterface* memif = memory_interface_instance();
     retcode = memif->mmap(memif, *addr, length, prot,
 				       flags, fd, off);
-    if ( retcode != MAP_FAILED ){
+    if ( (void*)retcode != MAP_FAILED ){
 	*addr = (void*)retcode;
 	retcode=0;
     }
@@ -400,17 +409,26 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     s_mounts_manager = get_mounts_manager();
 
     /*alloc filesystem based on channels*/
-    s_channels_mount = alloc_channels_mount( s_mounts_manager->handle_allocator,
-					     manifest->channels, manifest->channels_count );
+    struct ChannelsModeUpdaterPublicInterface *nvram_mode_setting_updater;
+
+    s_channels_mount = 
+	CONSTRUCT_L(CHANNELS_FILESYSTEM)( &nvram_mode_setting_updater,
+					  s_mounts_manager->handle_allocator,
+					  manifest->channels, 
+					  manifest->channels_count,
+					  s_emu_channels, 
+					  sizeof(s_emu_channels)/sizeof(struct ZVMChannel));
+    set_mapping_channels_settings_updater( nvram_mode_setting_updater ); 
+
     /*alloc main filesystem that combines all filesystems mounts*/
     s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
 
     s_zrt_ready = 1;
 
     /*open standard files to conform C*/
-    s_channels_mount->open( DEV_STDIN, O_RDONLY, 0 );
-    s_channels_mount->open( DEV_STDOUT, O_WRONLY, 0 );
-    s_channels_mount->open( DEV_STDERR, O_WRONLY, 0 );
+    s_channels_mount->open( s_channels_mount, DEV_STDIN, O_RDONLY, 0 );
+    s_channels_mount->open( s_channels_mount, DEV_STDOUT, O_WRONLY, 0 );
+    s_channels_mount->open( s_channels_mount, DEV_STDERR, O_WRONLY, 0 );
 
     /*create mem mount*/
     s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
@@ -421,9 +439,9 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
 
     /*explicitly create /dev directory in memmount, it's required for consistent
       FS structure, readdir from now can list /dev dir recursively from root */
-    s_mem_mount->mkdir( "/dev", 0777 );
+    s_mem_mount->mkdir( s_mem_mount, "/dev", 0777 );
     /*add directories here that can be expected by some user applications */
-    s_mem_mount->mkdir( "/tmp", 0777 );
+    s_mem_mount->mkdir( s_mem_mount, "/tmp", 0777 );
 
     /*user main execution just after zrt initialization*/
 }

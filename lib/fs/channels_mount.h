@@ -20,7 +20,13 @@
 #define CHANNELS_MOUNT_H_
 
 #include <fcntl.h>
-#include "mounts_interface.h"
+#include "mounts_interface.h" //struct MountsPublicInterface
+
+#include "zrt_defines.h" //CONSTRUCT_L
+
+/*name of constructor*/
+#define CHANNELS_FILESYSTEM channels_filesystem_construct 
+#define CHANNEL_MODE_UPDATER channel_mode_updater_construct
 
 #define FIRST_NON_RESERVED_INODE 11
 #define INODE_FROM_HANDLE(handle) (FIRST_NON_RESERVED_INODE+handle)
@@ -28,10 +34,21 @@
 struct ZVMChannel;
 struct HandleAllocator;
 
-struct MountsInterface* alloc_channels_mount( struct HandleAllocator* handle_allocator,
-        const struct ZVMChannel* channels, int channels_count );
-
 /*used by mapping nvram section for setting custom channel type*/
-uint* channel_mode(const char* channel_name);
+struct ChannelsModeUpdaterPublicInterface{
+    /*used by mapping nvram section for setting custom channel type*/
+    void (*set_channel_mode)(struct ChannelsModeUpdaterPublicInterface* this_, 
+			     const char* channel_name, uint mode);
+};
+
+/*@param mode_updater Create object and set provided pointer*/
+struct MountsPublicInterface* 
+channels_filesystem_construct ( struct ChannelsModeUpdaterPublicInterface** mode_updater,
+			        struct HandleAllocator* handle_allocator,
+				const struct ZVMChannel* zvm_channels, int zvm_channels_count,
+				const struct ZVMChannel* emu_channels, int emu_channels_count);
+
+struct ChannelsModeUpdaterPublicInterface*
+channel_mode_updater_construct(struct MountsPublicInterface* channels_mount);
 
 #endif /* CHANNELS_MOUNT_H_ */

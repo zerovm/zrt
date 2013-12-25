@@ -35,8 +35,8 @@
 static char block[512];
 static struct ParsePathObserver s_path_observer;
 
-#define WRITE_DATA_INTO_FS_IN_MEMORY( wrote_p, err_p, out_fd, data, datasize )		\
-    *wrote_p = unpacker->observer->mounts->write(out_fd, block, datasize ); \
+#define WRITE_DATA_INTO_FS_IN_MEMORY( mounts_p, wrote_p, err_p, out_fd, data, datasize )	\
+    *wrote_p = (mounts_p)->write(mounts_p,out_fd, block, datasize );		\
     if ( *wrote_p < datasize ){						\
 	*err_p=1;							\
 	ZRT_LOG(L_ERROR, "block write error, wrote %d instead %d bytes", \
@@ -49,7 +49,7 @@ static struct ParsePathObserver s_path_observer;
 /*directories handler, it's responsible to create existing directories at path*/
 static void callback_parse(struct ParsePathObserver* this_p, const char *path, int length){
     /*do not handle short paths*/
-    if ( length < 2 ) return 0;
+    if ( length < 2 ) return;
     /*do not create dir if already cached*/
     create_dir_and_cache_name(path, length);
 }
@@ -77,7 +77,8 @@ static int extract_entry( struct UnpackInterface* unpacker,
     }
     else{
 	/*Create new file, truncate it if exist*/
-	int out_fd = unpacker->observer->mounts->open(name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+	int out_fd = unpacker->observer->mounts->open( unpacker->observer->mounts,
+						       name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
 	if (out_fd < 0) {
 	    ZRT_LOG( L_ERROR, "create new file error, name=%s", name );
 	    return -1;
@@ -89,23 +90,26 @@ static int extract_entry( struct UnpackInterface* unpacker,
         /*read file by blocks*/
         while (entry_size > 0) {
             int len = (*unpacker->mounts_reader->read)( unpacker->mounts_reader,
-                    block, sizeof(block) );
+							block, sizeof(block) );
             if (len != sizeof(block)) {
 		ZRT_LOG(L_ERROR, "read error. saving failed=%s", name);
                 return -1;
             }
 	    int wrote;
             if (entry_size > sizeof(block)) {
-		WRITE_DATA_INTO_FS_IN_MEMORY( &wrote, &write_err, out_fd, block, sizeof(block) );
+		WRITE_DATA_INTO_FS_IN_MEMORY( unpacker->observer->mounts,
+					      &wrote, &write_err, out_fd, block, sizeof(block) );
             } else {
-		WRITE_DATA_INTO_FS_IN_MEMORY( &wrote, &write_err, out_fd, block, entry_size );
+		WRITE_DATA_INTO_FS_IN_MEMORY( unpacker->observer->mounts,
+					      &wrote, &write_err, out_fd, block, entry_size );
             }
 	    if ( write_err ){
 		return -1;
 	    }
             entry_size -= sizeof(block);
         }
-	unpacker->observer->mounts->close(out_fd);
+	unpacker->observer->mounts->close(unpacker->observer->mounts,
+					  out_fd);
     }
     return 0;
 }
@@ -124,7 +128,7 @@ static int deploy_image( const char* mount_path, struct UnpackInterface* unpacke
 
 //////////////////////////// image engine implementation //////////////////////////////
 
-struct ImageInterface* alloc_image_loader( struct MountsInterface* mounts ){
+struct ImageInterface* alloc_image_loader( struct MountsPublicInterface* mounts ){
     struct ImageInterface* image_engine = malloc( sizeof(struct ImageInterface) );
     image_engine->deploy_image = deploy_image; /*setup function pointer*/
     image_engine->mounts = mounts; /*set filesystem to extract files*/

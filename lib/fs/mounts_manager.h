@@ -20,21 +20,21 @@
 
 #include <linux/limits.h>
 
-struct MountsInterface;
+struct MountsPublicInterface;
 
 struct MountInfo{
     char mount_path[PATH_MAX]; /*for example "/", "/dev" */
-    struct MountsInterface* mount;
+    struct MountsPublicInterface* mount;
 };
 
 
 struct MountsManager{
-    int (*mount_add)( const char* path, struct MountsInterface* filesystem_mount );
+    int (*mount_add)( const char* path, struct MountsPublicInterface* filesystem_mount );
     int (*mount_remove)( const char* path );
 
     struct MountInfo* (*mountinfo_bypath)(const char* path);
-    struct MountsInterface* (*mount_bypath)( const char* path );
-    struct MountsInterface* (*mount_byhandle)( int handle );
+    struct MountsPublicInterface* (*mount_bypath)( const char* path );
+    struct MountsPublicInterface* (*mount_byhandle)( int handle );
 
     const char* (*convert_path_to_mount)(const char* full_path);
 

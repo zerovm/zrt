@@ -40,7 +40,7 @@ struct HandleItem{
     int used; /*if EHandleReserved is set, it can't be reallocated to another mount*/
     ino_t inode;
     off_t offset; /*used by read, write functions*/
-    struct MountsInterface* mount_fs;
+    struct MountsPublicInterface* mount_fs;
 };
 
 
@@ -61,7 +61,7 @@ int seek_unused_slot( int starting_from ){
     return -1;
 }
 
-static struct MountsInterface* mount_interface(int handle){
+static struct MountsPublicInterface* mount_interface(int handle){
     /*if handle invalid or can't be a valid*/
     if ( handle < 0 || handle >= MAX_HANDLES_COUNT ) return NULL;
     return s_handle_slots[handle].mount_fs;
@@ -98,14 +98,14 @@ static int set_offset(int handle, off_t newoffset ){
     return 0;
 }
 
-static int allocate_handle(struct MountsInterface* mount_fs){
+static int allocate_handle(struct MountsPublicInterface* mount_fs){
     s_first_unused_slot = seek_unused_slot( s_first_unused_slot );
     s_handle_slots[s_first_unused_slot].used = EHandleUsed;
     s_handle_slots[s_first_unused_slot].mount_fs = mount_fs;
     return s_first_unused_slot;
 }
 
-static int allocate_reserved_handle( struct MountsInterface* mount_fs, int handle ){
+static int allocate_reserved_handle( struct MountsPublicInterface* mount_fs, int handle ){
     CHECK_HANDLE(handle);
     s_handle_slots[handle].used = EHandleReserved;
     s_handle_slots[handle].mount_fs = mount_fs;

@@ -49,7 +49,7 @@ int zrt_zcall_chmod(const char *path, mode_t mode){
     errno=0;
     LOG_SYSCALL_START("path=%s mode=%o(octal)", path, mode);
 
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     ZRT_LOG(L_SHORT, "path=%s, mode=%u", path, mode );
@@ -57,7 +57,7 @@ int zrt_zcall_chmod(const char *path, mode_t mode){
     APPLY_UMASK(&mode);
 
     if ( (absolute_path = realpath(path, temp_path)) != NULL ){
-	ret = transpar_mount->chmod(absolute_path, mode);
+	ret = transpar_mount->chmod(transpar_mount, absolute_path, mode);
     }
 
     LOG_SHORT_SYSCALL_FINISH(ret, "path=%s mode=%o(octal)", path, mode);
@@ -70,11 +70,11 @@ int zrt_zcall_fchmod(int fd, mode_t mode){
     LOG_SYSCALL_START("fd=%d mode=%o(octal)", fd, mode);
     errno=0;
 
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
     /*update mode according to the mask and propogate it to fchmod implementation*/
     APPLY_UMASK(&mode);
-    int ret = transpar_mount->fchmod(fd, mode);
+    int ret = transpar_mount->fchmod(transpar_mount, fd, mode);
     LOG_SHORT_SYSCALL_FINISH(ret, "fd=%d mode=%o(octal)", fd, mode);
     return ret;
 }

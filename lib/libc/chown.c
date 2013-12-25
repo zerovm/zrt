@@ -49,13 +49,13 @@ int zrt_zcall_chown(const char *path, uid_t owner, gid_t group){
     errno=0;
     LOG_SYSCALL_START("path=%s owner=%u group=%u", path, owner, group);
 
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(path);
 
     if ( (absolute_path = realpath(path, temp_path)) != NULL ){
-	ret = transpar_mount->chown(absolute_path, owner, group);
+	ret = transpar_mount->chown(transpar_mount, absolute_path, owner, group);
     }
 
     LOG_SHORT_SYSCALL_FINISH( ret, "path=%s", path);
@@ -67,12 +67,12 @@ int zrt_zcall_fchown(int fd, uid_t owner, gid_t group){
 
     LOG_SYSCALL_START("fd=%d owner=%u group=%u", fd, owner, group);
 
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     errno=0;
     ZRT_LOG(L_SHORT, "fd=%d, owner=%u, group=%u", fd, owner, group );
-    int ret = transpar_mount->fchown(fd, owner, group);
+    int ret = transpar_mount->fchown(transpar_mount, fd, owner, group);
     LOG_SHORT_SYSCALL_FINISH( ret, "fd=%d", fd);
     return ret;
 }

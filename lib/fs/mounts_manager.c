@@ -28,11 +28,11 @@
 
 #define MIN(a,b)( a<b?a:b )
 
-int mm_mount_add( const char* path, struct MountsInterface* filesystem_mount );
+int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mount );
 int mm_mount_remove( const char* path );
 struct MountInfo* mm_mountinfo_bypath( const char* path );
-struct MountsInterface* mm_mount_bypath( const char* path );
-struct MountsInterface* mm_mount_byhandle( int handle );
+struct MountsPublicInterface* mm_mount_bypath( const char* path );
+struct MountsPublicInterface* mm_mount_byhandle( int handle );
 const char* mm_convert_path_to_mount(const char* full_path);
 
 static int s_mount_items_count;
@@ -48,7 +48,7 @@ static struct MountsManager s_mounts_manager = {
     };
 
 
-int mm_mount_add( const char* path, struct MountsInterface* filesystem_mount ){
+int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mount ){
     assert( s_mount_items_count < EMountsCount );
     memcpy( s_mount_items[s_mount_items_count].mount_path, path, MIN( strlen(path), PATH_MAX ) );
     s_mount_items[s_mount_items_count].mount = filesystem_mount;
@@ -85,7 +85,7 @@ struct MountInfo* mm_mountinfo_bypath( const char* path ){
 }
 
 
-struct MountsInterface* mm_mount_bypath( const char* path ){
+struct MountsPublicInterface* mm_mount_bypath( const char* path ){
     struct MountInfo* mount_info = mm_mountinfo_bypath(path);
     if ( mount_info )
         return mount_info->mount;
@@ -93,7 +93,7 @@ struct MountsInterface* mm_mount_bypath( const char* path ){
         return NULL;
 }
 
-struct MountsInterface* mm_mount_byhandle( int handle ){
+struct MountsPublicInterface* mm_mount_byhandle( int handle ){
     return s_mounts_manager.handle_allocator->mount_interface(handle);
 }
 

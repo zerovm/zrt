@@ -50,12 +50,12 @@ int zrt_zcall_mkdir(const char* pathname, mode_t mode){
     errno=0;
     LOG_SYSCALL_START("pathname=%p, mode=%o(octal)", pathname, (uint32_t)mode);
     
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     if ( (absolute_path = zrealpath(pathname, temp_path)) != NULL ){
-	ret = transpar_mount->mkdir(absolute_path, mode);
+	ret = transpar_mount->mkdir(transpar_mount, absolute_path, mode);
     }
 
     LOG_SHORT_SYSCALL_FINISH(ret, "pathname=%s, mode=%o(octal)", pathname, (uint32_t)mode);

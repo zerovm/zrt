@@ -38,110 +38,121 @@ static struct MountsManager* s_mounts_manager;
 #define CONVERT_PATH_TO_MOUNT(full_path)			\
     s_mounts_manager->convert_path_to_mount( full_path )
 
-static int transparent_chown(const char* path, uid_t owner, gid_t group){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_chown(struct MountsPublicInterface *this, 
+			     const char* path, uid_t owner, gid_t group){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->chown( CONVERT_PATH_TO_MOUNT(path), owner, group);
+	return mount->chown( mount, CONVERT_PATH_TO_MOUNT(path), owner, group);
     else{
         errno = ENOENT;
         return -1;
     }
 }
 
-static int transparent_chmod(const char* path, uint32_t mode){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_chmod(struct MountsPublicInterface *this,
+			     const char* path, uint32_t mode){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->chmod( CONVERT_PATH_TO_MOUNT(path), mode);
+	return mount->chmod( mount, CONVERT_PATH_TO_MOUNT(path), mode);
     else{
         errno = ENOENT;
         return -1;
     }
 }
 
-static int transparent_stat(const char* path, struct stat *buf){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_stat(struct MountsPublicInterface *this,
+			    const char* path, struct stat *buf){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->stat( CONVERT_PATH_TO_MOUNT(path), buf);
+	return mount->stat( mount, CONVERT_PATH_TO_MOUNT(path), buf);
     else{
         errno = ENOENT;
         return -1;
     }
 }
 
-static int transparent_mkdir(const char* path, uint32_t mode){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_mkdir(struct MountsPublicInterface *this,
+			     const char* path, uint32_t mode){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->mkdir( CONVERT_PATH_TO_MOUNT(path), mode);
+	return mount->mkdir( mount, CONVERT_PATH_TO_MOUNT(path), mode);
     else{
 	SET_ERRNO(ENOENT);
         return -1;
     }
 }
 
-static int transparent_rmdir(const char* path){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_rmdir(struct MountsPublicInterface *this,
+			     const char* path){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->rmdir( CONVERT_PATH_TO_MOUNT(path) );
+	return mount->rmdir( mount, CONVERT_PATH_TO_MOUNT(path) );
     else{
         errno = ENOENT;
         return -1;
     }
 }
 
-static int transparent_umount(const char* path){
+static int transparent_umount(struct MountsPublicInterface *this, const char* path){
     SET_ERRNO(ENOSYS);
     return -1;
 }
 
-static int transparent_mount(const char* path, void *mount_){
+static int transparent_mount(struct MountsPublicInterface *this, 
+			     const char* path, void *mount_){
     SET_ERRNO(ENOSYS);
     return -1;
 }
 
-static ssize_t transparent_read(int fd, void *buf, size_t nbyte){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static ssize_t transparent_read(struct MountsPublicInterface *this,
+				int fd, void *buf, size_t nbyte){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-        return mount->read(fd, buf, nbyte);
+        return mount->read( mount, fd, buf, nbyte);
     else{
         SET_ERRNO(EBADF);
         return -1;
     }
 }
 
-static ssize_t transparent_write(int fd, const void *buf, size_t nbyte){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static ssize_t transparent_write(struct MountsPublicInterface *this,
+				 int fd, const void *buf, size_t nbyte){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-        return mount->write(fd, buf, nbyte);
+        return mount->write( mount, fd, buf, nbyte);
     else{
         SET_ERRNO(EBADF);
         return -1;
     }
 }
 
-static int transparent_fchown(int fd, uid_t owner, gid_t group){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static int transparent_fchown(struct MountsPublicInterface *this,
+			      int fd, uid_t owner, gid_t group){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-        return mount->fchown(fd, owner, group);
+        return mount->fchown( mount, fd, owner, group);
     else{
 	SET_ERRNO(EBADF);
         return -1;
     }
 }
 
-static int transparent_fchmod(int fd, mode_t mode){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static int transparent_fchmod(struct MountsPublicInterface *this,
+			      int fd, mode_t mode){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-        return mount->fchmod(fd, mode);
+        return mount->fchmod( mount, fd, mode);
     else{
 	SET_ERRNO(EBADF);
         return -1;
     }
 }
 
-static int transparent_fstat(int fd, struct stat *buf){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static int transparent_fstat(struct MountsPublicInterface *this,
+			     int fd, struct stat *buf){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount ){
-        return mount->fstat(fd, buf);
+        return mount->fstat( mount, fd, buf);
     }
     else{
 	SET_ERRNO(EBADF);
@@ -149,47 +160,49 @@ static int transparent_fstat(int fd, struct stat *buf){
     }
 }
 
-static int transparent_getdents(int fd, void *buf, unsigned int count){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static int transparent_getdents(struct MountsPublicInterface *this,
+				int fd, void *buf, unsigned int count){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-        return mount->getdents(fd, buf, count);
+        return mount->getdents( mount, fd, buf, count);
     else{
 	SET_ERRNO(EBADF);
         return -1;
     }
 }
 
-static int transparent_fsync(int fd){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static int transparent_fsync(struct MountsPublicInterface *this, int fd){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-        return mount->fsync(fd);
+        return mount->fsync(mount, fd);
     else{
 	SET_ERRNO(EBADF);
         return -1;
     }
 }
 
-static int transparent_close(int fd){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static int transparent_close(struct MountsPublicInterface *this, int fd){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-        return mount->close(fd);
+        return mount->close(mount, fd);
     else{
 	SET_ERRNO(EBADF);
         return -1;
     }
 }
 
-static off_t transparent_lseek(int fd, off_t offset, int whence){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static off_t transparent_lseek(struct MountsPublicInterface *this,
+			       int fd, off_t offset, int whence){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount ){
         struct stat st;
-        int ret = mount->fstat(fd, &st );
+        int ret = mount->fstat(mount, fd, &st );
         if ( ret != 0 ) return -1; //errno sould be set by mount->fstat
         if ( S_ISDIR(st.st_mode) ){
 	    SET_ERRNO(EBADF);
             return -1;
         }
-        return mount->lseek(fd, offset, whence);
+        return mount->lseek(mount, fd, offset, whence);
     }
     else{
 	SET_ERRNO(EBADF);
@@ -197,33 +210,35 @@ static off_t transparent_lseek(int fd, off_t offset, int whence){
     }
 }
 
-static int transparent_open(const char* path, int oflag, uint32_t mode){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_open(struct MountsPublicInterface *this,
+			    const char* path, int oflag, uint32_t mode){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->open( CONVERT_PATH_TO_MOUNT(path), oflag, mode );
+	return mount->open( mount, CONVERT_PATH_TO_MOUNT(path), oflag, mode );
     else{
 	SET_ERRNO(ENOENT);
         return -1;
     }
 }
 
-static int transparent_fcntl(int fd, int cmd, ...){
+static int transparent_fcntl(struct MountsPublicInterface *this,
+			     int fd, int cmd, ...){
     int ret=0;
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount ){
 	va_list args;
 	if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
 	    va_start(args, cmd);
 	    struct flock* input_lock = va_arg(args, struct flock*);
 	    ZRT_LOG(L_SHORT, "flock=%p", input_lock );
-	    if ( 0 == (ret=mount->fcntl(fd, cmd, input_lock)) ){
-		ret = fcntl_implem(mount->implem(), fd, cmd, input_lock);
+	    if ( 0 == (ret=mount->fcntl(mount, fd, cmd, input_lock)) ){
+		ret = fcntl_implem(mount->implem(mount), fd, cmd, input_lock);
 	    }
 	    va_end(args);
 	}
 	else if( cmd == F_GETFL	){
-	    if ( 0 == (ret=mount->fcntl(fd, cmd)) ){
-		ret = fcntl_implem(mount->implem(), fd, cmd);
+	    if ( 0 == (ret=mount->fcntl(mount, fd, cmd)) ){
+		ret = fcntl_implem(mount->implem(mount), fd, cmd);
 	    }
 	}
 	else{
@@ -239,50 +254,55 @@ static int transparent_fcntl(int fd, int cmd, ...){
 }
 
 
-static int transparent_remove(const char* path){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_remove(struct MountsPublicInterface *this,
+			      const char* path){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->remove( CONVERT_PATH_TO_MOUNT(path) );
+	return mount->remove( mount, CONVERT_PATH_TO_MOUNT(path) );
     else{
         SET_ERRNO(ENOENT);
         return -1;
     }
 }
 
-static int transparent_unlink(const char* path){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_unlink(struct MountsPublicInterface *this,
+			      const char* path){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->unlink( CONVERT_PATH_TO_MOUNT(path) );
+	return mount->unlink( mount, CONVERT_PATH_TO_MOUNT(path) );
     else{
         SET_ERRNO(ENOENT);
         return -1;
     }
 }
 
-static int transparent_access(const char* path, int amode){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_access(struct MountsPublicInterface *this,
+			      const char* path, int amode){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->access( CONVERT_PATH_TO_MOUNT(path), amode );
+	return mount->access( mount, CONVERT_PATH_TO_MOUNT(path), amode );
     else{
         errno = ENOENT;
         return -1;
     }
 }
 
-static int transparent_ftruncate_size(int fd, off_t length){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static int transparent_ftruncate_size(struct MountsPublicInterface *this,
+				      int fd, off_t length){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-	return mount->ftruncate_size( fd, length );
+	return mount->ftruncate_size( mount, fd, length );
     else{
 	SET_ERRNO( EBADF );
         return -1;
     }
 }
 
-static int transparent_truncate_size(const char* path, off_t length){
-    struct MountsInterface* mount = s_mounts_manager->mount_bypath(path); 
+static int transparent_truncate_size(struct MountsPublicInterface *this,
+				     const char* path, off_t length){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
     if ( mount )
-	return mount->truncate_size( CONVERT_PATH_TO_MOUNT(path), length );
+	return mount->truncate_size( mount, CONVERT_PATH_TO_MOUNT(path), length );
     else{
 	SET_ERRNO( EBADF );
         return -1;
@@ -290,31 +310,32 @@ static int transparent_truncate_size(const char* path, off_t length){
 }
 
 
-static int transparent_isatty(int fd){
-    struct MountsInterface* mount = s_mounts_manager->mount_byhandle(fd);
+static int transparent_isatty(struct MountsPublicInterface *this, int fd){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
-        return mount->isatty(fd);
+        return mount->isatty(mount, fd);
     else{
         errno = EBADF;
         return -1;
     }
 }
 
-static int transparent_dup(int oldfd){
+static int transparent_dup(struct MountsPublicInterface *this, int oldfd){
     SET_ERRNO(ENOSYS);
     return -1;
 }
 
-static int transparent_dup2(int oldfd, int newfd){
+static int transparent_dup2(struct MountsPublicInterface *this, int oldfd, int newfd){
     SET_ERRNO(ENOSYS);
     return -1;
 }
 
-static int transparent_link(const char *oldpath, const char *newpath){
-    struct MountsInterface* mount1 = s_mounts_manager->mount_bypath(oldpath); 
-    struct MountsInterface* mount2 = s_mounts_manager->mount_bypath(newpath); 
+static int transparent_link(struct MountsPublicInterface *this,
+			    const char *oldpath, const char *newpath){
+    struct MountsPublicInterface* mount1 = s_mounts_manager->mount_bypath(oldpath); 
+    struct MountsPublicInterface* mount2 = s_mounts_manager->mount_bypath(newpath); 
     if ( mount1 == mount2 && mount1 != NULL ){
-	return mount1->link(CONVERT_PATH_TO_MOUNT(oldpath),
+	return mount1->link(mount1, CONVERT_PATH_TO_MOUNT(oldpath),
 			    CONVERT_PATH_TO_MOUNT(newpath) );
     }
     else{
@@ -324,7 +345,7 @@ static int transparent_link(const char *oldpath, const char *newpath){
 }
 
 
-static struct MountsInterface s_transparent_mount = {
+static struct MountsPublicInterface s_transparent_mount = {
         transparent_chown,
         transparent_chmod,
         transparent_stat,
@@ -354,7 +375,7 @@ static struct MountsInterface s_transparent_mount = {
         transparent_link
 };
 
-struct MountsInterface* alloc_transparent_mount( struct MountsManager* mounts_manager ){
+struct MountsPublicInterface* alloc_transparent_mount( struct MountsManager* mounts_manager ){
     s_mounts_manager = mounts_manager;
     return &s_transparent_mount;
 }

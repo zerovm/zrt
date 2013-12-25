@@ -30,6 +30,11 @@
 
 #include "nvram_observer.h"
 
+struct ChannelsModeUpdaterPublicInterface;
+
+void set_mapping_channels_settings_updater( struct ChannelsModeUpdaterPublicInterface 
+					    *nvram_mode_setting_updater );
+
 /*get static interface, object not intended to destroy after using*/
 struct MNvramObserver* get_mapping_observer();
 

@@ -27,6 +27,7 @@
 #include "zrtlog.h"
 #include "nacl_struct.h"
 #include "channels_mount.h"
+#include "channels_array.h"
 
 //#define DIRENT struct nacl_abi_dirent
 #define DIRENT struct dirent
@@ -126,13 +127,17 @@ const char* name_from_path_get_path_len(const char *fullpath, int *pathlen){
 }
 
 
-void process_channels_create_dir_list( const struct ZVMChannel *channels, int channels_count,
+void process_channels_create_dir_list( const struct ChannelsArrayPublicInterface *channels_if,
         struct manifest_loaded_directories_t *manifest_dirs )
 {
+    struct ChannelArrayItem* item;
     int i;
-    for( i=0; i < channels_count; i++ ){
+    for( i=0; i < channels_if->count((struct ChannelsArrayPublicInterface *)channels_if); i++ ){
         /*process full path name including all sub dirs*/
-        process_subdirs_via_callback(callback_add_dir, manifest_dirs, channels[i].name, strlen(channels[i].name));
+	item = channels_if->get((struct ChannelsArrayPublicInterface *)channels_if, i);
+	assert(item);
+        process_subdirs_via_callback(callback_add_dir, manifest_dirs, 
+				     item->channel->name, strlen(item->channel->name));
     }
 
     int index;
@@ -150,7 +155,8 @@ void process_channels_create_dir_list( const struct ZVMChannel *channels, int ch
         /*calculate ok*/
 
         /*do unique handles for all manifest parsed directories*/
-        manifest_dirs->dir_array[i].handle += channels_count;
+        manifest_dirs->dir_array[i].handle += 
+	    channels_if->count((struct ChannelsArrayPublicInterface *)channels_if);
         /*get subdirs count, update nlink*/
         manifest_dirs->dir_array[i].nlink += subdirs_count;
     }

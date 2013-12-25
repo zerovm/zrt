@@ -19,9 +19,9 @@
 #ifndef TRANSPARENT_MOUNT_H_
 #define TRANSPARENT_MOUNT_H_
 
-struct MountsInterface;
+struct MountsPublicInterface;
 struct MountsManager;
 
-struct MountsInterface* alloc_transparent_mount( struct MountsManager* mounts_manager );
+struct MountsPublicInterface* alloc_transparent_mount( struct MountsManager* mounts_manager );
 
 #endif /* TRANSPARENT_MOUNT_H_ */

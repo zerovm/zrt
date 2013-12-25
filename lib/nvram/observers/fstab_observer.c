@@ -53,8 +53,8 @@ int save_as_tar(const char *dir_path, const char *tar_path );
 static struct FstabObserver    s_fstab_observer;
 static struct FstabObserver*   s_inited_observer = NULL;
 //external objects
-static struct MountsInterface* s_channels_mount=NULL;
-static struct MountsInterface* s_transparent_mount=NULL;
+static struct MountsPublicInterface* s_channels_mount=NULL;
+static struct MountsPublicInterface* s_transparent_mount=NULL;
 
 
 int handle_is_valid_record(struct MNvramObserver* observer, struct ParsedRecord* record){
@@ -76,8 +76,8 @@ void handle_fstab_record(struct MNvramObserver* observer,
 			 void* obj1, void* obj2, void* obj3){
     assert(record);
     struct FstabObserver* fobserver = (struct FstabObserver*)observer;
-    s_channels_mount = (struct MountsInterface*)obj1;     /*obj1 - channels filesystem interface*/
-    s_transparent_mount = (struct MountsInterface*)obj2;  /*obj2 - whole filesystem interface*/
+    s_channels_mount = (struct MountsPublicInterface*)obj1;     /*obj1 - channels filesystem interface*/
+    s_transparent_mount = (struct MountsPublicInterface*)obj2;  /*obj2 - whole filesystem interface*/
 
     if ( observer->is_valid_record(observer, record) != 0 ) return; /*skip record invalid*/
 
@@ -152,7 +152,7 @@ void handle_mount_import(struct FstabObserver* observer, struct FstabRecordConta
 		    channel_alias, mount_path, access, removable);
 	    record->mount_status = EFstabMountProcessing;	    
 	    /*create mounts reader linked to tar archive that contains filesystem image,
-	      it call "read" from MountsInterface and don't call "read" function from posix layer*/
+	      it call "read" from MountsPublicInterface and don't call "read" function from posix layer*/
 	    struct MountsReader* mounts_reader =
 		alloc_mounts_reader( s_channels_mount, channel_alias );
 

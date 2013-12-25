@@ -26,11 +26,11 @@ struct ImageInterface{
     int (*deploy_image)( const char* mount_path, struct UnpackInterface* );
     /*data*/
     const char* mount_path; /*point to extract filesystem contents*/
-    struct MountsInterface* mounts;
+    struct MountsPublicInterface* mounts;
     struct UnpackObserver* observer_implementation;
 };
 
-struct ImageInterface* alloc_image_loader( struct MountsInterface* );
+struct ImageInterface* alloc_image_loader( struct MountsPublicInterface* );
 
 void free_image_loader( struct ImageInterface* );
 

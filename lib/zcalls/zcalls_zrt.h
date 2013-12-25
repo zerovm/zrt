@@ -34,6 +34,6 @@ struct timeval*         static_timeval();
 void*                   static_prolog_brk();
 
 /*get static object from zrtsyscalls.c*/
-struct MountsInterface* transparent_mount();
+struct MountsPublicInterface* transparent_mount();
 
 #endif //__ZCALLS_ZRT_H__

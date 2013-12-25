@@ -28,21 +28,40 @@
 #include "mounts_reader.h"
 #include "mounts_interface.h"
 
+
+/*global variable to be set from  alloc_mounts_reader*/
+static struct MountsPublicInterface* s_mounts_interface;
+
+/*Overrides for functions : read / write to be used with buffered_io */
+ssize_t  read_override (int handle, void* data, size_t size){
+    return s_mounts_interface->read(s_mounts_interface, handle, data, size);
+}
+
+ssize_t  write_override (int handle, const void* data, size_t size){
+    return s_mounts_interface->write(s_mounts_interface, handle, data, size);
+}
+
+
+
+
 ssize_t mounts_read(struct MountsReader* reader, void *buf, size_t nbyte){
     return reader->buffered_io_reader->read(reader->buffered_io_reader, reader->fd, buf, nbyte);
 }
 
 
-struct MountsReader* alloc_mounts_reader( struct MountsInterface* mounts_interface, const char* channel_name ){
+struct MountsReader* alloc_mounts_reader( struct MountsPublicInterface* mounts_interface, const char* channel_name ){
     assert( mounts_interface );
-    int fd = mounts_interface->open( channel_name, O_RDONLY, 0 );
+    s_mounts_interface = mounts_interface;
+    int fd = mounts_interface->open( mounts_interface,
+				     channel_name, O_RDONLY, 0 );
     if ( fd < 0 ){
         ZRT_LOG( L_ERROR, "failed to open image channel %s", channel_name );
         return NULL;
     }
 
     /*seek to channel beginning to support re-read of channel data*/
-    int err = mounts_interface->lseek(fd, 0, SEEK_SET);
+    int err = mounts_interface->lseek( mounts_interface,
+				       fd, 0, SEEK_SET);
     if ( err != 0 ){
 	ZRT_LOG( L_ERROR, "%s must be seekable channel, err=%d", channel_name, err );
 	return NULL;
@@ -52,7 +71,8 @@ struct MountsReader* alloc_mounts_reader( struct MountsInterface* mounts_interfa
     mounts_reader->buffer = malloc(BUFFER_IO_SIZE);
     mounts_reader->buffered_io_reader = 
 	AllocBufferedIORead( mounts_reader->buffer, BUFFER_IO_SIZE, 
-			     mounts_interface->read /*override read for buffered io*/ );
+			     read_override /*override read for buffered io*/ );
+    /*set interface functions*/
     mounts_reader->fd = fd;
     mounts_reader->read = mounts_read;
     mounts_reader->mounts_interface = mounts_interface;
@@ -62,7 +82,8 @@ struct MountsReader* alloc_mounts_reader( struct MountsInterface* mounts_interfa
 void free_mounts_reader( struct MountsReader* mounts_reader ){
     assert( mounts_reader );
     ZRT_LOG( L_SHORT, "close channel fd=%d", mounts_reader->fd );
-    mounts_reader->mounts_interface->close( mounts_reader->fd );
+    mounts_reader->mounts_interface->close( mounts_reader->mounts_interface,
+					    mounts_reader->fd );
     free(mounts_reader->buffered_io_reader);
     free(mounts_reader->buffer);
     free(mounts_reader);

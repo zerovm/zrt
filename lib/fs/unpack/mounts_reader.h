@@ -23,10 +23,10 @@
 
 #define BUFFER_IO_SIZE 1024*64
 
-struct MountsInterface;
+struct MountsPublicInterface;
 
 /* 
- * File Reader class intended to serve read calls via lowlevel MountsInterface and do 
+ * File Reader class intended to serve read calls via lowlevel MountsPublicInterface and do 
  * not using standard POSIX toplevel interface. It is excluding zrt_zcall_*_read calls;
  */
 struct MountsReader{
@@ -35,10 +35,10 @@ struct MountsReader{
     int fd;                                   /*opened descriptor*/
     char*           buffer;                   /*buffer to be used for buffered io*/
     BufferedIORead* buffered_io_reader;       /*buffered io reader*/
-    struct MountsInterface* mounts_interface; /*interface to filesystem*/
+    struct MountsPublicInterface* mounts_interface; /*interface to filesystem*/
 };
 
-struct MountsReader* alloc_mounts_reader( struct MountsInterface* mounts_interface, const char* mounts_channel );
+struct MountsReader* alloc_mounts_reader( struct MountsPublicInterface* mounts_interface, const char* mounts_channel );
 void free_mounts_reader( struct MountsReader* );
 
 #endif /* MOUNTS_READER_H_ */

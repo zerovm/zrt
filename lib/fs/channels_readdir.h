@@ -24,7 +24,7 @@
 #define DIRECTORIES_MAX_NUMBER 255
 
 //forwards
-struct ZVMChannel;
+struct ChannelsArrayPublicInterface;
 
 struct dir_data_t {
     /*directory handle should be in range starting just after channels fd range;
@@ -54,8 +54,8 @@ match_handle_in_directory_list(struct manifest_loaded_directories_t *manifest_di
 
 /*reading channels list, fetch directories from channel path and add to manifest_dirs,
  * manifest_dirs should point to valid pointer*/
-void process_channels_create_dir_list( const struct ZVMChannel *channels, int channels_count,
-        struct manifest_loaded_directories_t *manifest_dirs );
+void process_channels_create_dir_list( const struct ChannelsArrayPublicInterface *channels, 
+				       struct manifest_loaded_directories_t *manifest_dirs );
 
 /* Search subdir starting from index in manifest_dirs, if matched return matched subdir index
  * To search many subdirs user would call it with index parameter returned by previous function call;

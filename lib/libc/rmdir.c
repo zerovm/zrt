@@ -51,11 +51,11 @@ int zrt_zcall_rmdir(const char *pathname){
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
     errno=0;
 
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     if ( (absolute_path = realpath(pathname, temp_path)) != NULL ){
-	ret = transpar_mount->rmdir( absolute_path );
+	ret = transpar_mount->rmdir( transpar_mount, absolute_path );
     }
 
     LOG_SHORT_SYSCALL_FINISH(ret, "pathname=%s", pathname);

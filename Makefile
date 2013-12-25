@@ -19,6 +19,7 @@ lib/libc/stat_realpath.c \
 lib/libc/getsysstats.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
+lib/helpers/dyn_array.c \
 lib/helpers/printf_prolog.c \
 lib/helpers/conf_parser.c \
 lib/helpers/conf_keys.c \
@@ -34,9 +35,11 @@ lib/nvram/observers/settime_observer.c \
 lib/nvram/observers/debug_observer.c \
 lib/nvram/observers/mapping_observer.c \
 lib/nvram/observers/precache_observer.c \
+lib/fs/mount_specific_implem.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
+lib/fs/channels_array.c \
 lib/fs/channels_mount.c \
 lib/fs/channels_readdir.c \
 lib/fs/transparent_mount.c \

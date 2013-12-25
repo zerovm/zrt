@@ -36,6 +36,7 @@
 #define MAPPING_PARAM_TYPE_KEY_INDEX       1
 
 static struct MNvramObserver s_mapping_observer;
+static struct ChannelsModeUpdaterPublicInterface *s_nvram_mode_setting_updater;
 
 void handle_mapping_record(struct MNvramObserver* observer,
 			   struct ParsedRecord* record,
@@ -54,21 +55,29 @@ void handle_mapping_record(struct MNvramObserver* observer,
     ZRT_LOG(L_SHORT, "mapping record: channel=%s, mode=%s", channel, mode);
 
     if ( channel != NULL && mode != NULL ){
-	int t=-1;
+	int channel_mode=-1;
 	if (!strcmp(mode, MAPPING_PARAM_VALUE_PIPE))
-	    t = S_IFIFO;
+	    channel_mode = S_IFIFO;
 	else if (!strcmp(mode, MAPPING_PARAM_VALUE_CHR))
-	    t = S_IFCHR;
+	    channel_mode = S_IFCHR;
 	else if (!strcmp(mode, MAPPING_PARAM_VALUE_FILE))
-	    t = S_IFREG;
+	    channel_mode = S_IFREG;
 
-	uint* cmode;
-	if ( t > 0 && (cmode=channel_mode(channel)) != NULL ){
-	    *cmode = t;
-	    ZRT_LOG(L_BASE, "channel=%s, mode=octal %o", channel, *cmode );
+	assert(s_nvram_mode_setting_updater);
+
+	if ( channel_mode > 0 ){
+	    s_nvram_mode_setting_updater->set_channel_mode(s_nvram_mode_setting_updater, 
+							   channel, channel_mode);
+	    ZRT_LOG(L_BASE, "channel=%s, mode=octal %o", channel, channel_mode );
 	}
     }
 }
+
+void set_mapping_channels_settings_updater( struct ChannelsModeUpdaterPublicInterface 
+					    *nvram_mode_setting_updater ){
+    s_nvram_mode_setting_updater = nvram_mode_setting_updater;
+}
+
 
 struct MNvramObserver* get_mapping_observer(){
     struct MNvramObserver* self = &s_mapping_observer;

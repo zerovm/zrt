@@ -48,13 +48,13 @@ int zrt_zcall_unlink(const char *pathname){
     errno=0;
     LOG_SYSCALL_START("pathname=%s", pathname);
 
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(pathname);
 
     if ( (absolute_path = realpath(pathname, temp_path)) != NULL ){
-	ret = transpar_mount->unlink(absolute_path);
+	ret = transpar_mount->unlink(transpar_mount, absolute_path);
     }
     
     LOG_SHORT_SYSCALL_FINISH(ret, "pathname=%s", pathname);

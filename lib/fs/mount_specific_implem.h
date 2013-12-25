@@ -6,7 +6,7 @@
  * Copyright (c) 2012-2013, LiteStack, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this_ file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -25,20 +25,39 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "zrt_defines.h" //CONSTRUCT_L
 
-struct mount_specific_implem{
+/*name of constructor*/
+#define MOUNT_SPECIFIC_IMPLEMENT mount_specific_construct 
+
+struct MountsPublicInterface;
+struct ChannelsArrayPublicInterface;
+struct MountSpecificImplemPublicInterface;
+
+struct MountSpecificImplemPublicInterface{
     /*return 0 if handle not valid, or 1 if handle is correct*/
-    int  (*check_handle)(int handle);
+    int  (*check_handle)(struct MountSpecificImplemPublicInterface* this_, int handle);
     /*if wrong handle return NULL*/
-    const char* (*handle_path)(int handle);
+    const char* (*handle_path)(struct MountSpecificImplemPublicInterface* this_, int handle);
     /*flags was specified at file opening
      *@param handle fd of opened file
      *@return -1 of bad handle, 0 if OK*/
-    int  (*fileflags)(int handle);
+    int  (*fileflags)(struct MountSpecificImplemPublicInterface* this_, int handle);
 
-    const struct flock* (*flock_data)( int fd );
-    int (*set_flock_data)( int fd, const struct flock* flock_data );
+    const struct flock* (*flock_data)( struct MountSpecificImplemPublicInterface* this_, int fd );
+    int (*set_flock_data)( struct MountSpecificImplemPublicInterface* this_, int fd, const struct flock* flock_data );
 };
+
+struct MountSpecificImplem{
+    struct MountSpecificImplemPublicInterface public_;
+    //data
+    struct ChannelsArrayPublicInterface* channels_array;
+};
+
+struct MountSpecificImplemPublicInterface*
+mount_specific_construct( struct MountSpecificImplemPublicInterface* mounts_interface,
+			  struct ChannelsArrayPublicInterface* channels_array );
+
 
 #endif //__MOUNT_SPECIFIC_IMPLEM_H__
 

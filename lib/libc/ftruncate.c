@@ -74,7 +74,7 @@ int zrt_zcall_ftruncate(int fd, off_t length){
 
     LOG_SYSCALL_START("fd=%d,length=%lld", fd, length);
     
-    struct MountsInterface* transpar_mount = transparent_mount();
+    struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
 
     errno=0;
@@ -102,7 +102,7 @@ int zrt_zcall_ftruncate(int fd, off_t length){
     else{ 
 	/*truncate data if user wants to reduce filesize
 	 *set new file size*/
-	int res = transpar_mount->ftruncate_size(fd, length);	
+	int res = transpar_mount->ftruncate_size(transpar_mount, fd, length);	
 	CHECK_NON_NEGATIVE_VALUE_RETURN_ERROR(res);
     }
 
