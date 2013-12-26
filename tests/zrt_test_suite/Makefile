@@ -89,4 +89,13 @@ CHANTYPE2-sequential.c=0
 CHANTYPE3-sequential.c=1
 #####################################################################
 
+#####################################################################
+#generate manifest file
+#in this section describe specific channel file size for some tests
+#this option is allow create manifest with specified channel size
+#examples: 
+CHANTYPE2_SIZE-bigfile.c=5368709120
+#####################################################################
+
+
 include $(ZRT_ROOT)/tests/Makefile.testengine

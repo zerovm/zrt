@@ -23,7 +23,8 @@ DEF_CHANTYPE3=1
 CHANNEL_READONLY=$(OUTFILE).readonly.channel
 CHANNEL_WRITEONLY=$(OUTFILE).writeonly.channel
 CHANNEL_READWRITE=$(OUTFILE).read-write.channel
-
+#default size for writeonly channel
+DEF_CHANTYPE2_SIZE=9999
 
 OUTPUT_LAST=last_test.output
 OUTPUT_FAIL=fail_tests.output
@@ -124,6 +125,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_CHANTYPE1:=$(firstword $(CHANTYPE1-$(NAMEONLY).c) $(DEF_CHANTYPE1)))
 	$(eval SPECIFIC_TEST_CHANTYPE2:=$(firstword $(CHANTYPE2-$(NAMEONLY).c) $(DEF_CHANTYPE2)))
 	$(eval SPECIFIC_TEST_CHANTYPE3:=$(firstword $(CHANTYPE3-$(NAMEONLY).c) $(DEF_CHANTYPE3)))
+#specific channel size
+	$(eval SPECIFIC_TEST_CHANTYPE2_SIZE:=$(firstword $(CHANTYPE2_SIZE-$(NAMEONLY).c) $(DEF_CHANTYPE2_SIZE)))
 #prepare channel files
 	@echo $(CHANNEL_TEST_FILE_CONTENTS) > $(CHANNEL_READONLY)
 	@echo $(CHANNEL_TEST_FILE_CONTENTS) > $(CHANNEL_WRITEONLY)
@@ -142,6 +145,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{CHANTYPE1}@$(SPECIFIC_TEST_CHANTYPE1)@g | \
 	 sed s@{CHANTYPE2}@$(SPECIFIC_TEST_CHANTYPE2)@g | \
 	 sed s@{CHANTYPE3}@$(SPECIFIC_TEST_CHANTYPE3)@g | \
+	 sed s@{CHANTYPE2_SIZE}@$(SPECIFIC_TEST_CHANTYPE2_SIZE)@g | \
 	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
 	 sed s@{JOB}@$(SPECIFIC_TEST_FORK)@g | \
 	 sed s@{TAR_MOUNT}@$(TEST_TAR)@g | \
@@ -155,10 +159,9 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{BR}@'\n'@g | \
 	 sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE)"@g > $(CURDIR)/$(BASENAME).nvram
 #Run test under zerovm and display returned error code
-#$shell should could not be used to get test result from file because it unexpectadly
-#using contents of previosly saved test output, and it is the main reason why using awk;
+#$shell could not be used to get test result from file because it unexpectadly
+#returns contents of previosly saved test output, and it is the main reason why using awk;
 #parsing correct output retrieved via pipe
-#todo: check  big file support without -l option
 	@cp -f ${TEST_TAR_MOUNT} $(SPECIFIC_TEST_MOUNT);
 	@$(ZEROVM) $(CURDIR)/$(BASENAME).manifest -P -v3 \
 	| $(AWK_GET_ZEROVM_APP_RETURN_CODE) \
