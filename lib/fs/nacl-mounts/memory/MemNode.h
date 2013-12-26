@@ -89,7 +89,7 @@ class MemNode {
 
     // Reallocate the size of data to be len bytes.  Copies the
     // current data to the reallocated memory.
-    void ReallocData(int len);
+    void ReallocData(size_t len);
 
     // children() returns a list of MemNode pointers
     // which represent the children of this node.

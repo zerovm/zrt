@@ -23,11 +23,53 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <error.h>
+#include <errno.h>
 #include <assert.h>
-#include "zrt.h"
+
+
+#include "macro_tests.h"
+
+
+off_t tell(int fd)
+{
+    return lseek(fd, 0, SEEK_CUR);
+}
+void zrt_test_issue71()
+{
+    char filename[] = "@tmp_1_test";
+    int fd, ret;
+
+    TEST_OPERATION_RESULT( open(filename, O_CREAT | O_RDWR), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( write(fd, "12345678901", 11), &ret, ret==11&&errno==0 );
+    TEST_OPERATION_RESULT( lseek(fd, -5, SEEK_END), &ret, ret==6&&errno==0);
+    TEST_OPERATION_RESULT( tell(fd), &ret, ret==6&&errno==0);
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
+    REMOVE_EXISTING_FILEPATH(filename);
+}
+
+void zrt_test_issue72(){
+    char filename[] = "@tmp_1_test";
+    off_t LARGE = 2147483648;
+    int fd, ret;
+
+    TEST_OPERATION_RESULT( open(filename, O_RDWR|O_CREAT|O_TRUNC, 0666), &fd, fd!=-1&&errno==0 );
+    off_t s = lseek(fd, LARGE, SEEK_SET);
+    fprintf(stderr, "lseek=%lld\n", s);
+    TEST_OPERATION_RESULT( s==LARGE&&errno==0, &ret, ret==1 );
+    s = tell(fd);
+    fprintf(stderr, "tell=%lld\n", s);
+    TEST_OPERATION_RESULT( s==LARGE&&errno==0, &ret, ret==1);
+    TEST_OPERATION_RESULT( write(fd, "12345678901", 11), &ret, ret==11&&errno==0);
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
+    REMOVE_EXISTING_FILEPATH(filename);
+}
 
 int main(int argc, char **argv)
 {
+    zrt_test_issue71();
+    zrt_test_issue72();
+
     const char* fname1 = "/seeker.data";
     const char* fname2 = "/seeker2.data";
 

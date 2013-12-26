@@ -101,7 +101,8 @@ void MemNode::RemoveChild(int child) {
     children_.remove(child);
 }
 
-void MemNode::ReallocData(int len) {
+//size_t to avoid int overflow on big files
+void MemNode::ReallocData(size_t len) {
     assert(len > 0);
     // TODO(arbenson): Handle memory overflow more gracefully.
     nodedata_->data_ = reinterpret_cast<char *>(realloc(data(), len));

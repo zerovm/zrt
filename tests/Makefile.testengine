@@ -1,9 +1,5 @@
 #Note1: SPECIFY TESTS_ROOT
-ifndef MEMMAX
-MEMMAX=268435456
-endif
-
-#Note2: RELEASE VERSION OF ZEROVM
+#Note2: RELEASE VERSION OF ZEROVM REQUIRED TO PARSE TESTS RESULTS
 #Given Makefile - test runner using release build of zerovm
 
 #mount/remount tar archives
@@ -16,6 +12,8 @@ OUTFILE=$(CURDIR)/$(BASENAME)
 #channels test file, 
 CHANNEL_TEST_FILE_CONTENTS="something something something something "
 
+#default memory size
+DEF_MEMMAX=4294967296
 #default types of channels we specifying from make
 DEF_CHANTYPE1=0
 DEF_CHANTYPE2=0
@@ -127,6 +125,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_CHANTYPE3:=$(firstword $(CHANTYPE3-$(NAMEONLY).c) $(DEF_CHANTYPE3)))
 #specific channel size
 	$(eval SPECIFIC_TEST_CHANTYPE2_SIZE:=$(firstword $(CHANTYPE2_SIZE-$(NAMEONLY).c) $(DEF_CHANTYPE2_SIZE)))
+#specific memory size
+	$(eval SPECIFIC_TEST_MEMMAX:=$(firstword $(MEMMAX-$(NAMEONLY).c) $(DEF_MEMMAX)))
 #prepare channel files
 	@echo $(CHANNEL_TEST_FILE_CONTENTS) > $(CHANNEL_READONLY)
 	@echo $(CHANNEL_TEST_FILE_CONTENTS) > $(CHANNEL_WRITEONLY)
@@ -149,7 +149,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
 	 sed s@{JOB}@$(SPECIFIC_TEST_FORK)@g | \
 	 sed s@{TAR_MOUNT}@$(TEST_TAR)@g | \
-	 sed s@{MEMMAX}@$(MEMMAX)@g > $(CURDIR)/$(BASENAME).manifest
+	 sed s@{MEMMAX}@$(SPECIFIC_TEST_MEMMAX)@g > $(CURDIR)/$(BASENAME).manifest
 #prepare nvram
 	@sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g nvram_tests.template | \
 	 sed s@{MAPPING}@"$(SPECIFIC_TEST_MAPPING)"@g | \

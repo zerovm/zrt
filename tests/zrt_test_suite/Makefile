@@ -97,5 +97,11 @@ CHANTYPE3-sequential.c=1
 CHANTYPE2_SIZE-bigfile.c=5368709120
 #####################################################################
 
+#####################################################################
+#generate manifest file, set amount of memory 
+#examples: 
+MEMMAX-mmap.c=268435456
+#####################################################################
+
 
 include $(ZRT_ROOT)/tests/Makefile.testengine

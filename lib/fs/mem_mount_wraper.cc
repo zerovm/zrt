@@ -372,7 +372,7 @@ static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset
 	    if (len == -1) {
 		return -1;
 	    }
-	    next = static_cast<size_t>(len) - offset;
+	    next = static_cast<size_t>(len) + offset;
 	    // TODO(arbenson): handle EOVERFLOW if too big.
 	    break;
 	default:

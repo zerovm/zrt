@@ -588,7 +588,7 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     }
     // Pad any gap with zeros.
     if (offset > static_cast<off_t>(node->len())) {
-        memset(node->data()+len, 0, offset);
+        memset(node->data()+node->len(), 0, offset-node->len());
     }
 
     // Write out the block.
