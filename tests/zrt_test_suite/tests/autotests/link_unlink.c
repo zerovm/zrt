@@ -30,6 +30,7 @@
 #include "macro_tests.h"
 
 #define TEST_FILE2 (TEST_FILE "2")
+#define TMP_TEST_DIR  "/testdirr"
 #define TMP_TEST_FILE "@test_1_tmp"
 
 int match_file_inode_in_dir(const char *dirpath, const char* fname) {
@@ -50,7 +51,19 @@ int match_file_inode_in_dir(const char *dirpath, const char* fname) {
     return -1; //no inode located
 }
 
-void test_zrt_issue_67(const char* name){
+void test_zrt_issue_70(){
+    /*Errno should be set to EBADF (9) when doing read, write, close
+      with already closed files.*/
+    int fd, ret;
+    char buf[2];
+    TEST_OPERATION_RESULT( open("foo2", O_RDWR|O_CREAT), &fd, ret!=-1&&errno==0);
+    TEST_OPERATION_RESULT( close(fd), &ret, ret!=-1&&errno==0);
+    TEST_OPERATION_RESULT( read(fd, buf, 1), &ret, ret==-1&&errno==EBADF);
+    TEST_OPERATION_RESULT( write(fd, buf, 1), &ret, ret==-1&&errno==EBADF);
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==-1&&errno==EBADF);
+}
+
+void test_zrt_issue_67(const char* dirname, const char* name){
     //https://github.com/zerovm/zrt/issues/67
     /*Since unlink returns no error if file in use, then unlinked
       file should not be available for getdents/stat; but must be
@@ -58,26 +71,34 @@ void test_zrt_issue_67(const char* name){
       get fd/FILE as argument.*/
     int ret;
     struct stat st;
+    char fullpath[PATH_MAX];
+ 
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", dirname, name );
+    fprintf(stderr, "dirname=%s, fullpath=%s\n", dirname, fullpath);
+
+    /*create test dir, and delete for final test */
+    TEST_OPERATION_RESULT( mkdir(dirname, 0700), &ret, ret==0&&errno==0);
+
     /*open file, now it's referenced and it's means that file in use*/
-    int fd = open(name, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
+    int fd = open(fullpath, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
     TEST_OPERATION_RESULT( 
 			  fd>=0&&errno==0,
 			  &ret, ret!=0);
 
     /*file can be accessed as dir item via getdents */
-    TEST_OPERATION_RESULT( 	match_file_inode_in_dir("/", name),
-				&ret, ret!=-1);
+    TEST_OPERATION_RESULT( match_file_inode_in_dir(dirname, name),
+			   &ret, ret!=-1);
 
     /*try to unlink file that in use - file removing is postponed */
-    TEST_OPERATION_RESULT( unlink(name), &ret, ret==0&&errno==0);
+    TEST_OPERATION_RESULT( unlink(fullpath), &ret, ret==0&&errno==0);
 
     /*can be accessed by fd via fstat*/
     TEST_OPERATION_RESULT( fstat(fd, &st), &ret, ret==0&&errno==0);
     /*can't be accessed by name via stat*/
     CHECK_PATH_NOT_EXIST( name );
     /*can't be accessed as dir item via getdents */
-    TEST_OPERATION_RESULT( 	match_file_inode_in_dir("/", name),
-				&ret, ret==-1);
+    TEST_OPERATION_RESULT( match_file_inode_in_dir(dirname, name),
+			   &ret, ret==-1);
 
     errno=0;
     TEST_OPERATION_RESULT( write(fd, name, 2), &ret, ret==2&&errno==0 )
@@ -85,17 +106,18 @@ void test_zrt_issue_67(const char* name){
 
     /*create file with the same name as unlink'ing now, it should be valid*/
     {
-	int fd2 = open(name, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
-	TEST_OPERATION_RESULT( 
-			      fd2>=0&&errno==0,
-			      &ret, ret!=0);
-	CHECK_PATH_EXISTANCE( name );
-
+	int fd2 = open(fullpath, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
+	TEST_OPERATION_RESULT( fd2>=0&&errno==0, &ret, ret!=0);
+	CHECK_PATH_EXISTANCE( fullpath );
 	close(fd2);
+	TEST_OPERATION_RESULT( unlink(fullpath), &ret, ret==0&&errno==0);
     }
 
     close(fd);
     /*file closed, from now it should not be available at all*/
+
+    /*delete dir for final test */
+    TEST_OPERATION_RESULT( rmdir(dirname), &ret, ret==0&&errno==0);
 
     /*can't be accessed by fd via fstat*/
     TEST_OPERATION_RESULT( fstat(fd, &st), &ret, ret==-1&&errno==EBADF);
@@ -153,8 +175,9 @@ int main(int argc, char**argv){
     CLOSE_FILE(fd1);
     CLOSE_FILE(fd2);
 
-    test_zrt_issue_67(TMP_TEST_FILE);
-    test_zrt_issue_67(TMP_TEST_FILE);
+    test_zrt_issue_67(TMP_TEST_DIR, TMP_TEST_FILE);
+    test_zrt_issue_67(TMP_TEST_DIR, TMP_TEST_FILE);
+    test_zrt_issue_70();
 
     return 0;
 }
