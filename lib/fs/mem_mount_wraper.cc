@@ -49,27 +49,6 @@ extern "C" {
 	if ( ret != 0 ) return ret;				\
     }
 
-#define TRUNCATE_FILE(inode) {						\
-	MemNode* node = NODE_OBJECT_BYINODE(inode);			\
-	if (node){							\
-	    /*check if file was not opened for writing*/		\
-	    int mode= node->mode();					\
-	    if ( !mode&S_IWUSR ){					\
-		ZRT_LOG(L_ERROR, "file not allowed for write, mode are %s", \
-			STR_FILE_OPEN_MODE(mode));			\
-		SET_ERRNO( EINVAL );					\
-		return -1;						\
-	    }								\
-	    /*set file length on related node and update new length in stat*/ \
-	    node->set_len(length);					\
-	    ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d", \
-		    (int)length, get_file_len(inode));			\
-	    /*file size truncated */					\
-	}								\
-    }
-
-
-
 
 static MemMount* s_mem_mount_cpp = NULL;
 static struct HandleAllocator* s_handle_allocator = NULL;
@@ -490,9 +469,24 @@ static int mem_access(struct MountsPublicInterface* this_, const char* path, int
 
 static int mem_ftruncate_size(struct MountsPublicInterface* this_, int fd, off_t length){
     ino_t inode;
+    MemNode* node; 
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
     if ( !is_dir(inode) ){
-	TRUNCATE_FILE(inode);
+	if ((node=NODE_OBJECT_BYINODE( inode )) != NULL){
+	    /*check if file was opened for writing*/
+	    int flags= node->flags();
+	    if ( !CHECK_FLAG(flags, O_WRONLY) && !CHECK_FLAG(flags, O_RDWR) ){
+		ZRT_LOG(L_ERROR, "file not allowed for write, open flags are %s",
+			STR_FILE_OPEN_FLAGS(flags));
+		SET_ERRNO( EINVAL );
+		return -1;
+	    }
+	    /*set file length on related node and update new length in stat*/
+	    node->set_len(length);
+	    ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d",
+		    (int)length, get_file_len( inode ));
+	    /*file size truncated */
+	}
 	return 0;
     }
     else{
@@ -503,18 +497,9 @@ static int mem_ftruncate_size(struct MountsPublicInterface* this_, int fd, off_t
 }
 
 int mem_truncate_size(struct MountsPublicInterface* this_, const char* path, off_t length){
-    lazy_mount(path);
-    struct stat st;
-    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
-    
-    /*it's not allowed to truncate directory*/
-    if ( S_ISDIR(st.st_mode) ){
-	SET_ERRNO(EISDIR);
-	return -1; 
-    }
-
-    TRUNCATE_FILE(st.st_ino);
-    return 0;
+    assert(0); 
+    /*truncate implementation replaced by ftruncate call*/
+    return -1;
 }
 
 static int mem_isatty(struct MountsPublicInterface* this_, int fd){

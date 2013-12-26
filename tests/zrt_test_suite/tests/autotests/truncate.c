@@ -20,10 +20,13 @@
 #include <errno.h>
 #include <error.h>
 #include <string.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+
+#include "macro_tests.h"
 
 //#include "tst-truncate.h"
 
@@ -35,6 +38,8 @@
 //values
 #define FILENAME "/truncatefile"
 #define EXIT_FAILURE -1
+
+void test_issue_69();
 
 int
 main (int argc, char **argv)
@@ -94,9 +99,27 @@ main (int argc, char **argv)
 	error (EXIT_FAILURE, 0, "size after increase with %s incorrect",
 	       STRINGIFY (TRUNCATE));
 
-
     close (fd);
     unlink (name);
 
+    test_issue_69();
     return 0;
+}
+
+void test_issue_69(){
+    int ret;
+    int fd;
+    char buffer[1024];
+    char filename[] = "@tmp_1_test";
+
+    TEST_OPERATION_RESULT( open(filename, O_WRONLY | O_CREAT), &fd, fd!=-1&&errno==0);
+    TEST_OPERATION_RESULT( write(fd, "12345678901", 11), &ret, ret==11&&errno==0);
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
+
+    TEST_OPERATION_RESULT( open(filename, O_RDONLY), &fd, fd!=-1&&errno==0);
+    TEST_OPERATION_RESULT( read(fd, buffer, 5), &ret, ret!=0&&errno==0 );
+    TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_CUR), &ret, ret==5&&errno==0);
+    TEST_OPERATION_RESULT( ftruncate(fd, 0), &ret, ret==-1&&errno==EINVAL);
+    TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_CUR), &ret, ret==11&&errno==0);
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0);
 }

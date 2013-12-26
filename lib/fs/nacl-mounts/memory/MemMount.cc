@@ -185,6 +185,7 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf,
     child->set_parent(parent_slot);
     parent->AddChild(slot);
     parent->increment_nlink(); /*emulate of creating hardlink to parent directory*/
+    errno=0;
     if (!buf) {
         return 0;
     }
