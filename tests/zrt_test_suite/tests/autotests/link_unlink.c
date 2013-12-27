@@ -113,11 +113,14 @@ void test_zrt_issue_67(const char* dirname, const char* name){
 	TEST_OPERATION_RESULT( unlink(fullpath), &ret, ret==0&&errno==0);
     }
 
-    close(fd);
+    /*delete dir with opened file */
+    TEST_OPERATION_RESULT( rmdir(dirname), &ret, ret==0&&errno==0);
+
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0);
     /*file closed, from now it should not be available at all*/
 
     /*delete dir for final test */
-    TEST_OPERATION_RESULT( rmdir(dirname), &ret, ret==0&&errno==0);
+    TEST_OPERATION_RESULT( rmdir(dirname), &ret, ret==-1&&errno==ENOENT);
 
     /*can't be accessed by fd via fstat*/
     TEST_OPERATION_RESULT( fstat(fd, &st), &ret, ret==-1&&errno==EBADF);

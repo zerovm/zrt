@@ -59,7 +59,7 @@ int MemNode::stat(struct stat *buf) {
     memset(buf, '\0', sizeof(struct stat));
     buf->st_ino = (ino_t)slot_;
     if (is_dir()) {
-        /*YaroslavLitvinov added various modes support*/
+        /*added for various modes support*/
         buf->st_mode = S_IFDIR | mode();
 	/*synthetically increase hardlinks count by one,
 	 *because for our fs we has not links '.', .. 

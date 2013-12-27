@@ -386,7 +386,7 @@ int MemMount::UnlinkInternal(MemNode *node) {
 	return -1;
     }
     MemNode *parent = slots_.At(parent_inode);
-    if (parent == NULL) {
+    if (parent == NULL && !node->UnlinkisTrying() ) {
         // Can't delete root
 	SET_ERRNO(EBUSY);
         return -1;
@@ -404,7 +404,7 @@ int MemMount::UnlinkInternal(MemNode *node) {
 
 #ifdef POSTPONE_DELETE_FILE_INUSE
     /*if file not used then delete it*/
-    if ( !node->use_count() ){
+    if ( !node->use_count() && !node->UnlinkisTrying() ){
 #endif //POSTPONE_DELETE_FILE_INUSE
 
 	parent->RemoveChild(inode);
@@ -438,10 +438,23 @@ int MemMount::Rmdir(ino_t slot) {
 	SET_ERRNO(ENOTDIR);
         return -1;
     }
+
+    /*TODO: check every child and if only deleted childs left, then
+      mark it as deleted */
     // Check if it's empty.
     if (node->children()->size() > 0) {
-	SET_ERRNO(ENOTEMPTY);
-        return -1;
+	MemNode *child;
+	int i;
+
+	std::list<int>::iterator it;
+	for (it = node->children()->begin(); it != node->children()->end(); ++it) {
+	    MemNode *child = slots_.At(*it);
+	    /*If any not deleted child in dir return error notempty*/
+	    if ( !child->UnlinkisTrying() ){
+		SET_ERRNO(ENOTEMPTY);
+		return -1;
+	    }
+	}
     }
     ZRT_LOG(L_INFO, "node->name()=%s", node->name().c_str() );
     parent = slots_.At(node->parent());
@@ -456,7 +469,10 @@ int MemMount::Rmdir(ino_t slot) {
 
     //Just release node instead using of Unref because it's 
     //not possible to have hardlinks for directories
-    slots_.Free(slot);
+    /*Do not delete hardlink if it's in use*/
+    if ( !node->UnlinkisTrying() ){
+	slots_.Free(slot);
+    }
     return 0;
 }
 
