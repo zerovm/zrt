@@ -66,19 +66,6 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode, MemData* h
 	ZRT_LOG(L_INFO, "%s Creat OK", path.c_str());
     }
 
-    if (oflag&O_RDWR){
-	/*set read-write permissions*/
-	mode |= S_IRUSR | S_IWUSR;
-    }
-    else if(oflag&O_RDONLY){
-	/*set read-only permissions*/
-	mode |= S_IRUSR;
-    }
-    else if(oflag&O_WRONLY){
-	/*set write-only permissions*/
-	mode |= S_IWUSR;
-    }
-
     /* save access mode to be able determine possibility of read/write access
      * during I/O operations*/
     MemNode* mnode = GetMemNode(path);

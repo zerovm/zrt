@@ -233,6 +233,13 @@ int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newf
     /*reset mode bits, that is not actual for permissions*/
     mode&=(S_IRWXU|S_IRWXG|S_IRWXO);
     APPLY_UMASK(&mode);
+    if ( getenv(UMASK_ENV) != NULL ){		
+	mode_t umask;				
+	sscanf( getenv(UMASK_ENV), "%o", &umask);	
+	ZRT_LOG(L_INFO, "umask=%o", umask);		
+	mode = ~umask & mode;			
+    }						
+
     if ( (absolute_path = zrealpath(name, temp_path)) != NULL ){
 	ZRT_LOG(L_SHORT, "absolute_path=%s", absolute_path);
 	if ( (ret = s_transparent_mount->open(s_transparent_mount, absolute_path, flags, mode )) >= 0 ){

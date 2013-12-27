@@ -15,16 +15,55 @@
  * limitations under the License.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h> //getenv
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <error.h>
+#include <errno.h>
 #include <assert.h>
-#include "zrt.h"
+#include "macro_tests.h"
+
+
+void zrt_test_issue73()
+{
+    const char modulepy[] = "/tmp/__main__.py";
+    int ret, fd;
+
+    struct stat buffer;
+    umask(022);
+
+    TEST_OPERATION_RESULT( open(modulepy, O_WRONLY|O_CREAT|O_EXCL|O_TRUNC, 0100666), &fd, fd!=-1&&errno==0);
+    TEST_OPERATION_RESULT( fstat(fd, &buffer), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( buffer.st_mode == 0100644, &ret, ret!=0 );
+    TEST_OPERATION_RESULT( unlink(modulepy), &ret, ret==0 );
+
+    TEST_OPERATION_RESULT( open(modulepy, O_WRONLY|O_CREAT|O_EXCL|O_TRUNC, 0100444), &fd, fd!=-1&&errno==0);
+    TEST_OPERATION_RESULT( fstat(fd, &buffer), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
+    fprintf(stderr, "bitwise operation result = %o, mode=%o\n", 
+	    0444 & ~022, 
+	    buffer.st_mode );
+    TEST_OPERATION_RESULT( buffer.st_mode == 0100444, &ret, ret!=0 );
+    TEST_OPERATION_RESULT( unlink(modulepy), &ret, ret==0 );
+
+
+    assert( (0777&buffer.st_mode) == 0444);
+
+}
 
 int main(int argc, char **argv)
 {
+    int ret;
     extern char **environ;
     char **env = environ;
+
+    zrt_test_issue73();
+
     printf("environment variables list tests\n");
 
     printf("\nTEST1: using extern environ:\n");
@@ -46,14 +85,10 @@ int main(int argc, char **argv)
     printf("%s=%s\n%s\n", var, val,  pattern );
     assert( !strcmp(val,  pattern) );
 
-    printf("\nTEST3: using setenv & getenv:\n");
-    printf( "before new environment assignemnt\n" );
     var = "Pum"; val = getenv(var);  
-    if ( val != NULL ) return 1;
-    printf("%s=%s\n", var, val );
-    printf( "setenv status=%d;\nafter new environment assignment\n",  setenv( "Pum", "PumPum", 1) );
-    val = getenv(var); 
-    if ( val == NULL ) return 1;
-    printf("%s=%s\n", var, val );
+    TEST_OPERATION_RESULT( val == NULL, &ret, ret!=0 );
+    TEST_OPERATION_RESULT( setenv(var, "PumPum", 1), &ret, ret==0&&errno==0  );
+    val = getenv(var);
+    TEST_OPERATION_RESULT( val!=NULL && !strcmp("PumPum", val), &ret, ret!=0&&errno==0 );
     return 0;
 }

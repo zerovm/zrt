@@ -110,6 +110,7 @@
 	if ( getenv(UMASK_ENV) != NULL ){		\
 	    mode_t umask;				\
 	    sscanf( getenv(UMASK_ENV), "%o", &umask);	\
+	    ZRT_LOG(L_INFO, "umask=%o", umask);		\
 	    *mode_p = ~umask & *mode_p;			\
 	}						\
     }
