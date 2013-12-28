@@ -24,15 +24,21 @@
 #include <stdio.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <error.h>
 #include <errno.h>
 
 #include "macro_tests.h"
 
+void zrt_test_issue73();
+
+
 int main(int argc, char **argv)
 {
     int ret;
     char* nullstr = NULL;
+
+    zrt_test_issue73();
 
     TEST_OPERATION_RESULT(
 			  rename(nullstr, TEST_FILE),
@@ -92,4 +98,26 @@ int main(int argc, char **argv)
     return 0;
 }
 
+void zrt_test_issue73(){
+    const char dirname[] =  "/tmp/tmp1111";
+    const char newdirname[] = "/tmp/tmp2222";
+    const char filename[] = "foo";
+    char fullpath[PATH_MAX];
+    char newfullpath[PATH_MAX];
+    int ret;
+
+    /*create file in dir*/
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", dirname, filename);
+    TEST_OPERATION_RESULT( mkdir(dirname, 0700), &ret, ret==0&&errno==0);
+    CREATE_FILE(fullpath, "xxx", 3);
+
+    /*rename dir*/
+    TEST_OPERATION_RESULT( rename(dirname, newdirname), &ret, ret==0&&errno==0);
+
+    /*check new path & oldpath*/
+    snprintf(newfullpath, sizeof(newfullpath), "%s/%s", newdirname, filename);
+    CHECK_PATH_NOT_EXIST(fullpath);
+    CHECK_PATH_EXISTANCE(newdirname);
+    CHECK_PATH_EXISTANCE(newfullpath);
+}
 

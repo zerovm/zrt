@@ -63,6 +63,7 @@ class MemData {
     uint32_t gid_;
     int hardinode_; //inode the same for all hardlinks
     struct flock flock_;
+    std::list<int> children_;
 };
 
 // MemNode is the node object for the MemoryMount class
@@ -200,7 +201,6 @@ class MemNode {
     std::string name_;
     int parent_;
     MemMount *mount_;
-    std::list<int> children_;
     MemData*  nodedata_;  //can be shared between nodes
 
     DISALLOW_COPY_AND_ASSIGN(MemNode);

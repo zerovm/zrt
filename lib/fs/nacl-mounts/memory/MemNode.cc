@@ -17,6 +17,7 @@ extern "C" {
 
 MemData::~MemData(){
     free(data_);
+    children_.clear();
 }
 
 MemData::MemData() {
@@ -40,7 +41,6 @@ MemNode::~MemNode() {
 	//delete file data if no hardlinks
 	delete nodedata_; 
     }
-    children_.clear();
 }
 
 void MemNode::second_phase_construct(MemData* nodedata){
@@ -91,14 +91,14 @@ void MemNode::AddChild(int child) {
     if (!is_dir()) {
         return;
     }
-    children_.push_back(child);
+    nodedata_->children_.push_back(child);
 }
 
 void MemNode::RemoveChild(int child) {
     if (!is_dir()) {
         return;
     }
-    children_.remove(child);
+    nodedata_->children_.remove(child);
 }
 
 //size_t to avoid int overflow on big files
@@ -112,7 +112,7 @@ void MemNode::ReallocData(size_t len) {
 
 std::list<int> *MemNode::children() {
     if (is_dir()) {
-        return &children_;
+        return &nodedata_->children_;
     } else {
         return NULL;
     }
