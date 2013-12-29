@@ -91,9 +91,12 @@ void zrt_zcall_prolog_init(){
     if ( MANIFEST )
 	sbrk_default = MANIFEST->heap_ptr;
 
-    /*Folowing handlers does not require a heap*/
-    struct NvramLoader* nvram = static_nvram();
-    if ( !nvram_read_parse( nvram ) ){
+    /*Folowing nvram handlers using only stack and nor heap*/
+    struct NvramLoaderPublicInterface* nvram = INSTANCE_L(NVRAM_LOADER)();
+    /*if nvram config file not empty then do parsing*/
+    if ( nvram->read(nvram, DEV_NVRAM) > 0 ){
+	nvram->parse(nvram);
+
 	/*handle debug section - verbosity*/
 	if ( NULL != nvram->section_by_name( nvram, DEBUG_SECTION_NAME ) ){
 	    ZRT_LOG(L_INFO, "%s", "nvram handle debug");
@@ -493,7 +496,7 @@ void zrt_zcall_prolog_premain(void){
 /*@return records count in fstab section*/
 static int get_records_count_for_section_and_buffer_size_to_copy_contents
 (
- struct NvramLoader* nvram, const char* section_name, int* buf_size){
+ struct NvramLoaderPublicInterface* nvram, const char* section_name, int* buf_size){
     /*Go through parsed envs section and calculate buffer size
       needed to store environment variables into single buffer
       as into null terminated strings folowing each after other*/
@@ -524,18 +527,16 @@ static int get_records_count_for_section_and_buffer_size_to_copy_contents
 /*nvram access from prolog*/
 void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size, 
 					       int *envs_buf_size, int *env_count){
-    ZRT_LOG(L_INFO, "nvram object size %u bytes", sizeof(struct NvramLoader));
-    struct NvramLoader* nvram = static_nvram();
     /* nvram must be read and parsed previously, just after warmup */
 
     /*Go through parsed envs section and calculate buffer size
       needed to store environment variables into single buffer
       as into null terminated strings folowing each after other*/
     *env_count = get_records_count_for_section_and_buffer_size_to_copy_contents
-	(nvram, ENVIRONMENT_SECTION_NAME, envs_buf_size);
+	(INSTANCE_L(NVRAM_LOADER)(), ENVIRONMENT_SECTION_NAME, envs_buf_size);
     /*handle args section*/
     get_records_count_for_section_and_buffer_size_to_copy_contents
-	(nvram, ARGS_SECTION_NAME, args_buf_size);
+	(INSTANCE_L(NVRAM_LOADER)(), ARGS_SECTION_NAME, args_buf_size);
     /*reserve additional space  to be able add null termination chars for all
       available args, see args_observer.c: add_val_to_temp_buffer */
     *args_buf_size+= strlen(STUB_ARG0);
@@ -545,7 +546,7 @@ void zrt_zcall_prolog_nvram_read_get_args_envs(int *args_buf_size,
 
 void zrt_zcall_prolog_nvram_get_args_envs(char** args, char* args_buf, int args_buf_size,
 					  char** envs, char* envs_buf, int envs_buf_size){
-    struct NvramLoader* nvram = static_nvram();
+    struct NvramLoaderPublicInterface* nvram = INSTANCE_L(NVRAM_LOADER)();
     /*handle "env" section*/
     if ( NULL != nvram->section_by_name( nvram, ENVIRONMENT_SECTION_NAME ) ){
 	ZRT_LOG(L_INFO, "%s", "nvram handle envs");

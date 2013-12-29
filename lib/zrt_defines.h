@@ -20,6 +20,8 @@
 
 /*execute constructor function*/
 #define CONSTRUCT_L(function_return_object_p) function_return_object_p
+/*get instance for singleton*/
+#define INSTANCE_L(function_return_object_p) function_return_object_p
 
 #define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
 

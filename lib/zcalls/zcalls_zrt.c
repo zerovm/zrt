@@ -77,7 +77,6 @@ static struct ZVMChannel s_emu_channels[]
     {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/random"},
     {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/urandom"}};
 
-static struct NvramLoader      s_nvram;
 struct MountsPublicInterface*        s_channels_mount=NULL;
 struct MountsPublicInterface*        s_mem_mount=NULL;
 static struct MountsManager*   s_mounts_manager = NULL;
@@ -85,7 +84,6 @@ static struct MountsPublicInterface* s_transparent_mount = NULL;
 static int                     s_zrt_ready=0;
 /****************** */
 
-struct NvramLoader*     static_nvram()      { return &s_nvram; }
 struct MountsPublicInterface* transparent_mount() { return s_transparent_mount; }
 
 /*internal functions to be used in this module*/
@@ -366,14 +364,14 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
 
 /*Basic zrt initializer*/
 void zrt_zcall_enhanced_zrt_setup(void){
-    struct NvramLoader* nvram = static_nvram();
+    struct NvramLoaderPublicInterface* nvram = INSTANCE_L(NVRAM_LOADER)();
     zrt_internal_init(MANIFEST);
 
     if ( NULL != nvram->section_by_name( nvram, MAPPING_SECTION_NAME ) ){
 	nvram->handle(nvram, HANDLE_ONLY_MAPPING_SECTION, NULL, NULL, NULL);
     }
     if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
-	nvram->handle(&s_nvram, (struct MNvramObserver*)HANDLE_ONLY_FSTAB_SECTION, 
+	nvram->handle(nvram, (struct MNvramObserver*)HANDLE_ONLY_FSTAB_SECTION, 
 		      s_channels_mount, s_transparent_mount, NULL );
     }
     /*check nvram section [precache] and call fork if needed*/
@@ -463,8 +461,12 @@ int zfork(){
     get_fstab_observer()->reset_removable(HANDLE_ONLY_FSTAB_SECTION);
 
     /*re-read nvram file because after fork his content can be changed. */
-    struct NvramLoader* nvram = static_nvram();
-    if ( !nvram_read_parse( nvram ) ){
+    /*Folowing nvram handlers using only stack and nor heap*/
+    struct NvramLoaderPublicInterface* nvram = INSTANCE_L(NVRAM_LOADER)();
+    /*if nvram config file not empty then do parsing*/
+    if ( nvram->read(nvram, DEV_NVRAM) > 0 ){
+	nvram->parse(nvram);
+
 	/*handle debug section - verbosity*/
 	if ( NULL != nvram->section_by_name( nvram, DEBUG_SECTION_NAME ) ){
 	    ZRT_LOG(L_INFO, "%s", "nvram handle debug");

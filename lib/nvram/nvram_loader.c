@@ -50,6 +50,18 @@
     ( bound_start != NULL && bound_end != NULL && (end_line == NULL || bound_end < end_line) )
 
 
+struct NvramLoader{
+    struct NvramLoaderPublicInterface public;
+    //private data
+    char nvram_data[NVRAM_MAX_FILE_SIZE];
+    int  nvram_data_size;
+    struct ParsedRecords parsed_sections[NVRAM_MAX_SECTIONS_COUNT];
+    int parsed_sections_count;
+    /*array of pointers to observer objects, unused cells would be NULL*/
+    struct MNvramObserver* nvram_observers[NVRAM_MAX_OBSERVERS_COUNT];
+    int init_ok; /*0 if not inited, 1 if initialized*/
+};
+
 /*section name, start, end*/
 struct config_section_t{
     const char *name; /*section name, referred in config as name in square brackets*/
@@ -63,6 +75,8 @@ struct config_structure_t{
     struct config_section_t sections[NVRAM_MAX_SECTIONS_COUNT];
     int count;
 };
+
+static struct NvramLoader      s_nvram;
 
 
 /*Parse section name
@@ -239,8 +253,11 @@ int nvram_read(struct NvramLoader* nvram, const char* nvram_file_name){
 void nvram_parse(struct NvramLoader* nvram){
     assert(nvram);
 
-    /*get sections list and save it in nvram object*/
     struct config_structure_t sections_bounds;
+
+    nvram->parsed_sections_count=0;
+
+    /*get sections list and save it in nvram object*/
     get_config_structure(nvram, &sections_bounds);
     ZRT_LOG(L_EXTRA, "nvram sections count %d", sections_bounds.count );
 
@@ -297,37 +314,37 @@ struct ParsedRecords* nvram_section_by_name( struct NvramLoader* nvram,
 }
 
     
-struct NvramLoader* construct_nvram_loader(struct NvramLoader* nvram ){
-    nvram->parsed_sections_count=0;
-    /*fill cells by NULL, so unused cells would be stay NULL*/
-    memset(nvram->nvram_observers, '\0', 
-	   NVRAM_MAX_OBSERVERS_COUNT*sizeof(struct MNvramObserver*));
-    nvram->read = nvram_read;
-    nvram->add_observer = nvram_add_observer;
-    nvram->parse = nvram_parse;
-    nvram->handle = nvram_handle;
-    nvram->section_by_name = nvram_section_by_name;
-    return nvram;
-}
+struct NvramLoaderPublicInterface* nvram_loader(){
+    if ( s_nvram.init_ok == 1 ) return &s_nvram.public; /*return if init ok*/
 
-/*@return 0 if read ok*/
-int nvram_read_parse( struct NvramLoader* nvram ){
-    construct_nvram_loader( nvram );
+    /*use existing object memory, for example resided in bss  */
+    struct NvramLoader* this = &s_nvram;
+
+    /*set functions*/
+    this->public.add_observer =    (void*)nvram_add_observer;
+    this->public.read =            (void*)nvram_read;
+    this->public.parse 	=          (void*)nvram_parse;
+    this->public.handle =          (void*)nvram_handle;
+    this->public.section_by_name = (void*)nvram_section_by_name;
+    /*init data*/
+
+    /*fill cells by NULL, so unused cells would be stay NULL*/
+    memset(this->nvram_observers, '\0', 
+	   NVRAM_MAX_OBSERVERS_COUNT*sizeof(struct MNvramObserver*));
+
     /*Get static observers object, their memory should not be freed
      Must add here all observers to known nvram sections*/
-    nvram->add_observer(nvram, get_precache_observer() );
-    nvram->add_observer(nvram, get_fstab_observer() );
-    nvram->add_observer(nvram, get_settime_observer() );
-    nvram->add_observer(nvram, get_debug_observer() );
-    nvram->add_observer(nvram, get_mapping_observer() );
-    nvram->add_observer(nvram, get_env_observer() );
-    nvram->add_observer(nvram, get_arg_observer() );
-    /*if readed not null bytes and result non negative then doing parsing*/
-    if ( nvram->read(nvram, DEV_NVRAM) > 0 ){
-	/*parse whole nvram config file into NvramLoader object*/
-        nvram->parse(nvram);
-	return 0;
-    }
-    return -1;
+    this->public.add_observer(&this->public, get_precache_observer() );
+    this->public.add_observer(&this->public, get_fstab_observer() );
+    this->public.add_observer(&this->public, get_settime_observer() );
+    this->public.add_observer(&this->public, get_debug_observer() );
+    this->public.add_observer(&this->public, get_mapping_observer() );
+    this->public.add_observer(&this->public, get_env_observer() );
+    this->public.add_observer(&this->public, get_arg_observer() );
+
+    ZRT_LOG(L_INFO, "nvram object size %u bytes", sizeof(struct NvramLoader));
+
+    s_nvram.init_ok = 1;
+    return this;
 }
 

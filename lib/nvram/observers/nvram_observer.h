@@ -24,6 +24,8 @@
 #include "nvram.h"
 #include "conf_keys.h"
 
+
+
 /*forward declarations*/
 struct NvramLoader;
 struct ParsedRecord;

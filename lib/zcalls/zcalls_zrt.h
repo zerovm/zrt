@@ -24,9 +24,6 @@
 
 #include <sys/stat.h> //mode_t
 
-/*@return nvram must be accessible from zcalls_prolog.c */
-struct NvramLoader*     static_nvram();
-
 /*timeval must be accessible from both zcalls_zrt, zcalls_prolog*/
 struct timeval*         static_timeval();
 
