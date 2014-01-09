@@ -84,6 +84,10 @@ static inline void update_cached_time()
 
 
 void zrt_zcall_prolog_init(){
+    /*set root dir as current dir*/
+    extern char __curr_dir_path[];
+    strcpy(__curr_dir_path, "/\0" );
+
     __zrt_log_init( DEV_DEBUG );
     ZRT_LOG(L_BASE, P_TEXT, "prolog init");
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);

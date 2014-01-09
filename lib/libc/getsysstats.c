@@ -38,7 +38,7 @@
  * Implementation used by glibc, through zcall interface; It's not using weak alias;
  **************************************************************************/
 
-int zrt_zcall_get_phys_pages(){
+int zrt_zcall_get_phys_pages(void){
     CHECK_EXIT_IF_ZRT_NOT_READY;
     errno=0;
     LOG_SYSCALL_START(P_TEXT, "");    
@@ -50,7 +50,7 @@ int zrt_zcall_get_phys_pages(){
 }
 
 
-int zrt_zcall_get_avphys_pages(){
+int zrt_zcall_get_avphys_pages(void){
     CHECK_EXIT_IF_ZRT_NOT_READY;
     errno=0;
     LOG_SYSCALL_START(P_TEXT, "");    
