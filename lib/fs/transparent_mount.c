@@ -227,6 +227,7 @@ static int transparent_fcntl(struct MountsPublicInterface *this,
     struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount ){
 	va_list args;
+	/*operating with file locks*/
 	if ( cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK ){
 	    va_start(args, cmd);
 	    struct flock* input_lock = va_arg(args, struct flock*);
@@ -236,9 +237,20 @@ static int transparent_fcntl(struct MountsPublicInterface *this,
 	    }
 	    va_end(args);
 	}
+	/*get file status flags, like flags specified with open function*/
 	else if( cmd == F_GETFL	){
 	    if ( 0 == (ret=mount->fcntl(mount, fd, cmd)) ){
 		ret = fcntl_implem(mount->implem(mount), fd, cmd);
+	    }
+	}
+	/*set file status flags, like flags specified with open function*/
+	else if( cmd == F_SETFL	){
+	    va_start(args, cmd);
+	    long flags = va_arg(args, long);
+	    ZRT_LOG(L_SHORT, "F_SETFL flags=%ld", flags );
+
+	    if ( 0 == (ret=mount->fcntl(mount, fd, cmd, flags)) ){
+		ret = fcntl_implem(mount->implem(mount), fd, cmd, flags);
 	    }
 	}
 	else{

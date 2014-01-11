@@ -41,6 +41,11 @@
 
 void test_issue_69();
 
+int tell(int fd)
+{
+    return lseek(fd, 0, SEEK_CUR);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -120,6 +125,13 @@ void test_issue_69(){
     TEST_OPERATION_RESULT( read(fd, buffer, 5), &ret, ret!=0&&errno==0 );
     TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_CUR), &ret, ret==5&&errno==0);
     TEST_OPERATION_RESULT( ftruncate(fd, 0), &ret, ret==-1&&errno==EINVAL);
-    TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_CUR), &ret, ret==11&&errno==0);
+    TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_CUR), &ret, ret==5&&errno==0);
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0);
+
+    TEST_OPERATION_RESULT( open(filename, O_CREAT | O_RDWR), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( write(fd, "12345678901", 11), &ret, ret==11&&errno==0);
+    TEST_OPERATION_RESULT( lseek(fd, -1, SEEK_END), &ret, ret==10&&errno==0);
+    TEST_OPERATION_RESULT( ftruncate(fd, 9), &ret, ret==0&&errno==0);
+    TEST_OPERATION_RESULT( tell(fd), &ret, ret==10&&errno==0);
     TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0);
 }

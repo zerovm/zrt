@@ -369,21 +369,21 @@ int MemMount::UnlinkInternal(MemNode *node) {
     int inode = node->slot();
     int parent_inode = node->parent();
     if ( parent_inode < 0 ){
-	SET_ERRNO(ENOENT);
-	return -1;
+        SET_ERRNO(ENOENT);
+        return -1;
     }
     MemNode *parent = slots_.At(parent_inode);
     if (parent == NULL && !node->UnlinkisTrying() ) {
         // Can't delete root
-	SET_ERRNO(EBUSY);
+        SET_ERRNO(EBUSY);
         return -1;
     }
 
     // Check if it's a directory.
     if ( node->is_dir() && node->nlink_count() < 2 ) {
-	/*it is not allowed to unlink directory if no anymore hardlinks to it;
-	 *actualy it can't remove directory*/
-	SET_ERRNO(EISDIR);
+        /*it is not allowed to unlink directory if no anymore hardlinks to it;
+         *actualy it can't remove directory*/
+        SET_ERRNO(EISDIR);
         return -1;
     }
 
@@ -394,24 +394,23 @@ int MemMount::UnlinkInternal(MemNode *node) {
     if ( !node->use_count() && !node->UnlinkisTrying() ){
 #endif //POSTPONE_DELETE_FILE_INUSE
 
-	parent->RemoveChild(inode);
-	slots_.Free(inode);
-	ZRT_LOG(L_SHORT, "file inode=%d removed", inode);
+        parent->RemoveChild(inode);
+        slots_.Free(inode);
+        ZRT_LOG(L_SHORT, "file inode=%d removed", inode);
 
 
 #ifdef POSTPONE_DELETE_FILE_INUSE
     }
     else{
-	/*set some wrong name, to do file unaccessible*/
-	node->set_name("//some deleted file//");
-	node->TryUnlink(); /*autotry to remove it at file close*/
+        /*set some wrong name, to do file unaccessible*/
+        node->set_name("//some deleted file//");
+        node->TryUnlink(); /*autotry to remove it at file close*/
     }
 #endif //POSTPONE_DELETE_FILE_INUSE
 
     errno=0;
     return 0; //return no error if file exist and ref count not 0
 }
-
 
 int MemMount::Rmdir(ino_t slot) {
     MemNode *parent;
@@ -430,9 +429,6 @@ int MemMount::Rmdir(ino_t slot) {
       mark it as deleted */
     // Check if it's empty.
     if (node->children()->size() > 0) {
-	MemNode *child;
-	int i;
-
 	std::list<int>::iterator it;
 	for (it = node->children()->begin(); it != node->children()->end(); ++it) {
 	    MemNode *child = slots_.At(*it);
@@ -537,15 +533,16 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
 
     MemNode *node = slots_.At(slot);
     if (node == NULL) {
-        errno = ENOENT;
+	SET_ERRNO( ENOENT );
         return -1;
     }
 
     /*check if file was not opened for reading*/
-    int mode= node->mode();
-    if ( !mode&S_IRUSR ){
-	ZRT_LOG(L_ERROR, "file open_mode=%s not allow read", STR_FILE_OPEN_MODE(mode));
+    int flags= node->flags() & O_ACCMODE;
+    if ( flags!=O_RDONLY && flags!=O_RDWR ){
+	ZRT_LOG(L_ERROR, "file open flags=%s not allow read", STR_FILE_OPEN_FLAGS(flags));
 	SET_ERRNO( EINVAL );
+	return -1;
     }
 
     // Limit to the end of the file.
@@ -573,10 +570,11 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     }
 
     /*check if file was not opened for writing*/
-    int mode= node->mode();
-    if ( !mode&S_IWUSR ){
-	ZRT_LOG(L_ERROR, "file open_mode=%s not allow write", STR_FILE_OPEN_MODE(mode));
+    int flags= node->flags() & O_ACCMODE;
+    if ( flags!=O_WRONLY && flags!=O_RDWR ){
+	ZRT_LOG(L_ERROR, "file open flags=%s not allow write", STR_FILE_OPEN_FLAGS(flags));
 	SET_ERRNO( EINVAL );
+	return -1;
     }
 
     size_t len = node->capacity();

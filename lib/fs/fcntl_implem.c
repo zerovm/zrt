@@ -95,8 +95,18 @@ int fcntl_implem(struct MountSpecificImplemPublicInterface* this, int fd, int cm
 	break;
     }
     case F_GETFL:
-	rc = this->fileflags(this, fd);
+	/*get file status flags, like flags specified with open function*/
+	rc = this->file_status_flags(this, fd);
 	break;	
+    case F_SETFL:{
+	/*set file status flags, like flags specified with open function*/
+	/*get input argument flags*/
+	va_list args;
+	va_start(args, cmd);
+	long flags = va_arg(args, long);
+	rc = this->set_file_status_flags(this, fd, flags);
+	break;	
+    }
     default:
 	SET_ERRNO(ENOSYS);
 	break;

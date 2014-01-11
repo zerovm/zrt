@@ -42,7 +42,8 @@ struct MountSpecificImplemPublicInterface{
     /*flags was specified at file opening
      *@param handle fd of opened file
      *@return -1 of bad handle, 0 if OK*/
-    int  (*fileflags)(struct MountSpecificImplemPublicInterface* this_, int handle);
+    int  (*file_status_flags)(struct MountSpecificImplemPublicInterface* this_, int handle);
+    int  (*set_file_status_flags)(struct MountSpecificImplemPublicInterface* this_, int handle, int flags);
 
     const struct flock* (*flock_data)( struct MountSpecificImplemPublicInterface* this_, int fd );
     int (*set_flock_data)( struct MountSpecificImplemPublicInterface* this_, int fd, const struct flock* flock_data );

@@ -82,6 +82,12 @@ int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
 	ZRT_LOG(L_INFO, "O_RDWR   =%s", byte_to_binary(O_RDWR) );
 	fflush(0);
     }
+    else if ( cmd == F_SETFL ){
+	va_list args;
+	va_start(args, cmd);
+	long flags = va_arg(args, long);
+	ret = transpar_mount->fcntl(transpar_mount, fd, cmd, flags);
+    }
 
     va_end(args);
     LOG_SHORT_SYSCALL_FINISH( ret, "fd=%d, cmd=%s", fd, STR_FCNTL_CMD(cmd));

@@ -51,6 +51,25 @@ int match_file_inode_in_dir(const char *dirpath, const char* fname) {
     return -1; //no inode located
 }
 
+void test_zrt_issue_77(const char* dirname, const char* name){
+    int fd;
+    int ret;
+    char fullpath[PATH_MAX];
+    int mode = O_RDWR|O_CREAT|O_EXCL;
+    const char data[] = "sadkjhaskjdhaskj";
+
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", dirname, name );
+
+    TEST_OPERATION_RESULT( mkdir(dirname, 0700), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( open(fullpath, mode, 0600), &fd, ret!=-1&&errno==0);
+    TEST_OPERATION_RESULT( fcntl(fd, F_GETFD), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( fcntl(fd, F_SETFD, FD_CLOEXEC), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( unlink(fullpath), &ret, ret==0&&errno==0);
+    TEST_OPERATION_RESULT( write(fd, data, sizeof(data)), &ret, ret==17&&errno==0);
+    TEST_OPERATION_RESULT( close(fd), &ret, ret!=-1&&errno==0);
+    TEST_OPERATION_RESULT( rmdir(dirname), &ret, ret==0&&errno==0 );
+}
+
 void test_zrt_issue_70(){
     /*Errno should be set to EBADF (9) when doing read, write, close
       with already closed files.*/
@@ -181,6 +200,7 @@ int main(int argc, char**argv){
     test_zrt_issue_67(TMP_TEST_DIR, TMP_TEST_FILE);
     test_zrt_issue_67(TMP_TEST_DIR, TMP_TEST_FILE);
     test_zrt_issue_70();
+    //test_zrt_issue_77(TMP_TEST_DIR, TMP_TEST_FILE);
 
     return 0;
 }

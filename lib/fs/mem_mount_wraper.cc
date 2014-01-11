@@ -118,7 +118,7 @@ static const char* path_handle(struct MountSpecificImplemPublicInterface* this_,
     }
 }
 
-static int fileflags(struct MountSpecificImplemPublicInterface* this_, int fd){
+static int file_status_flags(struct MountSpecificImplemPublicInterface* this_, int fd){
     ino_t inode;
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
     MemNode* mnode = NODE_OBJECT_BYINODE(inode);
@@ -127,6 +127,18 @@ static int fileflags(struct MountSpecificImplemPublicInterface* this_, int fd){
     }
     assert(0);
 }
+
+static int set_file_status_flags(struct MountSpecificImplemPublicInterface* this_, int fd, int flags){
+    ino_t inode;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    if ( mnode ){
+	mnode->set_flags(flags);
+	return 0;
+    }
+    assert(0);
+}
+
 
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data(struct MountSpecificImplemPublicInterface* this_, int fd ){
@@ -162,7 +174,8 @@ static int set_flock_data(struct MountSpecificImplemPublicInterface* this_, int 
 static struct MountSpecificImplemPublicInterface s_mount_specific_implem = {
     check_handle,
     path_handle,
-    fileflags,
+    file_status_flags,
+    set_file_status_flags,
     flock_data,
     set_flock_data
 };
@@ -284,9 +297,11 @@ static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void
     int ret = s_handle_allocator->get_offset( fd, &offset );
     assert( ret == 0 );
     ssize_t wrote = s_mem_mount_cpp->Write( inode, offset, buf, nbyte );
-    offset += wrote;
-    ret = s_handle_allocator->set_offset( fd, offset );
-    assert( ret == 0 );
+    if ( wrote != -1 ){
+	offset += wrote;
+	ret = s_handle_allocator->set_offset( fd, offset );
+	assert( ret == 0 );
+    }
     return wrote;
 }
 
@@ -483,6 +498,24 @@ static int mem_ftruncate_size(struct MountsPublicInterface* this_, int fd, off_t
 	    }
 	    /*set file length on related node and update new length in stat*/
 	    node->set_len(length);
+
+	    /*in according to docs if reducing file offset should not
+	     be changed, but on ubuntu linux host offset is not staying
+	     beyond of file bounds and assignes to max availibale
+	     pos. Juyt do it the same as on host */
+#define DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
+
+#ifdef DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
+	    off_t offset;
+	    int ret = s_handle_allocator->get_offset(fd, &offset );
+	    assert(ret==0);
+	    if ( length < offset ){
+		offset = length+1;
+		ret = s_handle_allocator->set_offset(fd, offset );
+		assert( ret == 0 );
+	    }
+#endif //DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
+
 	    ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d",
 		    (int)length, get_file_len( inode ));
 	    /*file size truncated */
