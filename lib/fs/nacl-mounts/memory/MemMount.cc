@@ -357,6 +357,7 @@ int MemMount::Unlink(const std::string& path) {
         ret = -1;
     }
     else{
+	ZRT_LOG(L_SHORT, "Unlink file inode=%d", node->slot() );
 	ret = UnlinkInternal(node);
 	if ( ret ==0 ){
 	    ZRT_LOG(L_SHORT, "file %s removed", path.c_str());
@@ -373,6 +374,10 @@ int MemMount::UnlinkInternal(MemNode *node) {
         return -1;
     }
     MemNode *parent = slots_.At(parent_inode);
+
+    /*Some entities has no parent node: 1)root has no parent; @)file
+     *having references, but file itself and host directory unlinked
+     *both.*/
     if (parent == NULL && !node->UnlinkisTrying() ) {
         // Can't delete root
         SET_ERRNO(EBUSY);
@@ -387,26 +392,19 @@ int MemMount::UnlinkInternal(MemNode *node) {
         return -1;
     }
 
-#define POSTPONE_DELETE_FILE_INUSE
-
-#ifdef POSTPONE_DELETE_FILE_INUSE
-    /*if file not used then delete it*/
-    if ( !node->use_count() && !node->UnlinkisTrying() ){
-#endif //POSTPONE_DELETE_FILE_INUSE
-
-        parent->RemoveChild(inode);
+    /*if file has no references or removing file already in removing state
+      and must be deleted finally*/
+    if ( !node->use_count() || node->UnlinkisTrying() ){
+	ZRT_LOG(L_SHORT, "file inode=%d UnlinkisTrying()=%d", inode, node->UnlinkisTrying() );
+	if ( parent ) parent->RemoveChild(inode);
         slots_.Free(inode);
         ZRT_LOG(L_SHORT, "file inode=%d removed", inode);
-
-
-#ifdef POSTPONE_DELETE_FILE_INUSE
     }
     else{
         /*set some wrong name, to do file unaccessible*/
         node->set_name("//some deleted file//");
         node->TryUnlink(); /*autotry to remove it at file close*/
     }
-#endif //POSTPONE_DELETE_FILE_INUSE
 
     errno=0;
     return 0; //return no error if file exist and ref count not 0

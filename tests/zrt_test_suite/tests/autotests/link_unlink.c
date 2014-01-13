@@ -200,7 +200,7 @@ int main(int argc, char**argv){
     test_zrt_issue_67(TMP_TEST_DIR, TMP_TEST_FILE);
     test_zrt_issue_67(TMP_TEST_DIR, TMP_TEST_FILE);
     test_zrt_issue_70();
-    //test_zrt_issue_77(TMP_TEST_DIR, TMP_TEST_FILE);
+    test_zrt_issue_77(TMP_TEST_DIR, TMP_TEST_FILE);
 
     return 0;
 }
