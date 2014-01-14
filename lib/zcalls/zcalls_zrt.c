@@ -222,6 +222,7 @@ int  zrt_zcall_enhanced_getdents(int fd, struct dirent *dirent_buf, size_t count
 
 int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newfd){
     LOG_SYSCALL_START("name=%s flags=%d mode=%o(octal)", name, flags, mode );
+
     char* absolute_path;
     char temp_path[PATH_MAX];
     int ret=-1;
@@ -430,7 +431,7 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     s_channels_mount->open( s_channels_mount, DEV_STDERR, O_WRONLY, 0 );
 
     /*create mem mount*/
-    s_mem_mount = alloc_mem_mount( s_mounts_manager->handle_allocator );
+    s_mem_mount = CONSTRUCT_L(INMEMORY_FILESYSTEM)( s_mounts_manager->handle_allocator );
 
     /*Mount filesystems*/
     s_mounts_manager->mount_add( "/dev", s_channels_mount );

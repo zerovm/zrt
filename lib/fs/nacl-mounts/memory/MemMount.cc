@@ -570,7 +570,8 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     /*check if file was not opened for writing*/
     int flags= node->flags() & O_ACCMODE;
     if ( flags!=O_WRONLY && flags!=O_RDWR ){
-	ZRT_LOG(L_ERROR, "file open flags=%s not allow write", STR_FILE_OPEN_FLAGS(flags));
+	ZRT_LOG(L_ERROR, "file open flags=(%d/%d)%s not allow write", 
+		node->flags(), flags, STR_FILE_OPEN_FLAGS(flags));
 	SET_ERRNO( EINVAL );
 	return -1;
     }

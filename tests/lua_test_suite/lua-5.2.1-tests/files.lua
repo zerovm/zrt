@@ -445,6 +445,7 @@ collectgarbage()
 
 -- testing buffers
 do
+  local fr2 = io.open("/tmp/11111", "r")
   local f = assert(io.open(file, "w"))
   local fr = assert(io.open(file, "r"))
   assert(f:setvbuf("full", 2000))

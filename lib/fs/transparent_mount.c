@@ -333,13 +333,23 @@ static int transparent_isatty(struct MountsPublicInterface *this, int fd){
 }
 
 static int transparent_dup(struct MountsPublicInterface *this, int oldfd){
-    SET_ERRNO(ENOSYS);
-    return -1;
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(oldfd);
+    if ( mount )
+	return mount->dup( mount, oldfd );
+    else{
+	SET_ERRNO( EBADF );
+        return -1;
+    }
 }
 
 static int transparent_dup2(struct MountsPublicInterface *this, int oldfd, int newfd){
-    SET_ERRNO(ENOSYS);
-    return -1;
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(oldfd);
+    if ( mount )
+	return mount->dup2( mount, oldfd, newfd );
+    else{
+	SET_ERRNO( EBADF );
+        return -1;
+    }
 }
 
 static int transparent_link(struct MountsPublicInterface *this,

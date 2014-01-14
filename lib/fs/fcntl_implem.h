@@ -26,9 +26,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "mount_specific_implem.h" //struct MountSpecificImplemPublicInterface
+#include "mount_specific_interface.h" //struct MountSpecificPublicInterface
 
-int fcntl_implem(struct MountSpecificImplemPublicInterface* this_, 
+int fcntl_implem(struct MountSpecificPublicInterface* this_, 
 		 int fd, int cmd, ...);
 
 #endif //__FCNTL_IMPLEM_H__

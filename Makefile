@@ -35,7 +35,6 @@ lib/nvram/observers/settime_observer.c \
 lib/nvram/observers/debug_observer.c \
 lib/nvram/observers/mapping_observer.c \
 lib/nvram/observers/precache_observer.c \
-lib/fs/mount_specific_implem.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \

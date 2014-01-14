@@ -86,7 +86,7 @@ struct MountsPublicInterface{
     int (*link)(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath);
 
     /* const  */MountId mount_id;
-    struct MountSpecificImplemPublicInterface* (*implem)(struct MountsPublicInterface* this_);
+    struct MountSpecificPublicInterface* (*implem)(struct MountsPublicInterface* this_);
 };
 
 #endif /* MOUNTS_INTERFACE_H_ */

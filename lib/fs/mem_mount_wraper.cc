@@ -18,7 +18,8 @@ extern "C" {
 #include "nacl-mounts/memory/MemMount.h"
 #include "nacl-mounts/util/Path.h"
 #include "mem_mount_wraper.h"
-#include "mount_specific_implem.h"
+#include "mounts_interface.h"
+#include "mount_specific_interface.h"
 extern "C" {
 #include "handle_allocator.h"
 #include "fstab_observer.h" /*lazy mount*/
@@ -27,32 +28,49 @@ extern "C" {
 #include "enum_strings.h"
 }
 
-#define NODE_OBJECT_BYINODE(inode) s_mem_mount_cpp->ToMemNode(inode)
-#define NODE_OBJECT_BYPATH(path) s_mem_mount_cpp->GetMemNode(path)
+#define NODE_OBJECT_BYINODE(memount_p, inode) memount_p->ToMemNode(inode)
+#define NODE_OBJECT_BYPATH(memount_p, path) memount_p->GetMemNode(path)
 
 /*retcode -1 at fail, 0 if OK*/
-#define GET_INODE_BY_HANDLE(handle, inode_p, retcode_p){		\
-	*retcode_p = s_handle_allocator->get_inode( handle, inode_p );	\
+#define GET_INODE_BY_HANDLE(halloc_p, handle, inode_p, retcode_p){	\
+	*retcode_p = halloc_p->get_inode( handle, inode_p );		\
     }
 
-#define GET_INODE_BY_HANDLE_OR_RAISE_ERROR(handle, inode_p){		\
+#define GET_INODE_BY_HANDLE_OR_RAISE_ERROR(halloc_p, handle, inode_p){	\
 	int ret;							\
-	GET_INODE_BY_HANDLE(handle, inode_p, &ret);			\
+	GET_INODE_BY_HANDLE(halloc_p, handle, inode_p, &ret);		\
 	if ( ret != 0 ){						\
 	    SET_ERRNO(EBADF);						\
 	    return -1;							\
 	}								\
     }
 
-#define GET_STAT_BYPATH_OR_RAISE_ERROR(path, stat_p ){		\
-	int ret = s_mem_mount_cpp->GetNode( path, stat_p);	\
-	if ( ret != 0 ) return ret;				\
+#define GET_STAT_BYPATH_OR_RAISE_ERROR(memount_p, path, stat_p ){	\
+	int ret = memount_p->GetNode( path, stat_p);			\
+	if ( ret != 0 ) return ret;					\
     }
 
+#define HALLOCATOR_BY_MOUNT_SPECIF(mount_specific_interface_p)		\
+    ((struct InMemoryMounts*)((struct MountSpecificImplem*)(mount_specific_interface_p))->mount)->handle_allocator
 
-static MemMount* s_mem_mount_cpp = NULL;
-static struct HandleAllocator* s_handle_allocator = NULL;
-static struct MountsPublicInterface* s_this=NULL;
+#define MOUNT_INTERFACE_BY_MOUNT_SPECIF(mount_specific_interface_p)	\
+    ((struct MountsPublicInterface*)((struct MountSpecificImplem*)(mount_specific_interface_p))->mount)
+
+#define MEMOUNT_BY_MOUNT_SPECIF(mount_specific_interface_p)		\
+    MEMOUNT_BY_MOUNT( MOUNT_INTERFACE_BY_MOUNT_SPECIF(mount_specific_interface_p) )
+
+#define HALLOCATOR_BY_MOUNT(mount_interface_p)				\
+    ((struct InMemoryMounts*)(mount_interface_p))->handle_allocator
+
+#define MEMOUNT_BY_MOUNT(mounts_interface_p) ((struct InMemoryMounts*)mounts_interface_p)->mem_mount_cpp
+
+
+struct InMemoryMounts{
+    struct MountsPublicInterface public_;
+    struct HandleAllocator* handle_allocator;
+    MemMount*               mem_mount_cpp;
+    struct MountSpecificPublicInterface* mount_specific_interface;
+};
 
 
 static const char* name_from_path( std::string path ){
@@ -66,9 +84,9 @@ static const char* name_from_path( std::string path ){
     return NULL;
 }
 
-static int is_dir( ino_t inode ){
+static int is_dir( struct MountsPublicInterface* this_, ino_t inode ){
     struct stat st;
-    int ret = s_mem_mount_cpp->Stat( inode, &st );
+    int ret = ((struct InMemoryMounts*)this_)->mem_mount_cpp->Stat( inode, &st );
     assert( ret == 0 );
     if ( S_ISDIR(st.st_mode) )
 	return 1;
@@ -76,37 +94,41 @@ static int is_dir( ino_t inode ){
 	return 0;
 }
 
-static ssize_t get_file_len(ino_t node) {
+static ssize_t get_file_len( struct MountsPublicInterface* this_, ino_t node) {
     struct stat st;
-    if (0 != s_mem_mount_cpp->Stat(node, &st)) {
+    if (0 != ((struct InMemoryMounts*)this_)->mem_mount_cpp->Stat(node, &st)) {
 	return -1;
     }
     return (ssize_t) st.st_size;
 }
 
-/*mount specific implementation*/
 
-/* MemMount specific implementation functions intended to initialize
- * mount_specific_implem struct pointers;
- * */
+/***********************************************************************
+   implementation of MountSpecificPublicInterface as part of
+   filesystem.  Below resides channels specific functions.*/
+
+struct MountSpecificImplem{
+    struct MountSpecificPublicInterface public_;
+    struct InMemoryMounts* mount;
+};
 
 /*return 0 if handle not valid, or 1 if handle is correct*/
-static int check_handle(struct MountSpecificImplemPublicInterface* this_, int handle){
+static int check_handle(struct MountSpecificPublicInterface* this_, int handle){
     ino_t inode;
     int ret;
-    GET_INODE_BY_HANDLE(handle, &inode, &ret);
-    if ( ret == 0 && !is_dir(inode) ) return 1;
+    GET_INODE_BY_HANDLE( HALLOCATOR_BY_MOUNT_SPECIF(this_), handle, &inode, &ret);
+    if ( ret == 0 && !is_dir( MOUNT_INTERFACE_BY_MOUNT_SPECIF(this_), inode) ) return 1;
     else return 0;
 }
 
-static const char* path_handle(struct MountSpecificImplemPublicInterface* this_, int handle){
+static const char* path_handle(struct MountSpecificPublicInterface* this_, int handle){
     ino_t inode;
     int ret;
-    GET_INODE_BY_HANDLE(handle, &inode, &ret);
+    GET_INODE_BY_HANDLE( HALLOCATOR_BY_MOUNT_SPECIF(this_), handle, &inode, &ret);
     if ( ret == 0 ){
 	/*path is OK*/
 	/*get runtime information related to channel*/
-    	MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    	MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
 	if ( mnode ){
 	    return mnode->name().c_str();
 	}
@@ -118,20 +140,20 @@ static const char* path_handle(struct MountSpecificImplemPublicInterface* this_,
     }
 }
 
-static int file_status_flags(struct MountSpecificImplemPublicInterface* this_, int fd){
+static int file_status_flags(struct MountSpecificPublicInterface* this_, int fd){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode);
+    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
     if ( mnode ){
 	return mnode->flags();
     }
     assert(0);
 }
 
-static int set_file_status_flags(struct MountSpecificImplemPublicInterface* this_, int fd, int flags){
+static int set_file_status_flags(struct MountSpecificPublicInterface* this_, int fd, int flags){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode);
+    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
     if ( mnode ){
 	mnode->set_flags(flags);
 	return 0;
@@ -141,15 +163,15 @@ static int set_file_status_flags(struct MountSpecificImplemPublicInterface* this
 
 
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
-static const struct flock* flock_data(struct MountSpecificImplemPublicInterface* this_, int fd ){
+static const struct flock* flock_data(struct MountSpecificPublicInterface* this_, int fd ){
     const struct flock* data = NULL;
     ino_t inode;
     int ret;
-    GET_INODE_BY_HANDLE(fd, &inode, &ret);
+    GET_INODE_BY_HANDLE(HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode, &ret);
     if ( ret == 0 ){
 	/*handle is OK*/
 	/*get runtime information related to channel*/
-    	MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    	MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
 	assert(mnode);
 	data = mnode->flock();
     }
@@ -157,21 +179,21 @@ static const struct flock* flock_data(struct MountSpecificImplemPublicInterface*
 }
 
 /*return 0 if success, -1 if fd didn't found*/
-static int set_flock_data(struct MountSpecificImplemPublicInterface* this_, int fd, const struct flock* flock_data ){
+static int set_flock_data(struct MountSpecificPublicInterface* this_, int fd, const struct flock* flock_data ){
     ino_t inode;
     int ret;
-    GET_INODE_BY_HANDLE(fd, &inode, &ret);
+    GET_INODE_BY_HANDLE(HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode, &ret);
     if ( ret !=0 ) return -1;
 
     /*handle is OK*/
     /*get runtime information related to channel*/
-    MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
     assert(mnode);
     mnode->set_flock(flock_data);
     return 0; /*OK*/
 }
 
-static struct MountSpecificImplemPublicInterface s_mount_specific_implem = {
+static struct MountSpecificPublicInterface KMountSpecificImplem = {
     check_handle,
     path_handle,
     file_status_flags,
@@ -181,12 +203,23 @@ static struct MountSpecificImplemPublicInterface s_mount_specific_implem = {
 };
 
 
+static struct MountSpecificPublicInterface*
+mount_specific_construct( struct MountSpecificPublicInterface* specific_implem_interface,
+			  struct InMemoryMounts* mount ){
+    struct MountSpecificImplem* this_ = (struct MountSpecificImplem*)malloc(sizeof(struct MountSpecificImplem));
+    /*set functions*/
+    this_->public_ = *specific_implem_interface;
+    this_->mount = mount;
+    return (struct MountSpecificPublicInterface*)this_;
+}
+
+
 /*helpers*/
 
 /*@return 0 if success, -1 if we don't need to mount*/
-static int lazy_mount(const char* path){
+static int lazy_mount( struct MountsPublicInterface* this_, const char* path){
     struct stat st;
-    int ret = s_mem_mount_cpp->GetNode( path, &st);
+    int ret = MEMOUNT_BY_MOUNT(this_)->GetNode( path, &st);
     (void)ret;
     /*if it's time to do mount, then do all waiting mounts*/
     FstabObserver* observer = get_fstab_observer();
@@ -203,29 +236,29 @@ static int lazy_mount(const char* path){
 /*wraper implementation*/
 
 static int mem_chown(struct MountsPublicInterface* this_, const char* path, uid_t owner, gid_t group){
-    lazy_mount(path);
+    lazy_mount(this_, path);
     struct stat st;
-    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
-    return s_mem_mount_cpp->Chown( st.st_ino, owner, group);
+    GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
+    return MEMOUNT_BY_MOUNT(this_)->Chown( st.st_ino, owner, group);
 }
 
 static int mem_chmod(struct MountsPublicInterface* this_, const char* path, uint32_t mode){
-    lazy_mount(path);
+    lazy_mount(this_, path);
     struct stat st;
-    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
-    return s_mem_mount_cpp->Chmod( st.st_ino, mode);
+    GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
+    return MEMOUNT_BY_MOUNT(this_)->Chmod( st.st_ino, mode);
 }
 
 static int mem_stat(struct MountsPublicInterface* this_, const char* path, struct stat *buf){
-    lazy_mount(path);
+    lazy_mount(this_, path);
     struct stat st;
-    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
-    int ret = s_mem_mount_cpp->Stat( st.st_ino, buf);
+    GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
+    int ret = MEMOUNT_BY_MOUNT(this_)->Stat( st.st_ino, buf);
 
     /*fixes for hardlinks pseudo support, different hardlinks must have same inode,
      *but internally all nodes have separeted inodes*/
     if ( ret == 0 ){
-	MemNode* node = NODE_OBJECT_BYINODE(st.st_ino);
+	MemNode* node = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), st.st_ino);
 	assert(node!=NULL);
 	/*patch inode if it has hardlinks*/
 	if ( node->hardinode() > 0 )
@@ -236,10 +269,10 @@ static int mem_stat(struct MountsPublicInterface* this_, const char* path, struc
 }
 
 static int mem_mkdir(struct MountsPublicInterface* this_, const char* path, uint32_t mode){
-    lazy_mount(path);
-    int ret = s_mem_mount_cpp->GetNode( path, NULL);
+    lazy_mount(this_, path);
+    int ret = MEMOUNT_BY_MOUNT(this_)->GetNode( path, NULL);
     if ( ret == 0 || (ret == -1&&errno==ENOENT) )
-	return s_mem_mount_cpp->Mkdir( path, mode, NULL);
+	return MEMOUNT_BY_MOUNT(this_)->Mkdir( path, mode, NULL);
     else{
 	return ret;
     }
@@ -247,9 +280,9 @@ static int mem_mkdir(struct MountsPublicInterface* this_, const char* path, uint
 
 
 static int mem_rmdir(struct MountsPublicInterface* this_, const char* path){
-    lazy_mount(path);
+    lazy_mount(this_, path);
     struct stat st;
-    GET_STAT_BYPATH_OR_RAISE_ERROR(path, &st);
+    GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
 
     const char* name = name_from_path(path);
     ZRT_LOG( L_EXTRA, "name=%s", name );
@@ -258,7 +291,7 @@ static int mem_rmdir(struct MountsPublicInterface* this_, const char* path){
 	SET_ERRNO(EINVAL);
 	return -1;
     }
-    return s_mem_mount_cpp->Rmdir( st.st_ino );
+    return MEMOUNT_BY_MOUNT(this_)->Rmdir( st.st_ino );
 }
 
 static int mem_umount(struct MountsPublicInterface* this_, const char* path){
@@ -273,16 +306,16 @@ static int mem_mount(struct MountsPublicInterface* this_, const char* path, void
 
 static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
 
     off_t offset;
-    int ret = s_handle_allocator->get_offset( fd, &offset );
+    int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
     assert( ret == 0 );
-    ssize_t readed = s_mem_mount_cpp->Read( inode, offset, buf, nbyte );
+    ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Read( inode, offset, buf, nbyte );
     if ( readed >= 0 ){
 	offset += readed;
 	/*update offset*/
-	ret = s_handle_allocator->set_offset( fd, offset );
+	ret = HALLOCATOR_BY_MOUNT(this_)->set_offset( fd, offset );
 	assert( ret == 0 );
     }
     /*return readed bytes or error*/
@@ -291,15 +324,15 @@ static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, 
 
 static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
 
     off_t offset;
-    int ret = s_handle_allocator->get_offset( fd, &offset );
+    int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
     assert( ret == 0 );
-    ssize_t wrote = s_mem_mount_cpp->Write( inode, offset, buf, nbyte );
+    ssize_t wrote = MEMOUNT_BY_MOUNT(this_)->Write( inode, offset, buf, nbyte );
     if ( wrote != -1 ){
 	offset += wrote;
-	ret = s_handle_allocator->set_offset( fd, offset );
+	ret = HALLOCATOR_BY_MOUNT(this_)->set_offset( fd, offset );
 	assert( ret == 0 );
     }
     return wrote;
@@ -307,34 +340,34 @@ static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void
 
 static int mem_fchown(struct MountsPublicInterface* this_, int fd, uid_t owner, gid_t group){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    return s_mem_mount_cpp->Chown( inode, owner, group);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    return MEMOUNT_BY_MOUNT(this_)->Chown( inode, owner, group);
 }
 
 static int mem_fchmod(struct MountsPublicInterface* this_, int fd, uint32_t mode){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    return s_mem_mount_cpp->Chmod( inode, mode);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    return MEMOUNT_BY_MOUNT(this_)->Chmod( inode, mode);
 }
 
 
 static int mem_fstat(struct MountsPublicInterface* this_, int fd, struct stat *buf){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    return s_mem_mount_cpp->Stat( inode, buf);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    return MEMOUNT_BY_MOUNT(this_)->Stat( inode, buf);
 }
 
 static int mem_getdents(struct MountsPublicInterface* this_, int fd, void *buf, unsigned int count){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
 
     off_t offset;
-    int ret = s_handle_allocator->get_offset( fd, &offset );
+    int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
     assert( ret == 0 );
-    ssize_t readed = s_mem_mount_cpp->Getdents( inode, offset, (DIRENT*)buf, count);
+    ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Getdents( inode, offset, (DIRENT*)buf, count);
     if ( readed != -1 ){
 	offset += readed;
-	ret = s_handle_allocator->set_offset( fd, offset );
+	ret = HALLOCATOR_BY_MOUNT(this_)->set_offset( fd, offset );
 	assert( ret == 0 );
     }
     return readed;
@@ -347,28 +380,28 @@ static int mem_fsync(struct MountsPublicInterface* this_, int fd){
 
 static int mem_close(struct MountsPublicInterface* this_, int fd){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    MemNode* mnode = NODE_OBJECT_BYINODE(inode);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), inode);
     assert(mnode);
 
-    s_mem_mount_cpp->Unref(mnode->slot()); /*decrement use count*/
+    MEMOUNT_BY_MOUNT(this_)->Unref(mnode->slot()); /*decrement use count*/
     if ( mnode->UnlinkisTrying() ){
-	int ret = s_mem_mount_cpp->UnlinkInternal(mnode);
+	int ret = MEMOUNT_BY_MOUNT(this_)->UnlinkInternal(mnode);
 	assert( ret == 0 );	
     }
     
-    int ret = s_handle_allocator->free_handle(fd);
+    int ret = HALLOCATOR_BY_MOUNT(this_)->free_handle(fd);
     assert( ret == 0 );
     return 0;
 }
 
 static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset, int whence){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
 
-    if ( !is_dir(inode) ){
+    if ( !is_dir(this_, inode) ){
 	off_t next;
-	int ret = s_handle_allocator->get_offset(fd, &next );
+	int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset(fd, &next );
 	assert( ret == 0 );
 	ssize_t len;
 
@@ -382,7 +415,7 @@ static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset
 	    break;
 	case SEEK_END:
 	    // TODO(krasin, arbenson): FileHandle should store file len.
-	    len = get_file_len( inode );
+	    len = get_file_len( this_, inode );
 	    if (len == -1) {
 		return -1;
 	    }
@@ -399,7 +432,7 @@ static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset
 	    return -1;
 	}
 	// Go to the new offset.
-	ret = s_handle_allocator->set_offset(fd, next );
+	ret = HALLOCATOR_BY_MOUNT(this_)->set_offset(fd, next );
 	assert( ret == 0 );
 	return next;
     }
@@ -410,15 +443,15 @@ static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset
 }
 
 static int mem_open(struct MountsPublicInterface* this_, const char* path, int oflag, uint32_t mode){
-    lazy_mount(path);
-    int ret = s_mem_mount_cpp->Open(path, oflag, mode);
+    lazy_mount(this_, path);
+    int ret = MEMOUNT_BY_MOUNT(this_)->Open(path, oflag, mode);
 
     /* get node from memory FS for specified type, if no errors occured 
      * then file allocated in memory FS and require file desc - fd*/
     struct stat st;
-    if ( ret == 0 && s_mem_mount_cpp->GetNode( path, &st) == 0 ){
+    if ( ret == 0 && MEMOUNT_BY_MOUNT(this_)->GetNode( path, &st) == 0 ){
 	/*ask for file descriptor in handle allocator*/
-	int fd = s_handle_allocator->allocate_handle( s_this );
+	int fd = HALLOCATOR_BY_MOUNT(this_)->allocate_handle( this_ );
 	if ( fd < 0 ){
 	    /*it's hipotetical but possible case if amount of open files 
 	      are exceeded an maximum value*/
@@ -428,7 +461,7 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 	
 	/* As inode and fd are depend each form other, we need update 
 	 * inode in handle allocator and stay them linked*/
-	ret = s_handle_allocator->set_inode( fd, st.st_ino );
+	ret = HALLOCATOR_BY_MOUNT(this_)->set_inode( fd, st.st_ino );
 	ZRT_LOG(L_EXTRA, "errcode ret=%d", ret );
 	assert( ret == 0 );
 
@@ -441,7 +474,7 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 	/*file truncate support, only for writable files, reset size*/
 	if ( oflag&O_TRUNC && (oflag&O_RDWR || oflag&O_WRONLY) ){
 	    /*reset file size*/
-	    MemNode* mnode = NODE_OBJECT_BYINODE(st.st_ino);
+	    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), st.st_ino);
 	    if (mnode){ 
 		ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_TRUNC");
 		/*update stat*/
@@ -461,8 +494,8 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 static int mem_fcntl(struct MountsPublicInterface* this_, int fd, int cmd, ...){
     ino_t inode;
     ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    if ( is_dir(inode) ){
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    if ( is_dir(this_, inode) ){
 	SET_ERRNO(EBADF);
 	return -1;
     }
@@ -470,11 +503,11 @@ static int mem_fcntl(struct MountsPublicInterface* this_, int fd, int cmd, ...){
 }
 
 static int mem_remove(struct MountsPublicInterface* this_, const char* path){
-    return s_mem_mount_cpp->Unlink(path);
+    return MEMOUNT_BY_MOUNT(this_)->Unlink(path);
 }
 
 static int mem_unlink(struct MountsPublicInterface* this_, const char* path){
-    return s_mem_mount_cpp->Unlink(path);
+    return MEMOUNT_BY_MOUNT(this_)->Unlink(path);
 }
 
 static int mem_access(struct MountsPublicInterface* this_, const char* path, int amode){
@@ -484,9 +517,9 @@ static int mem_access(struct MountsPublicInterface* this_, const char* path, int
 static int mem_ftruncate_size(struct MountsPublicInterface* this_, int fd, off_t length){
     ino_t inode;
     MemNode* node; 
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(fd, &inode);
-    if ( !is_dir(inode) ){
-	if ((node=NODE_OBJECT_BYINODE( inode )) != NULL){
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    if ( !is_dir(this_, inode) ){
+	if ((node=NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), inode )) != NULL){
 	    /*check if file was opened for writing*/
 	    int flags= node->flags();
 	    if ( !CHECK_FLAG(flags, O_WRONLY) && !CHECK_FLAG(flags, O_RDWR) ){
@@ -506,17 +539,17 @@ static int mem_ftruncate_size(struct MountsPublicInterface* this_, int fd, off_t
 
 #ifdef DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
 	    off_t offset;
-	    int ret = s_handle_allocator->get_offset(fd, &offset );
+	    int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset(fd, &offset );
 	    assert(ret==0);
 	    if ( length < offset ){
 		offset = length+1;
-		ret = s_handle_allocator->set_offset(fd, offset );
+		ret = HALLOCATOR_BY_MOUNT(this_)->set_offset(fd, offset );
 		assert( ret == 0 );
 	    }
 #endif //DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
 
 	    ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d",
-		    (int)length, get_file_len( inode ));
+		    (int)length, get_file_len( this_, inode ));
 	    /*file size truncated */
 	}
 	return 0;
@@ -547,17 +580,17 @@ static int mem_dup2(struct MountsPublicInterface* this_, int oldfd, int newfd){
 }
 
 static int mem_link(struct MountsPublicInterface* this_, const char* oldpath, const char* newpath){
-    lazy_mount(oldpath);
-    lazy_mount(newpath);
+    lazy_mount(this_, oldpath);
+    lazy_mount(this_, newpath);
     /*create new hardlink*/
-    int ret = s_mem_mount_cpp->Link(oldpath, newpath);
+    int ret = MEMOUNT_BY_MOUNT(this_)->Link(oldpath, newpath);
     if ( ret == -1 ){
 	/*errno already setted by MemMount*/
 	return ret;
     }
 
     /*ask for file descriptor in handle allocator*/
-    int fd = s_handle_allocator->allocate_handle( s_this );
+    int fd = HALLOCATOR_BY_MOUNT(this_)->allocate_handle( this_ );
     if ( fd < 0 ){
 	/*it's hipotetical but possible case if amount of open files 
 	  are exceeded an maximum value*/
@@ -565,23 +598,23 @@ static int mem_link(struct MountsPublicInterface* this_, const char* oldpath, co
 	return -1;
     }
 
-    MemNode* mnode = NODE_OBJECT_BYPATH(newpath);
+    MemNode* mnode = NODE_OBJECT_BYPATH( MEMOUNT_BY_MOUNT(this_), newpath);
     assert(mnode);
 
     /* As inode and fd are depend each form other, we need update 
      * inode in handle allocator and stay them linked*/
-    ret = s_handle_allocator->set_inode( fd, mnode->slot() );
+    ret = HALLOCATOR_BY_MOUNT(this_)->set_inode( fd, mnode->slot() );
     ZRT_LOG(L_EXTRA, "errcode ret=%d", ret );
     assert( ret == 0 );
 
     return 0;
 }
 
-struct MountSpecificImplemPublicInterface* mem_implem(struct MountsPublicInterface* this_){
-    return &s_mount_specific_implem;
+struct MountSpecificPublicInterface* mem_implem(struct MountsPublicInterface* this_){
+    return ((struct InMemoryMounts*)this_)->mount_specific_interface;
 }
 
-static struct MountsPublicInterface s_mem_mount_wraper = {
+static struct MountsPublicInterface KInMemoryMountWraper = {
     mem_chown,
     mem_chmod,
     mem_stat,
@@ -610,13 +643,21 @@ static struct MountsPublicInterface s_mem_mount_wraper = {
     mem_dup2,
     mem_link,
     EMemMountId,
-    mem_implem  /*mount_specific_implem interface*/
+    mem_implem  /*mount_specific_interface*/
 };
 
-struct MountsPublicInterface* alloc_mem_mount( struct HandleAllocator* handle_allocator ){
-    s_handle_allocator = handle_allocator;
-    s_mem_mount_cpp = new MemMount;
-    s_this = &s_mem_mount_wraper;
-    return &s_mem_mount_wraper;
+struct MountsPublicInterface* 
+inmemory_filesystem_construct( struct HandleAllocator* handle_allocator ){
+    /*use malloc and not new, because it's external c object*/
+    struct InMemoryMounts* this_ = (struct InMemoryMounts*)malloc( sizeof(struct InMemoryMounts) );
+
+    /*set functions*/
+    this_->public_ = KInMemoryMountWraper;
+    /*set data members*/
+    this_->handle_allocator = handle_allocator; /*use existing handle allocator*/
+    this_->mount_specific_interface = CONSTRUCT_L(MOUNT_SPECIFIC)( &KMountSpecificImplem,
+								   this_);
+    this_->mem_mount_cpp = new MemMount;
+    return (struct MountsPublicInterface*)this_;
 }
 

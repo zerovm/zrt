@@ -19,7 +19,11 @@
 #ifndef MEM_MOUNT_WRAPER_H_
 #define MEM_MOUNT_WRAPER_H_
 
-#include "mounts_interface.h"
+#include "mounts_interface.h" //struct MountsPublicInterface
+#include "zrt_defines.h" //CONSTRUCT_L
+
+/*name of constructor*/
+#define INMEMORY_FILESYSTEM inmemory_filesystem_construct 
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,9 +31,8 @@ extern "C" {
 
 struct HandleAllocator;
 
-/*todo: nlink support*/
-
-struct MountsPublicInterface* alloc_mem_mount( struct HandleAllocator* handle_allocator );
+struct MountsPublicInterface* 
+inmemory_filesystem_construct( struct HandleAllocator* handle_allocator );
 
 #ifdef __cplusplus
 }

@@ -30,12 +30,12 @@
 
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
-#include "mount_specific_implem.h"
+#include "mount_specific_interface.h"
 #include "fcntl_implem.h"
 #include "enum_strings.h"
 
 
-int fcntl_implem(struct MountSpecificImplemPublicInterface* this, int fd, int cmd, ...){
+int fcntl_implem(struct MountSpecificPublicInterface* this, int fd, int cmd, ...){
     int rc=0;
     /* check fd */
     if( this->check_handle(this, fd) == 0 ){

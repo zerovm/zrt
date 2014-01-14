@@ -37,7 +37,7 @@
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "nacl_struct.h"
-#include "mount_specific_implem.h"
+#include "mount_specific_interface.h"
 #include "mounts_interface.h"
 #include "handle_allocator.h"
 #include "fcntl_implem.h"
@@ -73,21 +73,16 @@ enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
 #define CHANNEL_ASSERT_IF_FAIL( channels_array, handle )  assert( CHANNEL_ITEM((channels_array), handle) != NULL )
 
 
-struct ChannelMounts{
-    struct MountsPublicInterface public;
-    struct manifest_loaded_directories_t manifest_dirs;
-    struct HandleAllocator* handle_allocator;
+/***********************************************************************
+   implementation of MountSpecificPublicInterface as part of
+   filesystem.  Below resides channels specific functions.*/
+
+struct MountSpecificImplem{
+    struct MountSpecificPublicInterface public_;
+    //data
     struct ChannelsArrayPublicInterface* channels_array;
-    struct MountSpecificImplemPublicInterface* mount_specific_implem_interface;
 };
 
-
-//////////////// data
-
-
-/* Channels specific implementation functions intended to initialize
- * struct MountSpecificImplemPublicInterface functions;
- * */
 
 /*return 0 if handle not valid, or 1 if handle is correct*/
 static int check_handle(struct MountSpecificImplem* this, int handle){
@@ -105,7 +100,7 @@ static const char* handle_path(struct MountSpecificImplem* this, int handle){
     }
 }
 
-static int fileflags(struct MountSpecificImplem* this, int handle){
+static int file_status_flags(struct MountSpecificImplem* this, int handle){
     int flags=0;
     struct ChannelArrayItem* item = CHANNEL_ITEM(this->channels_array, handle);
     if ( CHANNEL_IS_OPENED( item ) != 0 ){
@@ -119,6 +114,10 @@ static int fileflags(struct MountSpecificImplem* this, int handle){
     return flags;
 }
 
+static int set_file_status_flags(struct MountSpecificPublicInterface* this_, int fd, int flags){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
 
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data( struct MountSpecificImplem* this, int handle ){
@@ -143,12 +142,33 @@ static int set_flock_data( struct MountSpecificImplem* this, int handle, const s
     return rc;
 }
 
-static struct MountSpecificImplemPublicInterface KMountSpecificImplem = {
+static struct MountSpecificPublicInterface KMountSpecificImplem = {
     (void*)check_handle,
     (void*)handle_path,
-    (void*)fileflags,
+    (void*)file_status_flags,
+    (void*)set_file_status_flags,
     (void*)flock_data,
     (void*)set_flock_data
+};
+
+static struct MountSpecificPublicInterface*
+mount_specific_construct( struct MountSpecificPublicInterface* specific_implem_interface,
+			  struct ChannelsArrayPublicInterface* channels_array ){
+    struct MountSpecificImplem* this = malloc(sizeof(struct MountSpecificImplem));
+    /*set functions*/
+    this->public_ = *specific_implem_interface;
+    /*set data members*/
+    this->channels_array = channels_array;
+    return (struct MountSpecificPublicInterface*)this;
+}
+
+
+struct ChannelMounts{
+    struct MountsPublicInterface public;
+    struct manifest_loaded_directories_t manifest_dirs;
+    struct HandleAllocator* handle_allocator;
+    struct ChannelsArrayPublicInterface* channels_array;
+    struct MountSpecificPublicInterface* mount_specific_interface;
 };
 
 
@@ -1032,8 +1052,8 @@ static int channels_fchown(struct ChannelMounts* this,int f, uid_t u, gid_t g){
     return -1;
 }
 
-struct MountSpecificImplemPublicInterface* channels_implem(struct ChannelMounts* this){
-    return this->mount_specific_implem_interface;
+struct MountSpecificPublicInterface* channels_implem(struct ChannelMounts* this){
+    return this->mount_specific_interface;
 }
 
 
@@ -1067,7 +1087,7 @@ static struct MountsPublicInterface KChannels_mount = {
     (void*)channels_dup2,
     (void*)channels_link,
     EChannelsMountId,
-    (void*)channels_implem  /*mount_specific_implem interface*/
+    (void*)channels_implem  /*mount_specific_interface*/
 };
 
 struct ChannelsModeUpdater{
@@ -1115,9 +1135,9 @@ channels_filesystem_construct( struct ChannelsModeUpdaterPublicInterface** mode_
     this->handle_allocator = handle_allocator; /*use existing handle allocator*/
     this->channels_array = CONSTRUCT_L(CHANNELS_ARRAY)(zvm_channels, zvm_channels_count,
 						       emu_channels, emu_channels_count);
-    this->mount_specific_implem_interface = 
-	CONSTRUCT_L(MOUNT_SPECIFIC_IMPLEMENT)( &KMountSpecificImplem,
-					       this->channels_array);
+    this->mount_specific_interface = 
+	CONSTRUCT_L(MOUNT_SPECIFIC)( &KMountSpecificImplem,
+				     this->channels_array);
     this->manifest_dirs.dircount=0;
 
     *mode_updater = CONSTRUCT_L(CHANNEL_MODE_UPDATER)((struct MountsPublicInterface*)this);

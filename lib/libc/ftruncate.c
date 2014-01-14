@@ -35,7 +35,7 @@
 #include "zrt_helper_macros.h"
 #include "zrt_check.h"
 #include "transparent_mount.h"
-#include "mount_specific_implem.h"
+#include "mount_specific_interface.h"
 #include "mounts_manager.h"
 #include "mounts_interface.h"
 #include "utils.h"
