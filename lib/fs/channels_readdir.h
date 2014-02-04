@@ -27,12 +27,11 @@
 struct ChannelsArrayPublicInterface;
 
 struct dir_data_t {
-    /*directory handle should be in range starting just after channels fd range;
-     * can be used also to get inode by INODE_FROM_HANDLE*/
-    int handle;
+    /*directory dir_inode should be in range starting just after channels fd range;
+     * can be used also to get inode by INODE_FROM_ZVM_INODE*/
+    int dir_inode;
     int nlink;
     char* path;
-    uint32_t flags; /*for currently opened dir contains mode flags, always O_RDONLY*/
 };
 
 struct manifest_loaded_directories_t{
@@ -47,9 +46,9 @@ const char* name_from_path_get_path_len(const char *fullpath, int *pathlen);
 struct dir_data_t *
 match_dir_in_directory_list(struct manifest_loaded_directories_t *manifest_dirs, const char *dirpath, int len);
 
-/*search dir handle in dir list*/
+/*search dir inode in dir list*/
 struct dir_data_t *
-match_handle_in_directory_list(struct manifest_loaded_directories_t *manifest_dirs, int handle);
+match_inode_in_directory_list(struct manifest_loaded_directories_t *manifest_dirs, int inode);
 
 
 /*reading channels list, fetch directories from channel path and add to manifest_dirs,

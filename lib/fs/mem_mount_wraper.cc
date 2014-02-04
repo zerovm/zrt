@@ -142,23 +142,19 @@ static const char* path_handle(struct MountSpecificPublicInterface* this_, int h
 
 static int file_status_flags(struct MountSpecificPublicInterface* this_, int fd){
     ino_t inode;
+    int flags;
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode);
-    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
-    if ( mnode ){
-	return mnode->flags();
-    }
-    assert(0);
+
+    HALLOCATOR_BY_MOUNT_SPECIF(this_)->get_flags( fd, &flags );
+    return flags;
 }
 
 static int set_file_status_flags(struct MountSpecificPublicInterface* this_, int fd, int flags){
     ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR(HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode);
-    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
-    if ( mnode ){
-	mnode->set_flags(flags);
-	return 0;
-    }
-    assert(0);
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode);
+
+    HALLOCATOR_BY_MOUNT_SPECIF(this_)->set_flags( fd, flags );
+    return flags;
 }
 
 
@@ -305,12 +301,24 @@ static int mem_mount(struct MountsPublicInterface* this_, const char* path, void
 }
 
 static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
+    int ret;
     ino_t inode;
+    off_t offset;
+    int flags;
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
 
-    off_t offset;
-    int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
-    assert( ret == 0 );
+    HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
+    HALLOCATOR_BY_MOUNT(this_)->get_flags( fd, &flags );
+
+    /*check if file was not opened for reading*/
+    flags &= O_ACCMODE;
+    if ( flags!=O_RDONLY && flags!=O_RDWR ){
+	ZRT_LOG(L_ERROR, 
+		"file open flags=%s not allow read", STR_FILE_OPEN_FLAGS(flags));
+	SET_ERRNO( EINVAL );
+	return -1;
+    }
+
     ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Read( inode, offset, buf, nbyte );
     if ( readed >= 0 ){
 	offset += readed;
@@ -323,12 +331,24 @@ static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, 
 }
 
 static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
+    int ret;
     ino_t inode;
+    off_t offset;
+    int flags;
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
 
-    off_t offset;
-    int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
-    assert( ret == 0 );
+    HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
+    HALLOCATOR_BY_MOUNT(this_)->get_flags( fd, &flags );
+
+    /*check if file was not opened for writing*/
+    flags &= O_ACCMODE;
+    if ( flags!=O_WRONLY && flags!=O_RDWR ){
+	ZRT_LOG(L_ERROR, 
+		"file open flags=%s not allow write", STR_FILE_OPEN_FLAGS(flags));
+	SET_ERRNO( EINVAL );
+	return -1;
+    }
+
     ssize_t wrote = MEMOUNT_BY_MOUNT(this_)->Write( inode, offset, buf, nbyte );
     if ( wrote != -1 ){
 	offset += wrote;
@@ -444,7 +464,12 @@ static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset
 
 static int mem_open(struct MountsPublicInterface* this_, const char* path, int oflag, uint32_t mode){
     lazy_mount(this_, path);
-    int ret = MEMOUNT_BY_MOUNT(this_)->Open(path, oflag, mode);
+
+    int ret=0;
+    if (oflag & O_CREAT) {
+	/*If need to create path, then do it with errors checking*/
+	ret = MEMOUNT_BY_MOUNT(this_)->Open(path, oflag, mode);
+    }
 
     /* get node from memory FS for specified type, if no errors occured 
      * then file allocated in memory FS and require file desc - fd*/
@@ -454,7 +479,8 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 	int fd = HALLOCATOR_BY_MOUNT(this_)->allocate_handle( this_ );
 	if ( fd < 0 ){
 	    /*it's hipotetical but possible case if amount of open files 
-	      are exceeded an maximum value*/
+	      are exceeded an maximum value.*/
+	    /*TODO: Add functional test for it*/
 	    SET_ERRNO(ENFILE);
 	    return -1;
 	}
@@ -462,8 +488,9 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 	/* As inode and fd are depend each form other, we need update 
 	 * inode in handle allocator and stay them linked*/
 	ret = HALLOCATOR_BY_MOUNT(this_)->set_inode( fd, st.st_ino );
-	ZRT_LOG(L_EXTRA, "errcode ret=%d", ret );
 	assert( ret == 0 );
+	HALLOCATOR_BY_MOUNT(this_)->set_flags(fd, oflag);
+	MEMOUNT_BY_MOUNT(this_)->Ref(st.st_ino); /*set file referred*/
 
 	/*append feature support, is simple*/
 	if ( oflag & O_APPEND ){
@@ -520,10 +547,15 @@ static int mem_ftruncate_size(struct MountsPublicInterface* this_, int fd, off_t
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
     if ( !is_dir(this_, inode) ){
 	if ((node=NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), inode )) != NULL){
-	    /*check if file was opened for writing*/
-	    int flags= node->flags();
-	    if ( !CHECK_FLAG(flags, O_WRONLY) && !CHECK_FLAG(flags, O_RDWR) ){
-		ZRT_LOG(L_ERROR, "file not allowed for write, open flags are %s",
+
+	    int flags;
+	    HALLOCATOR_BY_MOUNT(this_)->get_flags( fd, &flags );
+
+	    /*check if file was not opened for writing*/
+	    flags &= O_ACCMODE;
+	    if ( flags!=O_WRONLY && flags!=O_RDWR ){
+		ZRT_LOG(L_ERROR, 
+			"file open flags=%s not allow write", 
 			STR_FILE_OPEN_FLAGS(flags));
 		SET_ERRNO( EINVAL );
 		return -1;

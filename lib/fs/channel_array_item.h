@@ -26,8 +26,8 @@
 /*Channel info we need to keep at runtime(For opened channels)
  *suitable data is: opened flags, mode, i/o positions*/
 struct ZrtChannelRt{
-    int     handle;
-    int     flags;                 /*For currently opened file contains flags*/
+    int     inode;
+    /*For currently opened file flags, refer to handle_alocator*/
     int64_t sequential_access_pos; /*sequential read, sequential write*/
     int64_t random_access_pos;     /*random read, random write*/
     int64_t maxsize;               /*synthethic size. based on maximum position of cursor pos 

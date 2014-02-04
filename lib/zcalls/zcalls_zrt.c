@@ -199,7 +199,7 @@ int  zrt_zcall_enhanced_fstat(int handle, struct stat *st){
 
     int ret = s_transparent_mount->fstat(s_transparent_mount, handle, st);
     if ( ret == 0 ){
-	ZRT_LOG_STAT(L_INFO, st);
+	ZRT_LOG_STAT(L_SHORT, st);
     }
     LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
@@ -261,7 +261,7 @@ int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
 
     if ( (absolute_path = realpath(pathname, temp_path)) != NULL ){
 	if ( (ret = s_transparent_mount->stat(s_transparent_mount, absolute_path, stat)) == 0 ){
-	    ZRT_LOG_STAT(L_INFO, stat);
+	    ZRT_LOG_STAT(L_SHORT, stat);
 	}
     }
     LOG_SHORT_SYSCALL_FINISH( ret, "pathname=%s", pathname);

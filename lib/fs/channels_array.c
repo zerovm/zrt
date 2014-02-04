@@ -19,8 +19,10 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "channels_array.h"
 #include "zvm.h" //struct ZVMChannel
+#include "zrtlog.h"
+#include "channels_array.h"
+#include "channels_mount.h" //INODE_FROM_ZVM_INODE
 #include "channel_array_item.h" //struct ChannelArrayItem
 #include "dyn_array.h" //DynArray
 
@@ -29,16 +31,17 @@
 #define ADD_CHANNELS(channels_if_p, channels_array_p, count, check){	\
 	/*add channels from array*/					\
 	struct ChannelArrayItem* item;					\
-	int i, index;							\
+	int i;							\
 	for (i=0; i < count; i++){					\
 	    if ( (check) == EMU_CHANNELS &&				\
-		 NULL != (channels_if_p)->public.match_by_name(&(channels_if_p)->public, (channels_array_p)[i].name, &index ) ){ \
+		 NULL != (channels_if_p)->public.match_by_name(&(channels_if_p)->public, (channels_array_p)[i].name ) ){ \
 		continue; /*do not add matched channel*/		\
 	    }								\
 	    /*alloc item*/						\
 	    item = malloc(sizeof(struct ChannelArrayItem));		\
 	    item->channel = &(channels_array_p)[i];			\
-	    item->channel_runtime.flags = -1;				\
+	    item->channel_runtime.inode =				\
+		INODE_FROM_ZVM_INODE((channels_if_p)->array.num_entries); \
 	    if ( (check) == EMU_CHANNELS ){				\
 		item->channel_runtime.emu = 1;				\
 	    }								\
@@ -67,20 +70,35 @@ struct ChannelArrayItem* channels_array_get(struct ChannelsArray* this, int inde
 }
 
 struct ChannelArrayItem* channels_array_match_by_name(struct ChannelsArray* this, 
-						      const char* channel_name,
-						      int* index ){
+						      const char* channel_name ){
     /* search for name through the channels list*/
     int handle;
     struct ChannelArrayItem* item;
     for(handle = 0; handle < this->array.num_entries; ++handle){
 	item = DynArrayGet(&this->array, handle);
 	if( strcmp( item->channel->name, channel_name) == 0){
-	    *index = handle;
-	    return item; /*matched filename*/
+	    return item; /*matched item*/
 	}
     }
     
     return NULL; /* if channel name not matched return error*/
+}
+
+struct ChannelArrayItem* channels_array_match_by_inode(struct ChannelsArray* this, 
+						      int inode ){
+    /* search for inode through the channels list*/
+    int idx;
+    struct ChannelArrayItem* item;
+    for(idx = 0; idx < this->array.num_entries; ++idx){
+	item = DynArrayGet(&this->array, idx);
+	ZRT_LOG( L_EXTRA, "inode=%d; name=%10s", 
+		 item->channel_runtime.inode, item->channel->name );
+	if( item->channel_runtime.inode == inode){
+	    return item; /*matched item*/
+	}
+    }
+    
+    return NULL; /* if not matched return error*/
 }
 
 
@@ -108,6 +126,7 @@ channels_array_construct( const struct ZVMChannel* zvm_channels,
     this->public.count = (void*)channels_array_count;
     this->public.get   = (void*)channels_array_get;
     this->public.match_by_name = (void*)channels_array_match_by_name;
+    this->public.match_by_inode = (void*)channels_array_match_by_inode;
     /*alloc array & set data members*/
     int res = DynArrayCtor( &this->array, 
 			   zvm_channels_count+emu_channels_count);

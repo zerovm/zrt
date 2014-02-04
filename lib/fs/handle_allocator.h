@@ -46,6 +46,13 @@ struct HandleAllocator{
     /* set offset
      * @return errcode, 0 ok, -1 not found*/
     int (*set_offset)(int handle, off_t offset );
+
+    /* get opend file flags
+     * @return errcode, 0 ok, -1 not found*/
+    int (*get_flags)(int handle, int* flags );
+    /* set opened file flags
+     * @return errcode, 0 ok, -1 not found*/
+    int (*set_flags)(int handle, int flags );
 };
 
 
