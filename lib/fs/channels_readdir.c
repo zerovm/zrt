@@ -46,13 +46,14 @@ match_dir_in_directory_list(struct manifest_loaded_directories_t *manifest_dirs,
 }
 
 struct dir_data_t *
-match_handle_in_directory_list(struct manifest_loaded_directories_t *manifest_dirs, int handle){
+match_inode_in_directory_list(struct manifest_loaded_directories_t *manifest_dirs, int inode){
     assert(manifest_dirs);
     struct dir_data_t *dir = NULL;
     int i;
     for( i=0; i < manifest_dirs->dircount; i++ ){
         dir = &manifest_dirs->dir_array[i];
-        if ( dir->handle == handle ) return dir;
+	ZRT_LOG(L_SHORT, "dir match inode=%d, loop inode=%d", inode, dir->dir_inode);
+        if ( dir->dir_inode == inode ) return dir;
     }
     return NULL;
 }
@@ -68,7 +69,7 @@ int callback_add_dir(struct manifest_loaded_directories_t *manifest_dirs, const 
             /*handle will assigned from 0 now, but should be increased on channels number, to be unique
              *nlink assigned now 2, should be increased on subdirs number*/
             struct dir_data_t *d = &manifest_dirs->dir_array[manifest_dirs->dircount];
-            d->handle = manifest_dirs->dircount;
+            d->dir_inode = manifest_dirs->dircount;
             d->nlink =2;
             d->path = calloc(sizeof(char), len+1);
             memcpy( d->path, dirpath, len );
@@ -155,8 +156,12 @@ void process_channels_create_dir_list( const struct ChannelsArrayPublicInterface
         /*calculate ok*/
 
         /*do unique handles for all manifest parsed directories*/
-        manifest_dirs->dir_array[i].handle += 
+        manifest_dirs->dir_array[i].dir_inode += 
 	    channels_if->count((struct ChannelsArrayPublicInterface *)channels_if);
+	manifest_dirs->dir_array[i].dir_inode = INODE_FROM_ZVM_INODE(manifest_dirs->dir_array[i].dir_inode);
+	ZRT_LOG(L_EXTRA, "dir %10s, inode=%d",
+		manifest_dirs->dir_array[i].path, 
+		manifest_dirs->dir_array[i].dir_inode );
         /*get subdirs count, update nlink*/
         manifest_dirs->dir_array[i].nlink += subdirs_count;
     }

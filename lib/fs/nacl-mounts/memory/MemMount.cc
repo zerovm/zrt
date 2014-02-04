@@ -70,9 +70,6 @@ int MemMount::Open(const std::string& path, int oflag, uint32_t mode, MemData* h
      * during I/O operations*/
     MemNode* mnode = GetMemNode(path);
     if ( mnode ){
-	mnode->set_mode(mode);
-	mnode->set_flags(oflag);
-	Ref(mnode->slot()); 	/*set file referred*/
 	return 0;
     }
     else return -1;
@@ -535,14 +532,6 @@ ssize_t MemMount::Read(ino_t slot, off_t offset, void *buf, size_t count) {
         return -1;
     }
 
-    /*check if file was not opened for reading*/
-    int flags= node->flags() & O_ACCMODE;
-    if ( flags!=O_RDONLY && flags!=O_RDWR ){
-	ZRT_LOG(L_ERROR, "file open flags=%s not allow read", STR_FILE_OPEN_FLAGS(flags));
-	SET_ERRNO( EINVAL );
-	return -1;
-    }
-
     // Limit to the end of the file.
     ssize_t len = count;
     if (len > node->len() - offset) {
@@ -565,15 +554,6 @@ ssize_t MemMount::Write(ino_t slot, off_t offset, const void *buf,
     if (node == NULL) {
         errno = ENOENT;
         return -1;
-    }
-
-    /*check if file was not opened for writing*/
-    int flags= node->flags() & O_ACCMODE;
-    if ( flags!=O_WRONLY && flags!=O_RDWR ){
-	ZRT_LOG(L_ERROR, "file open flags=(%d/%d)%s not allow write", 
-		node->flags(), flags, STR_FILE_OPEN_FLAGS(flags));
-	SET_ERRNO( EINVAL );
-	return -1;
     }
 
     size_t len = node->capacity();

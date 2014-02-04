@@ -33,8 +33,9 @@ struct ChannelsArrayPublicInterface{
     /*@param index return pointer to matched item
       @return NULL if not found, or item pointer is matched*/
     struct ChannelArrayItem* (*match_by_name)(struct ChannelsArrayPublicInterface* this, 
-					      const char* channel_name,
-					      int* index);
+					      const char* channel_name);
+    struct ChannelArrayItem* (*match_by_inode)(struct ChannelsArrayPublicInterface* this, 
+					      int inode);
 };
 
 

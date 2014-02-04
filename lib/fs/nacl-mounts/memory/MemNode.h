@@ -58,7 +58,6 @@ class MemData {
     int nlink_;      //nlink_ is hardlinks count
     int want_unlink_;//want_unlink_ flag indicates file waiting for remove if close
     mode_t mode_;    //mode_ used by stat indicate permissions
-    int flags_;      //flags_ has sence only for opened files
     uint32_t uid_;
     uint32_t gid_;
     int hardinode_; //inode the same for all hardlinks
@@ -174,10 +173,6 @@ class MemNode {
     /*added by YaroslavLitvinov*/
     mode_t mode()const { return nodedata_->mode_; }
     void set_mode(mode_t mode) { nodedata_->mode_ = mode; }
-
-    /*added by YaroslavLitvinov*/
-    int flags()const { return nodedata_->flags_; }
-    void set_flags(int flags) { nodedata_->flags_ = flags; }
 
     /*added by YaroslavLitvinov*/
     uint32_t uid()const { return nodedata_->uid_; }

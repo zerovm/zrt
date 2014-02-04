@@ -29,7 +29,8 @@
 #define CHANNEL_MODE_UPDATER channel_mode_updater_construct
 
 #define FIRST_NON_RESERVED_INODE 11
-#define INODE_FROM_HANDLE(handle) (FIRST_NON_RESERVED_INODE+handle)
+#define INODE_FROM_ZVM_INODE(zvm_inode) (FIRST_NON_RESERVED_INODE+zvm_inode)
+#define ZVM_INODE_FROM_INODE(inode) (inode-FIRST_NON_RESERVED_INODE)
 
 struct ZVMChannel;
 struct HandleAllocator;

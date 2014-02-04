@@ -46,9 +46,21 @@ int main(int argc, char **argv)
 }
 
 void test_zrt_issue_79(){
+    const char fdev[] = "/dev/null";
     const char fname[] = "/newfile124";
     char buf[PATH_MAX];
     int fdr, fdw, ret;
+    int fd1, fd2;
+
+    /*Devices fs test*/
+    TEST_OPERATION_RESULT( open(fdev, O_WRONLY), &fd1, fd1!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(fdev, O_WRONLY), &fd2, fd2!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( write(fd1, fname, strlen(fname) ), &ret, ret!=-1&&ret==strlen(fname)&&errno==0 );
+    TEST_OPERATION_RESULT( write(fd2, fname, strlen(fname) ), &ret, ret!=-1&&ret==strlen(fname)&&errno==0 );
+    TEST_OPERATION_RESULT( close(fd1), &ret, ret==0&&errno==0);
+    TEST_OPERATION_RESULT( close(fd2), &ret, ret==0&&errno==0);
+
+    /*InMemory fs test*/
     TEST_OPERATION_RESULT( open(fname, O_CREAT|O_WRONLY), &fdw, fdw!=-1&&errno==0 );
     TEST_OPERATION_RESULT( open(fname, O_CREAT|O_RDONLY), &fdr, fdr!=-1&&errno==0 );
 
