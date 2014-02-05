@@ -21,8 +21,6 @@
  * It's needed while building ZLIBC to cut off the rest of ZRT library code.
  * For generic ZRT using it is should no be defined;*/
 
-
-
 #ifndef ZLIBC_STUB
 #  include "zrt.h"
 #  include "zcalls.h"
@@ -109,8 +107,26 @@ static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
     zrt_zcall_get_phys_pages,
     zrt_zcall_get_avphys_pages
 };
+
 #endif //ZLIBC_STUB
 
+extern int __nacl_irt_pread(int fd, void *buf, int count, long long offset,
+			    int *nread){
+#ifdef ZLIBC_STUB
+    return -1;
+#else
+    return zrt_zcall_prolog_pread(fd, buf, count, offset, nread);
+#endif //ZLIBC_STUB
+}
+
+extern int __nacl_irt_pwrite(int fd, const void *buf, int count, long long offset,
+			     int *nwrote){
+#ifdef ZLIBC_STUB
+    return -1;
+#else
+    return zrt_zcall_prolog_pwrite(fd, buf, count, offset, nwrote);
+#endif //ZLIBC_STUB
+}
 
 int
 __query_zcalls(int type, void** table )

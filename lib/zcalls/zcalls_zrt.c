@@ -166,6 +166,55 @@ int  zrt_zcall_enhanced_write(int handle, const void *buf, size_t count, size_t 
     return ret;
 }
 
+
+////////////////
+int  zrt_zcall_enhanced_pread(int handle, void *buf, size_t count, off_t offset,
+			      size_t *nread){
+    int ret=-1;
+    LOG_SYSCALL_START("handle=%d buf=%p count=%u, offset=%lld", 
+		      handle, buf, count, offset);
+    errno = 0;
+    VALIDATE_SYSCALL_PTR(buf);
+
+    int32_t bytes_read = s_transparent_mount->pread(s_transparent_mount,
+						    handle, buf, count, offset);
+    if ( bytes_read >= 0 ){
+	/*get read bytes by pointer*/
+	*nread = bytes_read;
+	ret = 0;
+    }
+    LOG_INFO_SYSCALL_FINISH( ret, "bytes_read=%d, handle=%d", bytes_read, handle);
+    return ret;
+}
+
+int  zrt_zcall_enhanced_pwrite(int handle, const void *buf, size_t count, off_t offset,
+			       size_t *nwrote){
+    int ret=-1;
+    int log_state = __zrt_log_is_enabled();
+    /*disable logging while writing to stdout and stderr channel */
+    if ( handle <= 2 && log_state ){
+	__zrt_log_enable(0);
+    }
+
+    LOG_SYSCALL_START("handle=%d buf=%p count=%u, offset=%lld", 
+		      handle, buf, count, offset);
+    VALIDATE_SYSCALL_PTR(buf);
+
+    int32_t bytes_wrote = s_transparent_mount->pwrite(s_transparent_mount,
+						      handle, buf, count, offset);
+    if ( bytes_wrote >= 0 ){
+	/*get wrote bytes by pointer*/
+	*nwrote = bytes_wrote;
+	ret=0;
+    }
+    LOG_INFO_SYSCALL_FINISH( ret, "bytes_wrote=%d, handle=%d count=%u", 
+			     bytes_wrote, handle, count);
+    if ( log_state )
+	__zrt_log_enable(log_state); /*restore log state*/
+    return ret;
+}
+////////////////
+
 int  zrt_zcall_enhanced_seek(int handle, off_t offset, int whence, off_t *new_offset){
     int ret=-1;
     LOG_SYSCALL_START("handle=%d offset=%lld whence=%d", handle, offset, whence);

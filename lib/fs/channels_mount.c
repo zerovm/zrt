@@ -78,6 +78,14 @@ enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
 #define HALLOCATOR_BY_MOUNT(mount_interface_p)				\
     ((struct ChannelMounts*)(mount_interface_p))->handle_allocator
 
+#define CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags, flag1, flag2)	\
+    if ( (flags)!=flag1 && (flags)!=flag2 ){				\
+	ZRT_LOG(L_ERROR, "file open flags must be %s or %s",		\
+		STR_FILE_OPEN_FLAGS(flag1), STR_FILE_OPEN_FLAGS(flag2)); \
+	SET_ERRNO( EINVAL );						\
+	return -1;							\
+    }
+
 
 struct ChannelMounts{
     struct MountsPublicInterface public;
@@ -625,6 +633,20 @@ static int emu_handle_write(struct ChannelMounts* this,
 }
 
 
+/*calculated synthetic size as maximum writable position for channels 
+  with random access on write. For further calls: stat, fstat*/
+static void 
+update_artificial_channel_size(struct ChannelMounts* this, 
+			       int fd, struct ChannelArrayItem* item ){
+    int8_t access_type = item->channel->type;
+    if ( access_type == SGetRPut || access_type == RGetRPut ){
+	item->channel_runtime.maxsize 
+	    = MAX(item->channel_runtime.maxsize,
+		  channel_pos(this, fd, EPosGet, EPosWrite, 0));
+	ZRT_LOG(L_SHORT, "Update fd=%d channel size=%lld", 
+		fd, item->channel_runtime.maxsize );
+    }
+}
 
 
 //////////// interface implementation
@@ -684,9 +706,45 @@ static int channels_mount(struct ChannelMounts* this, const char* path, void *mo
 }
 
 static ssize_t channels_read(struct ChannelMounts* this, int fd, void *buf, size_t nbyte){
-    errno = 0;
+    off_t offset;
+    errno=0;
+    /*file not opened, bad descriptor*/
+    if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT(this), fd) == 0 ){
+	ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
+	SET_ERRNO( EBADF );
+	return -1;
+    }
+    offset = channel_pos(this, fd, EPosGet, EPosRead, 0);
+    if ( CHECK_NEW_POS( offset+nbyte ) != 0 ){
+        SET_ERRNO( EOVERFLOW );
+        return -1;
+    }
+    return this->public.pread(&this->public, fd, buf, nbyte, offset);
+}
+
+static ssize_t channels_write(struct ChannelMounts* this,int fd, const void *buf, size_t nbyte){
+    off_t offset;
+    errno=0;
+    /*file not opened, bad descriptor*/
+    if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT(this), fd) == 0 ){
+	ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
+	SET_ERRNO( EBADF );
+	return -1;
+    }
+    offset = channel_pos(this, fd, EPosGet, EPosWrite, 0);
+    if ( CHECK_NEW_POS( offset+nbyte ) != 0 ){
+        SET_ERRNO( EOVERFLOW );
+        return -1;
+    }
+    return this->public.pwrite(&this->public, fd, buf, nbyte, offset);
+}
+
+static ssize_t channels_pread(struct ChannelMounts* this, int fd, void *buf, 
+			      size_t nbyte, off_t offset){
     ino_t inode;
+    int flags;
     int32_t readed = 0;
+    errno = 0;
 
     /*case: file not opened, bad descriptor*/
     if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT(this), fd) == 0 ){
@@ -695,35 +753,17 @@ static ssize_t channels_read(struct ChannelMounts* this, int fd, void *buf, size
     }
 
     HALLOCATOR_BY_MOUNT(this)->get_inode(fd, &inode);
-
-    struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
-    ZRT_LOG(L_INFO, "channel name=%s", CHANNEL_NAME( item ) );
-    debug_mes_zrt_channel_runtime( item, fd );
+    HALLOCATOR_BY_MOUNT(this)->get_flags(fd, &flags);
 
     /*check if file was not opened for reading*/
-    int flags;
-    HALLOCATOR_BY_MOUNT(this)->get_flags(fd, &flags);
-    if ( !CHECK_FLAG(flags, O_RDONLY) && 
-	 !CHECK_FLAG(flags, O_RDWR)  )
-	{
-	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed read", STR_FILE_OPEN_FLAGS(flags));
-	    SET_ERRNO( EINVAL );
-	    return -1;
-	}
-
-    int64_t pos = channel_pos(this, fd, EPosGet, EPosRead, 0);
-    if ( CHECK_NEW_POS( pos+nbyte ) != 0 ){
-        ZRT_LOG(L_ERROR, "file bad pos=%lld", pos);
-        SET_ERRNO( EOVERFLOW );
-        return -1;
-    }
+    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags&O_ACCMODE, O_RDONLY, O_RDWR);
 
     /*try to read from emulated channel, else read via zvm_pread call */
     int handled=0;
     if ( (readed=emu_handle_read(this, inode, buf, nbyte, &handled)) == -1 && !handled )
-	readed = zvm_pread( ZVM_INODE_FROM_INODE(inode), buf, nbyte, pos );
-    if(readed > 0) channel_pos(this, fd, EPosSetRelative, EPosRead, readed);
-
+	readed = zvm_pread( ZVM_INODE_FROM_INODE(inode), buf, nbyte, offset );
+    if(readed > 0) channel_pos(this, fd, EPosSetAbsolute, EPosRead, offset+readed);
+    
     ZRT_LOG(L_EXTRA, "channel fd=%d, bytes readed=%d", fd, readed );
 
     if ( readed < 0 ){
@@ -735,9 +775,12 @@ static ssize_t channels_read(struct ChannelMounts* this, int fd, void *buf, size
     return readed;
 }
 
-static ssize_t channels_write(struct ChannelMounts* this,int fd, const void *buf, size_t nbyte){
+static ssize_t channels_pwrite(struct ChannelMounts* this,int fd, const void *buf, 
+			       size_t nbyte, off_t offset){
     ino_t inode;
+    int flags;
     int32_t wrote = 0;
+    errno=0;
     //if ( fd < 3 ) disable_logging_current_syscall();
 
     /*file not opened, bad descriptor*/
@@ -748,32 +791,19 @@ static ssize_t channels_write(struct ChannelMounts* this,int fd, const void *buf
     }
 
     HALLOCATOR_BY_MOUNT(this)->get_inode(fd, &inode);
+    HALLOCATOR_BY_MOUNT(this)->get_flags(fd, &flags);
+
     struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
-    ZRT_LOG( L_EXTRA, "channel name=%s", CHANNEL_NAME( item ) );
     debug_mes_zrt_channel_runtime( item, fd );
 
     /*if file was not opened for writing, set errno and get error*/
-    int flags;
-    HALLOCATOR_BY_MOUNT(this)->get_flags(fd, &flags);
-    if ( !CHECK_FLAG(flags, O_WRONLY) && 
-	 !CHECK_FLAG(flags, O_RDWR)  )
-	{
-	    ZRT_LOG(L_ERROR, "file open_mode=%s not allowed write", STR_FILE_OPEN_FLAGS(flags));
-	    SET_ERRNO( EINVAL );
-	    return -1;
-	}
-
-    int64_t pos = channel_pos(this, fd, EPosGet, EPosWrite, 0);
-    if ( CHECK_NEW_POS( pos+nbyte ) != 0 ){
-        SET_ERRNO( EOVERFLOW );
-        return -1;
-    }
+    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags&O_ACCMODE, O_WRONLY, O_RDWR);
 
     /*try to read from emulated channel, else read via zvm_pread call */
     int handled=0;
     if ( (wrote=emu_handle_write(this, inode, buf, nbyte, &handled)) == -1 && !handled )
-	wrote = zvm_pwrite(ZVM_INODE_FROM_INODE(inode), buf, nbyte, pos );
-    if(wrote > 0) channel_pos(this, fd, EPosSetRelative, EPosWrite, wrote);
+	wrote = zvm_pwrite(ZVM_INODE_FROM_INODE(inode), buf, nbyte, offset );
+    if(wrote > 0) channel_pos(this, fd, EPosSetAbsolute, EPosWrite, offset+wrote);
     ZRT_LOG(L_EXTRA, "channel fd=%d, bytes wrote=%d", fd, wrote);
 
     if ( wrote < 0 ){
@@ -782,20 +812,13 @@ static ssize_t channels_write(struct ChannelMounts* this,int fd, const void *buf
         return -1;
     }
 
-    /*Set maximum writable position for channels with random access on write using 
-      it as calculated synthetic size. For further calls: stat, fstat*/
-    int8_t access_type = item->channel->type;
-    if ( access_type == SGetRPut || access_type == RGetRPut )
-	{
-	    item->channel_runtime.maxsize 
-		= MAX(item->channel_runtime.maxsize,
-		      channel_pos(this, fd, EPosGet, EPosWrite, 0));
-	    ZRT_LOG(L_SHORT, "Update inode=%d channel size=%lld", 
-		    inode, item->channel_runtime.maxsize );
-	}
+    update_artificial_channel_size(this, fd, item);
 
     return wrote;
 }
+
+////////////////
+
 
 static int channels_fchmod(struct ChannelMounts* this,int fd, mode_t mode){
     SET_ERRNO(EPERM);
@@ -1104,6 +1127,8 @@ static struct MountsPublicInterface KChannels_mount = {
     (void*)channels_mount,
     (void*)channels_read,
     (void*)channels_write,
+    (void*)channels_pread,
+    (void*)channels_pwrite,
     (void*)channels_fchown,
     (void*)channels_fchmod,
     (void*)channels_fstat,

@@ -87,6 +87,7 @@ CHANTYPE2-bigfile.c=2
 CHANTYPE1-sequential.c=0
 CHANTYPE2-sequential.c=0
 CHANTYPE3-sequential.c=1
+CHANTYPE3-io.c=3
 #####################################################################
 
 #####################################################################

@@ -64,6 +64,14 @@ extern "C" {
 
 #define MEMOUNT_BY_MOUNT(mounts_interface_p) ((struct InMemoryMounts*)mounts_interface_p)->mem_mount_cpp
 
+#define CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags, flag1, flag2)	\
+    if ( (flags)!=flag1 && (flags)!=flag2 ){				\
+	ZRT_LOG(L_ERROR, "file open flags must be %s or %s",		\
+		STR_FILE_OPEN_FLAGS(flag1), STR_FILE_OPEN_FLAGS(flag2)); \
+	SET_ERRNO( EINVAL );						\
+	return -1;							\
+    }
+
 
 struct InMemoryMounts{
     struct MountsPublicInterface public_;
@@ -301,23 +309,32 @@ static int mem_mount(struct MountsPublicInterface* this_, const char* path, void
 }
 
 static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
-    int ret;
     ino_t inode;
     off_t offset;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
+    return this_->pread(this_, fd, buf, nbyte, offset);
+}
+
+static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
+    ino_t inode;
+    off_t offset;
+    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
+    return this_->pwrite(this_, fd, buf, nbyte, offset);
+}
+
+static ssize_t mem_pread(struct MountsPublicInterface* this_, 
+			 int fd, void *buf, size_t nbyte, off_t offset){
+    int ret;
+    ino_t inode;
     int flags;
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
 
-    HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
     HALLOCATOR_BY_MOUNT(this_)->get_flags( fd, &flags );
 
     /*check if file was not opened for reading*/
-    flags &= O_ACCMODE;
-    if ( flags!=O_RDONLY && flags!=O_RDWR ){
-	ZRT_LOG(L_ERROR, 
-		"file open flags=%s not allow read", STR_FILE_OPEN_FLAGS(flags));
-	SET_ERRNO( EINVAL );
-	return -1;
-    }
+    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags&O_ACCMODE, O_RDONLY, O_RDWR);
 
     ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Read( inode, offset, buf, nbyte );
     if ( readed >= 0 ){
@@ -330,24 +347,17 @@ static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, 
     return readed;
 }
 
-static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
+static ssize_t mem_pwrite(struct MountsPublicInterface* this_, 
+			  int fd, const void *buf, size_t nbyte, off_t offset){
     int ret;
     ino_t inode;
-    off_t offset;
     int flags;
     GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
 
-    HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
     HALLOCATOR_BY_MOUNT(this_)->get_flags( fd, &flags );
 
     /*check if file was not opened for writing*/
-    flags &= O_ACCMODE;
-    if ( flags!=O_WRONLY && flags!=O_RDWR ){
-	ZRT_LOG(L_ERROR, 
-		"file open flags=%s not allow write", STR_FILE_OPEN_FLAGS(flags));
-	SET_ERRNO( EINVAL );
-	return -1;
-    }
+    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags&O_ACCMODE, O_WRONLY, O_RDWR);
 
     ssize_t wrote = MEMOUNT_BY_MOUNT(this_)->Write( inode, offset, buf, nbyte );
     if ( wrote != -1 ){
@@ -656,6 +666,8 @@ static struct MountsPublicInterface KInMemoryMountWraper = {
     mem_mount,
     mem_read,
     mem_write,
+    mem_pread,
+    mem_pwrite,
     mem_fchown,
     mem_fchmod,
     mem_fstat,

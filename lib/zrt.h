@@ -130,10 +130,23 @@ struct zcalls_env_args_init_t{
 };
 
 
-/*Part of ZLIBC, used for ZRT initialization;
+/*Part of LIBC, used for ZRT initialization;
  *@return retrieved table type, should be same as requested*/
 int
 __query_zcalls(int type, void** table );
 
+/*Part of LIBC, linking it and GLIBC directly with no use ZCALLS
+ interface; it is a workaround for toolchain build error "undefined
+ reference" that appeared for functions sources resides in glibc/posix
+ folder.*/
+extern int __nacl_irt_pread(int fd, void *buf, int count, long long offset,
+			    int *nread);
+
+/*Part of LIBC, linking it and GLIBC directly with no use ZCALLS
+ interface; it is a workaround for toolchain build error "undefined
+ reference" that appeared for functions sources resides in glibc/posix
+ folder.*/
+extern int __nacl_irt_pwrite(int fd, const void *buf, int count, long long offset,
+			     int *nwrote);
 
 #endif /* _LIB_ZRT_H_ */
