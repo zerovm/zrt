@@ -231,6 +231,40 @@ int  zrt_zcall_prolog_write(int handle, const void *buf, size_t count, size_t *n
 	return zrt_zcall_enhanced_write(handle, buf, count, nwrote);
 }
 
+int zrt_zcall_prolog_pread(int fd, void *buf, size_t count, off_t offset, size_t *nread){
+    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
+    if ( s_prolog_doing_now ){
+	/*simplest implementation if trying to read file in case if
+	  FS not accessible, using channels directly without checks*/
+	if ( (*nread = zvm_pread(fd, buf, count, offset )) >= 0 )
+	    return 0; //read success
+	else{
+	    SET_ERRNO( *nread );
+	    return -1; //read error
+	}
+    }
+    else{
+	return zrt_zcall_enhanced_pread(fd, buf, count, offset, nread);
+    }
+    
+}
+
+int zrt_zcall_prolog_pwrite(int fd, const void *buf, size_t count, off_t offset,
+			    size_t *nwrote){
+    if ( s_prolog_doing_now ){
+	/*simplest implementation if trying to write file in case if
+	  FS not accessible, using channels directly without checks*/
+	if ( (*nwrote = zvm_pwrite(fd, buf, count, offset )) >= 0 )
+	    return 0; //read success
+	else{
+	    SET_ERRNO( *nwrote );
+	    return -1; //write error
+	}
+    }
+    else
+	return zrt_zcall_enhanced_pwrite(fd, buf, count, offset, nwrote);    
+}
+
 int  zrt_zcall_prolog_seek(int handle, off_t offset, int whence, off_t *new_offset){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     if ( s_prolog_doing_now ){

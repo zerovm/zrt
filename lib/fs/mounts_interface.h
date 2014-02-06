@@ -48,6 +48,10 @@ struct MountsPublicInterface{
     // associated mount's function will be called.
     ssize_t (*read)(struct MountsPublicInterface* this_,int fd, void *buf, size_t nbyte);
     ssize_t (*write)(struct MountsPublicInterface* this_,int fd, const void *buf, size_t nbyte);
+    ssize_t (*pread)(struct MountsPublicInterface* this_,
+		     int fd, void *buf, size_t nbyte, off_t offset);
+    ssize_t (*pwrite)(struct MountsPublicInterface* this_,
+		      int fd, const void *buf, size_t nbyte, off_t offset);
     int (*fchown)(struct MountsPublicInterface* this_,int fd, uid_t owner, gid_t group);
     int (*fchmod)(struct MountsPublicInterface* this_,int fd, uint32_t mode);
     int (*fstat)(struct MountsPublicInterface* this_,int fd, struct stat *buf);
