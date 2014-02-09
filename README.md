@@ -1,10 +1,10 @@
-# ABOUT
+# About
 
 ZRT - ZeroVM Run-Time environment for user executables running on virtual hardware 
 represented by ZeroVM. ZRT act as part of glibc library and implements zerovm platform
 dependent functions. ZVM toolchain must be used in order to create user applications;
 
-# INSTALL & RUN
+# Install & Run
 
 1. Install ZeroVM, Consult http://github.com/zerovm/zerovm/blob/master/README
 2. Install ZVM SDK. Consult http://github.com/zerovm/toolchain/README
