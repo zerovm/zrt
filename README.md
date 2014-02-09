@@ -9,7 +9,9 @@ toolchain must be used in order to create user applications;
 
 1. Install ZeroVM, Consult
    http://github.com/zerovm/zerovm/blob/master/README
+
 2. Install ZVM SDK. Consult http://github.com/zerovm/toolchain/README
+
 3. Install zrt
 
         git clone https://github.com/zerovm/zrt.git
