@@ -57,7 +57,7 @@ LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 LIBS= \
 lib/mapreduce/libmapreduce.a \
 lib/networking/libnetworking.a \
-lib/fs/nacl-mounts/libfs.a 
+lib/fs/nacl-mounts/libfs.a
 
 LIBPORTS= \
 libports/gtest/libgtest.a \
@@ -92,12 +92,12 @@ ${LIBZRT} : $(LIBZRT_OBJECTS)
 ${LIBS}:
 	@make -C$(dir $@)
 	@echo move $@ library to final folder
-	@mv -f $@ lib	
+	@mv -f $@ lib
 
 ${LIBPORTS}:
 	@make -C$(dir $@)
 	@echo move $@ library to final folder
-	@mv -f $@ lib	
+	@mv -f $@ lib
 
 ############## "make test" Run all test suites available for ZRT
 check: build
@@ -133,11 +133,11 @@ autotests possible_slow_autotests: build
 	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite -j4
 	@./kill_daemons.sh
 
-################ "make clean" Cleaning libs 
+################ "make clean" Cleaning libs
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 LIBPORTS_CLEAN =$(foreach smpl, ${LIBPORTS}, $(smpl).clean)
 
-################ "make clean" Cleaning libs, tests, samples         
+################ "make clean" Cleaning libs, tests, samples
 clean: libclean clean_ports testclean
 	@rm -f lib/*.a
 
@@ -145,14 +145,14 @@ libclean: ${LIBS_CLEAN} testclean clean_ports
 ${LIBS_CLEAN}: cleandep
 	@rm -f $(LIBZRT_OBJECTS)
 	@rm -f $(LIBS) $(LIBZRT)
-	@make -C$(dir $@) clean 
+	@make -C$(dir $@) clean
 
 clean_ports: ${LIBPORTS_CLEAN}
 ${LIBPORTS_CLEAN}:
-	@make -C$(dir $@) clean 
+	@make -C$(dir $@) clean
 	@rm -f $(LIBPORTS)
 
-testclean: 
+testclean:
 	@make -C locale/locale_patched clean
 	@make -Ctests/glibc_test_suite clean
 	@make -Ctests/lua_test_suite clean
@@ -164,7 +164,7 @@ cleandep:
 
 ################ "make doc" Generate doc file concatenating all READMEs
 README_GEN=README.gen
-doc:	
+doc:
 	@rm -f ${README_GEN}
 	@echo "Auto created from READMEs located in ZRT project\n" > ${README_GEN}
 	@find ./lib ./tests -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
@@ -174,7 +174,7 @@ ARCH=x86_64-nacl
 INCLUDE_DIR=$(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/include
 LIB_DIR=$(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 uninstall:
-	rm -f $(INCLUDE_DIR)/mapreduce/buffered_io.h 
+	rm -f $(INCLUDE_DIR)/mapreduce/buffered_io.h
 
 install: uninstall
 	install -m 0644 lib/libzrt.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
@@ -208,4 +208,3 @@ install: uninstall
 	install -m 0644 lib/helpers/buffered_io.h $(INCLUDE_DIR)/helpers
 
 .PHONY: install
-
