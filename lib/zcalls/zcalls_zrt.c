@@ -217,7 +217,7 @@ int  zrt_zcall_enhanced_pwrite(int handle, const void *buf, size_t count, off_t 
 
 int  zrt_zcall_enhanced_seek(int handle, off_t offset, int whence, off_t *new_offset){
     int ret=-1;
-    LOG_SYSCALL_START("handle=%d offset=%lld whence=%d", handle, offset, whence);
+    LOG_SYSCALL_START("handle=%d offset=%lld whence=%s", handle, offset, STR_SEEK_WHENCE(whence));
     errno = 0;
 
     if ( whence == SEEK_SET && offset < 0 ){
@@ -463,6 +463,7 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     s_channels_mount = 
 	CONSTRUCT_L(CHANNELS_FILESYSTEM)( &nvram_mode_setting_updater,
 					  s_mounts_manager->handle_allocator,
+					  s_mounts_manager->open_files_pool,
 					  manifest->channels, 
 					  manifest->channels_count,
 					  s_emu_channels, 
@@ -480,7 +481,8 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     s_channels_mount->open( s_channels_mount, DEV_STDERR, O_WRONLY, 0 );
 
     /*create mem mount*/
-    s_mem_mount = CONSTRUCT_L(INMEMORY_FILESYSTEM)( s_mounts_manager->handle_allocator );
+    s_mem_mount = CONSTRUCT_L(INMEMORY_FILESYSTEM)( s_mounts_manager->handle_allocator,
+						    s_mounts_manager->open_files_pool);
 
     /*Mount filesystems*/
     s_mounts_manager->mount_add( "/dev", s_channels_mount );

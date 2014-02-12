@@ -28,12 +28,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct HandleAllocator;
-
-struct MountsPublicInterface* 
-inmemory_filesystem_construct( struct HandleAllocator* handle_allocator );
-
+    
+    struct HandleAllocator;
+    struct OpenFilesPool;
+    
+    struct MountsPublicInterface* 
+    inmemory_filesystem_construct( struct HandleAllocator* handle_allocator,
+				   struct OpenFilesPool* open_files_pool);
+    
 #ifdef __cplusplus
 }
 #endif

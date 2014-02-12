@@ -25,6 +25,7 @@
 #include "mounts_manager.h"
 #include "mounts_interface.h"
 #include "handle_allocator.h"
+#include "open_file_description.h"
 
 #define MIN(a,b)( a<b?a:b )
 
@@ -44,7 +45,8 @@ static struct MountsManager s_mounts_manager = {
         mm_mount_bypath,
         mm_mount_byhandle,
         mm_convert_path_to_mount,
-        NULL
+        NULL,
+	NULL
     };
 
 
@@ -94,7 +96,9 @@ struct MountsPublicInterface* mm_mount_bypath( const char* path ){
 }
 
 struct MountsPublicInterface* mm_mount_byhandle( int handle ){
-    return s_mounts_manager.handle_allocator->mount_interface(handle);
+    const struct HandleItem* entry = s_mounts_manager.handle_allocator->entry(handle);
+    if ( entry ) return entry->mount_fs;
+    else return NULL;
 }
 
 const char* mm_convert_path_to_mount(const char* full_path){
@@ -124,6 +128,7 @@ struct MountsManager* mounts_manager(){
 
 struct MountsManager* get_mounts_manager(){
     s_mounts_manager.handle_allocator = get_handle_allocator();
+    s_mounts_manager.open_files_pool = get_open_files_pool();
     return &s_mounts_manager;
 }
 

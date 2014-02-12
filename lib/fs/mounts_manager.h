@@ -21,6 +21,7 @@
 #include <linux/limits.h>
 
 struct MountsPublicInterface;
+struct OpenFilesPool;
 
 struct MountInfo{
     char mount_path[PATH_MAX]; /*for example "/", "/dev" */
@@ -39,6 +40,7 @@ struct MountsManager{
     const char* (*convert_path_to_mount)(const char* full_path);
 
     struct HandleAllocator* handle_allocator;
+    struct OpenFilesPool* open_files_pool;
 };
 
 

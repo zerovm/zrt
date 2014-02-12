@@ -21,38 +21,33 @@
 #include <sys/stat.h>
 #include <stdint.h>
 
+#include "open_file_description.h" //const struct OpenFileDescription
+
 #define MAX_HANDLES_COUNT 1000
 
 struct MountsPublicInterface;
 
+struct HandleItem{
+    ino_t inode;
+    int   open_file_description_id;
+    struct MountsPublicInterface* mount_fs;
+};
+
+
 /*interface*/
 struct HandleAllocator{
-    int (*allocate_handle)(struct MountsPublicInterface* mount_fs);
-    int (*allocate_reserved_handle)( struct MountsPublicInterface* mount_fs, int handle );
+    /**/
+    int (*allocate_handle)(struct MountsPublicInterface* mount_fs, ino_t inode, int open_file_desc_id);
+    int (*allocate_handle2)(struct MountsPublicInterface* mount_fs, ino_t inode, int open_file_desc_id, int handle);
     int (*free_handle)(int handle);
 
+    /*Check if handle is related to the specified fs
+     *@return 0 if matched, -1 if not*/
+    int (*check_handle_is_related_to_filesystem)(int handle, struct MountsPublicInterface* fs);
     struct MountsPublicInterface* (*mount_interface)(int handle);
 
-    /* get inode
-     * @return errcode, 0 ok, -1 not found*/
-    int (*get_inode)(int handle, ino_t* inode );
-    /* set inode
-     * @return errcode, 0 ok, -1 not found*/
-    int (*set_inode)(int handle, ino_t inode );
-
-    /* get offset
-     * @return errcode, 0 ok, -1 not found*/
-    int (*get_offset)(int handle, off_t* offset );
-    /* set offset
-     * @return errcode, 0 ok, -1 not found*/
-    int (*set_offset)(int handle, off_t offset );
-
-    /* get opend file flags
-     * @return errcode, 0 ok, -1 not found*/
-    int (*get_flags)(int handle, int* flags );
-    /* set opened file flags
-     * @return errcode, 0 ok, -1 not found*/
-    int (*set_flags)(int handle, int flags );
+    const struct HandleItem* (*entry)(int handle);
+    const struct OpenFileDescription* (*ofd)(int handle);
 };
 
 
