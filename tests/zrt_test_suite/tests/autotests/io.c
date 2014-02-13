@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 }
 
 void test_zrt_issue_81(const char* filename){
-    const char gap[] = "gap";
+    const char gap[] = "xxx";
     char buf[PATH_MAX];
     int fd, ret;
     
@@ -78,7 +78,7 @@ void test_zrt_issue_81(const char* filename){
     TEST_OPERATION_RESULT( pread(fd, 
 				 buf, 
 				 strlen(filename),
-				 strlen(gap)), &ret, ret==strlen(buf)&&errno==0 );
+				 strlen(gap)), &ret, ret==strlen(filename)&&errno==0 );
     TEST_OPERATION_RESULT( strncmp(buf, filename, strlen(filename)), &ret, ret==0 );
     TEST_OPERATION_RESULT( pread(fd, 
 				 buf, 
