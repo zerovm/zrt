@@ -117,13 +117,23 @@ int  zrt_zcall_enhanced_close(int handle){
     LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
     return ret;
 }
-int  zrt_zcall_enhanced_dup(int fd, int *newfd){
-    SET_ERRNO(ENOSYS);
-    return -1;
+
+int  zrt_zcall_enhanced_dup(int handle, int *newfd){
+    LOG_SYSCALL_START("handle=%d", handle);
+    errno = 0;
+
+    int ret = s_transparent_mount->dup(s_transparent_mount, handle);
+    LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
+    return ret;
 }
-int  zrt_zcall_enhanced_dup2(int fd, int newfd){
-    SET_ERRNO(ENOSYS);
-    return -1;
+
+int  zrt_zcall_enhanced_dup2(int handle, int new_handle){
+    LOG_SYSCALL_START("handle=%d", handle);
+    errno = 0;
+
+    int ret = s_transparent_mount->dup2(s_transparent_mount, handle, new_handle);
+    LOG_SHORT_SYSCALL_FINISH( ret, "handle=%d", handle);
+    return ret;
 }
 
 int  zrt_zcall_enhanced_read(int handle, void *buf, size_t count, size_t *nread){
