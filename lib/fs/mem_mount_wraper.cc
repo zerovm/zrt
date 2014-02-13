@@ -370,7 +370,7 @@ static ssize_t mem_pread(struct MountsPublicInterface* this_,
 	assert(ofd);
 	/*check if file was not opened for reading*/
 	CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_RDONLY, O_RDWR);
-	ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Read( hentry->inode, ofd->offset, buf, nbyte );
+	ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Read( hentry->inode, offset, buf, nbyte );
 	if ( readed >= 0 ){
 	    int ret;
 	    offset += readed;
@@ -396,7 +396,7 @@ static ssize_t mem_pwrite(struct MountsPublicInterface* this_,
 	/*check if file was not opened for writing*/
 	CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_WRONLY, O_RDWR);
 
-	ssize_t wrote = MEMOUNT_BY_MOUNT(this_)->Write( hentry->inode, ofd->offset, buf, nbyte );
+	ssize_t wrote = MEMOUNT_BY_MOUNT(this_)->Write( hentry->inode, offset, buf, nbyte );
 	if ( wrote != -1 ){
 	    int ret;
 	    offset += wrote;
