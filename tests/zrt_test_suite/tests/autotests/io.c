@@ -55,6 +55,7 @@ int main(int argc, char **argv)
 
     /*devices fs test dup functions*/
     test_zrt_issue_78(READ_WRITE_CHANNEL);
+    test_zrt_issue_78(tmpfile_template);
 }
 
 void test_zrt_issue_81(const char* filename){
