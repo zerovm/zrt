@@ -118,7 +118,7 @@ int  zrt_zcall_enhanced_close(int handle){
     return ret;
 }
 
-int  zrt_zcall_enhanced_dup(int handle, int *newfd){
+int  zrt_zcall_enhanced_dup(int handle){
     LOG_SYSCALL_START("handle=%d", handle);
     errno = 0;
 

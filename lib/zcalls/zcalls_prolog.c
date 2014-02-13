@@ -185,14 +185,14 @@ int  zrt_zcall_prolog_close(int handle){
     else
 	return zrt_zcall_enhanced_close(handle);
 }
-int  zrt_zcall_prolog_dup(int fd, int *newfd){
+int  zrt_zcall_prolog_dup(int fd){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     if ( s_prolog_doing_now ){
 	SET_ERRNO(ENOSYS);
 	return -1;
     }
     else 
-	return zrt_zcall_enhanced_dup(fd, newfd);
+	return zrt_zcall_enhanced_dup(fd);
 }
 int  zrt_zcall_prolog_dup2(int fd, int newfd){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);

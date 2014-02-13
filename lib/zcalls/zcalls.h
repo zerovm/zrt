@@ -50,7 +50,7 @@ int zrt_zcall_prolog_sched_yield(void);
 int zrt_zcall_prolog_sysconf(int name, int *value);
 /* irt fdio *************************/
 int zrt_zcall_prolog_close(int fd);
-int zrt_zcall_prolog_dup(int fd, int *newfd);
+int zrt_zcall_prolog_dup(int fd);
 int zrt_zcall_prolog_dup2(int fd, int newfd);
 int zrt_zcall_prolog_read(int fd, void *buf, size_t count, size_t *nread);
 int zrt_zcall_prolog_write(int fd, const void *buf, size_t count, size_t *nwrote);
@@ -125,7 +125,7 @@ void zrt_zcall_prolog_nvram_get_args_envs( char** args, char* args_buf, int args
 void zrt_zcall_enhanced_exit(int status);
 /* irt fdio *************************/
 int zrt_zcall_enhanced_close(int fd);
-int zrt_zcall_enhanced_dup(int fd, int *newfd);
+int zrt_zcall_enhanced_dup(int fd);
 int zrt_zcall_enhanced_dup2(int fd, int newfd);
 int zrt_zcall_enhanced_read(int fd, void *buf, size_t count, size_t *nread);
 int zrt_zcall_enhanced_write(int fd, const void *buf, size_t count, size_t *nwrote);
