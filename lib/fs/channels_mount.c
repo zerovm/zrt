@@ -57,11 +57,11 @@ enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
     if ( EPosSetRelative == whence ){			\
 	if ( CHECK_NEW_POS( *pos_p+offset ) == -1 )	\
             { SET_ERRNO( EOVERFLOW ); return -1; }	\
-	else return *pos_p +=offset; }			\
+	else  *pos_p +=offset; }			\
     else{						\
 	if ( CHECK_NEW_POS( offset ) == -1 )		\
 	    { SET_ERRNO( EOVERFLOW ); return -1; }	\
-	else return *pos_p  =offset; }
+	else *pos_p  =offset; }
 
 #define CHANNEL_IS_OPENED(hallocator_p, handle)			\
     ( (hallocator_p)->mount_interface(handle)==NULL ?0 :1 )
@@ -225,18 +225,6 @@ static int check_channel_flags(const struct ZVMChannel *chan, int flags)
     return 1;
 }
 
-static void debug_mes_zrt_channel_runtime( struct ChannelArrayItem* item, int handle ){
-    if (item){
-        ZRT_LOG(L_EXTRA, 
-		"handle=%d, sequential_access_pos=%llu, random_access_pos=%llu",
-                handle, 
-		//STR_FILE_OPEN_FLAGS(item->channel_runtime.flags),
-                item->channel_runtime.sequential_access_pos, 
-		item->channel_runtime.random_access_pos );
-    }
-}
-
-
 static int open_channel( struct ChannelMounts* this, const char *name, int flags, int mode )
 {
     struct ChannelArrayItem* item 
@@ -304,10 +292,12 @@ static uint32_t channel_permissions(const struct ChannelArrayItem *item){
 }
 
 
-static int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_channel,
+static int64_t channel_pos_sequen_get_sequen_put( struct ChannelMounts* this, int open_file_description_id,
 						  int8_t whence, int8_t access, int64_t offset ){
+    const struct OpenFileDescription* ofd = this->open_files_pool->entry(open_file_description_id);
+    off_t openfile_offset_seq = ofd->channel_sequential_offset;
     /*seek get supported by channel for any modes*/
-    if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
+    if ( EPosGet == whence ) return openfile_offset_seq;
     switch ( access ){
     case EPosSeek:
         /*seek set does not supported for this channel type*/
@@ -315,7 +305,9 @@ static int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_chann
         return -1;
     case EPosRead:
     case EPosWrite:
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
+        SET_SAFE_OFFSET( whence, &openfile_offset_seq, offset );
+	this->open_files_pool->set_offset_sequential_channel(open_file_description_id, openfile_offset_seq);
+	return openfile_offset_seq;
         break;
     default:
         assert(0);
@@ -324,19 +316,25 @@ static int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_chann
 }
 
 
-static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_channel,
+static int64_t channel_pos_random_get_sequen_put( struct ChannelMounts* this, int open_file_description_id,
 						  int flags, int8_t whence, int8_t access, int64_t offset ){
+    const struct OpenFileDescription* ofd = this->open_files_pool->entry(open_file_description_id);
+    off_t openfile_offset_seq = ofd->channel_sequential_offset;
+    off_t openfile_offset_rand = ofd->offset;
+
     switch ( access ){
     case EPosSeek:
         if ( CHECK_FLAG( flags, O_RDONLY )
 	     || CHECK_FLAG( flags, O_RDWR ) )
 	    {
-		if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-		SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+		if ( EPosGet == whence ) return openfile_offset_rand;
+		SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+		this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+		return openfile_offset_rand;
 	    }
         else if ( CHECK_FLAG( flags, O_WRONLY ) == 1 )
 	    {
-		if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
+		if ( EPosGet == whence ) return openfile_offset_seq;
 		else{
 		    /*it's does not supported for seeking sequential write*/
 		    SET_ERRNO( ESPIPE );
@@ -345,12 +343,16 @@ static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_chann
 	    }
         break;
     case EPosRead:
-        if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+        if ( EPosGet == whence ) return openfile_offset_rand;
+        SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+	this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+	return openfile_offset_rand;
         break;
     case EPosWrite:
-        if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
+        if ( EPosGet == whence ) return openfile_offset_seq;
+        SET_SAFE_OFFSET( whence, &openfile_offset_seq, offset );
+	this->open_files_pool->set_offset_sequential_channel(open_file_description_id, openfile_offset_seq);
+	return openfile_offset_seq;
         break;
     default:
         assert(0);
@@ -358,19 +360,25 @@ static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_chann
     }
 }
 
-static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channel,
+static int64_t channel_pos_sequen_get_random_put(struct ChannelMounts* this, int open_file_description_id,
 						 int flags, int8_t whence, int8_t access, int64_t offset){
+    const struct OpenFileDescription* ofd = this->open_files_pool->entry(open_file_description_id);
+    off_t openfile_offset_seq = ofd->channel_sequential_offset;
+    off_t openfile_offset_rand = ofd->offset;
+
     switch ( access ){
     case EPosSeek:
         if ( CHECK_FLAG( flags, O_WRONLY ) == 1
 	     || CHECK_FLAG( flags, O_RDWR ) == 1 )
 	    {
-		if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-		SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+		if ( EPosGet == whence ) return openfile_offset_rand;
+		SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+		this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+		return openfile_offset_rand;
 	    }
         else if ( CHECK_FLAG( flags, O_RDONLY )  == 1)
 	    {
-		if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
+		if ( EPosGet == whence ) return openfile_offset_seq;
 		else{
 		    /*it's does not supported for seeking sequential read*/
 		    SET_ERRNO( ESPIPE );
@@ -379,12 +387,16 @@ static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channe
 	    }
         break;
     case EPosRead:
-        if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
+        if ( EPosGet == whence ) return openfile_offset_seq;
+        SET_SAFE_OFFSET( whence, &openfile_offset_seq, offset );
+	this->open_files_pool->set_offset_sequential_channel(open_file_description_id, openfile_offset_seq);
+	return openfile_offset_seq;
         break;
     case EPosWrite:
-        if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+	if ( EPosGet == whence ) return openfile_offset_rand;
+	SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+	this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+	return openfile_offset_rand;
         break;
     default:
         assert(0);
@@ -392,14 +404,19 @@ static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channe
     }
 }
 
-static int64_t channel_pos_random_get_random_put(struct ZrtChannelRt *zrt_channel,
+static int64_t channel_pos_random_get_random_put(struct ChannelMounts* this, int open_file_description_id,
 						 int8_t whence, int8_t access, int64_t offset){
-    if ( EPosGet == whence ) return zrt_channel->random_access_pos;
+    const struct OpenFileDescription* ofd = this->open_files_pool->entry(open_file_description_id);
+    off_t openfile_offset_rand = ofd->offset;
+
+    if ( EPosGet == whence ) return openfile_offset_rand;
     switch ( access ){
     case EPosSeek:
     case EPosRead:
     case EPosWrite:
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+	SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+	this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+	return openfile_offset_rand;
         break;
     default:
         assert(0);
@@ -420,16 +437,20 @@ static int64_t channel_pos( struct ChannelMounts* this,
         int8_t access_type = item->channel->type;
         switch ( access_type ){
         case SGetSPut:
-            return channel_pos_sequen_get_sequen_put( &item->channel_runtime, whence, access, offset );
+            return channel_pos_sequen_get_sequen_put(this, hentry->open_file_description_id,
+						     whence, access, offset );
             break;
         case RGetSPut:
-            return channel_pos_random_get_sequen_put( &item->channel_runtime, flags, whence, access, offset );
+            return channel_pos_random_get_sequen_put(this, hentry->open_file_description_id, 
+						     flags, whence, access, offset );
             break;
         case SGetRPut:
-            return channel_pos_sequen_get_random_put( &item->channel_runtime, flags, whence, access, offset );
+            return channel_pos_sequen_get_random_put(this, hentry->open_file_description_id, 
+						     flags, whence, access, offset );
             break;
         case RGetRPut:
-            return channel_pos_random_get_random_put( &item->channel_runtime, whence, access, offset );
+            return channel_pos_random_get_random_put(this, hentry->open_file_description_id, 
+						     whence, access, offset );
             break;
         }
     }
@@ -779,6 +800,7 @@ static ssize_t channels_pwrite(struct ChannelMounts* this,int fd, const void *bu
     int32_t wrote = 0;
     const struct HandleItem* hentry;
     const struct OpenFileDescription* ofd;
+    struct ChannelArrayItem* item;
 
     errno=0;
     //if ( fd < 3 ) disable_logging_current_syscall();
@@ -792,9 +814,6 @@ static ssize_t channels_pwrite(struct ChannelMounts* this,int fd, const void *bu
     hentry = this->handle_allocator->entry(fd); 
     ofd = this->handle_allocator->ofd(fd);
     assert(ofd);
-
-    struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
-    debug_mes_zrt_channel_runtime( item, fd );
 
     /*if file was not opened for writing, set errno and get error*/
     CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_WRONLY, O_RDWR);
@@ -812,6 +831,7 @@ static ssize_t channels_pwrite(struct ChannelMounts* this,int fd, const void *bu
         return -1;
     }
 
+    item = CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
     update_artificial_channel_size(this, fd, item);
 
     return wrote;
@@ -926,8 +946,6 @@ static int channels_close(struct ChannelMounts* this,int fd){
     struct ChannelArrayItem* item 
 	= CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
     if ( item != NULL ){
-	item->channel_runtime.random_access_pos 
-	    = item->channel_runtime.sequential_access_pos  = 0;
 #define SAVE_SYNTHETIC_SIZE
 #ifndef SAVE_SYNTHETIC_SIZE
 	item->channel_runtime.maxsize = 0;
@@ -958,10 +976,6 @@ static off_t channels_lseek(struct ChannelMounts* this,int fd, off_t offset, int
     }
 
     hentry = this->handle_allocator->entry(fd);
-    struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
-    debug_mes_zrt_channel_runtime( item, fd );
-
-    ZRT_LOG(L_EXTRA, "channel name=%s", CHANNEL_NAME(item) );
 
     switch(whence)
 	{
@@ -1086,8 +1100,29 @@ static int channels_isatty(struct ChannelMounts* this,int fd){
 }
 
 static int channels_dup(struct ChannelMounts* this,int oldfd){
-    SET_ERRNO( ENOSYS );
-    return -1;
+    const struct HandleItem* hentry;
+    errno = 0;
+
+    /*case: file not opened, bad descriptor*/
+    if ( this->handle_allocator->check_handle_is_related_to_filesystem(oldfd, &this->public) == -1 ){
+	SET_ERRNO( EBADF );
+	return -1;
+    }
+
+    hentry = this->handle_allocator->entry(oldfd);
+    
+    int ret = this->open_files_pool->refer_ofd(hentry->open_file_description_id);
+    assert(ret==0);
+    /*get dup handle */
+    int handle = this->handle_allocator->allocate_handle(&this->public,
+							 hentry->inode,
+							 hentry->open_file_description_id);
+    if ( handle == -1 ){
+	this->open_files_pool->release_ofd(hentry->open_file_description_id);
+	SET_ERRNO(ENFILE);
+	return -1;
+    }
+    return handle;
 }
 
 static int channels_dup2(struct ChannelMounts* this,int oldfd, int newfd){

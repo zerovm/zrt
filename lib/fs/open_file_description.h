@@ -23,7 +23,8 @@
 #include <sys/types.h>
 
 struct OpenFileDescription{
-    off_t offset; /*used by read, write functions*/
+    off_t channel_sequential_offset; /*sequential read, sequential write*/
+    off_t offset; /*used by read, write; also for channels random read, random write*/
     int   flags; /*opened file's flags*/
 };
 
@@ -40,6 +41,11 @@ struct OpenFilesPool{
     int (*release_ofd)(int id_ofd);
 
     const struct OpenFileDescription* (*entry)(int id_ofd);
+
+    /* Use it only for DevicesFS, as second offset. 
+     * set offset for channels with sequential access. 
+     * @return errcode, 0 ok, -1 not found*/
+    int (*set_offset_sequential_channel)(int id_ofd, off_t offset );
 
     /* set offset
      * @return errcode, 0 ok, -1 not found*/

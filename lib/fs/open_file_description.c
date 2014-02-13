@@ -50,6 +50,7 @@ static int getnew_ofd(int flags){
     if ( s_first_unused_slot == -1 ) return -1;
     ++s_open_files_array[s_first_unused_slot].refcount;
     s_open_files_array[s_first_unused_slot].public_.offset=0;
+    s_open_files_array[s_first_unused_slot].public_.channel_sequential_offset=0;
     s_open_files_array[s_first_unused_slot].public_.flags=flags;
     return s_first_unused_slot;
 }
@@ -63,13 +64,23 @@ static int refer_ofd(int id_ofd){
 
 static int release_ofd(int id_ofd){
     if ( !VERIFY_OFD(id_ofd) ) return -1;
-    --s_open_files_array[id_ofd].refcount;
+    if ( !--s_open_files_array[id_ofd].refcount ){
+	/*set lowest available slot*/
+	if ( id_ofd < s_first_unused_slot ) s_first_unused_slot = id_ofd;
+    }
     return 0;
 }
 
 static const struct OpenFileDescription* entry(int id_ofd){
     if ( !VERIFY_OFD(id_ofd) ) return NULL;
     return &s_open_files_array[id_ofd].public_;
+}
+
+
+static int set_offset_sequential_channel(int id_ofd, off_t offset ){
+    if ( !VERIFY_OFD(id_ofd) ) return -1;
+    s_open_files_array[id_ofd].public_.channel_sequential_offset = offset;
+    return 0;
 }
 
 
@@ -92,6 +103,7 @@ static struct OpenFilesPool s_open_files_pool = {
     refer_ofd,
     release_ofd,    
     entry,
+    set_offset_sequential_channel,
     set_offset,
     set_flags
 };

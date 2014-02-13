@@ -28,8 +28,6 @@
 struct ZrtChannelRt{
     int     inode;
     /*For currently opened file flags, refer to handle_alocator*/
-    int64_t sequential_access_pos; /*sequential read, sequential write*/
-    int64_t random_access_pos;     /*random read, random write*/
     int64_t maxsize;               /*synthethic size. based on maximum position of cursor pos 
 				     channel for all I/O requests*/
     int     mode;                  /*channel type, taken from mapping nvram section*/
