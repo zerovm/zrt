@@ -577,9 +577,9 @@ static int iterate_dir_contents( struct ChannelMounts* this, int dir_handle, int
 		if ( index == file_index ){
 		    /*fetch name from full path*/
 		    int shortname_len;
+		    ino_t loop_inode = INODE_FROM_ZVM_INODE(i);		    
 		    const char *short_name = 
 			name_from_path_get_path_len( CHANNEL_NAME( channel_item ), &shortname_len );
-		    ino_t loop_inode = this->handle_allocator->entry(i)->inode;
 		    *iter_inode = loop_inode; /*channel handle is the same as channel index*/
 		    *iter_name = short_name; /*get name of item*/
 		    *iter_is_dir = 0; /*get info that item is not directory*/
