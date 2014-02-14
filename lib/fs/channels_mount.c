@@ -1096,36 +1096,16 @@ static int channels_truncate_size(struct ChannelMounts* this,const char* path, o
 static int channels_isatty(struct ChannelMounts* this,int fd){
     SET_ERRNO( ENOSYS );
     return -1;
-
 }
 
 static int channels_dup(struct ChannelMounts* this,int oldfd){
-    const struct HandleItem* hentry;
-    errno = 0;
-
-    /*case: file not opened, bad descriptor*/
-    if ( this->handle_allocator->check_handle_is_related_to_filesystem(oldfd, &this->public) == -1 ){
-	SET_ERRNO( EBADF );
-	return -1;
-    }
-
-    hentry = this->handle_allocator->entry(oldfd);
-    
-    int ret = this->open_files_pool->refer_ofd(hentry->open_file_description_id);
-    assert(ret==0);
-    /*get dup handle */
-    int handle = this->handle_allocator->allocate_handle(&this->public,
-							 hentry->inode,
-							 hentry->open_file_description_id);
-    if ( handle == -1 ){
-	this->open_files_pool->release_ofd(hentry->open_file_description_id);
-	SET_ERRNO(ENFILE);
-	return -1;
-    }
-    return handle;
+    /*see generic implementation in transparent_mount*/
+    SET_ERRNO( ENOSYS );
+    return -1;
 }
 
 static int channels_dup2(struct ChannelMounts* this,int oldfd, int newfd){
+    /*see generic implementation in transparent_mount*/
     SET_ERRNO( ENOSYS );
     return -1;
 }

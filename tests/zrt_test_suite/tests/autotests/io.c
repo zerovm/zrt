@@ -33,13 +33,18 @@
 #include "macro_tests.h"
 
 #define READ_WRITE_CHANNEL "/dev/read-write"
+#define READONLY_CHANNEL "/dev/readonly"
 static char tmpfile_template[PATH_MAX] = "/tmp/test.XXXXXX";
+static char tmpfile_template2[PATH_MAX] = "/tmp/test2.XXXXXX";
 
 /*pread/pwrite tests*/
 void test_zrt_issue_81(const char* filename);
 
-/*dup-dup2 tests*/
-void test_zrt_issue_78(const char* filename);
+/*dup tests*/
+void test_zrt_issue_78_1(const char* filename);
+/*dup2 tests*/
+void test_zrt_issue_78_2(const char* filename, const char* filename_newfd);
+
 
 int main(int argc, char **argv)
 {
@@ -54,8 +59,19 @@ int main(int argc, char **argv)
     test_zrt_issue_81(tmpfile_template);
 
     /*devices fs test dup functions*/
-    test_zrt_issue_78(READ_WRITE_CHANNEL);
-    test_zrt_issue_78(tmpfile_template);
+    test_zrt_issue_78_1(READ_WRITE_CHANNEL);
+    /*generic filesystem dup test*/
+    test_zrt_issue_78_1(tmpfile_template);
+
+    /*devices fs dup2 tests*/
+    test_zrt_issue_78_2(READ_WRITE_CHANNEL, READONLY_CHANNEL);
+    test_zrt_issue_78_2(READ_WRITE_CHANNEL, tmpfile_template);
+
+    TEST_OPERATION_RESULT( mkstemp(tmpfile_template2), &fd, fd!=-1&&errno==0 );
+
+    /*generic fs dup2 tests*/
+    test_zrt_issue_78_2(tmpfile_template, READONLY_CHANNEL);
+    test_zrt_issue_78_2(tmpfile_template, tmpfile_template2);
 }
 
 void test_zrt_issue_81(const char* filename){
@@ -89,7 +105,7 @@ void test_zrt_issue_81(const char* filename){
     TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
 }
 
-void test_zrt_issue_78(const char* filename){
+void test_zrt_issue_78_1(const char* filename){
     int dupfd, fd, ret;
     char buf[PATH_MAX];
     const int test_offset = 100;
@@ -102,6 +118,34 @@ void test_zrt_issue_78(const char* filename){
 
     /*get new handle and close old*/
     TEST_OPERATION_RESULT( dup(fd), &dupfd, dupfd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
+
+    TEST_OPERATION_RESULT( lseek(dupfd, 0, SEEK_CUR), &ret, ret==test_offset&&errno==0 );
+    TEST_OPERATION_RESULT( read(dupfd, buf, strlen(filename)), &ret, ret==strlen(filename)&&errno==0 );
+    
+    TEST_OPERATION_RESULT( close(dupfd), &ret, ret==0&&errno==0 );
+}
+
+
+void test_zrt_issue_78_2(const char* filename, const char* filename_newfd){
+    int dupfd, fd, newfd, ret;
+    char buf[PATH_MAX];
+    const int test_offset = 100;
+    
+    /*open file to be closed by dup2*/
+    TEST_OPERATION_RESULT( open(filename_newfd, O_RDONLY), &newfd, newfd!=-1&&errno==0 );
+    /*current offset is 0*/
+    TEST_OPERATION_RESULT( lseek(newfd, 0, SEEK_CUR), &ret, ret==0&&errno==0 );
+
+    TEST_OPERATION_RESULT( open(filename, O_RDWR), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( lseek(fd, test_offset, SEEK_SET), &ret, ret==test_offset&&errno==0 );
+    TEST_OPERATION_RESULT( write(fd, filename, strlen(filename) ), &ret, ret==strlen(filename)&&errno==0 );
+    TEST_OPERATION_RESULT( lseek(fd, test_offset, SEEK_SET), &ret, ret==test_offset&&errno==0 );
+
+    /*get new handle, get closed newfd and close old*/
+    TEST_OPERATION_RESULT( dup2(fd, newfd), &dupfd, dupfd!=-1&&errno==0 );
+    /*after dup2 current offset is not 0*/
+    TEST_OPERATION_RESULT( lseek(newfd, 0, SEEK_CUR), &ret, ret==test_offset&&errno==0 );
     TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
 
     TEST_OPERATION_RESULT( lseek(dupfd, 0, SEEK_CUR), &ret, ret==test_offset&&errno==0 );
