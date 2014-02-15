@@ -47,7 +47,7 @@ struct zcalls_init_t{
     int (*sysconf)(int name, int *value);
     /* irt fdio *************************/
     int (*close)(int fd);
-    int (*dup)(int fd, int *newfd);
+    int (*dup)(int fd);
     int (*dup2)(int fd, int newfd);
     int (*read)(int fd, void *buf, size_t count, size_t *nread);
     int (*write)(int fd, const void *buf, size_t count, size_t *nwrote);
