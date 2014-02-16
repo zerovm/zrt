@@ -38,6 +38,7 @@ lib/nvram/observers/precache_observer.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
+lib/fs/open_file_description.c \
 lib/fs/channels_array.c \
 lib/fs/channels_mount.c \
 lib/fs/channels_readdir.c \

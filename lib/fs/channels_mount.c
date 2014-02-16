@@ -39,7 +39,8 @@
 #include "nacl_struct.h"
 #include "mount_specific_interface.h"
 #include "mounts_interface.h"
-#include "handle_allocator.h"
+#include "handle_allocator.h" //struct HandleAllocator, struct HandleItem
+#include "open_file_description.h" //struct OpenFilesPool, struct OpenFileDescription
 #include "fcntl_implem.h"
 #include "enum_strings.h"
 #include "channels_readdir.h"
@@ -56,11 +57,11 @@ enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
     if ( EPosSetRelative == whence ){			\
 	if ( CHECK_NEW_POS( *pos_p+offset ) == -1 )	\
             { SET_ERRNO( EOVERFLOW ); return -1; }	\
-	else return *pos_p +=offset; }			\
+	else  *pos_p +=offset; }			\
     else{						\
 	if ( CHECK_NEW_POS( offset ) == -1 )		\
 	    { SET_ERRNO( EOVERFLOW ); return -1; }	\
-	else return *pos_p  =offset; }
+	else *pos_p  =offset; }
 
 #define CHANNEL_IS_OPENED(hallocator_p, handle)			\
     ( (hallocator_p)->mount_interface(handle)==NULL ?0 :1 )
@@ -91,6 +92,7 @@ struct ChannelMounts{
     struct MountsPublicInterface public;
     struct manifest_loaded_directories_t manifest_dirs;
     struct HandleAllocator* handle_allocator;
+    struct OpenFilesPool* open_files_pool;
     struct ChannelsArrayPublicInterface* channels_array;
     struct MountSpecificPublicInterface* mount_specific_interface;
 };
@@ -109,33 +111,31 @@ struct MountSpecificImplem{
 
 /*return 0 if handle not valid, or 1 if handle is correct*/
 static int check_handle(struct MountSpecificImplem* this, int handle){
-    return (handle >=0 && handle < this->channels_array->count(this->channels_array)) ? 1 : 0;
+    return !HALLOCATOR_BY_MOUNT_SPECIF(this)
+	 ->check_handle_is_related_to_filesystem(handle, &this->mount->public);
 }
 
 static const char* handle_path(struct MountSpecificImplem* this, int handle){
-    ino_t inode;
-    HALLOCATOR_BY_MOUNT_SPECIF(this)->get_inode(handle, &inode);
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this)
+	 ->check_handle_is_related_to_filesystem(handle, &this->mount->public) != 0 ) return NULL;
 
-    struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
-    if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT_SPECIF(this), handle) != 0 ){
-	return CHANNEL_NAME( item );
-    }
-    else{
-	return NULL;
-    }
+    const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT_SPECIF(this)->entry(handle);
+    return CHANNEL_NAME( CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode) );
 }
 
 static int file_status_flags(struct MountSpecificImplem* this, int handle){
-    int flags=0;
-    if ( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT_SPECIF(this), handle ) != 0 ){
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this)
+	 ->check_handle_is_related_to_filesystem(handle, &this->mount->public) == 0 ){
+
 	/*get runtime information related to channel*/
-	HALLOCATOR_BY_MOUNT_SPECIF(this)->get_flags(handle, &flags);
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT_SPECIF(this)->ofd(handle);
+	assert(ofd);
+	return ofd->flags;
     }
     else{
 	SET_ERRNO(EBADF);
-	flags = -1;
+	return -1;
     }
-    return flags;
 }
 
 static int set_file_status_flags(struct MountSpecificPublicInterface* this_, int fd, int flags){
@@ -143,15 +143,15 @@ static int set_file_status_flags(struct MountSpecificPublicInterface* this_, int
     return -1;
 }
 
-/*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
+/*return pointer at success, NULL if fd didn't found or flock
+  structure has not been set*/
 static const struct flock* flock_data( struct MountSpecificImplem* this, int handle ){
     const struct flock* data = NULL;
 
-    if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT_SPECIF(this), handle) != 0 ){
-	ino_t inode;
-	HALLOCATOR_BY_MOUNT_SPECIF(this)->get_inode(handle, &inode);
-	struct ChannelArrayItem* item 
-	    = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this)
+	 ->check_handle_is_related_to_filesystem(handle, &this->mount->public) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT_SPECIF(this)->entry(handle);
+	struct ChannelArrayItem* item  = CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
 	/*get runtime information related to channel*/
 	data = &item->channel_runtime.fcntl_flock;
     }
@@ -162,11 +162,10 @@ static const struct flock* flock_data( struct MountSpecificImplem* this, int han
 static int set_flock_data( struct MountSpecificImplem* this, int handle, 
 			   const struct flock* flock_data ){
     int rc = 1; /*error by default*/
-    if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT_SPECIF(this), handle) != 0 ){
-	ino_t inode;
-	HALLOCATOR_BY_MOUNT_SPECIF(this)->get_inode(handle, &inode);
-	struct ChannelArrayItem* item 
-	    = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this)
+	 ->check_handle_is_related_to_filesystem(handle, &this->mount->public) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT_SPECIF(this)->entry(handle);
+	struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
 	/*get runtime information related to channel*/
 	memcpy( &item->channel_runtime.fcntl_flock, flock_data, sizeof(struct flock) );
 	rc = 0; /*ok*/
@@ -226,18 +225,6 @@ static int check_channel_flags(const struct ZVMChannel *chan, int flags)
     return 1;
 }
 
-static void debug_mes_zrt_channel_runtime( struct ChannelArrayItem* item, int handle ){
-    if (item){
-        ZRT_LOG(L_EXTRA, 
-		"handle=%d, sequential_access_pos=%llu, random_access_pos=%llu",
-                handle, 
-		//STR_FILE_OPEN_FLAGS(item->channel_runtime.flags),
-                item->channel_runtime.sequential_access_pos, 
-		item->channel_runtime.random_access_pos );
-    }
-}
-
-
 static int open_channel( struct ChannelMounts* this, const char *name, int flags, int mode )
 {
     struct ChannelArrayItem* item 
@@ -259,16 +246,17 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
         return -1;
     }
 
-    /*open file and return new handle*/
-    int handle = this->handle_allocator->allocate_handle(&this->public);
+    int open_file_descr = this->open_files_pool->getnew_ofd(flags);
+    /*open file and return new handle, zvm handle is used as indode, 
+      and can be used in order to do multiple opens of single file */
+    int handle = this->handle_allocator->allocate_handle(&this->public,
+							 item->channel_runtime.inode,
+							 open_file_descr);
     if ( handle == -1 ){
+	this->open_files_pool->release_ofd(open_file_descr);
 	SET_ERRNO(ENFILE);
 	return -1;
     }
-
-    /*zvm handle is used as indode, and can be used in order to do multiple ones */
-    this->handle_allocator->set_inode(handle, item->channel_runtime.inode);
-    this->handle_allocator->set_flags(handle, flags);
 
     ZRT_LOG(L_EXTRA, "channel open ok, handle=%d, inode=%d ", 
 	    handle, item->channel_runtime.inode );
@@ -304,10 +292,12 @@ static uint32_t channel_permissions(const struct ChannelArrayItem *item){
 }
 
 
-static int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_channel,
+static int64_t channel_pos_sequen_get_sequen_put( struct ChannelMounts* this, int open_file_description_id,
 						  int8_t whence, int8_t access, int64_t offset ){
+    const struct OpenFileDescription* ofd = this->open_files_pool->entry(open_file_description_id);
+    off_t openfile_offset_seq = ofd->channel_sequential_offset;
     /*seek get supported by channel for any modes*/
-    if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
+    if ( EPosGet == whence ) return openfile_offset_seq;
     switch ( access ){
     case EPosSeek:
         /*seek set does not supported for this channel type*/
@@ -315,7 +305,9 @@ static int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_chann
         return -1;
     case EPosRead:
     case EPosWrite:
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
+        SET_SAFE_OFFSET( whence, &openfile_offset_seq, offset );
+	this->open_files_pool->set_offset_sequential_channel(open_file_description_id, openfile_offset_seq);
+	return openfile_offset_seq;
         break;
     default:
         assert(0);
@@ -324,19 +316,25 @@ static int64_t channel_pos_sequen_get_sequen_put( struct ZrtChannelRt *zrt_chann
 }
 
 
-static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_channel,
+static int64_t channel_pos_random_get_sequen_put( struct ChannelMounts* this, int open_file_description_id,
 						  int flags, int8_t whence, int8_t access, int64_t offset ){
+    const struct OpenFileDescription* ofd = this->open_files_pool->entry(open_file_description_id);
+    off_t openfile_offset_seq = ofd->channel_sequential_offset;
+    off_t openfile_offset_rand = ofd->offset;
+
     switch ( access ){
     case EPosSeek:
         if ( CHECK_FLAG( flags, O_RDONLY )
 	     || CHECK_FLAG( flags, O_RDWR ) )
 	    {
-		if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-		SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+		if ( EPosGet == whence ) return openfile_offset_rand;
+		SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+		this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+		return openfile_offset_rand;
 	    }
         else if ( CHECK_FLAG( flags, O_WRONLY ) == 1 )
 	    {
-		if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
+		if ( EPosGet == whence ) return openfile_offset_seq;
 		else{
 		    /*it's does not supported for seeking sequential write*/
 		    SET_ERRNO( ESPIPE );
@@ -345,12 +343,16 @@ static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_chann
 	    }
         break;
     case EPosRead:
-        if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+        if ( EPosGet == whence ) return openfile_offset_rand;
+        SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+	this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+	return openfile_offset_rand;
         break;
     case EPosWrite:
-        if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
+        if ( EPosGet == whence ) return openfile_offset_seq;
+        SET_SAFE_OFFSET( whence, &openfile_offset_seq, offset );
+	this->open_files_pool->set_offset_sequential_channel(open_file_description_id, openfile_offset_seq);
+	return openfile_offset_seq;
         break;
     default:
         assert(0);
@@ -358,19 +360,25 @@ static int64_t channel_pos_random_get_sequen_put( struct ZrtChannelRt *zrt_chann
     }
 }
 
-static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channel,
+static int64_t channel_pos_sequen_get_random_put(struct ChannelMounts* this, int open_file_description_id,
 						 int flags, int8_t whence, int8_t access, int64_t offset){
+    const struct OpenFileDescription* ofd = this->open_files_pool->entry(open_file_description_id);
+    off_t openfile_offset_seq = ofd->channel_sequential_offset;
+    off_t openfile_offset_rand = ofd->offset;
+
     switch ( access ){
     case EPosSeek:
         if ( CHECK_FLAG( flags, O_WRONLY ) == 1
 	     || CHECK_FLAG( flags, O_RDWR ) == 1 )
 	    {
-		if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-		SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+		if ( EPosGet == whence ) return openfile_offset_rand;
+		SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+		this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+		return openfile_offset_rand;
 	    }
         else if ( CHECK_FLAG( flags, O_RDONLY )  == 1)
 	    {
-		if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
+		if ( EPosGet == whence ) return openfile_offset_seq;
 		else{
 		    /*it's does not supported for seeking sequential read*/
 		    SET_ERRNO( ESPIPE );
@@ -379,12 +387,16 @@ static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channe
 	    }
         break;
     case EPosRead:
-        if ( EPosGet == whence ) return zrt_channel->sequential_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->sequential_access_pos, offset );
+        if ( EPosGet == whence ) return openfile_offset_seq;
+        SET_SAFE_OFFSET( whence, &openfile_offset_seq, offset );
+	this->open_files_pool->set_offset_sequential_channel(open_file_description_id, openfile_offset_seq);
+	return openfile_offset_seq;
         break;
     case EPosWrite:
-        if ( EPosGet == whence ) return zrt_channel->random_access_pos;
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+	if ( EPosGet == whence ) return openfile_offset_rand;
+	SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+	this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+	return openfile_offset_rand;
         break;
     default:
         assert(0);
@@ -392,14 +404,19 @@ static int64_t channel_pos_sequen_get_random_put(struct ZrtChannelRt *zrt_channe
     }
 }
 
-static int64_t channel_pos_random_get_random_put(struct ZrtChannelRt *zrt_channel,
+static int64_t channel_pos_random_get_random_put(struct ChannelMounts* this, int open_file_description_id,
 						 int8_t whence, int8_t access, int64_t offset){
-    if ( EPosGet == whence ) return zrt_channel->random_access_pos;
+    const struct OpenFileDescription* ofd = this->open_files_pool->entry(open_file_description_id);
+    off_t openfile_offset_rand = ofd->offset;
+
+    if ( EPosGet == whence ) return openfile_offset_rand;
     switch ( access ){
     case EPosSeek:
     case EPosRead:
     case EPosWrite:
-        SET_SAFE_OFFSET( whence, &zrt_channel->random_access_pos, offset );
+	SET_SAFE_OFFSET( whence, &openfile_offset_rand, offset );
+	this->open_files_pool->set_offset(open_file_description_id, openfile_offset_rand);
+	return openfile_offset_rand;
         break;
     default:
         assert(0);
@@ -407,29 +424,33 @@ static int64_t channel_pos_random_get_random_put(struct ZrtChannelRt *zrt_channe
     }
 }
 
-/*@param pos_whence If EPosGet offset unused, otherwise check and set offset
+/*@param pos_whence If EPosGet offset unused, otherwise check and set offset 
  *@return -1 if bad offset, else offset result*/
-static int64_t channel_pos( struct ChannelMounts* this, int handle, int8_t whence, int8_t access, int64_t offset ){
-    if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT(this), handle) != 0 ){
-	ino_t inode;
-	HALLOCATOR_BY_MOUNT(this)->get_inode(handle, &inode);
-	struct ChannelArrayItem* item 
-	    = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
-	int flags;
-	HALLOCATOR_BY_MOUNT(this)->get_flags(handle, &flags);
+static int64_t channel_pos( struct ChannelMounts* this, 
+			    int handle, int8_t whence, int8_t access, int64_t offset ){
+    if ( HALLOCATOR_BY_MOUNT(this)
+	 ->check_handle_is_related_to_filesystem(handle, &this->public) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this)->entry(handle);
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this)->ofd(handle);
+	struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
+	int flags = ofd->flags;
         int8_t access_type = item->channel->type;
         switch ( access_type ){
         case SGetSPut:
-            return channel_pos_sequen_get_sequen_put( &item->channel_runtime, whence, access, offset );
+            return channel_pos_sequen_get_sequen_put(this, hentry->open_file_description_id,
+						     whence, access, offset );
             break;
         case RGetSPut:
-            return channel_pos_random_get_sequen_put( &item->channel_runtime, flags, whence, access, offset );
+            return channel_pos_random_get_sequen_put(this, hentry->open_file_description_id, 
+						     flags, whence, access, offset );
             break;
         case SGetRPut:
-            return channel_pos_sequen_get_random_put( &item->channel_runtime, flags, whence, access, offset );
+            return channel_pos_sequen_get_random_put(this, hentry->open_file_description_id, 
+						     flags, whence, access, offset );
             break;
         case RGetRPut:
-            return channel_pos_random_get_random_put( &item->channel_runtime, whence, access, offset );
+            return channel_pos_random_get_random_put(this, hentry->open_file_description_id, 
+						     whence, access, offset );
             break;
         }
     }
@@ -503,8 +524,7 @@ static void set_stat(struct ChannelMounts* this, struct stat *stat, int inode)
 static int iterate_dir_contents( struct ChannelMounts* this, int dir_handle, int index, 
 			  int* iter_inode, const char** iter_name, int* iter_is_dir ){
     int i=0;
-    ino_t inode;
-    this->handle_allocator->get_inode(dir_handle, &inode);
+    ino_t inode = this->handle_allocator->entry(dir_handle)->inode;
 
     /*get directory data by handle*/
     struct dir_data_t* dir_pattern =
@@ -557,10 +577,9 @@ static int iterate_dir_contents( struct ChannelMounts* this, int dir_handle, int
 		if ( index == file_index ){
 		    /*fetch name from full path*/
 		    int shortname_len;
+		    ino_t loop_inode = INODE_FROM_ZVM_INODE(i);		    
 		    const char *short_name = 
 			name_from_path_get_path_len( CHANNEL_NAME( channel_item ), &shortname_len );
-		    ino_t loop_inode;
-		    this->handle_allocator->get_inode(i, &loop_inode);
 		    *iter_inode = loop_inode; /*channel handle is the same as channel index*/
 		    *iter_name = short_name; /*get name of item*/
 		    *iter_is_dir = 0; /*get info that item is not directory*/
@@ -741,27 +760,28 @@ static ssize_t channels_write(struct ChannelMounts* this,int fd, const void *buf
 
 static ssize_t channels_pread(struct ChannelMounts* this, int fd, void *buf, 
 			      size_t nbyte, off_t offset){
-    ino_t inode;
-    int flags;
     int32_t readed = 0;
+    const struct HandleItem* hentry;
+    const struct OpenFileDescription* ofd;
     errno = 0;
 
     /*case: file not opened, bad descriptor*/
-    if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT(this), fd) == 0 ){
+    if ( this->handle_allocator->check_handle_is_related_to_filesystem(fd, &this->public) == -1 ){
 	SET_ERRNO( EBADF );
 	return -1;
     }
 
-    HALLOCATOR_BY_MOUNT(this)->get_inode(fd, &inode);
-    HALLOCATOR_BY_MOUNT(this)->get_flags(fd, &flags);
+    hentry = this->handle_allocator->entry(fd); 
+    ofd = this->handle_allocator->ofd(fd);
+    assert(ofd);
 
     /*check if file was not opened for reading*/
-    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags&O_ACCMODE, O_RDONLY, O_RDWR);
+    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_RDONLY, O_RDWR);
 
     /*try to read from emulated channel, else read via zvm_pread call */
     int handled=0;
-    if ( (readed=emu_handle_read(this, inode, buf, nbyte, &handled)) == -1 && !handled )
-	readed = zvm_pread( ZVM_INODE_FROM_INODE(inode), buf, nbyte, offset );
+    if ( (readed=emu_handle_read(this, hentry->inode, buf, nbyte, &handled)) == -1 && !handled )
+	readed = zvm_pread( ZVM_INODE_FROM_INODE(hentry->inode), buf, nbyte, offset );
     if(readed > 0) channel_pos(this, fd, EPosSetAbsolute, EPosRead, offset+readed);
     
     ZRT_LOG(L_EXTRA, "channel fd=%d, bytes readed=%d", fd, readed );
@@ -777,32 +797,31 @@ static ssize_t channels_pread(struct ChannelMounts* this, int fd, void *buf,
 
 static ssize_t channels_pwrite(struct ChannelMounts* this,int fd, const void *buf, 
 			       size_t nbyte, off_t offset){
-    ino_t inode;
-    int flags;
     int32_t wrote = 0;
+    const struct HandleItem* hentry;
+    const struct OpenFileDescription* ofd;
+    struct ChannelArrayItem* item;
+
     errno=0;
     //if ( fd < 3 ) disable_logging_current_syscall();
 
-    /*file not opened, bad descriptor*/
-    if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT(this), fd) == 0 ){
-	ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
+    /*case: file not opened, bad descriptor*/
+    if ( this->handle_allocator->check_handle_is_related_to_filesystem(fd, &this->public) == -1 ){
 	SET_ERRNO( EBADF );
 	return -1;
     }
 
-    HALLOCATOR_BY_MOUNT(this)->get_inode(fd, &inode);
-    HALLOCATOR_BY_MOUNT(this)->get_flags(fd, &flags);
-
-    struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
-    debug_mes_zrt_channel_runtime( item, fd );
+    hentry = this->handle_allocator->entry(fd); 
+    ofd = this->handle_allocator->ofd(fd);
+    assert(ofd);
 
     /*if file was not opened for writing, set errno and get error*/
-    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags&O_ACCMODE, O_WRONLY, O_RDWR);
+    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_WRONLY, O_RDWR);
 
     /*try to read from emulated channel, else read via zvm_pread call */
     int handled=0;
-    if ( (wrote=emu_handle_write(this, inode, buf, nbyte, &handled)) == -1 && !handled )
-	wrote = zvm_pwrite(ZVM_INODE_FROM_INODE(inode), buf, nbyte, offset );
+    if ( (wrote=emu_handle_write(this, hentry->inode, buf, nbyte, &handled)) == -1 && !handled )
+	wrote = zvm_pwrite(ZVM_INODE_FROM_INODE(hentry->inode), buf, nbyte, offset );
     if(wrote > 0) channel_pos(this, fd, EPosSetAbsolute, EPosWrite, offset+wrote);
     ZRT_LOG(L_EXTRA, "channel fd=%d, bytes wrote=%d", fd, wrote);
 
@@ -812,6 +831,7 @@ static ssize_t channels_pwrite(struct ChannelMounts* this,int fd, const void *bu
         return -1;
     }
 
+    item = CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
     update_artificial_channel_size(this, fd, item);
 
     return wrote;
@@ -826,17 +846,15 @@ static int channels_fchmod(struct ChannelMounts* this,int fd, mode_t mode){
 }
 
 static int channels_fstat(struct ChannelMounts* this, int fd, struct stat *buf){
-    ino_t inode;
-    errno = 0;
-    ZRT_LOG(L_EXTRA, "fd=%d", fd);
+    errno=0;
 
-    if ( this->handle_allocator->mount_interface(fd) != &this->public ){
-        SET_ERRNO(EBADF);
-        return -1;
+    /*case: file not opened, bad descriptor*/
+    if ( this->handle_allocator->check_handle_is_related_to_filesystem(fd, &this->public) == -1 ){
+	SET_ERRNO( EBADF );
+	return -1;
     }
 
-    HALLOCATOR_BY_MOUNT(this)->get_inode(fd, &inode);
-    set_stat( this, buf, inode); /*channel fd*/
+    set_stat( this, buf, this->handle_allocator->entry(fd)->inode); /*channel fd*/
     return 0;
 }
 
@@ -858,7 +876,12 @@ static int channels_getdents(struct ChannelMounts* this, int fd, void *buf, unsi
     }
 
     errno=0;
-    ZRT_LOG( L_INFO, "fd=%d, buf_size=%d", fd, buf_size );
+
+    /*case: file not opened, bad descriptor*/
+    if ( this->handle_allocator->check_handle_is_related_to_filesystem(fd, &this->public) == -1 ){
+	SET_ERRNO( EBADF );
+	return -1;
+    }
 
     /* check null and  make sure the buffer is aligned */
     if ( !buf || 0 != ((sizeof(unsigned long) - 1) & (uintptr_t) buf)) {
@@ -866,15 +889,15 @@ static int channels_getdents(struct ChannelMounts* this, int fd, void *buf, unsi
         return -1;
     }
     int bytes_read=0;
+    const struct HandleItem* hentry;
+    const struct OpenFileDescription* ofd;
 
-    /*get offset, and use it as cursor that using to iterate directory contents*/
-    off_t offset;
-    this->handle_allocator->get_offset(fd, &offset );
-    ino_t dir_inode;
-    this->handle_allocator->get_inode(fd, &dir_inode );
+    /*use offset of opened directoctory as cursor pos to iterate directory contents*/
+    hentry = this->handle_allocator->entry(fd); 
+    ofd = this->handle_allocator->ofd(fd);
 
     /*through via list all directory contents*/
-    int index=offset;
+    int index=ofd->offset;
     int iter_inode=0;
     const char* iter_item_name = NULL;
     int iter_is_dir=0;
@@ -899,8 +922,7 @@ static int channels_getdents(struct ChannelMounts* this, int fd, void *buf, unsi
 	}
     }
     /*update offset index of handled directory item*/
-    offset = index;
-    this->handle_allocator->set_offset(fd, offset );
+    this->open_files_pool->set_offset(hentry->open_file_description_id, index );
     return bytes_read;
 }
 
@@ -910,61 +932,50 @@ static int channels_fsync(struct ChannelMounts* this,int fd){
 }
 
 static int channels_close(struct ChannelMounts* this,int fd){
-    ino_t inode;
+    const struct HandleItem* hentry;
     errno = 0;
-    ZRT_LOG(L_EXTRA, "fd=%d", fd);
 
-    /*if handle is valid*/
-    if( this->handle_allocator->mount_interface(fd) == &this->public ){
-	HALLOCATOR_BY_MOUNT(this)->get_inode(fd, &inode);
-	struct ChannelArrayItem* item 
-	    = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
-	if ( item != NULL ){
-	    item->channel_runtime.random_access_pos 
-		= item->channel_runtime.sequential_access_pos  = 0;
+    /*case: file not opened, bad descriptor*/
+    if ( this->handle_allocator->check_handle_is_related_to_filesystem(fd, &this->public) == -1 ){
+	SET_ERRNO( EBADF );
+	return -1;
+    }
+
+    hentry = this->handle_allocator->entry(fd);
+    
+    struct ChannelArrayItem* item 
+	= CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode);
+    if ( item != NULL ){
 #define SAVE_SYNTHETIC_SIZE
 #ifndef SAVE_SYNTHETIC_SIZE
-	    item->channel_runtime.maxsize = 0;
+	item->channel_runtime.maxsize = 0;
 #endif
 
-	    ZRT_LOG(L_EXTRA, "closed channel=%s", CHANNEL_NAME( item ) );
-	}
-	else{ /*search fd in directories list*/
-	    ino_t inode;
-	    this->handle_allocator->get_inode(fd, &inode);
-	    struct dir_data_t * dir = match_inode_in_directory_list(&this->manifest_dirs, inode);
-	    assert( dir != NULL );
-	}
+	ZRT_LOG(L_EXTRA, "closed channel=%s", CHANNEL_NAME( item ) );
+    }
+    else{ /*search fd in directories list*/
+	struct dir_data_t * dir = match_inode_in_directory_list(&this->manifest_dirs, hentry->inode);
+	assert( dir != NULL );
+    }
 
-	/*reset offset of last i/o operations for handle*/
-	off_t offset = 0;
-	this->handle_allocator->set_offset(fd, offset );
-	this->handle_allocator->free_handle(fd);
-    }
-    else{
-        SET_ERRNO( EBADF );
-        return -1;
-    }
+    int res = this->open_files_pool->release_ofd(hentry->open_file_description_id);
+    assert(res==0);
+
+    this->handle_allocator->free_handle(fd);
     return 0;
 }
 
 static off_t channels_lseek(struct ChannelMounts* this,int fd, off_t offset, int whence){
-    ino_t inode;
+    const struct HandleItem* hentry;
     errno = 0;
-    
-    /* check fd */
-    if( CHANNEL_IS_OPENED( this->handle_allocator, fd) == 0 ){
-        SET_ERRNO( EBADF );
-        return -1;
+
+    /*case: file not opened, bad descriptor*/
+    if ( this->handle_allocator->check_handle_is_related_to_filesystem(fd, &this->public) == -1 ){
+	SET_ERRNO( EBADF );
+	return -1;
     }
 
-    ZRT_LOG(L_INFO, "offt size=%d, fd=%d, offset=%lld", sizeof(off_t), fd, offset);
-    HALLOCATOR_BY_MOUNT(this)->get_inode(fd, &inode);
-    struct ChannelArrayItem* item = CHANNEL_ITEM_BY_INODE(this->channels_array, inode);
-    debug_mes_zrt_channel_runtime( item, fd );
-
-    ZRT_LOG(L_EXTRA, "channel name=%s, whence=%s", 
-	    CHANNEL_NAME( item ), STR_SEEK_WHENCE(whence) );
+    hentry = this->handle_allocator->entry(fd);
 
     switch(whence)
 	{
@@ -978,7 +989,7 @@ static off_t channels_lseek(struct ChannelMounts* this,int fd, off_t offset, int
 		offset = channel_pos(this, fd, EPosSetRelative, EPosSeek, offset );
 	    break;
 	case SEEK_END:{
-	    off_t size = CHANNEL_SIZE( CHANNEL_ITEM_BY_INODE(this->channels_array, inode) );
+	    off_t size = CHANNEL_SIZE( CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode) );
 	    /*use runtime size instead static size in zvm channel*/
 	    offset = channel_pos(this, fd, EPosSetAbsolute, EPosSeek, size + offset );
 	    break;
@@ -1008,17 +1019,19 @@ static int channels_open(struct ChannelMounts* this,const char* path, int oflag,
         /*if valid directory path matched */
         if ( dir != NULL ){
 	    /*directory exist, try to open*/
-	    if ( CHECK_FLAG(oflag, O_RDONLY) ){  
+	    if ( CHECK_FLAG(oflag, O_RDONLY) ){
+		int ofd_id = this->open_files_pool->getnew_ofd(oflag);
+
 		/*it's allowed to open in read only mode*/
-		int handle = this->handle_allocator->allocate_handle(&this->public);
+		int handle = this->handle_allocator->allocate_handle(&this->public,
+								     dir->dir_inode,
+								     ofd_id);
 		if ( handle == -1 ){
+		    this->open_files_pool->release_ofd(ofd_id);
 		    SET_ERRNO(ENFILE);
 		    return -1;
 		}
-		/*directory handle is ok*/
-		this->handle_allocator->set_inode( handle, dir->dir_inode );
-		this->handle_allocator->set_flags( handle, oflag );
-		return handle;
+		return handle; /*directory handle is ok*/
 	    }
 	    else{  /*Not allowed read-write / write access*/
 		SET_ERRNO( EACCES );
@@ -1083,15 +1096,16 @@ static int channels_truncate_size(struct ChannelMounts* this,const char* path, o
 static int channels_isatty(struct ChannelMounts* this,int fd){
     SET_ERRNO( ENOSYS );
     return -1;
-
 }
 
 static int channels_dup(struct ChannelMounts* this,int oldfd){
+    /*see generic implementation in transparent_mount*/
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
 static int channels_dup2(struct ChannelMounts* this,int oldfd, int newfd){
+    /*see generic implementation in transparent_mount*/
     SET_ERRNO( ENOSYS );
     return -1;
 }
@@ -1185,6 +1199,7 @@ channel_mode_updater_construct(struct MountsPublicInterface* channels_mount){
 struct MountsPublicInterface* 
 channels_filesystem_construct( struct ChannelsModeUpdaterPublicInterface** mode_updater,
 			       struct HandleAllocator* handle_allocator,
+			       struct OpenFilesPool* open_files_pool,
 			       const struct ZVMChannel* zvm_channels, int zvm_channels_count,
 			       const struct ZVMChannel* emu_channels, int emu_channels_count ){
     struct ChannelMounts* this = malloc( sizeof(struct ChannelMounts) );
@@ -1193,6 +1208,7 @@ channels_filesystem_construct( struct ChannelsModeUpdaterPublicInterface** mode_
     this->public = KChannels_mount;
     /*set data members*/
     this->handle_allocator = handle_allocator; /*use existing handle allocator*/
+    this->open_files_pool = open_files_pool; /*use existing opened files pool*/
     this->channels_array = CONSTRUCT_L(CHANNELS_ARRAY)(zvm_channels, zvm_channels_count,
 						       emu_channels, emu_channels_count);
     this->mount_specific_interface = 

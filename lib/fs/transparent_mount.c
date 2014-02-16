@@ -33,6 +33,9 @@
 #include "mounts_interface.h"
 #include "fcntl_implem.h"
 
+#include "handle_allocator.h" //struct HandleAllocator, struct HandleItem
+#include "open_file_description.h" //struct OpenFilesPool, struct OpenFileDescription
+
 static struct MountsManager* s_mounts_manager;
 
 #define CONVERT_PATH_TO_MOUNT(full_path)			\
@@ -356,20 +359,76 @@ static int transparent_isatty(struct MountsPublicInterface *this, int fd){
 
 static int transparent_dup(struct MountsPublicInterface *this, int oldfd){
     struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(oldfd);
-    if ( mount )
-	return mount->dup( mount, oldfd );
+    if ( mount ){
+	const struct HandleItem* hentry;
+	errno = 0;
+
+	/*case: file not opened, bad descriptor*/
+	if ( get_handle_allocator()->check_handle_is_related_to_filesystem(oldfd, mount) == -1 ){
+	    SET_ERRNO( EBADF );
+	    return -1;
+	}
+
+	hentry = get_handle_allocator()->entry(oldfd);
+    
+	int ret = get_open_files_pool()->refer_ofd(hentry->open_file_description_id);
+	assert(ret==0);
+	/*get dup handle */
+	int handle = get_handle_allocator()->allocate_handle(mount,
+							     hentry->inode,
+							     hentry->open_file_description_id);
+	if ( handle == -1 ){
+	    get_open_files_pool()->release_ofd(hentry->open_file_description_id);
+	    SET_ERRNO(ENFILE);
+	    return -1;
+	}
+	return handle;
+    }
     else{
-	SET_ERRNO( EBADF );
+        errno = EBADF;
         return -1;
     }
 }
 
 static int transparent_dup2(struct MountsPublicInterface *this, int oldfd, int newfd){
     struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(oldfd);
-    if ( mount )
-	return mount->dup2( mount, oldfd, newfd );
+    if ( mount ){
+	const struct HandleItem* hentry;
+	errno = 0;
+
+	/*case: file not opened, bad descriptor*/
+	if ( get_handle_allocator()->check_handle_is_related_to_filesystem(oldfd, mount) == -1 ){
+	    SET_ERRNO( EBADF );
+	    return -1;
+	}
+	if ( oldfd == newfd ) return newfd; /*does nothing*/
+	    
+	/*close newfd if it's opened in any fs*/
+	struct MountsPublicInterface* mount2 = s_mounts_manager->mount_byhandle(newfd);
+	if (mount2){
+	    if ( get_handle_allocator()->check_handle_is_related_to_filesystem(newfd, mount2) == 0 ){
+		mount2->close(mount2, newfd);
+	    }
+	}
+	
+	hentry = get_handle_allocator()->entry(oldfd);
+    
+	int ret = get_open_files_pool()->refer_ofd(hentry->open_file_description_id);
+	assert(ret==0);
+	/*get dup handle */
+	int handle = get_handle_allocator()->allocate_handle2(mount,
+							      hentry->inode,
+							      hentry->open_file_description_id,
+							      newfd);
+	if ( handle == -1 ){
+	    get_open_files_pool()->release_ofd(hentry->open_file_description_id);
+	    SET_ERRNO(ENFILE);
+	    return -1;
+	}
+	return handle;
+    }
     else{
-	SET_ERRNO( EBADF );
+        errno = EBADF;
         return -1;
     }
 }

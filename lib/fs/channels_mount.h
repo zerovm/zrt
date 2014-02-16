@@ -34,6 +34,7 @@
 
 struct ZVMChannel;
 struct HandleAllocator;
+struct OpenFilesPool;
 
 /*used by mapping nvram section for setting custom channel type*/
 struct ChannelsModeUpdaterPublicInterface{
@@ -46,6 +47,7 @@ struct ChannelsModeUpdaterPublicInterface{
 struct MountsPublicInterface* 
 channels_filesystem_construct ( struct ChannelsModeUpdaterPublicInterface** mode_updater,
 			        struct HandleAllocator* handle_allocator,
+				struct OpenFilesPool* open_files_pool,
 				const struct ZVMChannel* zvm_channels, int zvm_channels_count,
 				const struct ZVMChannel* emu_channels, int emu_channels_count);
 

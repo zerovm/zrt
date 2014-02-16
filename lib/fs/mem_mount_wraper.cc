@@ -21,7 +21,8 @@ extern "C" {
 #include "mounts_interface.h"
 #include "mount_specific_interface.h"
 extern "C" {
-#include "handle_allocator.h"
+#include "handle_allocator.h" //struct HandleAllocator, struct HandleItem
+#include "open_file_description.h" //struct OpenFilesPool, struct OpenFileDescription
 #include "fstab_observer.h" /*lazy mount*/
 #include "fcntl_implem.h"
 #include "channels_mount.h"
@@ -53,6 +54,9 @@ extern "C" {
 #define HALLOCATOR_BY_MOUNT_SPECIF(mount_specific_interface_p)		\
     ((struct InMemoryMounts*)((struct MountSpecificImplem*)(mount_specific_interface_p))->mount)->handle_allocator
 
+#define OFILESPOOL_BY_MOUNT_SPECIF(mount_specific_interface_p)		\
+    ((struct InMemoryMounts*)((struct MountSpecificImplem*)(mount_specific_interface_p))->mount)->open_files_pool
+
 #define MOUNT_INTERFACE_BY_MOUNT_SPECIF(mount_specific_interface_p)	\
     ((struct MountsPublicInterface*)((struct MountSpecificImplem*)(mount_specific_interface_p))->mount)
 
@@ -61,6 +65,9 @@ extern "C" {
 
 #define HALLOCATOR_BY_MOUNT(mount_interface_p)				\
     ((struct InMemoryMounts*)(mount_interface_p))->handle_allocator
+
+#define OFILESPOOL_BY_MOUNT(mount_interface_p)				\
+    ((struct InMemoryMounts*)(mount_interface_p))->open_files_pool
 
 #define MEMOUNT_BY_MOUNT(mounts_interface_p) ((struct InMemoryMounts*)mounts_interface_p)->mem_mount_cpp
 
@@ -76,6 +83,7 @@ extern "C" {
 struct InMemoryMounts{
     struct MountsPublicInterface public_;
     struct HandleAllocator* handle_allocator;
+    struct OpenFilesPool*   open_files_pool;
     MemMount*               mem_mount_cpp;
     struct MountSpecificPublicInterface* mount_specific_interface;
 };
@@ -113,7 +121,7 @@ static ssize_t get_file_len( struct MountsPublicInterface* this_, ino_t node) {
 
 /***********************************************************************
    implementation of MountSpecificPublicInterface as part of
-   filesystem.  Below resides channels specific functions.*/
+   filesystem.  Below resides related functions.*/
 
 struct MountSpecificImplem{
     struct MountSpecificPublicInterface public_;
@@ -122,79 +130,101 @@ struct MountSpecificImplem{
 
 /*return 0 if handle not valid, or 1 if handle is correct*/
 static int check_handle(struct MountSpecificPublicInterface* this_, int handle){
-    ino_t inode;
-    int ret;
-    GET_INODE_BY_HANDLE( HALLOCATOR_BY_MOUNT_SPECIF(this_), handle, &inode, &ret);
-    if ( ret == 0 && !is_dir( MOUNT_INTERFACE_BY_MOUNT_SPECIF(this_), inode) ) return 1;
-    else return 0;
+    return !HALLOCATOR_BY_MOUNT_SPECIF(this_)
+	 ->check_handle_is_related_to_filesystem(handle, 
+						 &((struct MountSpecificImplem*)this_)->mount->public_);
 }
 
 static const char* path_handle(struct MountSpecificPublicInterface* this_, int handle){
-    ino_t inode;
-    int ret;
-    GET_INODE_BY_HANDLE( HALLOCATOR_BY_MOUNT_SPECIF(this_), handle, &inode, &ret);
-    if ( ret == 0 ){
-	/*path is OK*/
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this_)
+	 ->check_handle_is_related_to_filesystem(handle, 
+						 &((struct MountSpecificImplem*)this_)->mount->public_) == 0 ){
+	const struct HandleItem* hentry;
+	hentry = HALLOCATOR_BY_MOUNT_SPECIF(this_)->entry(handle);
+
 	/*get runtime information related to channel*/
-    	MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
+	MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), hentry->inode);
 	if ( mnode ){
 	    return mnode->name().c_str();
 	}
 	else
 	    return NULL;
     }
-    else{
+    else
 	return NULL;
-    }
 }
 
 static int file_status_flags(struct MountSpecificPublicInterface* this_, int fd){
-    ino_t inode;
-    int flags;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode);
-
-    HALLOCATOR_BY_MOUNT_SPECIF(this_)->get_flags( fd, &flags );
-    return flags;
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this_)
+	 ->check_handle_is_related_to_filesystem(fd, 
+						 &((struct MountSpecificImplem*)this_)->mount->public_) == 0 ){
+	const struct OpenFileDescription* ofd;
+	ofd = HALLOCATOR_BY_MOUNT_SPECIF(this_)->ofd(fd);
+	assert(ofd);
+	return ofd->flags;
+    }
+    else{
+	SET_ERRNO(EBADF);						\
+	return -1;							\
+    }
 }
 
 static int set_file_status_flags(struct MountSpecificPublicInterface* this_, int fd, int flags){
-    ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode);
-
-    HALLOCATOR_BY_MOUNT_SPECIF(this_)->set_flags( fd, flags );
-    return flags;
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this_)
+	 ->check_handle_is_related_to_filesystem(fd, 
+						 &((struct MountSpecificImplem*)this_)->mount->public_) == 0 ){
+	const struct HandleItem* hentry;
+	hentry = HALLOCATOR_BY_MOUNT_SPECIF(this_)->entry(fd);
+	OFILESPOOL_BY_MOUNT_SPECIF(this_)->set_flags( hentry->open_file_description_id,
+						      flags);
+	return flags;
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data(struct MountSpecificPublicInterface* this_, int fd ){
-    const struct flock* data = NULL;
-    ino_t inode;
-    int ret;
-    GET_INODE_BY_HANDLE(HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode, &ret);
-    if ( ret == 0 ){
-	/*handle is OK*/
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this_)
+	 ->check_handle_is_related_to_filesystem(fd, 
+						 &((struct MountSpecificImplem*)this_)->mount->public_) == 0 ){
+	MemNode* mnode;	
+	const struct HandleItem* hentry;
+	hentry = HALLOCATOR_BY_MOUNT_SPECIF(this_)->entry(fd);
+
 	/*get runtime information related to channel*/
-    	MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
+    	mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), hentry->inode);
 	assert(mnode);
-	data = mnode->flock();
+	return mnode->flock();
     }
-    return data;
+    else{
+	SET_ERRNO(EBADF);
+	return NULL;
+    }
 }
 
 /*return 0 if success, -1 if fd didn't found*/
 static int set_flock_data(struct MountSpecificPublicInterface* this_, int fd, const struct flock* flock_data ){
-    ino_t inode;
-    int ret;
-    GET_INODE_BY_HANDLE(HALLOCATOR_BY_MOUNT_SPECIF(this_), fd, &inode, &ret);
-    if ( ret !=0 ) return -1;
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this_)
+	 ->check_handle_is_related_to_filesystem(fd, 
+						 &((struct MountSpecificImplem*)this_)->mount->public_) == 0 ){
+	MemNode* mnode;	
+	const struct HandleItem* hentry;
+	hentry = HALLOCATOR_BY_MOUNT_SPECIF(this_)->entry(fd);
 
-    /*handle is OK*/
-    /*get runtime information related to channel*/
-    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), inode);
-    assert(mnode);
-    mnode->set_flock(flock_data);
-    return 0; /*OK*/
+	/*get runtime information related to channel*/
+    	mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), hentry->inode);
+	assert(mnode);
+	mnode->set_flock(flock_data);
+	return 0;
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 static struct MountSpecificPublicInterface KMountSpecificImplem = {
@@ -309,98 +339,132 @@ static int mem_mount(struct MountsPublicInterface* this_, const char* path, void
 }
 
 static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
-    ino_t inode;
-    off_t offset;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-    HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
-    return this_->pread(this_, fd, buf, nbyte, offset);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
+	assert(ofd);
+	return this_->pread(this_, fd, buf, nbyte, ofd->offset);
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
-    ino_t inode;
-    off_t offset;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-    HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
-    return this_->pwrite(this_, fd, buf, nbyte, offset);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
+	assert(ofd);
+	return this_->pwrite(this_, fd, buf, nbyte, ofd->offset);
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 static ssize_t mem_pread(struct MountsPublicInterface* this_, 
 			 int fd, void *buf, size_t nbyte, off_t offset){
-    int ret;
-    ino_t inode;
-    int flags;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-
-    HALLOCATOR_BY_MOUNT(this_)->get_flags( fd, &flags );
-
-    /*check if file was not opened for reading*/
-    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags&O_ACCMODE, O_RDONLY, O_RDWR);
-
-    ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Read( inode, offset, buf, nbyte );
-    if ( readed >= 0 ){
-	offset += readed;
-	/*update offset*/
-	ret = HALLOCATOR_BY_MOUNT(this_)->set_offset( fd, offset );
-	assert( ret == 0 );
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
+	assert(ofd);
+	/*check if file was not opened for reading*/
+	CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_RDONLY, O_RDWR);
+	ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Read( hentry->inode, offset, buf, nbyte );
+	if ( readed >= 0 ){
+	    int ret;
+	    offset += readed;
+	    /*update offset*/
+	    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset( hentry->open_file_description_id, offset );
+	    assert( ret == 0 );
+	}
+	/*return readed bytes or error*/
+	return readed;
     }
-    /*return readed bytes or error*/
-    return readed;
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 static ssize_t mem_pwrite(struct MountsPublicInterface* this_, 
 			  int fd, const void *buf, size_t nbyte, off_t offset){
-    int ret;
-    ino_t inode;
-    int flags;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
+	assert(ofd);
+	/*check if file was not opened for writing*/
+	CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_WRONLY, O_RDWR);
 
-    HALLOCATOR_BY_MOUNT(this_)->get_flags( fd, &flags );
-
-    /*check if file was not opened for writing*/
-    CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(flags&O_ACCMODE, O_WRONLY, O_RDWR);
-
-    ssize_t wrote = MEMOUNT_BY_MOUNT(this_)->Write( inode, offset, buf, nbyte );
-    if ( wrote != -1 ){
-	offset += wrote;
-	ret = HALLOCATOR_BY_MOUNT(this_)->set_offset( fd, offset );
-	assert( ret == 0 );
+	ssize_t wrote = MEMOUNT_BY_MOUNT(this_)->Write( hentry->inode, offset, buf, nbyte );
+	if ( wrote != -1 ){
+	    int ret;
+	    offset += wrote;
+	    /*update offset*/
+	    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset( hentry->open_file_description_id, offset );
+	    assert( ret == 0 );
+	}
+	return wrote;
     }
-    return wrote;
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 static int mem_fchown(struct MountsPublicInterface* this_, int fd, uid_t owner, gid_t group){
-    ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-    return MEMOUNT_BY_MOUNT(this_)->Chown( inode, owner, group);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	return MEMOUNT_BY_MOUNT(this_)->Chown( hentry->inode, owner, group);
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 static int mem_fchmod(struct MountsPublicInterface* this_, int fd, uint32_t mode){
-    ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-    return MEMOUNT_BY_MOUNT(this_)->Chmod( inode, mode);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	return MEMOUNT_BY_MOUNT(this_)->Chmod( hentry->inode, mode);
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 
 static int mem_fstat(struct MountsPublicInterface* this_, int fd, struct stat *buf){
-    ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-    return MEMOUNT_BY_MOUNT(this_)->Stat( inode, buf);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	return MEMOUNT_BY_MOUNT(this_)->Stat( hentry->inode, buf);
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 static int mem_getdents(struct MountsPublicInterface* this_, int fd, void *buf, unsigned int count){
-    ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
+	assert(ofd);
 
-    off_t offset;
-    int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset( fd, &offset );
-    assert( ret == 0 );
-    ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Getdents( inode, offset, (DIRENT*)buf, count);
-    if ( readed != -1 ){
-	offset += readed;
-	ret = HALLOCATOR_BY_MOUNT(this_)->set_offset( fd, offset );
-	assert( ret == 0 );
+	ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Getdents( hentry->inode, ofd->offset, (DIRENT*)buf, count);
+	if ( readed != -1 ){
+	    int ret;
+	    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset( hentry->open_file_description_id, 
+							  ofd->offset + readed );
+	    assert( ret == 0 );
+	}
+	return readed;
     }
-    return readed;
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 static int mem_fsync(struct MountsPublicInterface* this_, int fd){
@@ -409,67 +473,70 @@ static int mem_fsync(struct MountsPublicInterface* this_, int fd){
 }
 
 static int mem_close(struct MountsPublicInterface* this_, int fd){
-    ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-    MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), inode);
-    assert(mnode);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	int ret;	
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), hentry->inode);
+	assert(mnode);
 
-    MEMOUNT_BY_MOUNT(this_)->Unref(mnode->slot()); /*decrement use count*/
-    if ( mnode->UnlinkisTrying() ){
-	int ret = MEMOUNT_BY_MOUNT(this_)->UnlinkInternal(mnode);
-	assert( ret == 0 );	
-    }
-    
-    int ret = HALLOCATOR_BY_MOUNT(this_)->free_handle(fd);
-    assert( ret == 0 );
-    return 0;
-}
-
-static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset, int whence){
-    ino_t inode;
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-
-    if ( !is_dir(this_, inode) ){
-	off_t next;
-	int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset(fd, &next );
-	assert( ret == 0 );
-	ssize_t len;
-
-	switch (whence) {
-	case SEEK_SET:
-	    next = offset;
-	    break;
-	case SEEK_CUR:
-	    next += offset;
-	    // TODO(arbenson): handle EOVERFLOW if too big.
-	    break;
-	case SEEK_END:
-	    // TODO(krasin, arbenson): FileHandle should store file len.
-	    len = get_file_len( this_, inode );
-	    if (len == -1) {
-		return -1;
-	    }
-	    next = static_cast<size_t>(len) + offset;
-	    // TODO(arbenson): handle EOVERFLOW if too big.
-	    break;
-	default:
-	    SET_ERRNO(EINVAL);
-	    return -1;
+	MEMOUNT_BY_MOUNT(this_)->Unref(mnode->slot()); /*decrement use count*/
+	if ( mnode->UnlinkisTrying() ){
+	    ret = MEMOUNT_BY_MOUNT(this_)->UnlinkInternal(mnode);
+	    assert( ret == 0 );	
 	}
-	// Must not seek beyond the front of the file.
-	if (next < 0) {
-	    SET_ERRNO(EINVAL);
-	    return -1;
-	}
-	// Go to the new offset.
-	ret = HALLOCATOR_BY_MOUNT(this_)->set_offset(fd, next );
+
+	ret=OFILESPOOL_BY_MOUNT(this_)->release_ofd(hentry->open_file_description_id);    
 	assert( ret == 0 );
-	return next;
+	ret = HALLOCATOR_BY_MOUNT(this_)->free_handle(fd);
+	assert( ret == 0 );
+	return 0;
     }
     else{
 	SET_ERRNO(EBADF);
 	return -1;
     }
+}
+
+static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset, int whence){
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
+	assert(ofd);
+	if ( !is_dir(this_, hentry->inode) ){
+	    off_t next = ofd->offset;
+	    int ret;
+	    ssize_t len;
+	    switch (whence) {
+	    case SEEK_SET:
+		next = offset;
+		break;
+	    case SEEK_CUR:
+		next += offset;
+		break;
+	    case SEEK_END:
+		len = get_file_len( this_, hentry->inode );
+		if (len == -1) {
+		    return -1;
+		}
+		next = static_cast<size_t>(len) + offset;
+		break;
+	    default:
+		SET_ERRNO(EINVAL);
+		return -1;
+	    }
+	    // Must not seek beyond the front of the file.
+	    if (next < 0) {
+		SET_ERRNO(EINVAL);
+		return -1;
+	    }
+	    // Go to the new offset.
+	    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset(hentry->open_file_description_id, next);
+	    assert( ret == 0 );
+	    return next;
+	}
+    }
+    SET_ERRNO(EBADF);
+    return -1;
 }
 
 static int mem_open(struct MountsPublicInterface* this_, const char* path, int oflag, uint32_t mode){
@@ -480,34 +547,28 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 	/*If need to create path, then do it with errors checking*/
 	ret = MEMOUNT_BY_MOUNT(this_)->Open(path, oflag, mode);
     }
-
     /* get node from memory FS for specified type, if no errors occured 
      * then file allocated in memory FS and require file desc - fd*/
     struct stat st;
     if ( ret == 0 && MEMOUNT_BY_MOUNT(this_)->GetNode( path, &st) == 0 ){
+	int open_file_description_id = OFILESPOOL_BY_MOUNT(this_)->getnew_ofd(oflag);
 	/*ask for file descriptor in handle allocator*/
-	int fd = HALLOCATOR_BY_MOUNT(this_)->allocate_handle( this_ );
+	int fd = HALLOCATOR_BY_MOUNT(this_)->allocate_handle( this_, 
+							      st.st_ino,
+							      open_file_description_id);
 	if ( fd < 0 ){
 	    /*it's hipotetical but possible case if amount of open files 
 	      are exceeded an maximum value.*/
-	    /*TODO: Add functional test for it*/
+	    OFILESPOOL_BY_MOUNT(this_)->release_ofd(open_file_description_id);
 	    SET_ERRNO(ENFILE);
 	    return -1;
 	}
-	
-	/* As inode and fd are depend each form other, we need update 
-	 * inode in handle allocator and stay them linked*/
-	ret = HALLOCATOR_BY_MOUNT(this_)->set_inode( fd, st.st_ino );
-	assert( ret == 0 );
-	HALLOCATOR_BY_MOUNT(this_)->set_flags(fd, oflag);
 	MEMOUNT_BY_MOUNT(this_)->Ref(st.st_ino); /*set file referred*/
-
 	/*append feature support, is simple*/
 	if ( oflag & O_APPEND ){
 	    ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_APPEND");
 	    mem_lseek(this_, fd, 0, SEEK_END);
 	}
-
 	/*file truncate support, only for writable files, reset size*/
 	if ( oflag&O_TRUNC && (oflag&O_RDWR || oflag&O_WRONLY) ){
 	    /*reset file size*/
@@ -520,23 +581,27 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 		ZRT_LOG(L_SHORT, "%s, %d", mnode->name().c_str(), mnode->len() );
 	    }
 	}
-
 	/*success*/
 	return fd;
     }
-    else
-	return -1;
+    SET_ERRNO(ENOENT);
+    return -1;
 }
 
 static int mem_fcntl(struct MountsPublicInterface* this_, int fd, int cmd, ...){
-    ino_t inode;
-    ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-    if ( is_dir(this_, inode) ){
-	SET_ERRNO(EBADF);
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
+	if ( is_dir(this_, hentry->inode) ){
+	    SET_ERRNO(EBADF);
+	    return -1;
+	}
+	return 0;
+    }
+    else{
+	SET_ERRNO(ENOENT);
 	return -1;
     }
-    return 0;
 }
 
 static int mem_remove(struct MountsPublicInterface* this_, const char* path){
@@ -552,55 +617,59 @@ static int mem_access(struct MountsPublicInterface* this_, const char* path, int
 }
 
 static int mem_ftruncate_size(struct MountsPublicInterface* this_, int fd, off_t length){
-    ino_t inode;
-    MemNode* node; 
-    GET_INODE_BY_HANDLE_OR_RAISE_ERROR( HALLOCATOR_BY_MOUNT(this_), fd, &inode);
-    if ( !is_dir(this_, inode) ){
-	if ((node=NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), inode )) != NULL){
+    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
+	assert(ofd);
 
-	    int flags;
-	    HALLOCATOR_BY_MOUNT(this_)->get_flags( fd, &flags );
+	MemNode* node; 
+	if ( !is_dir(this_, hentry->inode) ){
+	    if ((node=NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), hentry->inode )) != NULL){
 
-	    /*check if file was not opened for writing*/
-	    flags &= O_ACCMODE;
-	    if ( flags!=O_WRONLY && flags!=O_RDWR ){
-		ZRT_LOG(L_ERROR, 
-			"file open flags=%s not allow write", 
-			STR_FILE_OPEN_FLAGS(flags));
-		SET_ERRNO( EINVAL );
-		return -1;
-	    }
-	    /*set file length on related node and update new length in stat*/
-	    node->set_len(length);
+		int flags = ofd->flags & O_ACCMODE;
+		/*check if file was not opened for writing*/
+		if ( flags!=O_WRONLY && flags!=O_RDWR ){
+		    ZRT_LOG(L_ERROR, "file open flags=%s not allow write", 
+			    STR_FILE_OPEN_FLAGS(flags));
+		    SET_ERRNO( EINVAL );
+		    return -1;
+		}
+		/*set file length on related node and update new length in stat*/
+		node->set_len(length);
 
-	    /*in according to docs if reducing file offset should not
-	     be changed, but on ubuntu linux host offset is not staying
-	     beyond of file bounds and assignes to max availibale
-	     pos. Juyt do it the same as on host */
+		/*in according to docs: if doing file size reduce then
+		  offset should not be changed, but on ubuntu linux
+		  host offset is not staying beyond of file bounds and
+		  assignes to max availibale pos. Just do it the same
+		  as on host */
 #define DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
 
 #ifdef DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
-	    off_t offset;
-	    int ret = HALLOCATOR_BY_MOUNT(this_)->get_offset(fd, &offset );
-	    assert(ret==0);
-	    if ( length < offset ){
-		offset = length+1;
-		ret = HALLOCATOR_BY_MOUNT(this_)->set_offset(fd, offset );
-		assert( ret == 0 );
-	    }
+		off_t offset = ofd->offset;
+		if ( length < offset ){
+		    int ret;
+		    offset = length+1;
+		    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset(hentry->open_file_description_id,
+								 offset);
+		    assert( ret == 0 );
+		}
 #endif //DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
 
-	    ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d",
-		    (int)length, get_file_len( this_, inode ));
-	    /*file size truncated */
+		ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d",
+			(int)length, get_file_len( this_, hentry->inode ));
+		/*file size truncated */
+	    }
+	    return 0;
 	}
-	return 0;
+	else{
+	    SET_ERRNO(EBADF);
+	    return -1;
+	}
     }
     else{
 	SET_ERRNO(EBADF);
 	return -1;
     }
-    return -1;
 }
 
 int mem_truncate_size(struct MountsPublicInterface* this_, const char* path, off_t length){
@@ -630,25 +699,6 @@ static int mem_link(struct MountsPublicInterface* this_, const char* oldpath, co
 	/*errno already setted by MemMount*/
 	return ret;
     }
-
-    /*ask for file descriptor in handle allocator*/
-    int fd = HALLOCATOR_BY_MOUNT(this_)->allocate_handle( this_ );
-    if ( fd < 0 ){
-	/*it's hipotetical but possible case if amount of open files 
-	  are exceeded an maximum value*/
-	SET_ERRNO(ENFILE);
-	return -1;
-    }
-
-    MemNode* mnode = NODE_OBJECT_BYPATH( MEMOUNT_BY_MOUNT(this_), newpath);
-    assert(mnode);
-
-    /* As inode and fd are depend each form other, we need update 
-     * inode in handle allocator and stay them linked*/
-    ret = HALLOCATOR_BY_MOUNT(this_)->set_inode( fd, mnode->slot() );
-    ZRT_LOG(L_EXTRA, "errcode ret=%d", ret );
-    assert( ret == 0 );
-
     return 0;
 }
 
@@ -691,7 +741,8 @@ static struct MountsPublicInterface KInMemoryMountWraper = {
 };
 
 struct MountsPublicInterface* 
-inmemory_filesystem_construct( struct HandleAllocator* handle_allocator ){
+inmemory_filesystem_construct( struct HandleAllocator* handle_allocator,
+			       struct OpenFilesPool* open_files_pool){
     /*use malloc and not new, because it's external c object*/
     struct InMemoryMounts* this_ = (struct InMemoryMounts*)malloc( sizeof(struct InMemoryMounts) );
 
@@ -699,6 +750,7 @@ inmemory_filesystem_construct( struct HandleAllocator* handle_allocator ){
     this_->public_ = KInMemoryMountWraper;
     /*set data members*/
     this_->handle_allocator = handle_allocator; /*use existing handle allocator*/
+    this_->open_files_pool = open_files_pool; /*use existing open files pool*/
     this_->mount_specific_interface = CONSTRUCT_L(MOUNT_SPECIFIC)( &KMountSpecificImplem,
 								   this_);
     this_->mem_mount_cpp = new MemMount;
