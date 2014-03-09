@@ -452,11 +452,14 @@ static int mem_getdents(struct MountsPublicInterface* this_, int fd, void *buf, 
 	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
 	assert(ofd);
 
-	ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Getdents( hentry->inode, ofd->offset, (DIRENT*)buf, count);
+	off_t newoffset;
+	ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Getdents( hentry->inode, 
+							    ofd->offset, &newoffset,
+							    (DIRENT*)buf, count);
 	if ( readed != -1 ){
 	    int ret;
 	    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset( hentry->open_file_description_id, 
-							  ofd->offset + readed );
+							  newoffset );
 	    assert( ret == 0 );
 	}
 	return readed;
