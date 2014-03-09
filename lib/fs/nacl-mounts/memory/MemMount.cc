@@ -480,7 +480,7 @@ void MemMount::Unref(ino_t slot) {
     }
 }
 
-int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_size) {
+int MemMount::Getdents(ino_t slot, off_t offset, off_t *newoffset, void *buf, unsigned int buf_size) {
     MemNode *node = slots_.At(slot);
     // Check that node exist and it is a directory.
     if (node == NULL || !node->is_dir()) {
@@ -520,6 +520,7 @@ int MemMount::Getdents(ino_t slot, off_t offset, void *buf, unsigned int buf_siz
 				 node->name().c_str(), node->name().length() );
         ++pos;
     }
+    *newoffset=pos;
     return bytes_read;
 }
 

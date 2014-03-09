@@ -89,7 +89,7 @@ class MemMount {
   int Chown(ino_t slot, uid_t owner, gid_t group);
   int Chmod(ino_t slot, mode_t mode);
   int Stat(ino_t node, struct stat *buf);
-  int Getdents(ino_t node, off_t offset, void *buf, unsigned int count);
+  int Getdents(ino_t node, off_t offset, off_t *newoffset, void *buf, unsigned int count);
   ssize_t Read(ino_t node, off_t offset, void *buf, size_t count);
   ssize_t Write(ino_t node, off_t offset, const void *buf, size_t count);
 
