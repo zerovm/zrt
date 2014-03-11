@@ -37,6 +37,15 @@
 
 #define SMALL_BUF_SIZE 2
 
+void test_issue_93(){
+    #define STR "1111111"
+    int ret;
+    TEST_OPERATION_RESULT( chdir("/tmp"), &ret, ret==0&&errno==0 );
+    CREATE_FILE( "@tmp_1", STR, strlen(STR) );
+    CHECK_PATH_EXISTANCE("/tmp/@tmp_1");
+}
+
+
 int main(int argc, char **argv)
 {
     char buf[PATH_MAX];
@@ -81,6 +90,7 @@ int main(int argc, char **argv)
     TEST_OPERATION_RESULT( chdir(DEV_PATH), &ret, ret==0&&errno==0 );
     CHECK_PATH_EXISTANCE("stdin");
 
+    test_issue_93();
     return 0;
 }
 

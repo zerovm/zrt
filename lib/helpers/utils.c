@@ -27,6 +27,11 @@
 #define MERGE_PATH_COMPONENTS(path1, path2, result){		\
 	int path1len = strlen(path1);				\
 	strcpy(result, path1);					\
+	if ( path1len > 0 && path1[path1len-1] != '/' &&	\
+	     strlen(path2) > 0 && path2[0] != '/' ){		\
+	    strncpy(result+path1len, "/", PATH_MAX-path1len);	\
+	    ++path1len;						\
+	}							\
 	strncpy(result+path1len, path2, PATH_MAX-path1len);	\
     }
 
