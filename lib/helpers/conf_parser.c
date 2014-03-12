@@ -421,7 +421,7 @@ int unescape_string_copy_to_dest(const char* source, int sourcelen, char* dest){
 	hexint = hexchar-'0';						\
     if (hexchar >= 'a' && hexchar <= 'f')				\
 	hexint = 10+hexchar-'a';						\
-    if (hexchar >= 'F' && hexchar <= 'F')				\
+    if (hexchar >= 'A' && hexchar <= 'F')				\
 	hexint = 10+hexchar-'A';
 
 
