@@ -383,8 +383,8 @@ int parse_args(struct ParsedParam* parsed_args_array, int args_array_len,
 }
 
 #define MATCH_HEX(chr)							\
-    ((chr >= '0' && chr <= '9') || (chr >= 'a' && chr <= 'z') ||	\
-     (chr >= 'A' && chr <= 'Z'))? 1 : 0
+    ((chr >= '0' && chr <= '9') || (chr >= 'a' && chr <= 'f') ||	\
+     (chr >= 'A' && chr <= 'F'))? 1 : 0
 /*example: aa, 0a*/
 #define MATCH_2HEX_DIGITS(hexstr)				\
     (MATCH_HEX( (hexstr)[0] ) != 0 && MATCH_HEX( (hexstr)[1] ) != 0)
@@ -419,9 +419,9 @@ int unescape_string_copy_to_dest(const char* source, int sourcelen, char* dest){
 #define GET_VALIDATED_HEX_CHAR_TO_INT(hexchar, hexint)				\
     if (hexchar >= '0' && hexchar <= '9')				\
 	hexint = hexchar-'0';						\
-    if (hexchar >= 'a' && hexchar <= 'z')				\
+    if (hexchar >= 'a' && hexchar <= 'f')				\
 	hexint = 10+hexchar-'a';						\
-    if (hexchar >= 'A' && hexchar <= 'Z')				\
+    if (hexchar >= 'F' && hexchar <= 'F')				\
 	hexint = 10+hexchar-'A';
 
 
