@@ -45,6 +45,32 @@ void test_issue_93(){
     CHECK_PATH_EXISTANCE("/tmp/@tmp_1");
 }
 
+void test_issue_96(){
+#define STR "1111111"
+#define FILE "@tmp_test_1"
+    int ret;
+    char buf[PATH_MAX];
+    CREATE_FILE( FILE, STR, strlen(STR) );
+    TEST_OPERATION_RESULT( chdir("."), &ret, ret==0&&errno==0 );
+    sprintf(buf, "%s/%s", get_current_dir_name(), FILE );
+    TEST_OPERATION_RESULT( chdir(buf), &ret, ret==-1&&errno==ENOTDIR );
+}
+
+void test_issue_96_2()
+{
+#define STR "1111111"
+#define FILE "@tmp_test_1"
+#define DIR "\xe7w\xf0"
+    
+    int ret;
+    TEST_OPERATION_RESULT( chdir("/"), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( mkdir(DIR, 0777), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( chdir(DIR), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( strcmp(get_current_dir_name(), "/" DIR), &ret, ret==0&&errno==0 );
+    CREATE_FILE( FILE, STR, strlen(STR) );
+    CHECK_PATH_EXISTANCE("/" DIR "/" FILE);
+}
+
 
 int main(int argc, char **argv)
 {
@@ -91,6 +117,8 @@ int main(int argc, char **argv)
     CHECK_PATH_EXISTANCE("stdin");
 
     test_issue_93();
+    test_issue_96();
+    test_issue_96_2();
     return 0;
 }
 
