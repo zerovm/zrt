@@ -116,6 +116,7 @@ struct zcalls_nonsyscalls_t{
     int  (*stat_realpath) (const char *abspathname, struct stat *stat);
     int (*get_phys_pages)(void);
     int (*get_avphys_pages)(void);
+    int (*fchdir)(int fd);
 };
 
 #define ZCALLS_ENV_ARGS_INIT 4         /*use as type param in __query_zcalls*/

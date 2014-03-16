@@ -164,6 +164,7 @@ int zrt_zcall_ftruncate(int fd, off_t length);
 int zrt_zcall_stat_realpath(const char *abspathname, struct stat *stat);
 int zrt_zcall_get_phys_pages(void);
 int zrt_zcall_get_avphys_pages(void);
+int zrt_zcall_fchdir(int fd);
 
 #endif //__ZCALLS_H__
 

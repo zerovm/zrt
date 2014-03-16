@@ -17,6 +17,7 @@ lib/libc/chown.c \
 lib/libc/ftruncate.c \
 lib/libc/stat_realpath.c \
 lib/libc/getsysstats.c \
+lib/libc/fchdir.c \
 lib/zrtlog.c \
 lib/enum_strings.c \
 lib/helpers/dyn_array.c \
