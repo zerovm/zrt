@@ -87,7 +87,6 @@ enum PosWhence{ EPosGet=0, EPosSetAbsolute, EPosSetRelative };
 	return -1;							\
     }
 
-
 struct ChannelMounts{
     struct MountsPublicInterface public;
     struct manifest_loaded_directories_t manifest_dirs;
@@ -198,6 +197,9 @@ mount_specific_construct( struct MountSpecificPublicInterface* specific_implem_i
 
 //////////// helpers
 
+int64_t channel_pos( struct ChannelMounts* this, 
+		     int handle, int8_t whence, int8_t access, int64_t offset );
+
 /*return 0 if specified mode is matches to chan AccessType*/
 static int check_channel_flags(const struct ZVMChannel *chan, int flags)
 {
@@ -239,6 +241,14 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
         return -1;
     }
 
+    /*Append only channels support
+      Do not allow to open append only channel with wrong flags*/
+    if ( item->channel->type == RGetSPut && 
+	 ( !CHECK_FLAG(flags, O_APPEND) || CHECK_FLAG(flags, O_TRUNC) ) ){
+        SET_ERRNO( EPERM );
+        return -1;
+    }
+
     /*check access mode for opening channel, limits not checked*/
     if( check_channel_flags( item->channel, flags ) != 0 ){
         ZRT_LOG(L_ERROR, "can't open channel, name=%s ", name );
@@ -256,6 +266,13 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
 	this->open_files_pool->release_ofd(open_file_descr);
 	SET_ERRNO(ENFILE);
 	return -1;
+    }
+
+    /*Append only channels support
+     set writing pos into end of file*/
+    if ( CHECK_FLAG(flags, O_APPEND) ){
+	size_t chan_size = CHANNEL_SIZE(item);
+	channel_pos(this, handle, EPosSetAbsolute, EPosWrite, chan_size);
     }
 
     ZRT_LOG(L_EXTRA, "channel open ok, handle=%d, inode=%d ", 
@@ -426,8 +443,8 @@ static int64_t channel_pos_random_get_random_put(struct ChannelMounts* this, int
 
 /*@param pos_whence If EPosGet offset unused, otherwise check and set offset 
  *@return -1 if bad offset, else offset result*/
-static int64_t channel_pos( struct ChannelMounts* this, 
-			    int handle, int8_t whence, int8_t access, int64_t offset ){
+int64_t channel_pos( struct ChannelMounts* this, 
+		     int handle, int8_t whence, int8_t access, int64_t offset ){
     if ( HALLOCATOR_BY_MOUNT(this)
 	 ->check_handle_is_related_to_filesystem(handle, &this->public) == 0 ){
 	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this)->entry(handle);
@@ -658,7 +675,7 @@ static void
 update_artificial_channel_size(struct ChannelMounts* this, 
 			       int fd, struct ChannelArrayItem* item ){
     int8_t access_type = item->channel->type;
-    if ( access_type == SGetRPut || access_type == RGetRPut ){
+    if ( access_type == SGetRPut || access_type == RGetRPut || access_type == RGetSPut ){
 	item->channel_runtime.maxsize 
 	    = MAX(item->channel_runtime.maxsize,
 		  channel_pos(this, fd, EPosGet, EPosWrite, 0));

@@ -65,18 +65,33 @@ void zrt_test_issue72(){
     REMOVE_EXISTING_FILEPATH(filename);
 }
 
+void zrt_test_issue_102_103(){
+    const char* append_only_file = "/dev/read-write";
+    int fd, ret;
+    TEST_OPERATION_RESULT( open(append_only_file, O_RDWR|O_CREAT|O_APPEND, 0666), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( write(fd, append_only_file, strlen(append_only_file)), &ret, ret==strlen(append_only_file)&&errno==0 );
+    TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_END), &ret, ret==strlen(append_only_file)&&errno==0 );
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
+
+    TEST_OPERATION_RESULT( open(append_only_file, O_RDWR, 0666), &fd, fd==-1&&errno==EPERM );
+    TEST_OPERATION_RESULT( open(append_only_file, O_RDWR|O_APPEND|O_TRUNC, 0666), &fd, fd==-1&&errno==EPERM );
+
+    TEST_OPERATION_RESULT( open(append_only_file, O_RDWR|O_APPEND, 0666), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_END), &ret, ret==strlen(append_only_file)&&errno==0 );
+    TEST_OPERATION_RESULT( write(fd, append_only_file, strlen(append_only_file)), &ret, ret==strlen(append_only_file)&&errno==0 );
+    TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_END), &ret, ret==(2*strlen(append_only_file))&&errno==0 );
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0 );
+}
+
 int main(int argc, char **argv)
 {
     zrt_test_issue71();
     zrt_test_issue72();
 
+    zrt_test_issue_102_103();
+
     const char* fname1 = "/seeker.data";
     const char* fname2 = "/seeker2.data";
-
-//    int ret = creat( fname1, S_IRWXU);
-//    fprintf(stderr, "creat %s ret=%d\n", fname1, ret );
-//    ret = creat( fname2, S_IRWXU);
-//    fprintf(stderr, "creat %s ret=%d\n", fname2, ret );
 
     FILE *f = fopen( fname1, "w" );
     assert( f>0 );
