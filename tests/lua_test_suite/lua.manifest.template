@@ -10,8 +10,8 @@ Channel = {ABS_PATH}zrtdebug.log, /dev/debug, 0, 0, 0, 0, 9999999, 9999999
 =====================================================================
 == Mounts 
 =====================================================================
-Channel = {ABS_PATH}/lua.nvram, /dev/nvram, 1, 0, 9999999, 9999999, 0, 0 
-Channel = {ABS_PATH}mounts/lua-5.2.1-tests.tar, /dev/mount/root, 1, 0, 9999999, 9999999, 0, 0 
+Channel = {ABS_PATH}/lua.nvram, /dev/nvram, 3, 0, 9999999, 9999999, 0, 0 
+Channel = {ABS_PATH}mounts/lua-5.2.1-tests.tar, /dev/mount/root, 3, 0, 9999999, 9999999, 0, 0 
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
