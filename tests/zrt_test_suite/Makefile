@@ -48,6 +48,7 @@ ENV-nvram.c=name=FPATH, value=${TESTFILE}
 MAPPING-lstat-stat-mapping.c =channel=/dev/stdin, mode=char {BR}
 MAPPING-lstat-stat-mapping.c+=channel=/dev/stdout, mode=pipe {BR}
 MAPPING-lstat-stat-mapping.c+=channel=/dev/stderr, mode=file
+MAPPING-seek.c =channel=/dev/read-write, mode=file
 #####################################################################
 
 #####################################################################
@@ -80,14 +81,13 @@ FORK-fork.c+=$(shell mktemp -u)
 #generate manifest file
 #in this section describe channels type for all channels in manifest which have 
 #separated channels of unspecified type:
-#{CHANTYPE1} {CHANTYPE2} {CHANTYPE3} possible channel types: [0, 1, 2, 3]
+#{CHANNEL_READONLY_TYPE} {CHANNEL_WRITEONLY_TYPE} {CHANNEL_READWRITE_TYPE} 
+#possible channel type values: [0, 1, 2, 3]
 #this option is allow create manifest with specified channel type
 #examples: 
-CHANTYPE2-bigfile.c=2
-CHANTYPE1-sequential.c=0
-CHANTYPE2-sequential.c=0
-CHANTYPE3-sequential.c=1
-CHANTYPE3-io.c=3
+CHANNEL_WRITEONLY_TYPE-bigfile.c=2
+CHANNEL_READWRITE_TYPE-seek.c=1
+CHANNEL_READWRITE_TYPE-io.c=3
 #####################################################################
 
 #####################################################################
@@ -95,8 +95,16 @@ CHANTYPE3-io.c=3
 #in this section describe specific channel file size for some tests
 #this option is allow create manifest with specified channel size
 #examples: 
-CHANTYPE2_SIZE-bigfile.c=5368709120
+CHANNEL_WRITEONLY_SIZE-bigfile.c=5368709120
 #####################################################################
+
+#####################################################################
+#generate manifest file
+#inject some data into channels except standard channels
+#examples: 
+CHANNEL_READONLY_CONTENT-devices.c=something something
+#####################################################################
+
 
 #####################################################################
 #generate manifest file, set amount of memory 
