@@ -9,8 +9,6 @@ TEST_TAR_REMOUNT=$(CURDIR)/remount.tar
 #file for both TAR archives
 TESTFILE=test.1234
 OUTFILE=$(CURDIR)/$(BASENAME)
-#channels test file, 
-#CHANNEL_TEST_FILE_CONTENTS="something something something something "
 
 #default memory size
 DEF_MEMMAX=4294967296
@@ -132,9 +130,9 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #specific memory size
 	$(eval SPECIFIC_TEST_MEMMAX:=$(firstword $(MEMMAX-$(NAMEONLY).c) $(DEF_MEMMAX)))
 #prepare channel files
-	@echo $(SPECIFIC_TEST_CHANNEL_READONLY) > $(CHANNEL_READONLY)
-	@echo $(SPECIFIC_TEST_CHANNEL_WRITEONLY) > $(CHANNEL_WRITEONLY)
-	@echo $(SPECIFIC_TEST_CHANNEL_READWRITE) > $(CHANNEL_READWRITE)
+	@echo -n $(SPECIFIC_TEST_CHANNEL_READONLY) > $(CHANNEL_READONLY)
+	@echo -n $(SPECIFIC_TEST_CHANNEL_WRITEONLY) > $(CHANNEL_WRITEONLY)
+	@echo -n $(SPECIFIC_TEST_CHANNEL_READWRITE) > $(CHANNEL_READWRITE)
 #tar mount/remount support
 	$(eval SPECIFIC_TEST_MOUNT=$(CURDIR)/$(BASENAME).$(TEST_TAR))
 	@echo "RUN TEST $@ "
