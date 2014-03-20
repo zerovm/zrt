@@ -200,6 +200,8 @@ mount_specific_construct( struct MountSpecificPublicInterface* specific_implem_i
 int64_t channel_pos( struct ChannelMounts* this, 
 		     int handle, int8_t whence, int8_t access, int64_t offset );
 
+uint32_t channel_permissions(const struct ChannelArrayItem *item);
+
 /*return 0 if specified mode is matches to chan AccessType*/
 static int check_channel_flags(const struct ZVMChannel *chan, int flags)
 {
@@ -243,8 +245,16 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
 
     /*Append only channels support
       Do not allow to open append only channel with wrong flags*/
-    if ( item->channel->type == RGetSPut && 
-	 ( !CHECK_FLAG(flags, O_APPEND) || CHECK_FLAG(flags, O_TRUNC) ) ){
+    uint32_t permissions = channel_permissions(item);
+    if ( item->channel->type == RGetSPut && !CHECK_FLAG(flags, O_APPEND) &&
+	 CHECK_FLAG(permissions, S_IRUSR) && CHECK_FLAG(permissions, S_IWUSR) &&
+	 (CHECK_FLAG(permissions, S_IFBLK)||CHECK_FLAG(permissions, S_IFREG)) ){
+        SET_ERRNO( EPERM );
+        return -1;
+    }
+
+    /*truncate not allowed at all for channels */
+    if ( CHECK_FLAG(flags, O_TRUNC) ){
         SET_ERRNO( EPERM );
         return -1;
     }
@@ -281,7 +291,7 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
 }
 
 
-static uint32_t channel_permissions(const struct ChannelArrayItem *item){
+uint32_t channel_permissions(const struct ChannelArrayItem *item){
     uint32_t perm = 0;
     uint mode;
     assert(item);
