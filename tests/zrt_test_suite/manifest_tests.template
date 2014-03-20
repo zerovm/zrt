@@ -8,9 +8,9 @@ Channel = {OUTFILE}.zrtdebug.log, /dev/debug, 0, 0, 0, 0, 50999999, 50999999
 Channel = {OUTFILE}.nvram, /dev/nvram, 1, 0, 999999, 999999, 0, 0
 ==foo.tar must be created by main zrt Makefile in order to proper run some autotests
 Channel = {OUTFILE}.{TAR_MOUNT}, /dev/mount/import.tar, 1, 0, 9999999, 9999999, 0, 0
-Channel = {OUTFILE}.readonly.channel, /dev/readonly, {CHANTYPE1}, 0, 99999, 999999, 0, 0
-Channel = {OUTFILE}.writeonly.channel, /dev/writeonly, {CHANTYPE2}, 0, 0, 0, {CHANTYPE2_SIZE}, {CHANTYPE2_SIZE}
-Channel = {OUTFILE}.read-write.channel, /dev/read-write, {CHANTYPE3}, 0, 99999, 99999, 99999, 99999
+Channel = {OUTFILE}.readonly.channel, /dev/readonly, {CHANNEL_READONLY_TYPE}, 0, 99999, 999999, 0, 0
+Channel = {OUTFILE}.writeonly.channel, /dev/writeonly, {CHANNEL_WRITEONLY_TYPE}, 0, 0, 0, {CHANNEL_WRITEONLY_SIZE}, {CHANNEL_WRITEONLY_SIZE}
+Channel = {OUTFILE}.read-write.channel, /dev/read-write, {CHANNEL_READWRITE_TYPE}, 0, 99999, 99999, 99999, 99999
 
 =====================================================================
 == switches for zerovm. some of them used to control nexe, some
