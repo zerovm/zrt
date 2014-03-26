@@ -37,8 +37,12 @@ CMDLINE-nvram.c=args=nvram.nexe
 #trying to add env variable, escaping it twice because Makefile unescaping it
 #waiting is env variable:  usable=1,2,3/"3,2,1"
 ENV-environment.c=name=SafeWords, value=klaato_verada_nikto
-ENV-fork.c=name=FPATH, value=${TESTFILE}
-ENV-nvram.c=name=FPATH, value=${TESTFILE}
+####################################ENV-nvram.c =name=FPATH, value=${TESTFILE}
+ENV_FORKED-nvram.c=name=FPATH, value=${TESTFILE}
+ENV-fork.c=name=FPATH, value=${TESTFILE} {BR}
+ENV-fork.c+=name=new, value=1
+ENV_FORKED-fork.c =$(ENV-fork.c) {BR}
+ENV_FORKED-fork.c+=name=new, value=2
 #####################################################################
 
 
@@ -49,24 +53,30 @@ MAPPING-lstat-stat-mapping.c =channel=/dev/stdin, mode=char {BR}
 MAPPING-lstat-stat-mapping.c+=channel=/dev/stdout, mode=pipe {BR}
 MAPPING-lstat-stat-mapping.c+=channel=/dev/stderr, mode=file
 MAPPING-seek.c =channel=/dev/read-write, mode=file
+MAPPING-fork.c =channel=/dev/read-write, mode=char
+MAPPING_FORKED-fork.c =channel=/dev/read-write, mode=file
 #####################################################################
 
 #####################################################################
 #generate nvram file, 
 #fstab section for mounting tar archive
-#using many tests for fstab for access=ro
+#usng many tests for fstab for access=ro
 FSTAB-nvram.c =channel=/dev/mount/import.tar, mountpoint=/warm, access=ro, removable=no {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad, access=ro, bad=removable {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, removable=yes {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, removable=yes {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad1, access=ro {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad2, access=re, removable=yes {BR}
-FSTAB-fork.c =channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=yes {BR}
+FSTAB_FORKED-nvram.c=$(FSTAB-nvram.c)
+FSTAB-fork.c  =channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=no {BR}
 FSTAB-fork.c +=channel=/dev/mount/import.tar, mountpoint=/test, access=ro, removable=no {BR}
+#for forked session use new nvram config and do remount file, using updated removable field
+FSTAB_FORKED-fork.c  =channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=yes {BR}
 #####################################################################
 
 #####################################################################
 #generate nvram file, precache section
+#no PRECACHE available for forked session because logically it's can done only once
 PRECACHE-nvram.c=precache=yes {BR}
 #####################################################################
 

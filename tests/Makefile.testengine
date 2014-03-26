@@ -117,6 +117,11 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_FSTAB:=$(FSTAB-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_PRECACHE:=$(PRECACHE-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_FORK=$(FORK-$(NAMEONLY).c))
+#prepare variable ralated to forked session tests
+	$(eval SPECIFIC_TEST_CMDLINE_FORKED:=$(CMDLINE_FORKED-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_ENV_FORKED:=$(ENV_FORKED-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_MAPPING_FORKED:=$(MAPPING_FORKED-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_FSTAB_FORKED:=$(FSTAB_FORKED-$(NAMEONLY).c))
 #channels testing suport
 	$(eval SPECIFIC_TEST_CHANNEL_READONLY_TYPE:=$(firstword $(CHANNEL_READONLY_TYPE-$(NAMEONLY).c) $(DEF_CHANNEL_READONLY_TYPE)))
 	$(eval SPECIFIC_TEST_CHANNEL_WRITEONLY_TYPE:=$(firstword $(CHANNEL_WRITEONLY_TYPE-$(NAMEONLY).c) $(DEF_CHANNEL_WRITEONLY_TYPE)))
@@ -169,9 +174,16 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	| $(AWK_GET_ZEROVM_APP_RETURN_CODE) \
 	| $(AWK_HANDLE_FAIL) testname="$@"  2>&1 | tee -a $(OUTPUT_FAIL)
 #If session was forked by zfork() and socket file exist then restore forked session now
-#rewrite tar image to test remount
+#rewrite tar image to test remount, prepare updated nvram
 	@if [ "${SPECIFIC_TEST_FORK}" != "" ] && [ -S "${SPECIFIC_TEST_FORK}" ] ; then \
 	rm -f ${SPECIFIC_TEST_MOUNT}; cp -f ${TEST_TAR_REMOUNT} ${SPECIFIC_TEST_MOUNT}; \
+	sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV_FORKED)"@g nvram_tests.template | \
+	sed s@{MAPPING}@"$(SPECIFIC_TEST_MAPPING_FORKED)"@g | \
+	sed s@{FSTAB}@"$(SPECIFIC_TEST_FSTAB_FORKED)"@g | \
+	sed s@{PRECACHE}@"$(SPECIFIC_TEST_PRECACHE)"@g | \
+	sed s@{SECONDS}@"seconds=$(shell date +%s)"@g | \
+	sed s@{BR}@'\n'@g | \
+	sed s@{COMMAND_LINE}@"$(SPECIFIC_TEST_CMDLINE_FORKED)"@g > $(CURDIR)/$(BASENAME).nvram;	\
 	echo "RUN FORKED TEST $@ "; \
 	cat $(CURDIR)/$(BASENAME).manifest \
 	| python ../daemon_client.py "${SPECIFIC_TEST_FORK}" 2>&1 \

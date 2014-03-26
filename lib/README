@@ -11,27 +11,37 @@ user code to host system are not allowed, untrusted code at all should
 be prevalidated by ZeroVM before execution, see ZeroVM docs.
 Untrusted code - it's an any code running under ZeroVM. Both zerovm
 environment and user code running in the same address space.
-2. Implemented 2 own filesystems that also accessible via plaggable
+2. ZRT API now includes a one function zfork(), which actually an
+extension for ZVM API. It's calling zvm_fork() and in that moment then
+it returns execution context into a forked session, it will re-read
+nvram config and will handle sections :
+2.1. [fstab] it performs mount of new records and remount of
+existing. The channels wanted to be remount must have a seekable
+type=1 or type=3 to be able to read a channel again from beginning.
+2.2. [env] add new environment variables and rewrite existing;
+2.3. [mapping] updates channels mappings.
+2.4. [debug], [time] sections also will be handled;
+3. Implemented 2 own filesystems that also accessible via plaggable
 interface: RW FS hosted in memory and FS with an unmutable structure
 on top of channels; All FSs accessible via single object - main
 filesystem that combines implemented FSs and translates requests to
 real FS implementations depending on file path.
-2.1 Rewritable filesystem, available in user space as mounted on "/"
+3.1 Rewritable filesystem, available in user space as mounted on "/"
 root. ZRT creates it at runtime in memory, and injects it by real
 directories/files if nvram feature used during startup before main()
 entry point.  All changes made in this filesystem will lost at nexe
 exit.
-2.2 Channels mount filesystem - it is wrapper around zerovm channels,
+3.2 Channels mount filesystem - it is wrapper around zerovm channels,
 and mounted into "/dev" folder. It has static structure based on
 channels aliases list, and interpret channels as devices. All channels
 aliases listed in zerovm manifest file should be started with /dev/
 alias, that represents their belonging to /dev/ mount. Channels whose
 aliases not started with /dev/ will not be accessible by channels
 filesystem. Functions like stat, readdir are supported also;
-2.2.1 Channels representation by stat function. Sequential access
+3.2.1 Channels representation by stat function. Sequential access
 channels are represented as character devices; Random access channels
 are represented as block devices;
-2.2.2 Channels I/O. For channels described in manifest - input/output
+3.2.2 Channels I/O. For channels described in manifest - input/output
 operations are available, and folowing allowed :
 Channel type SGetSPut=0, sequential  get / sequential_put
 RDONLY     Seek pos —     get
@@ -49,42 +59,41 @@ Channel type RGetRPut=3, Random get / Random put
 RDONLY     Seek pos — set get
 WRONLY     Seek pos —     get
 RDWR       Seek pos — set get
-2.2.3 Debugging channel. ZRT has its own debugging channel associated
+3.2.3 Debugging channel. ZRT has its own debugging channel associated
 with alias name "/dev/debug". If this channel is defined then all
 debugging ZRT information will go into the debug channel If debug
 channel is not defined no debug info will available (apart from system
 logs). Debugging level are regulated by VERBOSITY environment
 variables and supports 1,2,3 values.
-2.2.3 Nvram channel, it's a config file for tuning zvm session, has
+3.2.4 Nvram channel, it's a config file for tuning zvm session, has
 alias "/dev/nvram". Config syntax is allowing comments starting with
 "#", and sections names that are expected in square brackets. Single
 pair of key and value must be on single line and it's value should not
 contain carriage return. Escaping rules available if need to provide
 unsupported chars as value.
 List of supported nvram sections:
-2.2.3.1. Section [fstab]: Intended to import of TAR archive contents
-leaving directory structure, into ReadWrite FS in memory for ReadOnly
-mounts. And to export of Filesystem contents into tar archive at the
-end of session in 'exit' syscall handler. 
+3.2.4.1. Section [fstab]: provides ability to read/write TAR images
+into/from filesystem. The read from TAR image occurs silently and
+injects image contents into filesystem then accessing a file at
+specified mountpoint. The write into TAR image from filesystem doing
+at the end of session in the 'exit' syscall handler.
 Keywords are valid for fstab:
 - channel : zerovm channel alias, provided in manifest file
 - mountpoint : path in zrt filesystem, any directory path except '/dev/' 
 - access : ro / wo. 
-  'ro' value if you need to inject files into zrt;
-  'rw' value for saving contents of zrt filesystem into tar archive,
-  uses of '/' root does not support for 'wo' access value;
-- removable : yes / no; In case if session forked by zfork() from zrt
-  API and for folowing fstab records with access=ro and removable=yes
-  then content of tar archive will reread and remount. It means that
-  old files will stay untouchable, new files/dirs will added and
-  existing files will be overwrited. This is also related to
-  [precache] section. if removable=no mount will occured only once.
-2.2.3.2. Section [env]: Add environment vars into main(), keywords
-are:
+  'ro' specify it if you need to inject files into filesystem;
+  'wo' is for saving contents of filesystem into tar archive, but
+  don't specify mountpoint=/, because the saving into TAR image of
+  entire filesystem is not supported;
+- removable : yes / no; 
+  This option is deprecated, since updated nvram config is used at
+  fork. Set any option value;
+3.2.4.2. Section [env]: Add environment vars into main(), or just
+update enviroments at fork; keywords are:
 - name : variable name
 - value : variable value
 Escaping of value are supported, rules the same as for args section.
-2.2.3.3. Section [args]: Setup command line arguments - 1st argument
+3.2.4.3. Section [args]: Setup command line arguments - 1st argument
 is application name famous as argv0, the rest of contents is
 arguments. argument has several words but inside of double quotes
 interpreting as single argument. It's necessary to escape chars: ','
@@ -92,25 +101,28 @@ interpreting as single argument. It's necessary to escape chars: ','
 appropriate hex value. But any another char can be escaped, using same
 rule.
 - args : command line, specifying also program name as first arg.
-2.2.3.4. Section [mapping] : Can be used to set zerovm channels mode,
+3.2.4.4. Section [mapping] : Can be used to set zerovm channels mode,
 if need to override default values: for sequential channels default
 mode is 'pipe', for devices with random access mode is block device.
 args are:
 - channel : zerovm channel whose mode need to be overrided
 - mode : pipe / char /file ;
-2.2.3.5. Section [time] : Use to set time, arg:
+3.2.4.5. Section [time] : Use to set time, arg:
 - seconds : Amount of seconds since 1970, to get value in linux
   terminal use command: date +"%s"
-2.2.3.6. Section [debug] : Use to set verbosity level, for log file
+3.2.4.6. Section [debug] : Use to set verbosity level, for log file
 /dev/debug. To enable logging this channel must exist in zerovm
 manifest file. Arg is:
 - verbosity : decimal value 0,1,2,3 or 4 for maximum logging level.
-2.2.3.7. Section [precache] : Instructs ZRT that we need to call
-zfork() before main, just after all nvram sections were processed /
-all tar archives injected into Filesystem;
-- precache : yes / no value; If yes - then zfork will called, if no
-  (default) - nothing happens;
-2.2.3.8. Example:
+3.2.4.7. Section [precache] : Doing call of zfork() before main()
+function, somewhere internally but after [fstab] section handling; No
+need to specify [args], [env] and [precache] in the same nvram config,
+because args, env will be handled after zfork() using updated nvram
+config. See zfork() for full list of sections which must be handled.
+- precache : yes / no ; 
+  'yes'- call zfork; 
+  'no' - then nothing happens;
+3.2.4.8. Example:
 [fstab] 
 #inject archive contents into zrt fs
 channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=no

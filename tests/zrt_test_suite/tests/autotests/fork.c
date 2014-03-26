@@ -32,7 +32,7 @@
 
 #include "macro_tests.h"
 
-#define FILENAME getenv("FPATH")
+#define FILENAME_WITH_DYNAMIC_CONTENTS getenv("FPATH")
 #define MOUNT_CONTENTS "mount\n"
 #define REMOUNT_CONTENTS "remount\n"
 
@@ -53,32 +53,40 @@ int main(int argc, char **argv)
 {
     int res;
     int datalen, datalen1;
-    int i;
     char testpath[PATH_MAX];
-    snprintf(testpath, sizeof(testpath), "/test/%s", FILENAME );
+    snprintf(testpath, sizeof(testpath), "/test/%s", FILENAME_WITH_DYNAMIC_CONTENTS );
     printf("%s\n", testpath);
 
+    /*Read files at mountpoint*/
     char* contents1 = read_file_contents( testpath, &datalen1 );
     CMP_MEM_DATA(MOUNT_CONTENTS, contents1, strlen(MOUNT_CONTENTS) );
 
-    char* contents = read_file_contents( FILENAME, &datalen );
+    char* contents = read_file_contents( FILENAME_WITH_DYNAMIC_CONTENTS, &datalen );
     CMP_MEM_DATA(MOUNT_CONTENTS, contents, strlen(MOUNT_CONTENTS) );
 
-    for ( i=0; i < 10000; i++ ){
-	void* c = malloc(100000);
-	if ( c != NULL ){
-	    free(c);
-	}
-    }
+    TEST_OPERATION_RESULT(strcmp("1", getenv("new")), &res, res==0);
+
+    struct stat st;
+    TEST_OPERATION_RESULT( lstat("/dev/read-write", &st), &res, res==0 );
+    TEST_OPERATION_RESULT( (st.st_mode&S_IFCHR)==S_IFCHR, &res, res==1 );
     
     res = zfork();
     free(contents);
     free(contents1);
+    /*After fork it is expected that this file remains unchanged*/
     contents1 = read_file_contents( testpath, &datalen1 );
     CMP_MEM_DATA(MOUNT_CONTENTS, contents1, strlen(MOUNT_CONTENTS) );
 
-    contents = read_file_contents( FILENAME, &datalen );
+    /*After fork it is expected that this file is changed*/
+    contents = read_file_contents( FILENAME_WITH_DYNAMIC_CONTENTS, &datalen );
     CMP_MEM_DATA(REMOUNT_CONTENTS, contents, strlen(REMOUNT_CONTENTS) );
+
+    /*After fork env var changed*/
+    TEST_OPERATION_RESULT(strcmp("2", getenv("new")), &res, res==0);
+
+    /*After fork channels mapping is changed*/
+    TEST_OPERATION_RESULT( lstat("/dev/read-write", &st), &res, res==0 );
+    TEST_OPERATION_RESULT( (st.st_mode&S_IFREG)==S_IFREG, &res, res==1 );
 
     free(contents);
     free(contents1);

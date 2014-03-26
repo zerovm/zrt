@@ -35,8 +35,8 @@
 #define FSTAB_VAL_REMOVABLE_YES       "yes"
 #define FSTAB_VAL_REMOVABLE_NO        "no"
 
-/* If mount_stage is equal to FSTAB_MOUNT_FIRST_STAGE then always return 1,
- * if fstab_stage value is equal to FSTAB_REMOUNT_STAGE then return 1 only 
+/* If mount_stage is equal to EFstabMountWaiting then always return 1,
+ * if fstab_stage value is equal to EFstabMountComplete then return 1 only 
  * in case if removable_record is 1 */
 #define IS_NEED_TO_HANDLE_FSTAB_RECORD(mount_stage, removable_record)	\
     ((EFstabMountWaiting)==(mount_stage))? 1:				\
