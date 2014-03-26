@@ -412,6 +412,7 @@ int unescape_string_copy_to_dest(const char* source, int sourcelen, char* dest){
 	    dest[index_out++] = source[index_in++];
 	}
     }
+    dest[index_out]='\0';
     return index_out;
  }
 

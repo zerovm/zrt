@@ -51,6 +51,7 @@
 #include "mounts_reader.h"
 #include "settime_observer.h"
 #include "utils.h"             /*zrealpath*/
+#include "args_observer.h"
 #include "environment_observer.h"
 #include "fstab_observer.h"
 #include "mapping_observer.h"
@@ -422,7 +423,12 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
 	}
 }
 
-/*Basic zrt initializer*/
+/*Basic zrt initializer.  The argv & envp vectors will be set after
+this function will return a value. If precache requested by nvram,
+then fork will be called here, to be able provide both args & envs
+from new nvram file for forked session. Thus sections [args], [env]
+should not be specified in initial nvram file if precache is
+enabled.*/
 void zrt_zcall_enhanced_zrt_setup(void){
     struct NvramLoaderPublicInterface* nvram = INSTANCE_L(NVRAM_LOADER)();
     zrt_internal_init(MANIFEST);
@@ -519,22 +525,39 @@ int zfork(){
     int res = zvm_fork();
     ZRT_LOG(L_INFO, "zvm_fork res=%d", res);
 
-    /*update state for removable mounts, all removable mounts needs to be refreshed*/
-    get_fstab_observer()->reset_removable(HANDLE_ONLY_FSTAB_SECTION);
-
     /*re-read nvram file because after fork his content can be changed. */
+    /*Use updated nvram fields that we get with forked session*/
     /*Folowing nvram handlers using only stack and nor heap*/
     struct NvramLoaderPublicInterface* nvram = INSTANCE_L(NVRAM_LOADER)();
     /*if nvram config file not empty then do parsing*/
+    //    if ( nvram->read(nvram, "/dev/nvram2") > 0 ){
     if ( nvram->read(nvram, DEV_NVRAM) > 0 ){
 	nvram->parse(nvram);
 
-	/*handle debug section - verbosity*/
+	/*all sections must be handled here except [precache, args] at fork*/
+
+	/*[env] section*/
+	if ( NULL != nvram->section_by_name( nvram, ENVIRONMENT_SECTION_NAME ) ){
+	    nvram->handle(nvram, HANDLE_ONLY_ENV_SECTION, NULL, NULL, NULL);
+	}
+	/*[mapping] section*/
+	if ( NULL != nvram->section_by_name( nvram, MAPPING_SECTION_NAME ) ){
+	    nvram->handle(nvram, HANDLE_ONLY_MAPPING_SECTION, NULL, NULL, NULL);
+	}
+	/*[fstab] section*/
+	if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
+	    nvram->handle(nvram, (struct MNvramObserver*)HANDLE_ONLY_FSTAB_SECTION, 
+			  s_channels_mount, s_transparent_mount, NULL );
+	    /*update state for removable mounts, all removable mounts needs to be refreshed*/
+	    get_fstab_observer()->reset_removable(HANDLE_ONLY_FSTAB_SECTION);
+
+	}
+	/*[debug] section - verbosity*/
 	if ( NULL != nvram->section_by_name( nvram, DEBUG_SECTION_NAME ) ){
 	    ZRT_LOG(L_INFO, "%s", "nvram handle debug");
 	    nvram->handle(nvram, HANDLE_ONLY_DEBUG_SECTION, NULL, NULL, NULL );
 	}
-	/*handle time section*/
+	/*[time] section*/
 	if ( NULL != nvram->section_by_name( nvram, TIME_SECTION_NAME ) ){
 	    nvram->handle(nvram, HANDLE_ONLY_TIME_SECTION, static_timeval(), NULL, NULL);
 	}

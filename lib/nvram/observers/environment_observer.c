@@ -41,9 +41,9 @@ static void add_pair_to_temp_buffer(char* buf, int bufsize, int* index,
 	memcpy(buf+*index, name, len);
 	(*index)+=len;
 	buf[ (*index)++ ] = '=';
-	/*try unescape value contets*/
-
-	*index += unescape_string_copy_to_dest(val, len2, buf+*index);
+	/*copy value contets*/
+	memcpy(buf+*index, val, len2);
+	*index += len2;
 	buf[ (*index)++ ] = '\0';
     }
     else{
@@ -76,10 +76,6 @@ void get_env_array(char **envs, char* buf, int bufsize){
 void handle_env_record(struct MNvramObserver* observer,
 		       struct ParsedRecord* record,
 		       void* obj1, void* obj2, void* obj3){
-    char* buffer = (char*)obj1; /*obj1 - char* */
-    int bufsize = *(int*)obj2;  /*obj2 - int*  */
-    int* index = (int*)obj3;    /*obj3 - int*  */
-    assert(buffer); /*into buffer will be saved results*/
     assert(record);
     /*get param*/
     char* envname = NULL;
@@ -90,11 +86,37 @@ void handle_env_record(struct MNvramObserver* observer,
     ALLOCA_PARAM_VALUE(record->parsed_params_array[ENV_PARAM_VALUE_KEY_INDEX], 
 		      &envval);
     ZRT_LOG(L_INFO, "env record: %s=%s", envname, envval);
-    add_pair_to_temp_buffer(buffer, bufsize, index,
-			    envname, 
-			    record->parsed_params_array[ENV_PARAM_NAME_KEY_INDEX].vallen, 
-			    envval, 
-			    record->parsed_params_array[ENV_PARAM_VALUE_KEY_INDEX].vallen);
+    /*unescape value*/
+    char* unescaped_value_result = alloca( strlen(envval)+1 );
+    int unescaped_value_len =
+	unescape_string_copy_to_dest(envval, 
+				     record->parsed_params_array[ENV_PARAM_VALUE_KEY_INDEX].vallen, 
+				     unescaped_value_result);
+    ZRT_LOG(L_SHORT, "env record: %s=%s (escaped) %d", envname, unescaped_value_result, unescaped_value_len);
+
+    /*If handling envs at session start preparing main() arguments,
+     it's expected code running at prolog stage*/
+    if ( obj1 && obj2 && obj3 ){
+	char* buffer = (char*)obj1; /*obj1 - char* */
+	int bufsize = *(int*)obj2;  /*obj2 - int*  */
+	int* index = (int*)obj3;    /*obj3 - int*  */
+	assert(buffer); /*into buffer will be saved results*/
+
+	add_pair_to_temp_buffer(buffer, bufsize, index,
+				envname, 
+				record->parsed_params_array[ENV_PARAM_NAME_KEY_INDEX].vallen, 
+				unescaped_value_result, 
+				unescaped_value_len);
+    }
+    /*Handling envs at forked session, no another input parameters needed */
+    else{
+	if ( setenv(envname, unescaped_value_result, 1) == 0 ){
+	    ZRT_LOG(L_INFO, P_TEXT, "env overwrite success");
+	}
+	else{
+	    ZRT_LOG(L_INFO, P_TEXT, "env overwrite failed");
+	}
+    }
 }
 
 struct MNvramObserver* get_env_observer(){

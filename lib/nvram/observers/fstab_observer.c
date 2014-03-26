@@ -85,12 +85,14 @@ void handle_fstab_record(struct MNvramObserver* observer,
     if ( fobserver->postpone_mounts_array == NULL ){
 	assert( fobserver->postpone_mounts_count ==0 );
     }
-    /*extend array & add record to mounts array*/
+    /*extend array & add record to mounts array
+     no checks for duplicated items doing*/
     ++fobserver->postpone_mounts_count;
     fobserver->postpone_mounts_array 
 	= realloc(fobserver->postpone_mounts_array, 
 		  sizeof(*fobserver->postpone_mounts_array)*fobserver->postpone_mounts_count);
     assert(fobserver->postpone_mounts_array != NULL);
+    /*record added into postopne mounts list and must be handled later*/
     struct FstabRecordContainer* record_container = &fobserver->postpone_mounts_array[ fobserver->postpone_mounts_count -1 ];
     record_container->mount_status = EFstabMountWaiting;
     copy_record(record, &record_container->mount);
