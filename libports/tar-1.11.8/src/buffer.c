@@ -593,8 +593,14 @@ open_tar_archive (int reading)
   else if (reading)
     archive = rmtopen (archive_name_array[0], O_RDONLY | O_BINARY, 0666,
 		       flag_rsh_command);
-  else
+  else{
+#ifdef __native_client__
+      /*O_TRUNC, O_CREAT doesn't supported for zerovm channels, so unset truncate flag*/
+      archive = open (archive_name_array[0], O_WRONLY, 0666);
+#else
     archive = rmtcreat (archive_name_array[0], 0666, flag_rsh_command);
+#endif
+  }
 
   if (archive < 0)
     ERROR ((TAREXIT_FAILURE, errno, _("Cannot open %s"),
@@ -1231,7 +1237,7 @@ close_tar_archive (void)
     WARN ((0, errno, _("WARNING: Cannot close %s (%d, %d)"),
 	   *archive_name_cursor, archive, c));
 
-#ifndef	__MSDOS__
+#if !defined(__MSDOS__) && !defined(__native_client__)
 
   if (childpid)
     {
