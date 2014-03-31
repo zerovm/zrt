@@ -4,7 +4,10 @@ CFLAGS+=-DDEBUG -g
 
 all: libnetworking.a
 
-libnetworking.a: eachtoother_comm.o channels_conf.o channels_conf_reader.o
+libnetworking.a: \
+	$(CURDIR)/eachtoother_comm.o \
+	$(CURDIR)/channels_conf.o \
+	$(CURDIR)/channels_conf_reader.o
 	@ar rcs libnetworking.a eachtoother_comm.o channels_conf.o channels_conf_reader.o
 
 clean:

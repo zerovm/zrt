@@ -75,6 +75,11 @@ LDFLAGS+= -lmapreduce -lnetworking
 #uncomment below one if want to display removed files list during clean
 #VERBOSE_CLEAN=-v
 
+gcov: LDFLAGS+=${GCOV_LDFLAGS}
+gcov: CPPFLAGS+=${GCOV_FLAGS}
+gcov: CFLAGS+=${GCOV_FLAGS}
+gcov: prepare $(ZEROVM) $(TEST_NEXES) report
+
 all: prepare $(ZEROVM) $(TEST_NEXES) report
 
 clean:
@@ -153,6 +158,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{CHANNEL_WRITEONLY_TYPE}@$(SPECIFIC_TEST_CHANNEL_WRITEONLY_TYPE)@g | \
 	 sed s@{CHANNEL_READWRITE_TYPE}@$(SPECIFIC_TEST_CHANNEL_READWRITE_TYPE)@g | \
 	 sed s@{CHANNEL_WRITEONLY_SIZE}@$(SPECIFIC_TEST_CHANNEL_WRITEONLY_SIZE)@g | \
+	 sed s@{GCOV_DATA_TAR}@$(GCOV_DATA_TAR)@g | \
 	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
 	 sed s@{JOB}@$(SPECIFIC_TEST_FORK)@g | \
 	 sed s@{TAR_MOUNT}@$(TEST_TAR)@g | \

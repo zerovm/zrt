@@ -7,8 +7,8 @@ CPPFLAGS += -I..
 CPPFLAGS += -I../..
 CPPFLAGS += -g -DDEBUG
 
-UTIL_SOURCES = $(addprefix util/, Path.cc )
-MEM_SOURCES = $(addprefix memory/, MemMount.cc MemNode.cc)
+UTIL_SOURCES = $(addprefix $(CURDIR)/util/, Path.cc )
+MEM_SOURCES = $(addprefix $(CURDIR)/memory/, MemMount.cc MemNode.cc)
 
 SOURCES = $(UTIL_SOURCES) $(BASE_SOURCES) $(MEM_SOURCES) 
 OBJECTS = $(SOURCES:.cc=.o)

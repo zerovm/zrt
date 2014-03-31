@@ -14,12 +14,14 @@ name=usable, value=1\x2C2\x2C3/"1\x2C2\x2C3"
 
 [fstab]
 {FSTAB}
+channel=/dev/mount/gcov.gcda.tar, mountpoint=/, access=ro, removable=no
+channel=/dev/mount/gcov.gcda.tar, mountpoint=/home/zvm/git/zrt, access=wo, removable=no
 
 [time]
 {SECONDS}
 
 [debug]
-verbosity=4
+verbosity=2
 
 [precache]
 {PRECACHE}

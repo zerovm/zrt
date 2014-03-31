@@ -51,9 +51,10 @@ lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c \
 lib/zrt.c
 
-LIBDEP_OBJECTS=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
-LIBZRT_OBJECTS=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
-
+LIBDEP_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
+LIBDEP_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBDEP_OBJECTS_NO_PREFIX))
+LIBZRT_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
+LIBZRT_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBZRT_OBJECTS_NO_PREFIX))
 
 ############## zrtlibs and ported libraries build
 LIBS= \
@@ -140,8 +141,17 @@ LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 LIBPORTS_CLEAN =$(foreach smpl, ${LIBPORTS}, $(smpl).clean)
 
 ################ "make clean" Cleaning libs, tests, samples
-clean: libclean clean_ports testclean
+clean: libclean clean_ports testclean gcovclean
 	@rm -f lib/*.a
+
+gcovclean:
+	@rm -f -r $(GCOV_HTML_FOLDER)
+	@lcov --base-directory . --directory . --zerocounters -q
+	@rm -f $(GCOV_DATA_TAR)
+	@rm -f -r $(GCOV_TEMP_FOLDER)
+	@find -name "*.gcda" | xargs rm -f
+	@find -name "*.gcno" | xargs rm -f
+	@find -name "*.gcov" | xargs rm -f
 
 libclean: ${LIBS_CLEAN} testclean clean_ports
 ${LIBS_CLEAN}: cleandep
@@ -172,41 +182,57 @@ doc:
 	@find ./lib ./tests -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
 	@chmod 0444 ${README_GEN}
 
-ARCH=x86_64-nacl
-INCLUDE_DIR=$(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/include
-LIB_DIR=$(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
+################ "make gcov" Run tests and create document reflecting test coverage
+gcov: LDFLAGS+=${GCOV_LDFLAGS}
+gcov: CPPFLAGS+=${GCOV_FLAGS}
+gcov: CFLAGS+=${GCOV_FLAGS}
+gcov: build
+	@echo ------------- RUN coverage tests $@ ------------
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite gcov
+	@./kill_daemons.sh
+	@mkdir $(GCOV_TEMP_FOLDER) $(GCOV_HTML_FOLDER) -p
+	@tar xvf $(GCOV_DATA_TAR) -C $(GCOV_TEMP_FOLDER) 2>&1 > /dev/null
+	@cp $(GCOV_TEMP_FOLDER)$(ZRT_ROOT)/lib $(ZRT_ROOT) -r
+	@rm $(GCOV_TEMP_FOLDER) -r -f
+#prepare html document covering only sources from lib folder
+	@lcov --gcov-tool=${GCOV} --directory=$(ZRT_ROOT)/lib --capture --output-file $(GCOV_HTML_FOLDER)/app.info
+	@genhtml --output-directory $(GCOV_HTML_FOLDER) $(GCOV_HTML_FOLDER)/app.info
+	@echo ------------- RUN coverage tests OK $@ ------------
+	@echo open $(GCOV_HTML_FOLDER)/index.html
+
 uninstall:
-	rm -f $(INCLUDE_DIR)/mapreduce/buffered_io.h
+	rm -f $(INSTALL_INCLUDE_DIR)/mapreduce/buffered_io.h
 
 install: uninstall
 	install -m 0644 lib/libzrt.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libmapreduce.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libnetworking.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libfs.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
-	install -m 0644 lib/liblua.a $(LIB_DIR)
-	install -m 0644 lib/libgtest.a $(LIB_DIR)
-	install -m 0644 lib/libtar.a $(LIB_DIR)
-	install -m 0644 lib/libsqlite3.a $(LIB_DIR)
-	install -m 0644 lib/libcontext.a $(LIB_DIR)
-	install -d $(INCLUDE_DIR)/sqlite3 $(INCLUDE_DIR)/lua $(INCLUDE_DIR)/helpers \
-		$(INCLUDE_DIR)/networking $(INCLUDE_DIR)/mapreduce $(LIB_DIR)
-	install -m 0644 lib/zrtapi.h $(INCLUDE_DIR)
-	install -m 0644 libports/sqlite3/vfs_channel.h $(INCLUDE_DIR)/sqlite3
-	install -m 0644 libports/sqlite3/sqlite3.h $(INCLUDE_DIR)/sqlite3
-	install -m 0644 libports/sqlite3/sqlite3ext.h $(INCLUDE_DIR)/sqlite3
-	install -m 0644 lib/lua/lauxlib.h $(INCLUDE_DIR)/lua
-	install -m 0644 lib/lua/lualib.h $(INCLUDE_DIR)/lua
-	install -m 0644 lib/lua/lua.h $(INCLUDE_DIR)/lua
-	install -m 0644 lib/lua/luaconf.h $(INCLUDE_DIR)/lua
-	install -m 0644 lib/networking/channels_conf.h $(INCLUDE_DIR)/networking
-	install -m 0644 lib/networking/channels_conf_reader.h $(INCLUDE_DIR)/networking
-	install -m 0644 lib/networking/eachtoother_comm.h $(INCLUDE_DIR)/networking
-	install -m 0644 lib/mapreduce/map_reduce_lib.h $(INCLUDE_DIR)/mapreduce
-	install -m 0644 lib/mapreduce/buffer.h $(INCLUDE_DIR)/mapreduce
-	install -m 0644 lib/mapreduce/buffer.inl $(INCLUDE_DIR)/mapreduce
-	install -m 0644 lib/mapreduce/map_reduce_datatypes.h $(INCLUDE_DIR)/mapreduce
-	install -m 0644 lib/mapreduce/elastic_mr_item.h $(INCLUDE_DIR)/mapreduce
-	install -m 0644 lib/helpers/dyn_array.h $(INCLUDE_DIR)/helpers
-	install -m 0644 lib/helpers/buffered_io.h $(INCLUDE_DIR)/helpers
+	install -m 0644 lib/liblua.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libgtest.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libtar.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libsqlite3.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libcontext.a $(INSTALL_LIB_DIR)
+	install -d $(INSTALL_INCLUDE_DIR)/sqlite3 $(INSTALL_INCLUDE_DIR)/lua $(INSTALL_INCLUDE_DIR)/helpers \
+		$(INSTALL_INCLUDE_DIR)/networking $(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR)
+	install -m 0644 lib/zrtapi.h $(INSTALL_INCLUDE_DIR)
+	install -m 0644 libports/sqlite3/vfs_channel.h $(INSTALL_INCLUDE_DIR)/sqlite3
+	install -m 0644 libports/sqlite3/sqlite3.h $(INSTALL_INCLUDE_DIR)/sqlite3
+	install -m 0644 libports/sqlite3/sqlite3ext.h $(INSTALL_INCLUDE_DIR)/sqlite3
+	install -m 0644 lib/lua/lauxlib.h $(INSTALL_INCLUDE_DIR)/lua
+	install -m 0644 lib/lua/lualib.h $(INSTALL_INCLUDE_DIR)/lua
+	install -m 0644 lib/lua/lua.h $(INSTALL_INCLUDE_DIR)/lua
+	install -m 0644 lib/lua/luaconf.h $(INSTALL_INCLUDE_DIR)/lua
+	install -m 0644 lib/networking/channels_conf.h $(INSTALL_INCLUDE_DIR)/networking
+	install -m 0644 lib/networking/channels_conf_reader.h $(INSTALL_INCLUDE_DIR)/networking
+	install -m 0644 lib/networking/eachtoother_comm.h $(INSTALL_INCLUDE_DIR)/networking
+	install -m 0644 lib/mapreduce/map_reduce_lib.h $(INSTALL_INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/buffer.h $(INSTALL_INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/buffer.inl $(INSTALL_INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/map_reduce_datatypes.h $(INSTALL_INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/mapreduce/elastic_mr_item.h $(INSTALL_INCLUDE_DIR)/mapreduce
+	install -m 0644 lib/helpers/dyn_array.h $(INSTALL_INCLUDE_DIR)/helpers
+	install -m 0644 lib/helpers/buffered_io.h $(INSTALL_INCLUDE_DIR)/helpers
 
 .PHONY: install
