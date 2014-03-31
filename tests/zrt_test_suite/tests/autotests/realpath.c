@@ -37,12 +37,15 @@ static char resolved_path[PATH_MAX];
 
 void test_relative_path(const char* relative_path, const char* abs_path){
     int ret;
+    fprintf(stderr, "relative=%s, ", relative_path);
 
     CHECK_PATH_EXISTANCE(relative_path);
 
     TEST_OPERATION_RESULT( realpath( relative_path, resolved_path),
 			   &res, res!=NULL );
 
+    fprintf(stderr, "resolved=%s expected=%s\n", resolved_path, abs_path);
+    
     /*realpath & abspath must be equal*/
     TEST_OPERATION_RESULT(strcmp(res, abs_path), &ret, ret==0);
     /*check file existance using abs_path*/

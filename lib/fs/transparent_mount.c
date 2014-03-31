@@ -25,12 +25,15 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
+#include <alloca.h>
 
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
+#include "utils.h" //zrealpath
 #include "transparent_mount.h"
 #include "mounts_manager.h"
 #include "mounts_interface.h"
+#include "fstab_observer.h"
 #include "fcntl_implem.h"
 
 #include "handle_allocator.h" //struct HandleAllocator, struct HandleItem
@@ -41,11 +44,40 @@ static struct MountsManager* s_mounts_manager;
 #define CONVERT_PATH_TO_MOUNT(full_path)			\
     s_mounts_manager->convert_path_to_mount( full_path )
 
+#define TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, absolute_path_p, temp_path) \
+    *(absolute_path_p) = zrealpath(path, temp_path);			\
+    if ( *(absolute_path_p) != NULL ) lazy_mount(*(absolute_path_p));	\
+    else if ( lazy_mount(path) == 0 ){					\
+	/*lazymount successfull now absolute_path should be exist*/	\
+	if ( (*(absolute_path_p) = zrealpath(path, temp_path)) == NULL ) \
+	    return -1;							\
+    }else if ( *(absolute_path_p) == NULL){				\
+	return -1;							\
+    }
+
+/*Try to mount postponed mount, in case if sub path matched.
+  @return 0 if success, -1 if we don't need to mount*/
+static int lazy_mount(const char* path){
+    /*if it's time to do mount, then do all waiting mounts*/
+    struct FstabObserver* observer = get_fstab_observer();
+    struct FstabRecordContainer* record;
+    while( NULL != (record = observer->locate_postpone_mount( observer, path, 
+							      EFstabMountWaiting)) ){
+	observer->mount_import(observer, record);
+	return 0;
+    }
+    return -1;
+}
+
+
 static int transparent_chown(struct MountsPublicInterface *this, 
 			     const char* path, uid_t owner, gid_t group){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    char* absolute_path;
+    TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, &absolute_path, alloca(PATH_MAX));
+
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
     if ( mount )
-	return mount->chown( mount, CONVERT_PATH_TO_MOUNT(path), owner, group);
+	return mount->chown( mount, CONVERT_PATH_TO_MOUNT(absolute_path), owner, group);
     else{
         errno = ENOENT;
         return -1;
@@ -54,9 +86,12 @@ static int transparent_chown(struct MountsPublicInterface *this,
 
 static int transparent_chmod(struct MountsPublicInterface *this,
 			     const char* path, uint32_t mode){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    char* absolute_path;
+    TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, &absolute_path, alloca(PATH_MAX));
+
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
     if ( mount )
-	return mount->chmod( mount, CONVERT_PATH_TO_MOUNT(path), mode);
+	return mount->chmod( mount, CONVERT_PATH_TO_MOUNT(absolute_path), mode);
     else{
         errno = ENOENT;
         return -1;
@@ -65,9 +100,12 @@ static int transparent_chmod(struct MountsPublicInterface *this,
 
 static int transparent_stat(struct MountsPublicInterface *this,
 			    const char* path, struct stat *buf){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    char* absolute_path;
+    TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, &absolute_path, alloca(PATH_MAX));
+
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
     if ( mount )
-	return mount->stat( mount, CONVERT_PATH_TO_MOUNT(path), buf);
+	return mount->stat( mount, CONVERT_PATH_TO_MOUNT(absolute_path), buf);
     else{
         errno = ENOENT;
         return -1;
@@ -76,9 +114,12 @@ static int transparent_stat(struct MountsPublicInterface *this,
 
 static int transparent_mkdir(struct MountsPublicInterface *this,
 			     const char* path, uint32_t mode){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    char* absolute_path;
+    TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, &absolute_path, alloca(PATH_MAX));
+
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
     if ( mount )
-	return mount->mkdir( mount, CONVERT_PATH_TO_MOUNT(path), mode);
+	return mount->mkdir( mount, CONVERT_PATH_TO_MOUNT(absolute_path), mode);
     else{
 	SET_ERRNO(ENOENT);
         return -1;
@@ -87,9 +128,12 @@ static int transparent_mkdir(struct MountsPublicInterface *this,
 
 static int transparent_rmdir(struct MountsPublicInterface *this,
 			     const char* path){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    char* absolute_path;
+    TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, &absolute_path, alloca(PATH_MAX));
+
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
     if ( mount )
-	return mount->rmdir( mount, CONVERT_PATH_TO_MOUNT(path) );
+	return mount->rmdir( mount, CONVERT_PATH_TO_MOUNT(absolute_path) );
     else{
         errno = ENOENT;
         return -1;
@@ -237,9 +281,12 @@ static off_t transparent_lseek(struct MountsPublicInterface *this,
 
 static int transparent_open(struct MountsPublicInterface *this,
 			    const char* path, int oflag, uint32_t mode){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    char* absolute_path;
+    TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, &absolute_path, alloca(PATH_MAX));
+
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
     if ( mount )
-	return mount->open( mount, CONVERT_PATH_TO_MOUNT(path), oflag, mode );
+	return mount->open( mount, CONVERT_PATH_TO_MOUNT(absolute_path), oflag, mode );
     else{
 	SET_ERRNO(ENOENT);
         return -1;
@@ -435,11 +482,16 @@ static int transparent_dup2(struct MountsPublicInterface *this, int oldfd, int n
 
 static int transparent_link(struct MountsPublicInterface *this,
 			    const char *oldpath, const char *newpath){
-    struct MountsPublicInterface* mount1 = s_mounts_manager->mount_bypath(oldpath); 
-    struct MountsPublicInterface* mount2 = s_mounts_manager->mount_bypath(newpath); 
+    char* absolute_oldpath;
+    char* absolute_newpath;
+    TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(oldpath, &absolute_oldpath, alloca(PATH_MAX));
+    TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(newpath, &absolute_newpath, alloca(PATH_MAX));
+
+    struct MountsPublicInterface* mount1 = s_mounts_manager->mount_bypath(absolute_oldpath); 
+    struct MountsPublicInterface* mount2 = s_mounts_manager->mount_bypath(absolute_newpath); 
     if ( mount1 == mount2 && mount1 != NULL ){
-	return mount1->link(mount1, CONVERT_PATH_TO_MOUNT(oldpath),
-			    CONVERT_PATH_TO_MOUNT(newpath) );
+	return mount1->link(mount1, CONVERT_PATH_TO_MOUNT(absolute_oldpath),
+			    CONVERT_PATH_TO_MOUNT(absolute_newpath) );
     }
     else{
         SET_ERRNO(ENOENT);
