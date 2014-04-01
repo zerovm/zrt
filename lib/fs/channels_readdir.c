@@ -38,9 +38,15 @@ match_dir_in_directory_list(struct manifest_loaded_directories_t *manifest_dirs,
     assert(manifest_dirs);
     struct dir_data_t *dir = NULL;
     int i;
+    /*do not compare trailing slash*/
+    if ( len >1 && dirpath[len-1] == '/' )
+	--len;
+
     for( i=0; i < manifest_dirs->dircount; i++ ){
         dir = &manifest_dirs->dir_array[i];
-        if ( ! strncmp(dirpath, dir->path, len ) && strlen(dir->path) == len ) return dir;
+        if ( ! strncmp(dirpath, dir->path, len ) && strlen(dir->path) == len ){
+	    return dir;
+	}
     }
     return NULL;
 }
@@ -159,7 +165,7 @@ void process_channels_create_dir_list( const struct ChannelsArrayPublicInterface
         manifest_dirs->dir_array[i].dir_inode += 
 	    channels_if->count((struct ChannelsArrayPublicInterface *)channels_if);
 	manifest_dirs->dir_array[i].dir_inode = INODE_FROM_ZVM_INODE(manifest_dirs->dir_array[i].dir_inode);
-	ZRT_LOG(L_EXTRA, "dir %10s, inode=%d",
+	ZRT_LOG(L_SHORT, "Directory %10s, inode=%d",
 		manifest_dirs->dir_array[i].path, 
 		manifest_dirs->dir_array[i].dir_inode );
         /*get subdirs count, update nlink*/

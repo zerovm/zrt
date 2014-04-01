@@ -250,41 +250,21 @@ mount_specific_construct( struct MountSpecificPublicInterface* specific_implem_i
 
 /*helpers*/
 
-/*@return 0 if success, -1 if we don't need to mount*/
-static int lazy_mount( struct MountsPublicInterface* this_, const char* path){
-    struct stat st;
-    int ret = MEMOUNT_BY_MOUNT(this_)->GetNode( path, &st);
-    (void)ret;
-    /*if it's time to do mount, then do all waiting mounts*/
-    FstabObserver* observer = get_fstab_observer();
-    struct FstabRecordContainer* record;
-    while( NULL != (record = observer->locate_postpone_mount( observer, path, 
-							      EFstabMountWaiting)) ){
-	observer->mount_import(observer, record);
-	return 0;
-    }
-    return -1;
-}
-
-
 /*wraper implementation*/
 
 static int mem_chown(struct MountsPublicInterface* this_, const char* path, uid_t owner, gid_t group){
-    lazy_mount(this_, path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
     return MEMOUNT_BY_MOUNT(this_)->Chown( st.st_ino, owner, group);
 }
 
 static int mem_chmod(struct MountsPublicInterface* this_, const char* path, uint32_t mode){
-    lazy_mount(this_, path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
     return MEMOUNT_BY_MOUNT(this_)->Chmod( st.st_ino, mode);
 }
 
 static int mem_stat(struct MountsPublicInterface* this_, const char* path, struct stat *buf){
-    lazy_mount(this_, path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
     int ret = MEMOUNT_BY_MOUNT(this_)->Stat( st.st_ino, buf);
@@ -303,7 +283,6 @@ static int mem_stat(struct MountsPublicInterface* this_, const char* path, struc
 }
 
 static int mem_mkdir(struct MountsPublicInterface* this_, const char* path, uint32_t mode){
-    lazy_mount(this_, path);
     int ret = MEMOUNT_BY_MOUNT(this_)->GetNode( path, NULL);
     if ( ret == 0 || (ret == -1&&errno==ENOENT) )
 	return MEMOUNT_BY_MOUNT(this_)->Mkdir( path, mode, NULL);
@@ -314,7 +293,6 @@ static int mem_mkdir(struct MountsPublicInterface* this_, const char* path, uint
 
 
 static int mem_rmdir(struct MountsPublicInterface* this_, const char* path){
-    lazy_mount(this_, path);
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
 
@@ -543,8 +521,6 @@ static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset
 }
 
 static int mem_open(struct MountsPublicInterface* this_, const char* path, int oflag, uint32_t mode){
-    lazy_mount(this_, path);
-
     int ret=0;
     if (oflag & O_CREAT) {
 	/*If need to create path, then do it with errors checking*/
@@ -694,8 +670,6 @@ static int mem_dup2(struct MountsPublicInterface* this_, int oldfd, int newfd){
 }
 
 static int mem_link(struct MountsPublicInterface* this_, const char* oldpath, const char* newpath){
-    lazy_mount(this_, oldpath);
-    lazy_mount(this_, newpath);
     /*create new hardlink*/
     int ret = MEMOUNT_BY_MOUNT(this_)->Link(oldpath, newpath);
     if ( ret == -1 ){

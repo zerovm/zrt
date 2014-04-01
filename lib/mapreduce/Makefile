@@ -3,7 +3,7 @@ CFLAGS+=-std=c99 -DDEBUG
 
 all: libmapreduce.a
 
-libmapreduce.a: buffer.o map_reduce_lib.o
+libmapreduce.a: $(CURDIR)/buffer.o $(CURDIR)/map_reduce_lib.o
 	@ar rcs libmapreduce.a buffer.o map_reduce_lib.o
 
 clean:

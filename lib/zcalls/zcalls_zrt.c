@@ -50,7 +50,6 @@
 #include "transparent_mount.h"
 #include "mounts_reader.h"
 #include "settime_observer.h"
-#include "utils.h"             /*zrealpath*/
 #include "args_observer.h"
 #include "environment_observer.h"
 #include "fstab_observer.h"
@@ -68,9 +67,9 @@
 
 extern char **environ;
 
-/****************** static data*/
 #define CHANNEL_SIZE_LIMIT 999999999
 #define CHANNEL_OPS_LIMIT  999999999
+/****************** static data*/
 static struct ZVMChannel s_emu_channels[] 
 = { {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/null"},
     {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/full"},
@@ -283,8 +282,6 @@ int  zrt_zcall_enhanced_getdents(int fd, struct dirent *dirent_buf, size_t count
 int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newfd){
     LOG_SYSCALL_START("name=%s flags=%d mode=%o(octal)", name, flags, mode );
 
-    char* absolute_path;
-    char temp_path[PATH_MAX];
     int ret=-1;
     errno=0;
     VALIDATE_SYSCALL_PTR(name);
@@ -293,13 +290,10 @@ int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newf
     mode&=(S_IRWXU|S_IRWXG|S_IRWXO);
     APPLY_UMASK(&mode);
 
-    if ( (absolute_path = zrealpath(name, temp_path)) != NULL ){
-	ZRT_LOG(L_SHORT, "absolute_path=%s", absolute_path);
-	if ( (ret = s_transparent_mount->open(s_transparent_mount, absolute_path, flags, mode )) >= 0 ){
-	    /*get fd by pointer*/
-	    *newfd  = ret;
-	    ret =0;
-	}
+    if ( (ret = s_transparent_mount->open(s_transparent_mount, name, flags, mode )) >= 0 ){
+	/*get fd by pointer*/
+	*newfd  = ret;
+	ret =0;
     }
 
     LOG_SHORT_SYSCALL_FINISH( ret, 
@@ -312,18 +306,15 @@ int  zrt_zcall_enhanced_open(const char *name, int flags, mode_t mode, int *newf
 
 int  zrt_zcall_enhanced_stat(const char *pathname, struct stat * stat){
     LOG_SYSCALL_START("pathname=%s stat=%p", pathname, stat);
-    char* absolute_path;
-    char temp_path[PATH_MAX];
     int ret=-1;
     errno = 0;
     VALIDATE_SYSCALL_PTR(pathname);
     VALIDATE_SYSCALL_PTR(stat);
 
-    if ( (absolute_path = realpath(pathname, temp_path)) != NULL ){
-	if ( (ret = s_transparent_mount->stat(s_transparent_mount, absolute_path, stat)) == 0 ){
-	    ZRT_LOG_STAT(L_SHORT, stat);
-	}
+    if ( (ret = s_transparent_mount->stat(s_transparent_mount, pathname, stat)) == 0 ){
+	ZRT_LOG_STAT(L_SHORT, stat);
     }
+
     LOG_SHORT_SYSCALL_FINISH( ret, "pathname=%s", pathname);
     return ret;
 }

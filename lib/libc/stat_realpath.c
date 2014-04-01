@@ -45,7 +45,7 @@
 int zrt_zcall_stat_realpath(const char* abspathname, struct stat *stat){
     CHECK_EXIT_IF_ZRT_NOT_READY;
 
-    LOG_SYSCALL_START("abspathname=%p, stat=%p", abspathname, stat);
+    //LOG_SYSCALL_START("abspathname=%p, stat=%p", abspathname, stat);
     
     struct MountsPublicInterface* transpar_mount = transparent_mount();
     assert(transpar_mount);
@@ -54,6 +54,6 @@ int zrt_zcall_stat_realpath(const char* abspathname, struct stat *stat){
     VALIDATE_SUBSTITUTED_SYSCALL_PTR(abspathname);
     int ret = transpar_mount->stat(transpar_mount, abspathname, stat);
 
-    LOG_SHORT_SYSCALL_FINISH(ret, "abspathname=%s", abspathname);
+    //LOG_SHORT_SYSCALL_FINISH(ret, "abspathname=%s", abspathname);
     return ret;
 }

@@ -56,5 +56,6 @@ int main(int argc, char **argv)
     int ret;
     TEST_OPERATION_RESULT(s_test_value, &ret, ret==1);
     fprintf(stderr, "main value=%d\n", s_test_value);
+    return 0;
 }
 
