@@ -35,13 +35,6 @@
 #define FSTAB_VAL_REMOVABLE_YES       "yes"
 #define FSTAB_VAL_REMOVABLE_NO        "no"
 
-/* If mount_stage is equal to EFstabMountWaiting then always return 1,
- * if fstab_stage value is equal to EFstabMountComplete then return 1 only 
- * in case if removable_record is 1 */
-#define IS_NEED_TO_HANDLE_FSTAB_RECORD(mount_stage, removable_record)	\
-    ((EFstabMountWaiting)==(mount_stage))? 1:				\
-    ((EFstabMountComplete)==(mount_stage)) && 0!=(removable_record)? 1 : 0
-
 enum {EFstabMountWaiting, EFstabMountProcessing, EFstabMountComplete};
 struct FstabRecordContainer{
     struct ParsedRecord mount;
@@ -57,6 +50,9 @@ struct FstabObserver {
     /*import tar archive  into maountpoint path, related to fstab record with access=ro*/
     void (*mount_import)(struct FstabObserver* observer, 
 			 struct FstabRecordContainer* record);
+    /*Erase previously loaded from nvram config fstab records, nvram
+      can be loaded multiple times during zfork()*/
+    void (*erase_old_mounts)(struct FstabObserver* observer);
     /*Say to removable mounts that they need to be remounted*/
     void (*reset_removable)(struct FstabObserver* observer);
     /* Locate ParsedRecord with mountpoint and mount status matched

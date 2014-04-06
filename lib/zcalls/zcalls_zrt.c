@@ -77,11 +77,11 @@ static struct ZVMChannel s_emu_channels[]
     {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/random"},
     {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/urandom"}};
 
-struct MountsPublicInterface*        s_channels_mount=NULL;
-struct MountsPublicInterface*        s_mem_mount=NULL;
-static struct MountsManager*   s_mounts_manager = NULL;
-static struct MountsPublicInterface* s_transparent_mount = NULL;
-static int                     s_zrt_ready=0;
+struct MountsPublicInterface*        s_channels_mount;
+struct MountsPublicInterface*        s_mem_mount;
+static struct MountsManager*   s_mounts_manager;
+static struct MountsPublicInterface* s_transparent_mount;
+static int                     s_zrt_ready;
 /****************** */
 
 struct MountsPublicInterface* transparent_mount() { return s_transparent_mount; }
@@ -537,6 +537,8 @@ int zfork(){
 	}
 	/*[fstab] section*/
 	if ( NULL != nvram->section_by_name( nvram, FSTAB_SECTION_NAME ) ){
+	    /*remove existing fstab records*/
+	    get_fstab_observer()->erase_old_mounts(HANDLE_ONLY_FSTAB_SECTION);
 	    nvram->handle(nvram, (struct MNvramObserver*)HANDLE_ONLY_FSTAB_SECTION, 
 			  s_channels_mount, s_transparent_mount, NULL );
 	    /*update state for removable mounts, all removable mounts needs to be refreshed*/
@@ -547,10 +549,6 @@ int zfork(){
 	if ( NULL != nvram->section_by_name( nvram, DEBUG_SECTION_NAME ) ){
 	    ZRT_LOG(L_INFO, "%s", "nvram handle debug");
 	    nvram->handle(nvram, HANDLE_ONLY_DEBUG_SECTION, NULL, NULL, NULL );
-	}
-	/*[time] section*/
-	if ( NULL != nvram->section_by_name( nvram, TIME_SECTION_NAME ) ){
-	    nvram->handle(nvram, HANDLE_ONLY_TIME_SECTION, static_timeval(), NULL, NULL);
 	}
     }
     ZRT_LOG(L_SHORT, "zfork() res=%d ", res);

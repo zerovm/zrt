@@ -12,15 +12,17 @@ be prevalidated by ZeroVM before execution, see ZeroVM docs.
 Untrusted code - it's an any code running under ZeroVM. Both zerovm
 environment and user code running in the same address space.
 2. ZRT API now includes a one function zfork(), which actually an
-extension for ZVM API. It's calling zvm_fork() and in that moment then
-it returns execution context into a forked session, it will re-read
-nvram config and will handle sections :
+extension for ZVM API. It's calling zvm_fork() and after it returns an
+execution context into a forked session, function returns zvm_fork's
+retcode value; it will re-read nvram config and will handle sections :
 2.1. [fstab] it performs mount of new records and remount of
 existing. The channels wanted to be remount must have a seekable
 type=1 or type=3 to be able to read a channel again from beginning.
 2.2. [env] add new environment variables and rewrite existing;
 2.3. [mapping] updates channels mappings.
-2.4. [debug], [time] sections also will be handled;
+2.4. [debug] sections also will be handled;
+2.5. [time] section handling only once - at session startup, and not
+at zfork().
 3. Implemented 2 own filesystems that also accessible via plaggable
 interface: RW FS hosted in memory and FS with an unmutable structure
 on top of channels; All FSs accessible via single object - main
@@ -80,14 +82,18 @@ at the end of session in the 'exit' syscall handler.
 Keywords are valid for fstab:
 - channel : zerovm channel alias, provided in manifest file
 - mountpoint : path in zrt filesystem, any directory path except '/dev/' 
-- access : ro / wo. 
+- access : (ro / wo).
   'ro' specify it if you need to inject files into filesystem;
   'wo' is for saving contents of filesystem into tar archive, but
   don't specify mountpoint=/, because the saving into TAR image of
   entire filesystem is not supported;
-- removable : yes / no; 
-  This option is deprecated, since updated nvram config is used at
-  fork. Set any option value;
+- removable : (yes / no)
+  'no' with it do complete mount at session start, can't be remounted
+  at zfork();
+  'yes' means that the mounting of image must be initiated at session
+  start and also remounted after fork. Must be provided through lazy
+  mount concept - it is doing at a time of accessing a file by path
+  which is related to specified mountpoint.
 3.2.4.2. Section [env]: Add environment vars into main(), or just
 update enviroments at fork; keywords are:
 - name : variable name
@@ -106,20 +112,23 @@ if need to override default values: for sequential channels default
 mode is 'pipe', for devices with random access mode is block device.
 args are:
 - channel : zerovm channel whose mode need to be overrided
-- mode : pipe / char /file ;
-3.2.4.5. Section [time] : Use to set time, arg:
-- seconds : Amount of seconds since 1970, to get value in linux
-  terminal use command: date +"%s"
+- mode : (pipe / char /file);
+3.2.4.5. Section [time] : Set time a once at session startup, args:
+- seconds : amount of seconds since 1970. The same value as output of
+the command > date +"%s" from terminal in Linux;
 3.2.4.6. Section [debug] : Use to set verbosity level, for log file
 /dev/debug. To enable logging this channel must exist in zerovm
 manifest file. Arg is:
-- verbosity : decimal value 0,1,2,3 or 4 for maximum logging level.
+- verbosity : decimal value 0,1,2,3 or 4 for maximum logging level. 
+  '0' - no debug info at all;
+  '1' - only errors and some prolog info;
+  '2', '3', '4' - another levels of debug info;
 3.2.4.7. Section [precache] : Doing call of zfork() before main()
 function, somewhere internally but after [fstab] section handling; No
 need to specify [args], [env] and [precache] in the same nvram config,
 because args, env will be handled after zfork() using updated nvram
 config. See zfork() for full list of sections which must be handled.
-- precache : yes / no ; 
+- precache : (yes / no)
   'yes'- call zfork; 
   'no' - then nothing happens;
 3.2.4.8. Example:
