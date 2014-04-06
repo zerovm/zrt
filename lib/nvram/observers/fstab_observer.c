@@ -52,6 +52,7 @@ int save_as_tar(const char *dir_path, const char *tar_path );
 
 static struct FstabObserver    s_fstab_observer;
 static struct FstabObserver*   s_inited_observer = NULL;
+static int s_updated_fstab_records = 0; /*At erase_old_mounts call it assigns value=1, that means fstab re-reading*/
 //external objects
 static struct MountsPublicInterface* s_channels_mount=NULL;
 static struct MountsPublicInterface* s_transparent_mount=NULL;
@@ -85,6 +86,7 @@ void handle_fstab_record(struct MNvramObserver* observer,
     if ( fobserver->postpone_mounts_array == NULL ){
 	assert( fobserver->postpone_mounts_count ==0 );
     }
+
     /*extend array & add record to mounts array
      no checks for duplicated items doing*/
     ++fobserver->postpone_mounts_count;
@@ -96,6 +98,12 @@ void handle_fstab_record(struct MNvramObserver* observer,
     struct FstabRecordContainer* record_container = &fobserver->postpone_mounts_array[ fobserver->postpone_mounts_count -1 ];
     record_container->mount_status = EFstabMountWaiting;
     copy_record(record, &record_container->mount);
+
+    /*For first fstab handling (s_updated_fstab_records=0) after
+      checks try mount channel with keys access=ro, removable=no*/
+    if ( !s_updated_fstab_records  ){
+	fobserver->mount_import(fobserver, record_container);
+    }
     
     /*get all params*/
     char* channel_alias = NULL;
@@ -143,8 +151,9 @@ void handle_mount_import(struct FstabObserver* observer, struct FstabRecordConta
 	int removable_record = !strcasecmp( removable, FSTAB_VAL_REMOVABLE_YES);
 
 	/* In case if we need to inject files into FS.*/
-	if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) &&
-	     IS_NEED_TO_HANDLE_FSTAB_RECORD(record->mount_status, removable_record) ){
+	if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) && 
+	     EFstabMountWaiting == record->mount_status &&
+	     ( removable_record || (!s_updated_fstab_records && !removable_record) ) ){
 	    /*
 	     * inject tar contents related to record into mount_path folder of filesystem;
 	     * Content of filesystem is reading from supported archive type linked to channel, 
@@ -189,6 +198,12 @@ void handle_mount_import(struct FstabObserver* observer, struct FstabRecordConta
     }
 }
 
+void handle_erase_old_mounts(struct FstabObserver* observer){
+    s_updated_fstab_records = 1;
+    observer->postpone_mounts_count = 0;
+    free(observer->postpone_mounts_array), observer->postpone_mounts_array = NULL;
+}
+
 void handle_reset_removable(struct FstabObserver* observer){
     struct FstabRecordContainer* record_container;
     int i;
@@ -202,9 +217,16 @@ void handle_reset_removable(struct FstabObserver* observer){
 	    GET_FSTAB_PARAMS(&record_container->mount, &channel_alias, &mount_path, &access, &removable);
 	    int removable_record = !strcasecmp( removable, FSTAB_VAL_REMOVABLE_YES);
 
-	    /* In case if we need to inject files into FS.*/
-	    if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) && removable_record != 0 ){
+	    /* In case if we need to inject files into FS.  
+	     case 1: do it always at session start (flag s_updated_fstab_records=0); 
+	     case 2: do it for records with flag removable=yes if nvram
+	     re-readed (flag s_updated_fstab_records=1)*/
+	    if ( !s_updated_fstab_records ||
+		 (!strcmp(access, FSTAB_VAL_ACCESS_READ) && removable_record != 0) ){
 		record_container->mount_status = EFstabMountWaiting;
+	    }
+	    else{
+		record_container->mount_status = EFstabMountComplete;
 	    }
 	}
     }
@@ -255,6 +277,7 @@ struct FstabObserver* get_fstab_observer(){
     s_fstab_observer.base.is_valid_record = handle_is_valid_record;
     s_fstab_observer.mount_export = handle_mount_export;
     s_fstab_observer.mount_import = handle_mount_import;
+    s_fstab_observer.erase_old_mounts = handle_erase_old_mounts;
     s_fstab_observer.reset_removable = handle_reset_removable;
     s_fstab_observer.locate_postpone_mount = handle_locate_postpone_mount;
     s_fstab_observer.postpone_mounts_array = NULL;

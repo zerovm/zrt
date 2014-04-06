@@ -70,8 +70,9 @@ FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad2, access=re, remov
 FSTAB_FORKED-nvram.c=$(FSTAB-nvram.c)
 FSTAB-fork.c  =channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=no {BR}
 FSTAB-fork.c +=channel=/dev/mount/import.tar, mountpoint=/test, access=ro, removable=no {BR}
-#for forked session use new nvram config and do remount file, using updated removable field
+#for forked session use new nvram config, update removable field's value
 FSTAB_FORKED-fork.c  =channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=yes {BR}
+FSTAB_FORKED-fork.c +=channel=/dev/mount/import.tar, mountpoint=/test, access=ro, removable=no {BR}
 #####################################################################
 
 #####################################################################

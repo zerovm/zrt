@@ -48,14 +48,17 @@ int main(int argc, char**argv){
     sprintf(path, "/ok/%s", FILENAME );
     CHECK_PATH_EXISTANCE( path );
 
-    //check file contents if injecting one of file that already exists
+    /*file size from /warm folder is different than a file from /ok dir
+     because /warm folder was mounted once in according to removable=no,
+     and file in /ok folder was updated.*/
     int sz1,sz2,ret;
     sprintf(path, "/warm/%s", FILENAME );
     GET_FILE_SIZE(path, &sz1);
 
     sprintf(path, "/ok/%s", FILENAME );
     GET_FILE_SIZE(path, &sz2);
-    TEST_OPERATION_RESULT( sz1==sz2,
+    fprintf(stderr, "sz1=%d, sz2=%d\n", sz1, sz2);
+    TEST_OPERATION_RESULT( sz1!=sz2,
     			   &ret, ret!=0);
 
     CHECK_PATH_NOT_EXIST("/bad1");
