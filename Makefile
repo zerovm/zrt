@@ -146,7 +146,9 @@ clean: libclean clean_ports testclean gcovclean
 
 gcovclean:
 	@rm -f -r $(GCOV_HTML_FOLDER)
+ifneq ($(strip $(LCOV_EXIST)),)
 	@lcov --base-directory . --directory . --zerocounters -q
+endif
 	@rm -f $(GCOV_DATA_TAR)
 	@rm -f -r $(GCOV_TEMP_FOLDER)
 	@find -name "*.gcda" | xargs rm -f
@@ -192,7 +194,7 @@ gcov: build
 	@TESTS_ROOT=tests make -Ctests/zrt_test_suite gcov
 	@./kill_daemons.sh
 	@mkdir $(GCOV_TEMP_FOLDER) $(GCOV_HTML_FOLDER) -p
-	@tar xvf $(GCOV_DATA_TAR) -C $(GCOV_TEMP_FOLDER) 2>&1 > /dev/null
+	@tar xvf $(GCOV_DATA_TAR) -C $(GCOV_TEMP_FOLDER) > /dev/null 2>&1
 	@cp $(GCOV_TEMP_FOLDER)$(ZRT_ROOT)/lib $(ZRT_ROOT) -r
 	@rm $(GCOV_TEMP_FOLDER) -r -f
 #prepare html document covering only sources from lib folder
