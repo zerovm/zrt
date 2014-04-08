@@ -20,9 +20,12 @@
  */
 
 
+#define _BSD_SOURCE
+#include <sys/time.h> //timeradd
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+
 #include "zrtlog.h"
 #include "zvm.h"
 #include "zcalls.h"
@@ -75,11 +78,21 @@ void* static_prolog_brk() {
     return sbrk_default; 
 }
 
-static inline void update_cached_time()
+static inline void increment_cached_time(time_t seconds, suseconds_t microseconds )
 {
-    /* update time value
-     * update seconds because updating miliseconds has no effect*/
-    ++s_cached_timeval.tv_sec;
+    struct timeval delta;
+
+    #define MICROSECONDS_IN_ONE_SECOND 1000000
+    if ( seconds || microseconds ){
+	delta.tv_sec = seconds;
+	delta.tv_usec = microseconds;
+    }
+    else{
+	delta.tv_sec = 0;
+	delta.tv_usec = 1; /*by default increment +1 microsecond*/
+    }
+
+    timeradd(&s_cached_timeval, &delta, &s_cached_timeval);
 }
 
 
@@ -139,7 +152,7 @@ int  zrt_zcall_prolog_gettod(struct timeval *tvl){
 	ZRT_LOG(L_INFO, "tv_sec=%lld, tv_usec=%lld", tvl->tv_sec, (int64_t)tvl->tv_usec );
 
 	/* update time value*/
-	update_cached_time();
+	increment_cached_time(0, 1);
 	ret=0;
     }
 
@@ -159,9 +172,10 @@ int  zrt_zcall_prolog_clock(clock_t *ticks){
 }
 int  zrt_zcall_prolog_nanosleep(const struct timespec *req, struct timespec *rem){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
+    increment_cached_time(req->tv_sec, req->tv_nsec/1000);
+    rem->tv_sec=0;
+    rem->tv_nsec=0;
+    return 0;
 }
 int  zrt_zcall_prolog_sched_yield(void){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
@@ -501,7 +515,9 @@ int  zrt_zcall_prolog_gettime(clockid_t clk_id, struct timespec *tp){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     (void)clk_id;
     tp->tv_sec = s_cached_timeval.tv_sec;
-    tp->tv_nsec = s_cached_timeval.tv_usec * 1000;
+    tp->tv_nsec = s_cached_timeval.tv_usec * 1000; /*nanoseconds*/
+
+    increment_cached_time(0, 1); //+1 millisecond
     return 0;
 }
 
@@ -527,7 +543,7 @@ void zrt_zcall_prolog_zrt_setup(void){
 void zrt_zcall_prolog_premain(void){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     zrt_zcall_enhanced_premain();
-    /*last prolog callback, next folowing main()*/
+    /*last prolog callback, next folowing is main() function*/
 }
 
 
