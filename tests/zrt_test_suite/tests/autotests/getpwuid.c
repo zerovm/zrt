@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <error.h>
 
+#include "utils.h"
 #include "macro_tests.h"
 
 int main(int argc, char **argv)
@@ -47,6 +48,8 @@ int main(int argc, char **argv)
     /*get passwd struct for invalid uid*/
     pass = getpwuid( !uid );
     TEST_OPERATION_RESULT( pass==NULL, &ret, ret!=0);
+
+    TEST_OPERATION_RESULT(test_strtouint_nolocale(), &ret, ret==0);
     return 0;
 }
 
