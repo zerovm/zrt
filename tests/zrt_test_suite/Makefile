@@ -43,6 +43,7 @@ ENV-fork.c=name=FPATH, value=${TESTFILE} {BR}
 ENV-fork.c+=name=new, value=1
 ENV_FORKED-fork.c =$(ENV-fork.c) {BR}
 ENV_FORKED-fork.c+=name=new, value=2
+ENV-getcwd.c=name=HOME, value=/home/zvm
 ENV-getpwuid.c=name=HOME, value=/home/zvm {BR}
 ENV-getpwuid.c+=name=LOGNAME, value=zvm {BR}
 ENV-getpwuid.c+=name=UID, value=2

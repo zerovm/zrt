@@ -380,25 +380,26 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
     time_t t = time(NULL);
     int pages_count = (int)(manifest->heap_size / sysconf(_SC_PAGE_SIZE));
 
-    LOG_DEBUG(ELogTitle, "ZVM SESSION INFO", "=======")
-    LOG_DEBUG(ELogAddress, (intptr_t)manifest->heap_ptr, "ZVM Manifest heap pointer" )
-    LOG_DEBUG(ELogSize, manifest->heap_size, "ZVM Manifest heap size" )
-
+    LOG_DEBUG(ELogTitle, "ZVM SESSION INFO", "=======");
+    LOG_DEBUG(ELogAddress, (intptr_t)manifest->heap_ptr, "ZVM Manifest heap pointer" );
+    LOG_DEBUG(ELogSize, manifest->heap_size, "ZVM Manifest heap size" );
+    
     /*get from system, print environment variables*/
-    LOG_DEBUG(ELogTime, ctime(&t), "System time" )
-    LOG_DEBUG(ELogSize, sysconf(_SC_PAGE_SIZE), "Page size _SC_PAGE_SIZE" )
-    LOG_DEBUG(ELogCount, pages_count, "Memory pages count"  )
-    LOG_DEBUG(ELogAddress, manifest->heap_ptr + manifest->heap_size, "Heap highest page" )
-    LOG_DEBUG(ELogAddress, sbrk(0), "sbrk(0)" )
+    LOG_DEBUG(ELogTime, ctime(&t), "System time" );
+    LOG_DEBUG(ELogSize, sysconf(_SC_PAGE_SIZE), "Page size _SC_PAGE_SIZE" );
+    LOG_DEBUG(ELogCount, pages_count, "Memory pages count"  );
+    LOG_DEBUG(ELogAddress, manifest->heap_ptr + manifest->heap_size, "Heap highest page" );
+    LOG_DEBUG(ELogAddress, sbrk(0), "sbrk(0)" );
+    LOG_DEBUG(ELogPath, get_current_dir_name(), "Home directory" );
 
-    LOG_DEBUG(ELogTitle, "Environment variables", "======")
+    LOG_DEBUG(ELogTitle, "Environment variables", "======");
     i=0;
     while( envp[i] ){
         ZRT_LOG(L_BASE, "envp[%d] = '%s'", i, envp[i]);
 	++i;
     }
 
-    LOG_DEBUG(ELogCount, manifest->channels_count, "channels list")
+    LOG_DEBUG(ELogCount, manifest->channels_count, "channels list");
     /*print channels list*/
     for(i = 0; i < manifest->channels_count; ++i)
 	{
@@ -444,6 +445,9 @@ void zrt_zcall_enhanced_zrt_setup(void){
 
 
 void zrt_zcall_enhanced_premain(void){
+    /*set home dir*/
+    char *homedir;
+    if ( (homedir=getenv("HOME")) ) chdir(homedir);
     zrt_internal_session_info(MANIFEST);
     ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished!");
     ZRT_LOG_DELIMETER;
