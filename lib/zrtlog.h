@@ -67,7 +67,7 @@
 	    if ( DEFAULT_VERBOSITY_FOR_PROLOG_LOG >= v_123 ){		\
 		/*write directly into channel always if logfile defined*/ \
 		tfp_printf("PROLOG " #v_123 " %s:%d " fmt_123 "\n",	\
-			   __FILE__, __LINE__, __VA_ARGS__);		\
+			   BASEFILE__, __LINE__, __VA_ARGS__);		\
 		/*flush data prepared in internal buffer by tfp_printf*/ \
 		__zrt_log_write(__zrt_log_fd(), NULL, 0, 0);		\
 	    }								\
@@ -79,7 +79,7 @@
 		(debug_handle_123=__zrt_log_debug_get_buf(&buf__123)) >= 0 ){ \
 		int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,	\
 				       #v_123 " %s:%d; [%s]- " fmt_123 "\n", \
-				       __FILE__, __LINE__,		\
+				       BASEFILE__, __LINE__,		\
 				       __zrt_log_syscall_stack_str(), __VA_ARGS__); \
 		__zrt_log_write(debug_handle_123, buf__123, len_123, 0); \
 	    }								\
