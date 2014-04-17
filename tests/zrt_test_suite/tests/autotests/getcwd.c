@@ -71,6 +71,13 @@ void test_issue_96_2()
     CHECK_PATH_EXISTANCE("/" DIR "/" FILE);
 }
 
+void test_issue_122(){
+    int ret;
+    char *curdir = get_current_dir_name();
+    TEST_OPERATION_RESULT( strcmp(curdir, "/home/zvm"), &ret, ret==0 );
+    TEST_OPERATION_RESULT( chdir("/"), &ret, ret==0&&errno==0 );
+}
+
 void test_issue_76(){
 #undef DIR
 #define DIR "/tmp"
@@ -86,6 +93,8 @@ int main(int argc, char **argv)
     char buf[PATH_MAX];
     int ret;
     char* res;
+
+    test_issue_122();
     
     /*some preparations*/
     CREATE_FILE(FILE_PATH, "abcd", 4);

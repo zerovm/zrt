@@ -238,3 +238,11 @@ install: uninstall
 	install -m 0644 lib/helpers/buffered_io.h $(INSTALL_INCLUDE_DIR)/helpers
 
 .PHONY: install
+
+#use macros BASEFILE__ if no need full srcpath in log debug file
+%.o: %.c
+	$(CC) $(CFLAGS) -DBASEFILE__=\"$(notdir $<)\" $< -o $@
+%.o: %.cc
+	$(CXX) $(CPPFLAGS) -DBASEFILE__=\"$(notdir $<)\" $< -o $@
+
+

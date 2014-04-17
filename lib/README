@@ -154,3 +154,12 @@ seconds=1370454582 #since 1970
 verbosity=4
 [precache]
 precache=yes
+3.3.support for getpwuid is based on using of folowing environment
+variables: 
+"LOGNAME" - login name, if not specified 'root' will used;
+"UID", "GID"- specify numeric value or 1 will used by default 
+"HOME" - home directory, if not specified '/' will used;
+"SHELL" - shell program
+note that /etc/passwd still dosn't exist
+
+

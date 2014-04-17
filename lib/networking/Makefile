@@ -4,6 +4,10 @@ CFLAGS+=-DDEBUG -g
 
 all: libnetworking.a
 
+#use macros BASEFILE__ if no need full srcpath in log debug file
+%.o: %.c
+	$(CC) $(CFLAGS) -DBASEFILE__=\"$(notdir $<)\" $< -o $@
+
 libnetworking.a: \
 	$(CURDIR)/eachtoother_comm.o \
 	$(CURDIR)/channels_conf.o \

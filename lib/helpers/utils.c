@@ -81,14 +81,17 @@ char* zrealpath( const char* path, char* resolved_path )
 uint strtouint_nolocale(const char* str, int base, int *err ){
     #define CURRENT_CHAR str[idx]
     int idx;
+    uint delta;
     int numlen = strlen(str);
     uint res = 0;
     uint append=1;
     for ( idx=numlen-1; idx >= 0; idx-- ){
 	if ( CURRENT_CHAR >= '0' && CURRENT_CHAR <= '9' ){
-	    if ( (res + append* (uint)(CURRENT_CHAR - '0')) < UINT_MAX )
-		res += append* (uint)(CURRENT_CHAR - '0');
+	    delta = append* (uint)(CURRENT_CHAR - '0');
+	    if ( !(delta > UINT_MAX-res) )
+		res += delta;
 	    else{
+		res=0;
 		*err = 1;
 		return 0;
 	    }
@@ -98,3 +101,17 @@ uint strtouint_nolocale(const char* str, int base, int *err ){
     return res;
 }
 
+int test_strtouint_nolocale(){
+    int err=0;
+    uint res;
+    res = strtouint_nolocale("0", 10, &err );
+    if ( res!=0 || err!=0 ) return -1;
+
+    res = strtouint_nolocale("4294967295", 10, &err );
+    if ( res!=4294967295 || err!=0 ) return -1;
+
+    res = strtouint_nolocale("4294967297", 10, &err );
+    if ( res!=0 || err==0 ) return -1;
+
+    return 0;
+}

@@ -20,21 +20,37 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <pwd.h>
 #include <limits.h>
 #include <errno.h>
+#include <error.h>
+
+#include "utils.h"
+#include "macro_tests.h"
 
 int main(int argc, char **argv)
 {
-    int rc=0;
-    struct passwd* pass = getpwuid(1);   /*valid uid=1*/
-    pass == NULL? rc=1 : rc;
+    int ret;
+    uid_t uid;
+    struct passwd* pass;
 
-    pass = getpwuid(2);                  /*invalid uid=2*/
-    pass != NULL? rc=1 : rc;
+    /*check getuid return some valid value*/
+    TEST_OPERATION_RESULT( uid=getuid(), &ret, ret!=-1);
 
-    fprintf(stderr, "rc=%d, errno=%d\n", rc, errno );
-    return rc;
+    /*get passwd struct for valid uid*/
+    pass = getpwuid( uid );
+    TEST_OPERATION_RESULT( pass!=NULL, &ret, ret!=0);
+
+    TEST_OPERATION_RESULT( strcmp(getenv("HOME"), pass->pw_dir ), &ret, ret==0);
+    TEST_OPERATION_RESULT( strcmp(pass->pw_name, getenv("LOGNAME")), &ret, ret==0);
+
+    /*get passwd struct for invalid uid*/
+    pass = getpwuid( !uid );
+    TEST_OPERATION_RESULT( pass==NULL, &ret, ret!=0);
+
+    TEST_OPERATION_RESULT(test_strtouint_nolocale(), &ret, ret==0);
+    return 0;
 }
 
 
