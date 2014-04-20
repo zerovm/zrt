@@ -27,6 +27,7 @@
 #include <error.h>
 #include <errno.h>
 
+#include "path_utils.h"
 #include "macro_tests.h"
 
 #define ROOT_PATH "/"
@@ -73,6 +74,7 @@ void test_issue_96_2()
 
 void test_issue_122(){
     int ret;
+    TEST_OPERATION_RESULT( test_path_utils(), &ret, ret==0);
     char *curdir = get_current_dir_name();
     TEST_OPERATION_RESULT( strcmp(curdir, "/home/zvm"), &ret, ret==0 );
     TEST_OPERATION_RESULT( chdir("/"), &ret, ret==0&&errno==0 );

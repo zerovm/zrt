@@ -23,6 +23,7 @@ lib/enum_strings.c \
 lib/helpers/dyn_array.c \
 lib/helpers/printf_prolog.c \
 lib/helpers/conf_parser.c \
+lib/helpers/path_utils.c \
 lib/helpers/conf_keys.c \
 lib/helpers/utils.c \
 lib/helpers/buffered_io.c \

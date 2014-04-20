@@ -48,6 +48,7 @@
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
+#include "parse_path.h"
 #include "mounts_reader.h"
 #include "settime_observer.h"
 #include "args_observer.h"
@@ -89,6 +90,21 @@ struct MountsPublicInterface* transparent_mount() { return s_transparent_mount; 
 /*internal functions to be used in this module*/
 void zrt_internal_session_info();
 void zrt_internal_init( const struct UserManifest const* manifest );
+
+void set_home_dir(const char *home)
+{
+    if ( home != NULL ) {
+	int err;
+	if ( !(err=mkpath_recursively(home, 0666)) || err==-1&&errno==EEXIST ){
+	    if( chdir(home) != 0 ){
+		ZRT_LOG(L_ERROR, "Error setting home directory %s, errno=%d", home, errno);
+	    }
+	}
+	else{
+	    ZRT_LOG(L_ERROR, "Error creating home directory %s, errno=%d", home, errno);
+	}
+    }
+}
 
 /********************************************************************************
  * ZRT IMPLEMENTATION OF ZCALLS
@@ -445,11 +461,9 @@ void zrt_zcall_enhanced_zrt_setup(void){
 
 
 void zrt_zcall_enhanced_premain(void){
-    /*set home dir*/
-    char *homedir;
-    if ( (homedir=getenv("HOME")) ) chdir(homedir);
+    set_home_dir( getenv("HOME") );
     zrt_internal_session_info(MANIFEST);
-    ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished!");
+    ZRT_LOG(L_SHORT, P_TEXT, "run user main()");
     ZRT_LOG_DELIMETER;
 }
 
@@ -560,6 +574,7 @@ int zfork(){
 }
 
 /*************************************************************************/
+
 
 
 
