@@ -95,7 +95,7 @@ void set_home_dir(const char *home)
 {
     if ( home != NULL ) {
 	int err;
-	if ( !(err=mkpath_recursively(home, 0666)) || err==-1&&errno==EEXIST ){
+	if ( !(err=mkpath_recursively(home, 0666)) || (err==-1&&errno==EEXIST) ){
 	    if( chdir(home) != 0 ){
 		ZRT_LOG(L_ERROR, "Error setting home directory %s, errno=%d", home, errno);
 	    }

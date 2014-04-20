@@ -104,9 +104,11 @@ int buf_read (BufferedIORead* self, int handle, void* data, size_t size){
 
 
 static ssize_t read_override (int handle, void* data, size_t size){
+    return 0;
 }
 
 static ssize_t write_override (int handle, const void* data, size_t size){
+    return 0;
 }
 
 

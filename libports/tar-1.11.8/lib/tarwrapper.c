@@ -1710,6 +1710,7 @@ int save_as_tar(const char *dir_path, const char *tar_path ){
     argv[argc++] = "-hcf";     //#1
     argv[argc++] = tar_path;   //#2
     argv[argc++] = dir_path;   //#3
+    argv[argc++] = "--exclude=/dev"; //#4
 
     DEBUG_PRINT(argv[0]);
     DEBUG_PRINT(argv[1]);
