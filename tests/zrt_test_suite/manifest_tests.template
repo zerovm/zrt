@@ -14,6 +14,10 @@ Channel = {OUTFILE}.writeonly.channel, /dev/writeonly, {CHANNEL_WRITEONLY_TYPE},
 Channel = {OUTFILE}.read-write.channel, /dev/read-write, {CHANNEL_READWRITE_TYPE}, 0, 99999, 99999, 99999, 99999
 
 =====================================================================
+== channels can be added separately for every test in Makefile
+{DYNAMIC_CHANNELS_LIST}
+
+=====================================================================
 == switches for zerovm. some of them used to control nexe, some
 == for the internal zerovm needs
 =====================================================================

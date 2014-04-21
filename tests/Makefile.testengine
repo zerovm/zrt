@@ -120,6 +120,7 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	$(eval SPECIFIC_TEST_FSTAB:=$(FSTAB-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_PRECACHE:=$(PRECACHE-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_FORK=$(FORK-$(NAMEONLY).c))
+	$(eval SPECIFIC_TEST_CHANNELS=$(CHANNELS-$(NAMEONLY).c))
 #prepare variable ralated to forked session tests
 	$(eval SPECIFIC_TEST_CMDLINE_FORKED:=$(CMDLINE_FORKED-$(NAMEONLY).c))
 	$(eval SPECIFIC_TEST_ENV_FORKED:=$(ENV_FORKED-$(NAMEONLY).c))
@@ -160,6 +161,8 @@ $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 	 sed s@{MOUNTS_PATH}@$(ZRT_ROOT)/mounts/@g | \
 	 sed s@{JOB}@$(SPECIFIC_TEST_FORK)@g | \
 	 sed s@{TAR_MOUNT}@$(TEST_TAR)@g | \
+	 sed s@{DYNAMIC_CHANNELS_LIST}@"$(SPECIFIC_TEST_CHANNELS)"@g | \
+	 sed s@{BR}@'\n'@g | \
 	 sed s@{MEMMAX}@$(SPECIFIC_TEST_MEMMAX)@g > $(CURDIR)/$(BASENAME).manifest
 #prepare nvram
 	@sed s@{ENVIRONMENT}@"$(SPECIFIC_TEST_ENV)"@g nvram_tests.template | \
