@@ -22,7 +22,15 @@
 #define MAX_ITEMS_SIZE 10
 
 /*Log Items*/
-typedef enum {ELogLength=0, ELogAddress, ELogSize, ELogTitle, ELogTime, ELogCount, ELogIndex} log_item;
+typedef enum {ELogLength=0, 
+	      ELogAddress, 
+	      ELogSize, 
+	      ELogTitle, 
+	      ELogTime, 
+	      ELogCount, 
+	      ELogIndex,
+	      ELogPath
+} log_item;
 
 extern char* s_log_items[MAX_ITEMS_SIZE];
 extern int   s_log_items_count;
@@ -39,7 +47,7 @@ extern int   s_log_items_count;
 	if( debug_handle > 0 ){						\
 	    assert( s_log_items[item_id] );				\
 	    len = snprintf(buf__123, LOG_BUFFER_SIZE, "%s:%d " #value" ", \
-			   __FILE__, __LINE__);				\
+			   BASEFILE__, __LINE__);				\
 	    __zrt_log_write(debug_handle, buf__123, len, 0);		\
 	    len = snprintf(buf__123, LOG_BUFFER_SIZE,			\
 			   s_log_items[item_id], comment, (void*)(value) ); \
@@ -80,8 +88,8 @@ extern int   s_log_items_count;
     ITEM(ELogTitle,      =======,    "%s" );	\
     ITEM(ELogTime,       time,       "%s" );	\
     ITEM(ELogCount,      count,      "%d" );	\
-    ITEM(ELogIndex,      index,      "%d" );
-
+    ITEM(ELogIndex,      index,      "%d" );	\
+    ITEM(ELogPath,       path,       "%s" );
 
 
 #endif //__ZRTLOGBASE_H__

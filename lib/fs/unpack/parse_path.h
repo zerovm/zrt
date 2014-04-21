@@ -32,4 +32,7 @@ int create_dir_and_cache_name( const char* path, int len );
 /*return parsed count*/
 int parse_path( struct ParsePathObserver* observer, const char *path );
 
+/*@return 0 if success, return -1 on error, set errno EEXIST if path exist*/
+int mkpath_recursively(const char* file_path, mode_t mode);
+
 #endif /* PARSE_PATH_H_ */

@@ -67,7 +67,7 @@
 	    if ( DEFAULT_VERBOSITY_FOR_PROLOG_LOG >= v_123 ){		\
 		/*write directly into channel always if logfile defined*/ \
 		tfp_printf("PROLOG " #v_123 " %s:%d " fmt_123 "\n",	\
-			   __FILE__, __LINE__, __VA_ARGS__);		\
+			   BASEFILE__, __LINE__, __VA_ARGS__);		\
 		/*flush data prepared in internal buffer by tfp_printf*/ \
 		__zrt_log_write(__zrt_log_fd(), NULL, 0, 0);		\
 	    }								\
@@ -79,7 +79,7 @@
 		(debug_handle_123=__zrt_log_debug_get_buf(&buf__123)) >= 0 ){ \
 		int len_123 = snprintf(buf__123, LOG_BUFFER_SIZE,	\
 				       #v_123 " %s:%d; [%s]- " fmt_123 "\n", \
-				       __FILE__, __LINE__,		\
+				       BASEFILE__, __LINE__,		\
 				       __zrt_log_syscall_stack_str(), __VA_ARGS__); \
 		__zrt_log_write(debug_handle_123, buf__123, len_123, 0); \
 	    }								\
@@ -150,6 +150,15 @@
 	    STR_STAT_ST_MODE(stat->st_mode), (int)stat->st_blksize,	\
 	    stat->st_size, (int)stat->st_blocks, stat->st_atime, stat->st_mtime );
 
+#else
+#define ZRT_LOG(v_123, fmt_123, ...)
+#define ZRT_LOG_DELIMETER
+#define LOG_SYSCALL_START(fmt_123, ...)
+#define LOG_SYSCALL_FINISH()
+#define LOG_INFO_SYSCALL_FINISH(ret, fmt_123, ...)
+#define ZRT_LOG_STAT(v123, stat)
+#endif
+
 
 void __zrt_log_init();
 const char* __zrt_log_syscall_stack_str();
@@ -171,10 +180,5 @@ int  __zrt_log_prolog_mode_is_enabled();
 int __zrt_log_debug_get_buf(char **buf);
 int32_t __zrt_log_write( int handle, const char* buf, int32_t size, int64_t offset);
 
-#else
-#define LOG_SYSCALL_START(fmt_123, ...)
-#define LOG_SYSCALL_FINISH()
-
-#endif
 
 #endif /* ZRTLOG_H_ */

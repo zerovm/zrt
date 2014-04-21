@@ -23,6 +23,7 @@ lib/enum_strings.c \
 lib/helpers/dyn_array.c \
 lib/helpers/printf_prolog.c \
 lib/helpers/conf_parser.c \
+lib/helpers/path_utils.c \
 lib/helpers/conf_keys.c \
 lib/helpers/utils.c \
 lib/helpers/buffered_io.c \
@@ -238,3 +239,11 @@ install: uninstall
 	install -m 0644 lib/helpers/buffered_io.h $(INSTALL_INCLUDE_DIR)/helpers
 
 .PHONY: install
+
+#use macros BASEFILE__ if no need full srcpath in log debug file
+%.o: %.c
+	$(CC) $(CFLAGS) -DBASEFILE__=\"$(notdir $<)\" $< -o $@
+%.o: %.cc
+	$(CXX) $(CPPFLAGS) -DBASEFILE__=\"$(notdir $<)\" $< -o $@
+
+

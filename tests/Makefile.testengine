@@ -59,8 +59,6 @@ CFLAGS+=-I.. -I. -Iframework
 CFLAGS+=-Iinclude
 CFLAGS+=-I$(ZRT_ROOT)/lib
 
-#in order to correectly link glibs substituted functions libzrt should be linked twice
-#before object file and after
 #For rt tests
 LDFLAGS+= -lrt
 #For dlopen
@@ -75,12 +73,12 @@ LDFLAGS+= -lmapreduce -lnetworking
 #uncomment below one if want to display removed files list during clean
 #VERBOSE_CLEAN=-v
 
+all: prepare $(ZEROVM) $(TEST_NEXES) report
+
 gcov: LDFLAGS+=${GCOV_LDFLAGS}
 gcov: CPPFLAGS+=${GCOV_FLAGS}
 gcov: CFLAGS+=${GCOV_FLAGS}
 gcov: prepare $(ZEROVM) $(TEST_NEXES) report
-
-all: prepare $(ZEROVM) $(TEST_NEXES) report
 
 clean:
 	@find -name "*.scp" | xargs rm -f $(VERBOSE_CLEAN)

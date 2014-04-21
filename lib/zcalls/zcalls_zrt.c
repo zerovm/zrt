@@ -48,6 +48,7 @@
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
+#include "parse_path.h"
 #include "mounts_reader.h"
 #include "settime_observer.h"
 #include "args_observer.h"
@@ -89,6 +90,21 @@ struct MountsPublicInterface* transparent_mount() { return s_transparent_mount; 
 /*internal functions to be used in this module*/
 void zrt_internal_session_info();
 void zrt_internal_init( const struct UserManifest const* manifest );
+
+void set_home_dir(const char *home)
+{
+    if ( home != NULL ) {
+	int err;
+	if ( !(err=mkpath_recursively(home, 0666)) || (err==-1&&errno==EEXIST) ){
+	    if( chdir(home) != 0 ){
+		ZRT_LOG(L_ERROR, "Error setting home directory %s, errno=%d", home, errno);
+	    }
+	}
+	else{
+	    ZRT_LOG(L_ERROR, "Error creating home directory %s, errno=%d", home, errno);
+	}
+    }
+}
 
 /********************************************************************************
  * ZRT IMPLEMENTATION OF ZCALLS
@@ -380,25 +396,26 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
     time_t t = time(NULL);
     int pages_count = (int)(manifest->heap_size / sysconf(_SC_PAGE_SIZE));
 
-    LOG_DEBUG(ELogTitle, "ZVM SESSION INFO", "=======")
-    LOG_DEBUG(ELogAddress, (intptr_t)manifest->heap_ptr, "ZVM Manifest heap pointer" )
-    LOG_DEBUG(ELogSize, manifest->heap_size, "ZVM Manifest heap size" )
-
+    LOG_DEBUG(ELogTitle, "ZVM SESSION INFO", "=======");
+    LOG_DEBUG(ELogAddress, (intptr_t)manifest->heap_ptr, "ZVM Manifest heap pointer" );
+    LOG_DEBUG(ELogSize, manifest->heap_size, "ZVM Manifest heap size" );
+    
     /*get from system, print environment variables*/
-    LOG_DEBUG(ELogTime, ctime(&t), "System time" )
-    LOG_DEBUG(ELogSize, sysconf(_SC_PAGE_SIZE), "Page size _SC_PAGE_SIZE" )
-    LOG_DEBUG(ELogCount, pages_count, "Memory pages count"  )
-    LOG_DEBUG(ELogAddress, manifest->heap_ptr + manifest->heap_size, "Heap highest page" )
-    LOG_DEBUG(ELogAddress, sbrk(0), "sbrk(0)" )
+    LOG_DEBUG(ELogTime, ctime(&t), "System time" );
+    LOG_DEBUG(ELogSize, sysconf(_SC_PAGE_SIZE), "Page size _SC_PAGE_SIZE" );
+    LOG_DEBUG(ELogCount, pages_count, "Memory pages count"  );
+    LOG_DEBUG(ELogAddress, manifest->heap_ptr + manifest->heap_size, "Heap highest page" );
+    LOG_DEBUG(ELogAddress, sbrk(0), "sbrk(0)" );
+    LOG_DEBUG(ELogPath, get_current_dir_name(), "Home directory" );
 
-    LOG_DEBUG(ELogTitle, "Environment variables", "======")
+    LOG_DEBUG(ELogTitle, "Environment variables", "======");
     i=0;
     while( envp[i] ){
         ZRT_LOG(L_BASE, "envp[%d] = '%s'", i, envp[i]);
 	++i;
     }
 
-    LOG_DEBUG(ELogCount, manifest->channels_count, "channels list")
+    LOG_DEBUG(ELogCount, manifest->channels_count, "channels list");
     /*print channels list*/
     for(i = 0; i < manifest->channels_count; ++i)
 	{
@@ -444,8 +461,9 @@ void zrt_zcall_enhanced_zrt_setup(void){
 
 
 void zrt_zcall_enhanced_premain(void){
+    set_home_dir( getenv("HOME") );
     zrt_internal_session_info(MANIFEST);
-    ZRT_LOG(L_INFO, P_TEXT, "zrt startup finished!");
+    ZRT_LOG(L_SHORT, P_TEXT, "run user main()");
     ZRT_LOG_DELIMETER;
 }
 
@@ -556,6 +574,7 @@ int zfork(){
 }
 
 /*************************************************************************/
+
 
 
 

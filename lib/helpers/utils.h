@@ -32,4 +32,7 @@ char* zrealpath( const char* path, char* resolved_path );
 /*convert string to unsingned int, to be used in prolog, not used locale */
 uint strtouint_nolocale(const char* str, int base, int *err );
 
+/*@return 0 OK, -1 error*/
+int test_strtouint_nolocale();
+
 #endif //__HELPERS_UTILS_H__

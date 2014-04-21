@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <string.h>
@@ -24,23 +26,36 @@
 #include <assert.h>
 
 #include "zrtlog.h"
+#include "path_utils.h"
 #include "parse_path.h"
 
 
 static char s_cached_full_path[4096] = "";
 
 
-int mkpath(char* file_path, mode_t mode) {
+int mkpath_recursively(const char* file_path, mode_t mode) {
     assert(file_path && *file_path);
-    char* p;
-    for (p=strchr(file_path+1, '/'); p; p=strchr(p+1, '/')) {
-	*p='\0';
-	if (mkdir(file_path, mode)==-1) {
-	    if (errno!=EEXIST) { *p='/'; return -1; }
+    struct stat st;
+
+    if ( stat(file_path, &st) != 0 ){
+	int temp_cursor, result_len, mkdirerr;
+	const char* subpath;
+	INIT_TEMP_CURSOR(&temp_cursor);
+
+	errno=0;
+	while( (subpath=path_subpath_forward(&temp_cursor, file_path, &result_len)) != NULL ){
+	    if ( result_len>1 ){
+		if ( (mkdirerr=mkdir( strndupa(subpath, result_len), mode)) == 0 || 
+		     mkdirerr==-1&&errno==EEXIST )
+		    continue;
+	    }
 	}
-	*p='/';
+	return mkdirerr;
     }
-    return 0;
+    else{
+	errno = EEXIST;
+	return -1;
+    }
 }
 
 /* check path directory is cached or not.

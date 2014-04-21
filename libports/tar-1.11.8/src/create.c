@@ -294,6 +294,9 @@ finish_header (register union record *header)
   register int i, sum;
   register char *p;
 
+  /*avoid adding empty name extracted from root name, in case if archiving root folder*/
+  if ( !header->header.arch_name || !strlen(header->header.arch_name) ) return;
+
   memcpy (header->header.chksum, CHKBLANKS, sizeof (header->header.chksum));
 
   sum = 0;
