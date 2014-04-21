@@ -47,6 +47,7 @@ ENV-getcwd.c=name=HOME, value=/home/zvm
 ENV-getpwuid.c=name=HOME, value=/home/zvm {BR}
 ENV-getpwuid.c+=name=LOGNAME, value=zvm {BR}
 ENV-getpwuid.c+=name=UID, value=2
+ENV-readdir.c=name=CURDIR, value=$(CURDIR)
 #####################################################################
 
 
@@ -59,6 +60,9 @@ MAPPING-lstat-stat-mapping.c+=channel=/dev/stderr, mode=file
 MAPPING-seek.c =channel=/dev/read-write, mode=file
 MAPPING-fork.c =channel=/dev/read-write, mode=char
 MAPPING_FORKED-fork.c =channel=/dev/read-write, mode=file
+MAPPING-readdir.c =channel=/dev/mount2, mode=file {BR}
+MAPPING-readdir.c +=channel=/dev/stdin, mode=char {BR}
+MAPPING-readdir.c +=channel=/dev/null, mode=char {BR}
 #####################################################################
 
 #####################################################################
@@ -125,6 +129,12 @@ CHANNEL_READONLY_CONTENT-devices.c=something something
 #generate manifest file, set amount of memory 
 #examples: 
 MEMMAX-mmap.c=268435456
+#####################################################################
+
+#####################################################################
+# add channels listed below into manifest file
+CHANNELS-readdir.c=Channel=/dev/null, /dev/mount1, 0, 0, 999999, 999999, 0, 0{BR}
+CHANNELS-readdir.c+=Channel=/dev/null, /dev/mount2, 0, 0, 999999, 999999, 0, 0{BR}
 #####################################################################
 
 
