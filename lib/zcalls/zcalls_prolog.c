@@ -70,10 +70,6 @@ static void*   sbrk_default = NULL;
 struct timeval s_cached_timeval;
 /****************** */
 
-struct timeval* static_timeval() { 
-    return &s_cached_timeval; 
-}
-
 void* static_prolog_brk() { 
     return sbrk_default; 
 }

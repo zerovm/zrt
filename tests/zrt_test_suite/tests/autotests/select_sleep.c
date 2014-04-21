@@ -30,6 +30,68 @@
 #include "macro_tests.h"
 
 
+void prepare_time_test(struct timespec *ts){
+    int ret;
+    /*compare time before and after timeout, measure in nanoseconds*/
+    TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, ts), &ret, ret==0 );
+}
+
+void complete_nanosec_test(struct timespec *prepared_ts, struct timespec *timeout_ts){
+    int ret;
+    struct timespec new_ts;
+
+    timeout_ts->tv_nsec += 1000; /*clock_gettime take additional time*/
+    TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, &new_ts), &ret, ret==0 );
+
+    struct timeval prepared_tv;
+    TIMESPEC_TO_TIMEVAL(&prepared_tv, prepared_ts);
+    struct timeval new_tv;
+    TIMESPEC_TO_TIMEVAL(&new_tv, &new_ts);
+    struct timeval timeout_tv;
+    TIMESPEC_TO_TIMEVAL(&timeout_tv, timeout_ts);
+    struct timeval tv_inc;
+    timeradd(&prepared_tv, &timeout_tv, &tv_inc);
+
+    TEST_OPERATION_RESULT( timercmp(&tv_inc, &new_tv, == ), &ret, ret==1);
+}
+
+
+void test_nanosleep(int sec, int nsec, int expected_sec, int expected_nsec){
+    int ret;
+    struct timespec ts, timeout_ts, expected_timeout_ts, remain;
+    
+    /*save current time*/
+    prepare_time_test(&ts);
+    /*wait until timeout exceeded*/
+    timeout_ts.tv_sec = 0;
+    timeout_ts.tv_nsec= 1000;
+    TEST_OPERATION_RESULT( nanosleep(&timeout_ts, &remain), &ret, ret==0 );
+    expected_timeout_ts.tv_sec = expected_sec;
+    expected_timeout_ts.tv_nsec = expected_nsec;
+    /*check the passed amount time as expected*/
+    complete_nanosec_test(&ts, &expected_timeout_ts);
+}
+
+void test_select_timeout(int sec, int nsec, int expected_sec, int expected_nsec){
+    int ret;
+    struct timespec ts, expected_timeout_ts;
+    
+    /*save current time*/
+    prepare_time_test(&ts);
+    /*wait until timeout exceeded*/
+    struct timeval timeout_tv;
+    timeout_tv.tv_sec = sec;
+    timeout_tv.tv_usec = nsec/1000;
+    TEST_OPERATION_RESULT( select(0, NULL, NULL,
+				  NULL, &timeout_tv), &ret, ret==0);
+    expected_timeout_ts.tv_sec = expected_sec;
+    expected_timeout_ts.tv_nsec = expected_nsec;
+    /*check the passed amount time as expected*/
+    complete_nanosec_test(&ts, &expected_timeout_ts);
+}
+
+
+
 int main(int argc, char **argv)
 {
     int ret;
@@ -47,20 +109,11 @@ int main(int argc, char **argv)
 	TEST_OPERATION_RESULT( tv2.tv_sec == tv.tv_sec+seconds, &ret, ret==1);
     }
 
-    {
-	struct timespec req, rem;
-	struct timespec tp, tp2, tp3;
+    test_nanosleep(0, 0, 0, 1000); /*if 0 time is passed it should take anyway 1 microsecond*/
+    test_nanosleep(0, 1998, 0, 1998);
 
-	/*compare time before and after nanosleep, measure in nanoseconds*/
-	TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, &tp), &ret, ret==0 );
-	req.tv_sec = 0;
-	req.tv_nsec = 1999;
-	TEST_OPERATION_RESULT( nanosleep(&req, &rem), &ret, ret==0 );
-	TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, &tp2), &ret, ret==0 );
-	TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, &tp3), &ret, ret==0 );
-	TEST_OPERATION_RESULT( tp2.tv_sec != tp3.tv_sec || tp2.tv_nsec != tp3.tv_nsec, &ret, ret==1);
-	TEST_OPERATION_RESULT( tp2.tv_nsec == tp.tv_nsec+req.tv_nsec+1, &ret, ret==1);
-    }
+    test_select_timeout(0, 0, 0, 1000);
+    test_select_timeout(0, 1000, 0, 1000);
 
     {
 	struct timespec ts, ts2;
