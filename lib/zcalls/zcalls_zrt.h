@@ -24,9 +24,6 @@
 
 #include <sys/stat.h> //mode_t
 
-/*timeval must be accessible from both zcalls_zrt, zcalls_prolog*/
-struct timeval*         static_timeval();
-
 /*save brk value before memory syscall handlers was setted up*/
 void*                   static_prolog_brk();
 

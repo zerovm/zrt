@@ -152,21 +152,34 @@ void test_root(){
     }
 }
 
-static void test_readdir_with_many_folders(const char *parent_dir, int create_folders_count){
-    struct direntry_t *expected = malloc(sizeof(struct direntry_t)*create_folders_count);
-    char *tmpdirname = malloc(PATH_MAX);
+static void test_readdir_with_many_components(const char *parent_dir, 
+					      int create_folders_count, 
+					      int create_files_count ){
+    struct direntry_t *expected 
+	= malloc(sizeof(struct direntry_t)*(create_folders_count+create_files_count));
+    char *tmpname = malloc(PATH_MAX);
     char intstr[20];
-    /*create folder and fill testing data structure*/
-    for (int i=0; i < create_folders_count; i++){
+    int i;
+    /*create folders and fill testing data structure*/
+    for (i=0; i < create_folders_count; i++){
 	snprintf(intstr, sizeof(intstr), "%d", i);
-	snprintf(tmpdirname, PATH_MAX, "%s/%s", parent_dir, intstr);
+	snprintf(tmpname, PATH_MAX, "%s/%s", parent_dir, intstr);
 	strcpy( expected[i].name, intstr );
 	expected[i].type = EDir;
-	mkdir(tmpdirname, 0666);
+	mkdir(tmpname, 0666);
     }
 
-    readdir_test_engine(parent_dir, expected, create_folders_count );
-    free(tmpdirname);
+    /*create files and fill testing data structure*/
+    for (i=create_folders_count; i < create_files_count+create_folders_count; i++){
+	snprintf(intstr, sizeof(intstr), "%d", i);
+	snprintf(tmpname, PATH_MAX, "%s/%s", parent_dir, intstr);
+	strcpy( expected[i].name, intstr );
+	expected[i].type = EFile;
+	CREATE_FILE(tmpname, intstr, strlen(intstr));
+    }
+
+    readdir_test_engine(parent_dir, expected, create_folders_count+create_files_count );
+    free(tmpname);
 }
 
 void test_random_folder(){
@@ -174,5 +187,5 @@ void test_random_folder(){
     char tmpdirname[PATH_MAX] ="/tmp/1234-XXXXXX";
     TEST_OPERATION_RESULT((int)mkdtemp(tmpdirname), (int*)&ret, ret!=0 );
     
-    test_readdir_with_many_folders(tmpdirname, 1000);
+    test_readdir_with_many_components(tmpdirname, 1000, 1000);
 }

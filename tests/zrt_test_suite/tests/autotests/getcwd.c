@@ -81,13 +81,21 @@ void test_issue_122(){
 }
 
 void test_issue_76(){
-#undef DIR
-#define DIR "/tmp"
+    const char* dirname = "/tmp";
     int fd, ret;
     TEST_OPERATION_RESULT( chdir("/"), &ret, ret==0&&errno==0 );
-    TEST_OPERATION_RESULT( open(DIR, O_DIRECTORY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(dirname, O_DIRECTORY), &fd, fd!=-1&&errno==0 );
     TEST_OPERATION_RESULT( fchdir(fd), &ret, ret==0&&errno==0 );
-    TEST_OPERATION_RESULT( strcmp(get_current_dir_name(), DIR), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( strcmp(get_current_dir_name(), dirname), &ret, ret==0&&errno==0 );
+}
+
+void test_fchdir_dev(){
+    const char* dirname = "/dev";
+    int fd, ret;
+    TEST_OPERATION_RESULT( chdir("/"), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( open(dirname, O_DIRECTORY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( fchdir(fd), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( strcmp(get_current_dir_name(), dirname), &ret, ret==0&&errno==0 );
 }
 
 int main(int argc, char **argv)
@@ -140,6 +148,7 @@ int main(int argc, char **argv)
     test_issue_96();
     test_issue_96_2();
     test_issue_76();
+    test_fchdir_dev();
     return 0;
 }
 

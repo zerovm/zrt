@@ -115,11 +115,22 @@ static int check_handle(struct MountSpecificImplem* this, int handle){
 }
 
 static const char* handle_path(struct MountSpecificImplem* this, int handle){
-    if ( HALLOCATOR_BY_MOUNT_SPECIF(this)
+    if ( this->mount->handle_allocator
 	 ->check_handle_is_related_to_filesystem(handle, &this->mount->public) != 0 ) return NULL;
-
-    const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT_SPECIF(this)->entry(handle);
-    return CHANNEL_NAME( CHANNEL_ITEM_BY_INODE(this->channels_array, hentry->inode) );
+    const struct HandleItem* hentry = this->mount->handle_allocator->entry(handle);
+    struct dir_data_t *dir_data;
+    struct ChannelArrayItem* item;
+    /*choose handle type: channel handle or dir handle */		
+    if ( (item=this->channels_array->match_by_inode(this->channels_array, 
+						    hentry->inode)) != NULL ){
+	return CHANNEL_NAME( item );
+    }
+    else if ( (dir_data=match_inode_in_directory_list( &this->mount->manifest_dirs, 
+						       hentry->inode)) != NULL ){
+	/*dir name*/
+	return dir_data->path;
+    }
+    return NULL;
 }
 
 static int file_status_flags(struct MountSpecificImplem* this, int handle){
@@ -137,9 +148,18 @@ static int file_status_flags(struct MountSpecificImplem* this, int handle){
     }
 }
 
-static int set_file_status_flags(struct MountSpecificPublicInterface* this_, int fd, int flags){
-    SET_ERRNO(ENOSYS);
-    return -1;
+static int set_file_status_flags(struct MountSpecificImplem* this, int fd, int flags){
+    if ( HALLOCATOR_BY_MOUNT_SPECIF(this)
+	 ->check_handle_is_related_to_filesystem(fd, &this->mount->public) == 0 ){
+	const struct HandleItem* hentry;
+	hentry = HALLOCATOR_BY_MOUNT_SPECIF(this)->entry(fd);
+	this->mount->open_files_pool->set_flags( hentry->open_file_description_id, flags);
+	return flags;
+    }
+    else{
+	SET_ERRNO(EBADF);
+	return -1;
+    }
 }
 
 /*return pointer at success, NULL if fd didn't found or flock
@@ -1075,8 +1095,19 @@ static int channels_open(struct ChannelMounts* this,const char* path, int oflag,
 }
 
 static int channels_fcntl(struct ChannelMounts* this,int fd, int cmd, ...){
-    ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
-    return 0;
+    if ( this->handle_allocator->check_handle_is_related_to_filesystem(fd, &this->public) == 0 ){
+	const struct HandleItem* hentry = this->handle_allocator->entry(fd);
+	ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
+	if ( this->channels_array->match_by_inode(this->channels_array, hentry->inode) == NULL ){
+	    SET_ERRNO(EBADF);
+	    return -1;
+	}
+	return 0;
+    }
+    else{
+	SET_ERRNO(ENOENT);
+	return -1;
+    }
 }
 
 static int channels_remove(struct ChannelMounts* this,const char* path){

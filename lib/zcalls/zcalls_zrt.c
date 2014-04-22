@@ -403,6 +403,8 @@ void zrt_internal_session_info( const struct UserManifest const* manifest ){
     /*get from system, print environment variables*/
     LOG_DEBUG(ELogTime, ctime(&t), "System time" );
     LOG_DEBUG(ELogSize, sysconf(_SC_PAGE_SIZE), "Page size _SC_PAGE_SIZE" );
+    LOG_DEBUG(ELogSize, sysconf(_SC_PHYS_PAGES), "sysconf(_SC_PHYS_PAGES)" )
+    LOG_DEBUG(ELogSize, sysconf(_SC_AVPHYS_PAGES), "sysconf(_SC_AVPHYS_PAGES)" )
     LOG_DEBUG(ELogCount, pages_count, "Memory pages count"  );
     LOG_DEBUG(ELogAddress, manifest->heap_ptr + manifest->heap_size, "Heap highest page" );
     LOG_DEBUG(ELogAddress, sbrk(0), "sbrk(0)" );
