@@ -107,6 +107,7 @@ FORK-fork.c+=$(shell mktemp -u)
 CHANNEL_WRITEONLY_TYPE-bigfile.c=2
 CHANNEL_READWRITE_TYPE-seek.c=1
 CHANNEL_READWRITE_TYPE-io.c=3
+CHANNEL_READWRITE_TYPE-fcntl-1.c=3
 #####################################################################
 
 #####################################################################

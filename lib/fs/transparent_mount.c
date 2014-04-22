@@ -293,6 +293,9 @@ static int transparent_open(struct MountsPublicInterface *this,
     }
 }
 
+/*fcntl performs in two stages:
+1st fcntl from related mount doing checks
+2dn fcntl_implem doing applaying of fcntl command */
 static int transparent_fcntl(struct MountsPublicInterface *this,
 			     int fd, int cmd, ...){
     int ret=0;

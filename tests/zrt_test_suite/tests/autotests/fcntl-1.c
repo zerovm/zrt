@@ -29,17 +29,27 @@
 
 #include "macro_tests.h"
 
+void test_fcntl(const char* path, int mode_modifier);
+
+
 int main(int argc, char **argv)
+{
+    test_fcntl(CHANNEL_NAME_RDWR, 0);
+    test_fcntl("/testfile", O_CREAT);
+    return 0;
+}
+
+void test_fcntl(const char* path, int mode_modifier)
 {
     int ret;
     int fd;
     struct flock lock, savelock;
     char buf[100];
-    int mode = O_CREAT|O_WRONLY;
+    int mode = mode_modifier|O_WRONLY;
 
     TEST_OPERATION_RESULT( fcntl(-1, F_SETLK), &ret, ret==-1 && errno==EBADF );
     
-    TEST_OPERATION_RESULT( open("/testfile", mode), &fd, fd!=-1 && errno==0 );
+    TEST_OPERATION_RESULT( open(path, mode), &fd, fd!=-1 && errno==0 );
 
     /*test file is not readable but avail for write*/
     TEST_OPERATION_RESULT( write(fd, "abcd", 4), &ret, ret==4&&errno==0 );
@@ -66,11 +76,8 @@ int main(int argc, char **argv)
     /*starting from now file is not writable and only can be read*/
     TEST_OPERATION_RESULT( write(fd, "abcd", 4), &ret, ret==-1&&errno==EINVAL );
     TEST_OPERATION_RESULT( lseek(fd, 0, SEEK_SET), &ret, ret==0&&errno==0 );
-    TEST_OPERATION_RESULT( read(fd, buf, 4), &ret, ret==4&&errno==0&&!strcmp(buf, "abcd") );
+    TEST_OPERATION_RESULT( read(fd, buf, 4), &ret, ret==4&&errno==0&&!strncmp(buf, "abcd", ret) );
 
     /*close file*/
     close(fd);
-    return 0;
 }
-
-
