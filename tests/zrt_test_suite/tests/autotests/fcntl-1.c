@@ -70,6 +70,8 @@ void test_fcntl(const char* path, int mode_modifier)
     TEST_OPERATION_RESULT( fcntl(fd, F_GETLK, &lock), &ret, 
 			   ret==0 && savelock.l_type==lock.l_type && errno==0 );
 
+    TEST_OPERATION_RESULT( fcntl(56903476, F_GETFL), &ret, ret==-1&&errno==EBADF );
+    TEST_OPERATION_RESULT( fcntl(56903476, F_SETFL), &ret, ret==-1&&errno==EBADF );
     TEST_OPERATION_RESULT( fcntl(fd, F_GETFL), &ret, ret==mode&&errno==0 );
     TEST_OPERATION_RESULT( fcntl(fd, F_SETFL, O_RDONLY), &ret, ret!=-1&&errno==0 );
 

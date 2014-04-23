@@ -67,7 +67,7 @@ int zrt_zcall_fchdir(int fd){
 	return -1;
     }
 
-    LOG_SHORT_SYSCALL_FINISH( ret, "get_phys_pages=%ld", ret );
+    LOG_SHORT_SYSCALL_FINISH( ret, "get_phys_pages=%d", ret );
     return ret;
 }
 

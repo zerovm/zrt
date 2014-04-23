@@ -64,7 +64,7 @@
 
 
 /****************** static data*/
-static int     s_prolog_doing_now;
+static int     s_prolog_doing_now=1; /*prolog state at start of session by default*/
 static void*   s_tls_addr=NULL;
 static void*   sbrk_default = NULL;
 struct timeval s_cached_timeval;
@@ -77,8 +77,6 @@ void* static_prolog_brk() {
 static inline void increment_cached_time(time_t seconds, suseconds_t microseconds )
 {
     struct timeval delta;
-
-    #define MICROSECONDS_IN_ONE_SECOND 1000000
     if ( seconds || microseconds ){
 	delta.tv_sec = seconds;
 	delta.tv_usec = microseconds;
@@ -100,7 +98,7 @@ void zrt_zcall_prolog_init(){
     __zrt_log_init( DEV_DEBUG );
     ZRT_LOG(L_BASE, P_TEXT, "prolog init");
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    s_prolog_doing_now = 1;
+
     if ( MANIFEST )
 	sbrk_default = MANIFEST->heap_ptr;
 
@@ -157,14 +155,13 @@ int  zrt_zcall_prolog_gettod(struct timeval *tvl){
 
 int  zrt_zcall_prolog_clock(clock_t *ticks){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*
-     * should never be implemented if we want deterministic behaviour
-     * note: but we can allow to return each time synthetic value
-     * warning! after checking i found that nacl is not using it, so this
-     *          function is useless for current nacl sdk version.
-     */
-    SET_ERRNO(EPERM);
-    return -1;
+    /*more usable but very simple implementation with deterministic
+      behaviour*/
+    *ticks = s_cached_timeval.tv_sec * CLOCKS_PER_SEC;
+    *ticks += s_cached_timeval.tv_usec * (CLOCKS_PER_SEC/1000);
+    increment_cached_time(0, 1); //+1 microsecond
+    return 0;
+    
 }
 int  zrt_zcall_prolog_nanosleep(const struct timespec *req, struct timespec *rem){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
@@ -172,18 +169,6 @@ int  zrt_zcall_prolog_nanosleep(const struct timespec *req, struct timespec *rem
     rem->tv_sec=0;
     rem->tv_nsec=0;
     return 0;
-}
-int  zrt_zcall_prolog_sched_yield(void){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_sysconf(int name, int *value){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
 }
 /* irt fdio *************************/
 int  zrt_zcall_prolog_close(int handle){
@@ -371,114 +356,6 @@ int  zrt_zcall_prolog_munmap(void *addr, size_t len){
 	return zrt_zcall_enhanced_munmap(addr, len);
 }
 
-/* irt dyncode *************************/
-int  zrt_zcall_prolog_dyncode_create(void *dest, const void *src, size_t size){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_dyncode_modify(void *dest, const void *src, size_t size){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_dyncode_delete(void *dest, size_t size){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-/* irt thread *************************/
-int  zrt_zcall_prolog_thread_create(void *start_user_address, void *stack, void *thread_ptr){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-void zrt_zcall_prolog_thread_exit(int32_t *stack_flag){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return;
-}
-int  zrt_zcall_prolog_thread_nice(const int nice){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-/* irt mutex *************************/
-int  zrt_zcall_prolog_mutex_create(int *mutex_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_mutex_destroy(int mutex_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_mutex_lock(int mutex_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_mutex_unlock(int mutex_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_mutex_trylock(int mutex_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-/* irt cond *************************/
-int  zrt_zcall_prolog_cond_create(int *cond_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_cond_destroy(int cond_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_cond_signal(int cond_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_cond_broadcast(int cond_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_cond_wait(int cond_handle, int mutex_handle){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-int  zrt_zcall_prolog_cond_timed_wait_abs(int cond_handle, int mutex_handle,
-				   const struct timespec *abstime){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
 /* irt tls *************************/
 int  zrt_zcall_prolog_tls_init(void *thread_ptr){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
@@ -493,13 +370,6 @@ void * zrt_zcall_prolog_tls_get(void){
     return s_tls_addr ; /*valid tls*/
 }
 
-/* irt resource open *************************/
-int  zrt_zcall_prolog_open_resource(const char *file, int *fd){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
 /* irt clock *************************/
 int  zrt_zcall_prolog_getres(clockid_t clk_id, struct timespec *res){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
@@ -515,13 +385,6 @@ int  zrt_zcall_prolog_gettime(clockid_t clk_id, struct timespec *tp){
 
     increment_cached_time(0, 1); //+1 millisecond
     return 0;
-}
-
-int zrt_zcall_prolog_chdir(const char *path){
-    ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*not implemented for both prolog and zrt enhanced */
-    SET_ERRNO(ENOSYS);
-    return -1;
 }
 
 /* Setup zrt */

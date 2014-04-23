@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <error.h>
@@ -39,9 +40,20 @@ void test_emu_devices_for_writing();
 char s_buffer[BUFFER_LEN];
 
 int main(int argc, char**argv){
+    int ret;
     test_emu_devices_for_reading();
     test_readonly_channel(CHANNEL_NAME_READONLY);
     test_writeonly_channel(CHANNEL_NAME_WRITEONLY);
+    /*try open non existing channel*/
+    TEST_OPERATION_RESULT( open("/dev/1233456", O_RDWR), &ret, 
+			   (ret==-1&&errno==ENOENT) );
+    /*tesing write to sequential channel /dev/stdout via pwrite*/
+    TEST_OPERATION_RESULT( 
+			  pwrite(2, "test", strlen("test"), 1), 
+			  &ret, ret == strlen("test") );
+    TEST_OPERATION_RESULT( 
+			  pwrite(2, "test", strlen("test"), 0), 
+			  &ret, ret == strlen("test") );
     return 0;
 }
 
@@ -286,7 +298,6 @@ void test_writeonly_channel(const char* name){
     TEST_OPERATION_RESULT(
 			  lseek(ret, 0, SEEK_CUR), 
 			  &ret2, ret2 == 10 );
-
     TEST_OPERATION_RESULT(
 			  lseek(ret, 10, SEEK_SET), 
 			  &ret2, ret2 == -1 );

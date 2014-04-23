@@ -29,7 +29,6 @@
 #include <assert.h>
 #include "macro_tests.h"
 
-
 void prepare_time_test(struct timespec *ts){
     int ret;
     /*compare time before and after timeout, measure in nanoseconds*/
@@ -55,6 +54,34 @@ void complete_nanosec_test(struct timespec *prepared_ts, struct timespec *timeou
     TEST_OPERATION_RESULT( timercmp(&tv_inc, &new_tv, == ), &ret, ret==1);
 }
 
+void test_clock(){
+    struct timespec ts, expected_timeout_ts;
+    
+    /*save current time*/
+    prepare_time_test(&ts);
+    /*get tick count*/
+    clock_t t = clock();
+    (void)t;
+    expected_timeout_ts.tv_sec = 0;
+    expected_timeout_ts.tv_nsec = 1000; //1 microsec
+    /*check the passed amount time as expected*/
+    complete_nanosec_test(&ts, &expected_timeout_ts);
+}
+
+
+void test_sleep(int sec, int nsec, int expected_sec, int expected_nsec){
+    int ret;
+    struct timespec ts, expected_timeout_ts;
+    
+    /*save current time*/
+    prepare_time_test(&ts);
+    /*wait until timeout exceeded*/
+    TEST_OPERATION_RESULT( sleep(sec), &ret, ret==0 );
+    expected_timeout_ts.tv_sec = expected_sec;
+    expected_timeout_ts.tv_nsec = expected_nsec;
+    /*check the passed amount time as expected*/
+    complete_nanosec_test(&ts, &expected_timeout_ts);
+}
 
 void test_nanosleep(int sec, int nsec, int expected_sec, int expected_nsec){
     int ret;
@@ -90,24 +117,24 @@ void test_select_timeout(int sec, int nsec, int expected_sec, int expected_nsec)
     complete_nanosec_test(&ts, &expected_timeout_ts);
 }
 
+/*various time functions tests for better tests coverage*/
+void test_issue_128(){
+    int ret;
+    struct timezone tz;
+    struct timezone *tz_p=NULL; //pass null pointer instead NULL, to avoid warnings
+    struct timeval *tv_p=NULL;
+    TEST_OPERATION_RESULT( gettimeofday(tv_p, &tz), &ret, ret!=0&&errno==EFAULT);
+    TEST_OPERATION_RESULT( gettimeofday(tv_p, tz_p), &ret, ret!=0&&errno==EFAULT);
+    test_clock();
+}
 
 
 int main(int argc, char **argv)
 {
     int ret;
-    {
-	struct timeval  tv, tv2, tv3;
-	struct timezone tz;
+    test_issue_128();
 
-	/*compare time before and after sleep, measure in microseconds*/
-	TEST_OPERATION_RESULT( gettimeofday(&tv, &tz), &ret, ret==0 );
-	int seconds = 1;
-	TEST_OPERATION_RESULT( sleep(seconds), &ret, ret==0);
-	TEST_OPERATION_RESULT( gettimeofday(&tv2, &tz), &ret, ret==0);
-	TEST_OPERATION_RESULT( gettimeofday(&tv3, &tz), &ret, ret==0);
-	TEST_OPERATION_RESULT( timercmp(&tv2, &tv3, < ) , &ret, ret==1);
-	TEST_OPERATION_RESULT( tv2.tv_sec == tv.tv_sec+seconds, &ret, ret==1);
-    }
+    test_sleep(1, 0, 1, 0);
 
     test_nanosleep(0, 0, 0, 1000); /*if 0 time is passed it should take anyway 1 microsecond*/
     test_nanosleep(0, 1998, 0, 1998);
