@@ -85,33 +85,32 @@ void zrt_test_issue_102_103(){
 
 int main(int argc, char **argv)
 {
+    int ret;
+    FILE *f;
+    const char* fname1 = "/seeker.data";
+    const char* fname2 = "/seeker2.data";
+    const char *str = "hip hop ololey";
+    const char *str2 = "opa-opa-opa-pa";
+    const char *str3 = "hip hop opa-opa-opa-pa";
+
     zrt_test_issue71();
     zrt_test_issue72();
 
     zrt_test_issue_102_103();
 
-    const char* fname1 = "/seeker.data";
-    const char* fname2 = "/seeker2.data";
-
-    FILE *f = fopen( fname1, "w" );
-    assert( f>0 );
-    const char *str = "hip hop ololey";
-    const char *str2 = "opa-opa-opa-pa";
-    const char *str3 = "hip hop opa-opa-opa-pa";
-    fwrite(str, 1, strlen(str), f);
-    fseek( f, 0, SEEK_CUR );
-    fprintf(stderr, "ftell(f)=%d, strlen(str)=%d\n", (int)ftell(f), (int)strlen(str));
-    assert( ftell(f) == strlen(str) );
-
-    fseek( f, -6, SEEK_CUR );
-    assert( ftell(f) == strlen(str)-6 );
-
-    fwrite(str2, 1, strlen(str2), f );
+    f = fopen( fname1, "w" );
+    TEST_OPERATION_RESULT(  f>0, &ret, ret==1);
+    TEST_OPERATION_RESULT( fseek(f, -1, SEEK_SET), &ret, ret==-1&&errno==EINVAL);
+    TEST_OPERATION_RESULT( fwrite(str, 1, strlen(str), f), &ret, ret==strlen(str)&&errno==0);
+    TEST_OPERATION_RESULT( fseek( f, 0, SEEK_CUR ), &ret, ret==0&&errno==0);
+    TEST_OPERATION_RESULT( ftell(f) == strlen(str), &ret, ret==1);
+    TEST_OPERATION_RESULT( fseek( f, -6, SEEK_CUR ), &ret, ret==0);
+    TEST_OPERATION_RESULT( ftell(f) == strlen(str)-6, &ret, ret==1);
+    TEST_OPERATION_RESULT( fwrite(str2, 1, strlen(str2), f ), &ret, ret==strlen(str2));
     //fseek( f, 0, SEEK_END ); /*zrt known issue 5.1: SEEK_END replace by NACL on SEEK_SET*/
     fprintf(stderr, "file pos=%ld, expected pos=%u\n", ftell(f), strlen(str3) );
-    assert( ftell(f) == strlen(str3) );
-    fclose(f);
-
+    TEST_OPERATION_RESULT( ftell(f) == strlen(str3), &ret, ret==1);
+    TEST_OPERATION_RESULT( fclose(f), &ret, ret==0 );
 
     int fd = open( fname2, O_CREAT | O_WRONLY );
     assert( fd >= 0 );

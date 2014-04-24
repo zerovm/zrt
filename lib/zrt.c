@@ -21,6 +21,8 @@
  * It's needed while building ZLIBC to cut off the rest of ZRT library code.
  * For generic ZRT using it is should no be defined;*/
 
+static void zcall_stub(void){}
+
 #ifndef ZLIBC_STUB
 #  include "zrt.h"
 #  include "zcalls.h"
@@ -31,8 +33,8 @@ static struct zcalls_init_t KZcalls_init = {
     zrt_zcall_prolog_gettod,
     zrt_zcall_prolog_clock,
     zrt_zcall_prolog_nanosleep,
-    zrt_zcall_prolog_sched_yield,
-    zrt_zcall_prolog_sysconf,
+    (void*)zcall_stub, //sched_yield
+    (void*)zcall_stub, //sysconf
 
     zrt_zcall_prolog_close,
     zrt_zcall_prolog_dup,
@@ -50,36 +52,36 @@ static struct zcalls_init_t KZcalls_init = {
     zrt_zcall_prolog_mmap,
     zrt_zcall_prolog_munmap,
 
-    zrt_zcall_prolog_dyncode_create,
-    zrt_zcall_prolog_dyncode_modify,
-    zrt_zcall_prolog_dyncode_delete,
+    (void*)zcall_stub, //dyncode_create
+    (void*)zcall_stub, //dyncode_modify
+    (void*)zcall_stub, //dyncode_delete
 
-    zrt_zcall_prolog_thread_create,
-    zrt_zcall_prolog_thread_exit,
-    zrt_zcall_prolog_thread_nice,
+    (void*)zcall_stub, //thread_create
+    (void*)zcall_stub, //thread_exit
+    (void*)zcall_stub, //thread_nice
 
-    zrt_zcall_prolog_mutex_create,
-    zrt_zcall_prolog_mutex_destroy,
-    zrt_zcall_prolog_mutex_lock,
-    zrt_zcall_prolog_mutex_unlock,
-    zrt_zcall_prolog_mutex_trylock,
+    (void*)zcall_stub, //mutex_create,
+    (void*)zcall_stub, //mutex_destroy,
+    (void*)zcall_stub, //mutex_lock,
+    (void*)zcall_stub, //mutex_unlock,
+    (void*)zcall_stub, //mutex_trylock,
 
-    zrt_zcall_prolog_cond_create,
-    zrt_zcall_prolog_cond_destroy,
-    zrt_zcall_prolog_cond_signal,
-    zrt_zcall_prolog_cond_broadcast,
-    zrt_zcall_prolog_cond_wait,
-    zrt_zcall_prolog_cond_timed_wait_abs,
+    (void*)zcall_stub, //cond_create
+    (void*)zcall_stub, //cond_destroy
+    (void*)zcall_stub, //cond_signal
+    (void*)zcall_stub, //cond_broadcast
+    (void*)zcall_stub, //cond_wait
+    (void*)zcall_stub, //wait_abs
 
     zrt_zcall_prolog_tls_init,
     zrt_zcall_prolog_tls_get,
 
-    zrt_zcall_prolog_open_resource,
+    (void*)zcall_stub, //open_resource,
 
     zrt_zcall_prolog_getres,
     zrt_zcall_prolog_gettime,
 
-    zrt_zcall_prolog_chdir
+    (void*)zcall_stub, //chdir (seems it's not used)
 };
 
 static struct zcalls_zrt_t KZcalls_zrt = {

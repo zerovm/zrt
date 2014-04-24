@@ -89,13 +89,20 @@ void test_issue_76(){
     TEST_OPERATION_RESULT( strcmp(get_current_dir_name(), dirname), &ret, ret==0&&errno==0 );
 }
 
-void test_fchdir_dev(){
-    const char* dirname = "/dev";
+void test_fchdir(const char* dirname){
     int fd, ret;
     TEST_OPERATION_RESULT( chdir("/"), &ret, ret==0&&errno==0 );
     TEST_OPERATION_RESULT( open(dirname, O_DIRECTORY), &fd, fd!=-1&&errno==0 );
     TEST_OPERATION_RESULT( fchdir(fd), &ret, ret==0&&errno==0 );
     TEST_OPERATION_RESULT( strcmp(get_current_dir_name(), dirname), &ret, ret==0&&errno==0 );
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0 );
+}
+
+void test_fchdir2(){
+    int fd, ret;
+    TEST_OPERATION_RESULT( open("/dev/stdin", O_RDONLY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( fchdir(fd), &ret, ret==-1&&errno==ENOTDIR );
+    TEST_OPERATION_RESULT( close(fd), &ret, ret==0 );
 }
 
 int main(int argc, char **argv)
@@ -148,7 +155,9 @@ int main(int argc, char **argv)
     test_issue_96();
     test_issue_96_2();
     test_issue_76();
-    test_fchdir_dev();
+    test_fchdir("/dev");
+    test_fchdir("/tmp");
+    test_fchdir2();
     return 0;
 }
 

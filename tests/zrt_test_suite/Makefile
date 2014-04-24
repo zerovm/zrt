@@ -47,7 +47,11 @@ ENV-getcwd.c=name=HOME, value=/home/zvm
 ENV-getpwuid.c=name=HOME, value=/home/zvm {BR}
 ENV-getpwuid.c+=name=LOGNAME, value=zvm {BR}
 ENV-getpwuid.c+=name=UID, value=2
-ENV-readdir.c=name=CURDIR, value=$(CURDIR)
+ENV-readdir.c=name=CURDIR, value=$(CURDIR) {BR}
+#set wrong home path to test behaviour in this cond
+ENV-readdir.c+=name=HOME, value=/dev/stdin
+#set wrong home path to test behaviour in this cond
+ENV-lstat-stat-mapping.c=name=HOME, value=/dev/stdin/mount
 #####################################################################
 
 
