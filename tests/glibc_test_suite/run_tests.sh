@@ -7,7 +7,7 @@ CURDIR=`dirname "$SCRIPT"`
 #create tar image to be injected into glibc fs
 tar -cf $CURDIR/mounts/tmp_dir.tar -C $CURDIR/mounts/glibc-fs tmp
 
-#run tests
+#run tests resides in glibc_test_suite/src folder
 make -C $CURDIR clean prepare
 make -C $CURDIR -j4
 
