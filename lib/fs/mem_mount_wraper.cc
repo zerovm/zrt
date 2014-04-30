@@ -556,6 +556,14 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 	    ZRT_LOG(L_SHORT, P_TEXT, "handle flag: O_APPEND");
 	    mem_lseek(this_, fd, 0, SEEK_END);
 	}
+
+	/*O_TRUNC, O_WRONLY, O_RDWR  for dirs must be rejected*/
+	if ( is_dir(this_, st.st_ino) && 
+	     (oflag&O_TRUNC || oflag&O_WRONLY || oflag&O_RDWR ) ){
+	    SET_ERRNO(EISDIR);
+	    return -1;
+	}
+
 	/*file truncate support, only for writable files, reset size*/
 	if ( oflag&O_TRUNC && (oflag&O_RDWR || oflag&O_WRONLY) ){
 	    /*reset file size*/
@@ -741,4 +749,3 @@ inmemory_filesystem_construct( struct HandleAllocator* handle_allocator,
     this_->mem_mount_cpp = new MemMount;
     return (struct MountsPublicInterface*)this_;
 }
-
