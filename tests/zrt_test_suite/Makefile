@@ -37,21 +37,24 @@ CMDLINE-nvram.c=args=nvram.nexe
 #trying to add env variable, escaping it twice because Makefile unescaping it
 #waiting is env variable:  usable=1,2,3/"3,2,1"
 ENV-environment.c=name=SafeWords, value=klaato_verada_nikto
-####################################ENV-nvram.c =name=FPATH, value=${TESTFILE}
-ENV_FORKED-nvram.c=name=FPATH, value=${TESTFILE}
+ENV_FORKED-nvram.c=name=FPATH, value=${TESTFILE}{BR}
 ENV-fork.c=name=FPATH, value=${TESTFILE} {BR}
-ENV-fork.c+=name=new, value=1
+ENV-fork.c+=name=new, value=1{BR}
 ENV_FORKED-fork.c =$(ENV-fork.c) {BR}
-ENV_FORKED-fork.c+=name=new, value=2
-ENV-getcwd.c=name=HOME, value=/home/zvm
+ENV_FORKED-fork.c+=name=new, value=2{BR}
+ENV-getcwd.c=name=HOME, value=/home/zvm{BR}
 ENV-getpwuid.c=name=HOME, value=/home/zvm {BR}
 ENV-getpwuid.c+=name=LOGNAME, value=zvm {BR}
-ENV-getpwuid.c+=name=UID, value=2
+ENV-getpwuid.c+=name=UID, value=2{BR}
+#CURDIR is needed to fetch & create rootdir, to have the same root
+#contents when compare expected and real readdir output at generic
+#test and gcov test
 ENV-readdir.c=name=CURDIR, value=$(CURDIR) {BR}
 #set wrong home path to test behaviour in this cond
 ENV-readdir.c+=name=HOME, value=/dev/stdin
 #set wrong home path to test behaviour in this cond
 ENV-lstat-stat-mapping.c=name=HOME, value=/dev/stdin/mount
+ENV-fdopen-open.c+=name=$(TRACE), value=1
 #####################################################################
 
 
@@ -79,12 +82,27 @@ FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, removab
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, removable=yes {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad1, access=ro {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad2, access=re, removable=yes {BR}
+FSTAB-nvram.c+=channel=/dev/mount/non_existing.tar, mountpoint=/bad3, access=ro, removable=yes {BR}
+FSTAB-nvram.c+=channel=/dev/stdout, mountpoint=/bad3, access=ro, removable=no {BR}
+FSTAB-nvram.c+=channel=/dev/stdin, mountpoint=/bad3, access=ro, removable=no {BR}
+#import image into special directory to test conflicts for furter imports
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/test/test.1234, access=ro, removable=no {BR}
+#import file test.1234 from tar image into dir where we have a dir
+#with a such name, expected error during extraction of file
+FSTAB-nvram.c +=channel=/dev/mount/import.tar, mountpoint=/test, access=ro, removable=no {BR}
+#try to import image with mountpoint not in dir but file, import itself should fail
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/test/test.1234/test.1234, access=ro, removable=no {BR}
+#try to import into path which have a file instead subdir
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/test/test.1234/test.1234/bad, access=ro, removable=no {BR}
 FSTAB_FORKED-nvram.c=$(FSTAB-nvram.c)
-FSTAB-fork.c  =channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=no {BR}
+FSTAB-fork.c +=channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=no {BR}
 FSTAB-fork.c +=channel=/dev/mount/import.tar, mountpoint=/test, access=ro, removable=no {BR}
 #for forked session use new nvram config, update removable field's value
 FSTAB_FORKED-fork.c  =channel=/dev/mount/import.tar, mountpoint=/, access=ro, removable=yes {BR}
 FSTAB_FORKED-fork.c +=channel=/dev/mount/import.tar, mountpoint=/test, access=ro, removable=no {BR}
+FSTAB-tmpfile.c+=channel=/dev/mount/non_existing.tar, mountpoint=/bad3, access=ro, removable=yes {BR}
+FSTAB-tmpfile.c +=channel=/dev/stdout, mountpoint=/bad3, access=ro, removable=no {BR}
+FSTAB-tmpfile.c +=channel=/dev/stdin, mountpoint=/bad3, access=ro, removable=no {BR}
 #####################################################################
 
 #####################################################################

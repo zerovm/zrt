@@ -771,7 +771,8 @@ static int channels_mount(struct ChannelMounts* this, const char* path, void *mo
     return -1;
 }
 
-static ssize_t channels_read(struct ChannelMounts* this, int fd, void *buf, size_t nbyte){
+static ssize_t __NON_INSTRUMENT_FUNCTION__
+channels_read(struct ChannelMounts* this, int fd, void *buf, size_t nbyte){
     off_t offset;
     errno=0;
     /*file not opened, bad descriptor*/
@@ -788,7 +789,8 @@ static ssize_t channels_read(struct ChannelMounts* this, int fd, void *buf, size
     return this->public.pread(&this->public, fd, buf, nbyte, offset);
 }
 
-static ssize_t channels_write(struct ChannelMounts* this,int fd, const void *buf, size_t nbyte){
+static ssize_t __NON_INSTRUMENT_FUNCTION__
+channels_write(struct ChannelMounts* this,int fd, const void *buf, size_t nbyte){
     off_t offset;
     errno=0;
     /*file not opened, bad descriptor*/
@@ -805,7 +807,8 @@ static ssize_t channels_write(struct ChannelMounts* this,int fd, const void *buf
     return this->public.pwrite(&this->public, fd, buf, nbyte, offset);
 }
 
-static ssize_t channels_pread(struct ChannelMounts* this, int fd, void *buf, 
+static ssize_t __NON_INSTRUMENT_FUNCTION__
+channels_pread(struct ChannelMounts* this, int fd, void *buf, 
 			      size_t nbyte, off_t offset){
     int32_t readed = 0;
     const struct HandleItem* hentry;
@@ -842,7 +845,8 @@ static ssize_t channels_pread(struct ChannelMounts* this, int fd, void *buf,
     return readed;
 }
 
-static ssize_t channels_pwrite(struct ChannelMounts* this,int fd, const void *buf, 
+static ssize_t __NON_INSTRUMENT_FUNCTION__
+channels_pwrite(struct ChannelMounts* this,int fd, const void *buf, 
 			       size_t nbyte, off_t offset){
     int32_t wrote = 0;
     const struct HandleItem* hentry;

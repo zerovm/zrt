@@ -25,5 +25,6 @@
 #define DEV_STDERR "/dev/stderr"
 #define DEV_NVRAM  "/dev/nvram"
 #define DEV_DEBUG  "/dev/debug"
+#define DEV_TRACE  "/dev/trace"
 
 #endif //__CHANNELS_RESERVED_H__

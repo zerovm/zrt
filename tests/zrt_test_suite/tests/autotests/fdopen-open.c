@@ -52,10 +52,10 @@ int main(int argc, char **argv)
 
 void test_open_limits(){
     int i, ret;
-    int maxhandlescount = MAX_HANDLES_COUNT;
-    maxhandlescount -= 3; /* dev/stdin, dev/stdout, dev/stderr */
-    int handles[MAX_HANDLES_COUNT];
-
+    int testfd = open("/dev/stdin", O_RDONLY, 0);
+    /* keep in mind already opened channels, like dev/stdin, dev/stdout, dev/stderr */
+    int maxhandlescount = MAX_HANDLES_COUNT - testfd -1 ;
+    int handles[maxhandlescount];
     for (i=0; i < maxhandlescount; i++){
 	TEST_OPERATION_RESULT( open("/dev/stdin", O_RDONLY, 0), &ret, ret!=-1&&errno==0);
 	fprintf(stderr, "fd=%d\n", ret );

@@ -23,6 +23,7 @@
 #include "printf_prolog.h" //tfp_sprintf
 #include "channels_reserved.h"
 #include "zrtlogbase.h"
+#include "zrt_defines.h"
 
 /*log levels*/
 #define L_BASE   1   /*log only base zrt data*/
@@ -162,23 +163,35 @@
 
 void __zrt_log_init();
 const char* __zrt_log_syscall_stack_str();
-void __zrt_log_push_name( const char* name );
-void __zrt_log_pop_name( const char* name );
-void __zrt_log_set_verbosity(int v);
-int  __zrt_log_verbosity();
-int  __zrt_log_fd();
+void __NON_INSTRUMENT_FUNCTION__
+ __zrt_log_push_name( const char* name );
+void __NON_INSTRUMENT_FUNCTION__
+__zrt_log_pop_name( const char* name );
+void __NON_INSTRUMENT_FUNCTION__
+__zrt_log_set_verbosity(int v);
+int  __NON_INSTRUMENT_FUNCTION__
+__zrt_log_verbosity();
+int  __NON_INSTRUMENT_FUNCTION__
+__zrt_log_fd();
 
 /* 1 switch on logging
  * 0 switch off logging*/
-void __zrt_log_enable(int status);
-int  __zrt_log_is_enabled();
+void __NON_INSTRUMENT_FUNCTION__
+__zrt_log_enable(int status);
+int  __NON_INSTRUMENT_FUNCTION__
+__zrt_log_is_enabled();
 /* 1 enables safe log allowed during prolog state*/
 /* 0 switch off prolog mode*/
-void __zrt_log_prolog_mode_enable(int status);
-int  __zrt_log_prolog_mode_is_enabled();
+void __NON_INSTRUMENT_FUNCTION__
+__zrt_log_prolog_mode_enable(int status);
+int  
+__NON_INSTRUMENT_FUNCTION__
+__zrt_log_prolog_mode_is_enabled();
 
-int __zrt_log_debug_get_buf(char **buf);
-int32_t __zrt_log_write( int handle, const char* buf, int32_t size, int64_t offset);
+int __NON_INSTRUMENT_FUNCTION__
+__zrt_log_debug_get_buf(char **buf);
+int32_t __NON_INSTRUMENT_FUNCTION__
+__zrt_log_write( int handle, const char* buf, int32_t size, int64_t offset);
 
 
 #endif /* ZRTLOG_H_ */

@@ -21,6 +21,7 @@
 #include <time.h>   /*clock_t*/
 
 #include "zrt.h"
+#include "zrt_defines.h"
 
 /*forwards*/
 struct stat;
@@ -52,9 +53,12 @@ int zrt_zcall_prolog_close(int fd);
 int zrt_zcall_prolog_dup(int fd);
 int zrt_zcall_prolog_dup2(int fd, int newfd);
 int zrt_zcall_prolog_read(int fd, void *buf, size_t count, size_t *nread);
-int zrt_zcall_prolog_write(int fd, const void *buf, size_t count, size_t *nwrote);
-int zrt_zcall_prolog_pread(int fd, void *buf, size_t count, off_t offset, size_t *nread);
-int zrt_zcall_prolog_pwrite(int fd, const void *buf, size_t count, off_t offset,
+int __NON_INSTRUMENT_FUNCTION__
+zrt_zcall_prolog_write(int fd, const void *buf, size_t count, size_t *nwrote);
+int __NON_INSTRUMENT_FUNCTION__
+zrt_zcall_prolog_pread(int fd, void *buf, size_t count, off_t offset, size_t *nread);
+int __NON_INSTRUMENT_FUNCTION__
+zrt_zcall_prolog_pwrite(int fd, const void *buf, size_t count, off_t offset,
 			    size_t *nwrote);
 int zrt_zcall_prolog_seek(int fd, off_t offset, int whence, off_t *new_offset);
 int zrt_zcall_prolog_fstat(int fd, struct stat *);
@@ -100,11 +104,15 @@ void zrt_zcall_enhanced_exit(int status);
 int zrt_zcall_enhanced_close(int fd);
 int zrt_zcall_enhanced_dup(int fd);
 int zrt_zcall_enhanced_dup2(int fd, int newfd);
-int zrt_zcall_enhanced_read(int fd, void *buf, size_t count, size_t *nread);
-int zrt_zcall_enhanced_write(int fd, const void *buf, size_t count, size_t *nwrote);
-int zrt_zcall_enhanced_pread(int fd, void *buf, size_t count, off_t offset, 
+int __NON_INSTRUMENT_FUNCTION__
+zrt_zcall_enhanced_read(int fd, void *buf, size_t count, size_t *nread);
+int __NON_INSTRUMENT_FUNCTION__
+zrt_zcall_enhanced_write(int fd, const void *buf, size_t count, size_t *nwrote);
+int __NON_INSTRUMENT_FUNCTION__
+zrt_zcall_enhanced_pread(int fd, void *buf, size_t count, off_t offset, 
 			     size_t *nread);
-int zrt_zcall_enhanced_pwrite(int fd, const void *buf, size_t count, off_t offset,
+int __NON_INSTRUMENT_FUNCTION__
+zrt_zcall_enhanced_pwrite(int fd, const void *buf, size_t count, off_t offset,
 			      size_t *nwrote);
 int zrt_zcall_enhanced_seek(int fd, off_t offset, int whence, off_t *new_offset);
 int zrt_zcall_enhanced_fstat(int fd, struct stat *);

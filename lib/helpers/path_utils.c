@@ -21,6 +21,18 @@
 
 #include "path_utils.h"
 
+int is_relative_path(const char *path){
+    int cursor, reslen;
+    INIT_TEMP_CURSOR(&cursor);
+    const char *res = path_component_forward(&cursor, path, &reslen);
+    if ( res == NULL || res[0] != '/' ) return 1;
+    while( (res=path_component_forward(&cursor, path, &reslen)) != NULL){
+	if ( !strncmp("..", res, reslen) ) return 1;
+    }
+    return 0;
+    
+}
+
 static const char* locate_last_occurence(const char *str, int len, char c ){
     /* locate rightmost char inside string, can't use strrchr because
      * it's no guarantied that str is null terminated string*/
@@ -46,12 +58,6 @@ static const char* locate_first_occurence(const char *str, int len, char c ){
 }
 
 
-/*path=/1/2
-step1 result /
-step2 result 1
-step3 result 2
-step4 result NULL
- */
 const char *path_component_forward(int *temp_cursor, const char *path, int *result_len){
     assert(temp_cursor);
     const char* component_start; 
@@ -86,12 +92,6 @@ const char *path_component_forward(int *temp_cursor, const char *path, int *resu
     return component_start;
 }
 
-/*path=/1/2
-step1 result 2
-step2 result 1
-step3 result /
-step4 result NULL
- */
 const char *path_component_backward(int *temp_cursor, const char *path, int *result_len){
     assert(temp_cursor);
     const char* last_component_start; 
@@ -127,12 +127,6 @@ const char *path_component_backward(int *temp_cursor, const char *path, int *res
     return last_component_start;
 }
 
-/*path=/1/2
-step1 result /
-step2 result /1
-step3 result /1/2
-step4 result NULL
- */
 const char *path_subpath_forward(int *temp_cursor, const char *path, int *result_len){
     int component_len;
     const char *component =path_component_forward( temp_cursor, path, &component_len);
@@ -144,11 +138,6 @@ const char *path_subpath_forward(int *temp_cursor, const char *path, int *result
 	return NULL;
 }
 
-/*path=/1/2
-step1 result /1
-step2 result /
-step3 result NULL
- */
 const char *path_subpath_backward(int *temp_cursor, const char *path, int *result_len){
     int component_len;
     const char *last_component =path_component_backward( temp_cursor, path, &component_len);

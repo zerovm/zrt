@@ -90,8 +90,8 @@ static void* alloc_memory_pseudo_mmap(struct MemoryManager* mem_if_p,
 	void* low_page_memory_addr = MEMORY_PAGE_FROM_INDEX(mem_if_p, mmap_low_page_index);
 	ZRT_LOG(L_BASE, "mmap_index=%d, mmap_low_page_index=%d", 
 		mmap_index, mmap_low_page_index);
-	ZRT_LOG(L_BASE, "pages low_addr=%p, high_addr=%p ", 
-		low_page_memory_addr, high_page_memory_addr);
+	ZRT_LOG(L_BASE, "pages low_addr=%p, high_addr=%p, brk=%p ", 
+		low_page_memory_addr, high_page_memory_addr, mem_if_p->heap_brk);
 	/*it's only allowed to return mmap pages which address upper
 	 *than brk pointer; */
 	if ( low_page_memory_addr >= mem_if_p->heap_brk &&
@@ -307,10 +307,17 @@ static long int memory_get_phys_pages(struct MemoryManager* this){
 }
 
 static long int memory_get_avphys_pages(struct MemoryManager* this){
-    /*all pages count we have in mmap memory region.  
-      TODO: Currently it's not a count of available 
-      pages, needed to calculate count.*/
-    return MMAP_REGION_SIZE_ALIGNED(this)/PAGE_SIZE;
+    int i;
+    int all_map_pages_count = ((MMAP_HIGHEST_PAGE_ADDR(this) - MMAP_LOWEST_PAGE_ADDR(this)) / PAGE_SIZE) +1;
+    long int avail_map_pages_count=0;
+    struct BitArrayPublicInterface* bitarray = (struct BitArrayPublicInterface*)&this->bitarray;
+    /*pass through bitarray related to pull of map entries*/
+    for ( i=0; i < all_map_pages_count ; i++ ){
+	if ( bitarray->get_bit( bitarray, i) == 0 )
+	    ++avail_map_pages_count;
+    }
+
+    return avail_map_pages_count;
 }
 
 

@@ -151,6 +151,9 @@
 		data1, data2, (long long int)datasize );		\
 	fflush(0);							\
 	TEST_OPERATION_RESULT(						\
+			      (data1==NULL&&data2!=NULL) || (data2==NULL&&data1!=NULL), \
+			      &ret, ret==0);				\
+	TEST_OPERATION_RESULT(						\
 			      memcmp((char*)data1, (char*)data2, datasize), \
 			      &ret, ret==0);				\
     }

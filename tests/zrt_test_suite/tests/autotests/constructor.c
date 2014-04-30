@@ -28,18 +28,26 @@
 #include <error.h>
 #include <errno.h>
 #include <assert.h>
-#include "macro_tests.h"
 
+#include "macro_tests.h"
+#include "parse_path.h"
+
+#define CONSTRUCTOR_TEST_DIR "/a/b/c/d"
 static int s_test_value;
 
 void constr() __attribute__((constructor));
 
 void constr()
 {
+    /*test constructor whatever was called*/
     int ret;
     TEST_OPERATION_RESULT(++s_test_value, &ret, ret==1);
     int res = fprintf(stderr, "constr value=%d\n", s_test_value);
     TEST_OPERATION_RESULT(res, &ret, ret>0);
+
+    /*create directory to be access it at the main, relation of
+      filesystem and constructor*/
+    mkpath_recursively(CONSTRUCTOR_TEST_DIR, 0666);
 }
 
 void destr() __attribute__((destructor));
@@ -55,6 +63,7 @@ int main(int argc, char **argv)
 {
     int ret;
     TEST_OPERATION_RESULT(s_test_value, &ret, ret==1);
+    CHECK_PATH_EXISTANCE(CONSTRUCTOR_TEST_DIR);
     fprintf(stderr, "main value=%d\n", s_test_value);
     return 0;
 }

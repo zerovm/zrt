@@ -80,7 +80,8 @@ struct MemoryManagerPublicInterface{
 
     /*result for sysconf(_SC_PHYS_PAGES)*/
     long int (*get_phys_pages)(struct MemoryManagerPublicInterface* this);
-    /*result for sysconf(_SC_AVPHYS_PAGES)*/
+    /*result for sysconf(_SC_AVPHYS_PAGES)
+     @return Really available pages count*/
     long int (*get_avphys_pages)(struct MemoryManagerPublicInterface* this);
 };
 

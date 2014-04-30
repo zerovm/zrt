@@ -34,7 +34,21 @@
 
 int main(int argc, char**argv){
     char path[PATH_MAX];
+    int ret;
+    struct stat st;
 
+    /*testing import errors*/
+    CHECK_PATH_EXISTANCE("/test/test.1234");
+    /*this is a dir, one of tar image imports has error while injecting this file*/
+    TEST_OPERATION_RESULT( stat("/test/test.1234", &st), 
+			   &ret, ret==0&&S_ISDIR(st.st_mode));
+    CHECK_PATH_EXISTANCE("/test/test.1234/test.1234");
+    /*this is a file, one of tar image imports expected as failed,
+      mountpoint not created, because of existing file*/
+    TEST_OPERATION_RESULT( stat("/test/test.1234/test.1234", &st), 
+			   &ret, ret==0&&S_ISREG(st.st_mode));
+    CHECK_PATH_NOT_EXIST("/test/test.1234/bad");
+    
     CHECK_PATH_EXISTANCE("/warm");
     sprintf(path, "/warm/%s", FILENAME );
     CHECK_PATH_EXISTANCE( path );
@@ -51,7 +65,7 @@ int main(int argc, char**argv){
     /*file size from /warm folder is different than a file from /ok dir
      because /warm folder was mounted once in according to removable=no,
      and file in /ok folder was updated.*/
-    int sz1,sz2,ret;
+    int sz1,sz2;
     sprintf(path, "/warm/%s", FILENAME );
     GET_FILE_SIZE(path, &sz1);
 

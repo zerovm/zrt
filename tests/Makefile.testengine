@@ -35,6 +35,9 @@ TEST_LOG_ZVM=$(addsuffix .zerovm.log, $(basename $(TEST_SOURCES) ) )
 TEST_LOG_DEBUG=$(addsuffix .zrtdebug.log, $(basename $(TEST_SOURCES) ) )
 TEST_TARS=$(addsuffix .$(TEST_TAR), $(basename $(TEST_SOURCES) ) )
 TEST_NEXES=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
+TEST_UNPARSED_TRACES=$(patsubst %.o, %.TRACE.unparsed, $(TEST_OBJECTS))
+TEST_TRACES=$(patsubst %.o, %.TRACE, $(TEST_OBJECTS))
+TEST_HIERARCHY_TRACES=$(patsubst %.o, %.TRACE.hierarchy, $(TEST_OBJECTS))
 TEST_LIST=$(basename $(TEST_SOURCES) )
 TEST_CHANNELS=$(shell find $(TESTS_ROOT) -name "*.channel")
 COUNTER=0
@@ -80,6 +83,12 @@ gcov: CPPFLAGS+=${GCOV_FLAGS}
 gcov: CFLAGS+=${GCOV_FLAGS}
 gcov: prepare $(ZEROVM) $(TEST_NEXES) report
 
+trace: CPPFLAGS+=${TRACE_FLAGS}
+trace: CFLAGS+=${TRACE_FLAGS}
+trace: prepare $(ZEROVM) $(TEST_UNPARSED_TRACES) report
+	python $(ZRT_ROOT)/tests/trace-parse-hierarchy.py
+	echo "trace success, see files: *.TRACE, *.TRACE.hierarchy"
+
 clean:
 	@find -name "*.scp" | xargs rm -f $(VERBOSE_CLEAN)
 	@rm -f $(VERBOSE_CLEAN) $(OUTPUT_LAST)
@@ -95,6 +104,8 @@ clean:
 	@rm -f $(VERBOSE_CLEAN) $(TEST_TARS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_CHANNELS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_TAR_MOUNT) $(TEST_TAR_REMOUNT)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_UNPARSED_TRACES) $(TEST_TRACES) $(TEST_HIERARCHY_TRACES)
+
 
 prepare:
 	$(eval TMPDIR:=$(shell mktemp -d))
@@ -106,6 +117,9 @@ prepare:
 
 $(ZEROVM):
 	$(error "$(ZEROVM) does not exist")
+
+$(TEST_TEST_UNPARSED_TRACES): $(TEST_NEXES)
+	python $(TRACE_PARSER) $(basename $@).nexe $@
 
 $(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
 #increase test counter

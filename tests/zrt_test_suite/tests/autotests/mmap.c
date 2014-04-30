@@ -48,7 +48,7 @@ void* mmap_test_align(size_t length, int result_expected);
 
 int main(int argc, char**argv){
     sbrk_mmap_test();
-
+    int ret;
     int pagesize = sysconf(_SC_PAGE_SIZE);
     uint32_t rounded_up_heap_addr = ROUND_UP( (uint32_t)MANIFEST->heap_ptr, sysconf(_SC_PAGESIZE) );
     int rounded_up_heap_size = MANIFEST->heap_size;
@@ -85,9 +85,12 @@ int main(int argc, char**argv){
     LOG_STDERR(ELogAddress, addr2+pagesize*MANY_PAGES_FOR_ALLOC, "expected next maped memory address" )
     addr = NULL;
     /*alloc all map pages*/
-    do{
+    int avphys = sysconf(_SC_AVPHYS_PAGES);
+    while( avphys-- ){
 	addr = mmap_test_align(pagesize, EXPECTED_TRUE);
-    }while( addr != NULL && addr-pagesize >= sbrk(0) );
+	fprintf(stderr, "sbrk(0)=%p, mmap_addr=%p, avphys=%d\n", sbrk(0), addr, avphys);
+	TEST_OPERATION_RESULT( addr!=NULL&&sbrk(0)<=addr, &ret, ret!=0);
+    }
 
     mmap_test_align(pagesize, EXPECTED_FALSE);
     /*unmap some memory page*/

@@ -85,7 +85,6 @@ static int extract_entry( struct UnpackInterface* unpacker,
 	}
 
 	ZRT_LOG(L_SHORT, "save %7d B : %s", entry_size, name);
-	int should_write = entry_size;
 	int write_err = 0;
         /*read file by blocks*/
         while (entry_size > 0) {
@@ -122,8 +121,22 @@ static struct UnpackObserver s_unpack_observer = {
 static int deploy_image( const char* mount_path, struct UnpackInterface* unpacker ){
     assert(unpacker);
     ZRT_LOG(L_SHORT, "mount_path=%s", mount_path );
-    create_dir_and_cache_name(mount_path, strlen(mount_path));
-    return unpacker->unpack( unpacker, mount_path );
+    /*create dir recursively if user want to import image in non
+      existing folder with non existing parent*/
+    int err = mkpath_recursively(mount_path, 0666);
+    if ( err!=0 && errno != EEXIST){
+	ZRT_LOG(L_ERROR, "Error creating mountpoint %s, errno=%d", mount_path, errno );
+	return -1;
+    }
+    struct stat st;
+    /*check if dir is really created*/
+    stat(mount_path, &st);
+    if ( !S_ISDIR(st.st_mode) ){
+	ZRT_LOG(L_ERROR, "Mountpoint %s is not a directory", mount_path );
+	return -1;
+    }
+    else
+	return unpacker->unpack( unpacker, mount_path );
 }
 
 //////////////////////////// image engine implementation //////////////////////////////
