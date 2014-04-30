@@ -120,8 +120,13 @@ static int unpack_tar( struct UnpackInterface* unpack_if, const char* mount_path
 	/* Now item name is retrieved from archive, 
 	 * in case if item type is directory we just create it on filesystem,
 	 * in case of file it's ready to retrieve data and create it on filesystem */
-	unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len );
-	++count;
+	if ( !unpack_if->observer->extract_entry( unpack_if, type, dst_filename, file_len ) ){
+	    ++count;
+	}
+	else{
+	    ZRT_LOG( L_ERROR, "Error! at least %d files injected.", count );
+	    return -1;
+	}
     }
     ZRT_LOG( L_SHORT, "unpacked items count: %d", count );
     return count;

@@ -37,12 +37,6 @@ ssize_t  read_override (int handle, void* data, size_t size){
     return s_mounts_interface->read(s_mounts_interface, handle, data, size);
 }
 
-ssize_t  write_override (int handle, const void* data, size_t size){
-    return s_mounts_interface->write(s_mounts_interface, handle, data, size);
-}
-
-
-
 
 ssize_t mounts_read(struct MountsReader* reader, void *buf, size_t nbyte){
     return reader->buffered_io_reader->read(reader->buffered_io_reader, reader->fd, buf, nbyte);
