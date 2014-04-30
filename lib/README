@@ -11,18 +11,24 @@ user code to host system are not allowed, untrusted code at all should
 be prevalidated by ZeroVM before execution, see ZeroVM docs.
 Untrusted code - it's an any code running under ZeroVM. Both zerovm
 environment and user code running in the same address space.
-2. ZRT API now includes a one function zfork(), which actually an
-extension for ZVM API. It's calling zvm_fork() and after it returns an
-execution context into a forked session, function returns zvm_fork's
-retcode value; it will re-read nvram config and will handle sections :
-2.1. [fstab] it performs mount of new records and remount of
+2. ZRT API functions: zfork(), is_ptrace_allowed();
+2.1. Function zfork() is actually an extension for ZVM API. It's
+calling zvm_fork() and after it returns an execution context into a
+forked session, function returns zvm_fork's retcode value; it will
+re-read nvram config and will handle sections :
+2.1.1. [fstab] it performs mount of new records and remount of
 existing. The channels wanted to be remount must have a seekable
 type=1 or type=3 to be able to read a channel again from beginning.
-2.2. [env] add new environment variables and rewrite existing;
-2.3. [mapping] updates channels mappings.
-2.4. [debug] sections also will be handled;
-2.5. [time] section handling only once - at session startup, and not
+2.1.2. [env] add new environment variables and rewrite existing;
+2.1.3. [mapping] updates channels mappings.
+2.1.4. [debug] sections also will be handled;
+2.1.5. [time] section handling only once - at session startup, and not
 at zfork().
+2.2. The function is_ptrace_allowed() intended to use by trace
+calls. It's return 0 if tracing calls must be ignored, or 1 if can
+be handled; This behavior is workaround for zrt, when it's not
+completely constructed and trying to use some glibc functions which
+cause to crash.
 3. Implemented 2 own filesystems that also accessible via plaggable
 interface: RW FS hosted in memory and FS with an unmutable structure
 on top of channels; All FSs accessible via single object - main
@@ -161,5 +167,7 @@ variables:
 "HOME" - home directory, if not specified '/' will used;
 "SHELL" - shell program
 note that /etc/passwd still dosn't exist
-
-
+4. ZRT has gcov support, and 'make gcov' can be used to get report
+about test coverage for zrt module;
+5. ZRT has tracing feature, which creates TRACE files for tests
+running in test suite by command: 'make trace'.
