@@ -18,36 +18,23 @@
 #define DEFAULT_TEMP_CURSOR_VALUE -100
 #define INIT_TEMP_CURSOR(temp_cursor_p) *(temp_cursor_p) = DEFAULT_TEMP_CURSOR_VALUE
 
-/*path=/1/2
-step1 result /
-step2 result 1
-step3 result 2
-step4 result NULL
- */
+/*example path "/1/22/" components = { "/", "1", "22", NULL }*/
 const char *path_component_forward(int *temp_cursor, const char *path, int *result_len);
 
-/*path=/1/2
-step1 result 2
-step2 result 1
-step3 result /
-step4 result NULL
- */
+/*example path "/1/22/" components = { "22", "1", "/", NULL }*/
 const char *path_component_backward(int *temp_cursor, const char *path, int *result_len);
 
-/*path=/1/2
-step1 result /
-step2 result /1
-step3 result /1/2
-step4 result NULL
- */
+
+/*example path "/1/22/" components = { "/", "/1", "/1/22", NULL }*/
 const char *path_subpath_forward(int *temp_cursor, const char *path, int *result_len);
 
-/*path=/1/2
-step1 result /1
-step2 result /
-step3 result NULL
- */
+
+/*example path "/1/22/" components = { "/1/22", "/1", "/", NULL }*/
 const char *path_subpath_backward(int *temp_cursor, const char *path, int *result_len);
 
-
 int test_path_utils();
+
+/*if path not started with slash or have dots .. then assume the path
+  is related;
+  @return 1 relative, 0 not relative*/
+int is_relative_path(const char *path);
