@@ -103,6 +103,7 @@ void test_issue_48_dev(){
 	{"stdin", ECharDev}, //mapping enabled
 	{"stdout", EPipe},
 	{"debug", EPipe},
+	{"trace", EPipe},
 	{"nvram", EBlockDev},
 	{"readonly", EPipe},
 	{"writeonly", EPipe},
@@ -187,5 +188,5 @@ void test_random_folder(){
     char tmpdirname[PATH_MAX] ="/tmp/1234-XXXXXX";
     TEST_OPERATION_RESULT((int)mkdtemp(tmpdirname), (int*)&ret, ret!=0 );
     
-    test_readdir_with_many_components(tmpdirname, 1000, 1000);
+    test_readdir_with_many_components(tmpdirname, 100, 100);
 }
