@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     int datalen, datalen1;
     char testpath[PATH_MAX];
     snprintf(testpath, sizeof(testpath), "/test/%s", FILENAME_WITH_DYNAMIC_CONTENTS );
-    printf("%s\n", testpath);
+    fprintf(stderr, "%s\n", testpath);
 
     /*Read files at mountpoint*/
     char* contents1 = read_file_contents( testpath, &datalen1 );
