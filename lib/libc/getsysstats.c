@@ -56,7 +56,7 @@ int zrt_zcall_get_avphys_pages(void){
     LOG_SYSCALL_START(P_TEXT, "");    
 
     struct MemoryManagerPublicInterface* memif = memory_interface_instance();
-    long int ret = memif->get_phys_pages(memif);
+    long int ret = memif->get_avphys_pages(memif);
     LOG_SHORT_SYSCALL_FINISH( ret, "get_avphys_pages=%ld", ret);
     return ret;
 }
