@@ -25,4 +25,8 @@
 
 #define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
 
+#define __NON_INSTRUMENT_FUNCTION__ __attribute__((__no_instrument_function__))
+#define __CONSTRUCTOR_FUNCTION__ __attribute__((constructor))
+#define __DESTRUCTOR_FUNCTION__ __attribute__((destructor))
+
 #endif //ZRT_CONFIG_H

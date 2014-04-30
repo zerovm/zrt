@@ -27,6 +27,7 @@
 #include <errno.h>
 
 #include "zrtlog.h"
+#include "zrtapi.h"
 #include "zvm.h"
 #include "zcalls.h"
 #include "zcalls_zrt.h" //nvram()
@@ -65,10 +66,13 @@
 
 /****************** static data*/
 static int     s_prolog_doing_now=1; /*prolog state at start of session by default*/
+static int     s_zrt_constructed=0;
 static void*   s_tls_addr=NULL;
 static void*   sbrk_default = NULL;
 struct timeval s_cached_timeval;
 /****************** */
+
+int is_ptrace_allowed() {return s_zrt_constructed;}
 
 void* static_prolog_brk() { 
     return sbrk_default; 
@@ -364,7 +368,7 @@ int  zrt_zcall_prolog_tls_init(void *thread_ptr){
     return 0;
 }
 
-void * zrt_zcall_prolog_tls_get(void){
+void __NON_INSTRUMENT_FUNCTION__ * zrt_zcall_prolog_tls_get(void){
     //ZRT_LOG_LOW_LEVEL(FUNC_NAME);
     /*very base implementation of tls handling*/
     return s_tls_addr ; /*valid tls*/
@@ -390,12 +394,15 @@ int  zrt_zcall_prolog_gettime(clockid_t clk_id, struct timespec *tp){
 /* Setup zrt */
 void zrt_zcall_prolog_zrt_setup(void){
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-    /*prolog initialization done and now main syscall handling should be processed by
-     *enhanced syscall handlers*/
+    /*The part of prolog initialization is done, from now every
+      syscall can be handled by enhanced handler. Now do the second
+      part of environment construction.*/
     s_prolog_doing_now = 0; 
-    __zrt_log_prolog_mode_enable(0);
+    __zrt_log_prolog_mode_enable( s_prolog_doing_now );
+    zrt_zcall_enhanced_zrt_setup();
+    /*Environment internal construct is completed*/
+    s_zrt_constructed = 1;
     ZRT_LOG_DELIMETER;
-    zrt_zcall_enhanced_zrt_setup();    
 }
 
 /* callback just before user main() */

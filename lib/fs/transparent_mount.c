@@ -151,7 +151,8 @@ static int transparent_mount(struct MountsPublicInterface *this,
     return -1;
 }
 
-static ssize_t transparent_read(struct MountsPublicInterface *this,
+static ssize_t __NON_INSTRUMENT_FUNCTION__
+transparent_read(struct MountsPublicInterface *this,
 				int fd, void *buf, size_t nbyte){
     struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
@@ -162,7 +163,8 @@ static ssize_t transparent_read(struct MountsPublicInterface *this,
     }
 }
 
-static ssize_t transparent_write(struct MountsPublicInterface *this,
+static ssize_t __NON_INSTRUMENT_FUNCTION__
+transparent_write(struct MountsPublicInterface *this,
 				 int fd, const void *buf, size_t nbyte){
     struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
@@ -173,7 +175,8 @@ static ssize_t transparent_write(struct MountsPublicInterface *this,
     }
 }
 
-static ssize_t transparent_pread(struct MountsPublicInterface *this,
+static ssize_t __NON_INSTRUMENT_FUNCTION__
+transparent_pread(struct MountsPublicInterface *this,
 				int fd, void *buf, size_t nbyte, off_t offset){
     struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )
@@ -184,7 +187,8 @@ static ssize_t transparent_pread(struct MountsPublicInterface *this,
     }
 }
 
-static ssize_t transparent_pwrite(struct MountsPublicInterface *this,
+static ssize_t __NON_INSTRUMENT_FUNCTION__
+transparent_pwrite(struct MountsPublicInterface *this,
 				  int fd, const void *buf, size_t nbyte, off_t offset){
     struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
     if ( mount )

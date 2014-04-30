@@ -19,9 +19,17 @@
 #ifndef __ZRT_API_H__
 #define __ZRT_API_H__
 
+#include "zrt_defines.h"
+
 /*call zvm_fork() and then reread nvram file and remount removable tar images
  *@return zvm_fork result*/
 int zfork();
+
+/*It is intended to use for debugging purposes when using c code
+ instrumentation aka ptrace; Tracing is not allowed while environment 
+ not fully constructed.
+ @return 1 if ptrace is allowed, 0 - not allowed*/
+int __NON_INSTRUMENT_FUNCTION__ is_ptrace_allowed();
 
 
 #endif //__ZRT_API_H__

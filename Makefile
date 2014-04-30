@@ -50,7 +50,8 @@ lib/fs/unpack/mounts_reader.c \
 lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c \
-lib/zrt.c
+lib/zrt.c \
+lib/ptrace.c 
 
 LIBDEP_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBDEP_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBDEP_OBJECTS_NO_PREFIX))
@@ -81,6 +82,55 @@ CFLAGS += -DUSER_SIDE
 ################# "make all" Build zrt & run minimal tests set
 all: build autotests
 
+############## "make test" Run all test suites available for ZRT
+check: build
+	@echo ------------- RUN zrt tests ------------
+#zrt tests
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite -j4
+#glibc tests
+	@sh tests/glibc_test_suite/run_tests.sh
+#lua tests
+	@make -Ctests/lua_test_suite
+	@./kill_daemons.sh
+
+################ "make gcov" Run tests and create document reflecting test coverage
+trace: CPPFLAGS+=${TRACE_FLAGS}
+trace: CFLAGS+=${TRACE_FLAGS}
+trace: all
+
+################ "make gcov" Run tests and create document reflecting test coverage
+gcov: LDFLAGS+=${GCOV_LDFLAGS}
+gcov: CPPFLAGS+=${GCOV_FLAGS}
+gcov: CFLAGS+=${GCOV_FLAGS}
+gcov: build
+	@echo ------------- RUN coverage tests $@ ------------
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite gcov
+	@./kill_daemons.sh
+	@mkdir $(GCOV_TEMP_FOLDER) $(GCOV_HTML_FOLDER) -p
+	@tar xvf $(GCOV_DATA_TAR) -C $(GCOV_TEMP_FOLDER) > /dev/null 2>&1
+	@cp $(GCOV_TEMP_FOLDER)$(ZRT_ROOT)/lib $(ZRT_ROOT) -r
+	@rm $(GCOV_TEMP_FOLDER) -r -f
+#prepare html document covering only sources from lib folder
+	@lcov --gcov-tool=${GCOV} --directory=$(ZRT_ROOT)/lib --capture --output-file $(GCOV_HTML_FOLDER)/app.info
+	@genhtml --output-directory $(GCOV_HTML_FOLDER) $(GCOV_HTML_FOLDER)/app.info
+	@echo ------------- RUN coverage tests OK $@ ------------
+	@echo open $(GCOV_HTML_FOLDER)/index.html
+
+zrt_test_suite: build
+#Run different groups of zrt tests sequentially
+	@echo ------------- RUN zrt $@ ------------
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite -j4
+
+############## "make autotests" run zrt autotests
+autotests possible_slow_autotests: build
+	@echo ------------- RUN zrt $@ ------------
+	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite clean prepare
+	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite -j4
+	@./kill_daemons.sh
+
 build: doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
 	@make -C locale/locale_patched
 
@@ -103,18 +153,6 @@ ${LIBPORTS}:
 	@echo move $@ library to final folder
 	@mv -f $@ lib
 
-############## "make test" Run all test suites available for ZRT
-check: build
-	@echo ------------- RUN zrt tests ------------
-#zrt tests
-	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
-	@TESTS_ROOT=tests make -Ctests/zrt_test_suite -j4
-#glibc tests
-	@sh tests/glibc_test_suite/run_tests.sh
-#lua tests
-	@make -Ctests/lua_test_suite
-	@./kill_daemons.sh
-
 lua_test_suite: build
 	@make -Ctests/$@
 
@@ -123,19 +161,6 @@ glibc_test_suite: build
 #run tests
 	make -C tests/glibc_test_suite clean
 	make -C tests/glibc_test_suite -j4
-
-zrt_test_suite: build
-#Run different groups of zrt tests sequentially
-	@echo ------------- RUN zrt $@ ------------
-	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
-	@TESTS_ROOT=tests make -Ctests/zrt_test_suite -j4
-
-############## "make autotests" run zrt autotests
-autotests possible_slow_autotests: build
-	@echo ------------- RUN zrt $@ ------------
-	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite clean prepare
-	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite -j4
-	@./kill_daemons.sh
 
 ################ "make clean" Cleaning libs
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
@@ -184,25 +209,6 @@ doc:
 	@echo "Auto created from READMEs located in ZRT project\n" > ${README_GEN}
 	@find ./lib ./tests -name "README" | xargs -l1 -IFNAME sed 's@{DOCPATH}@Editable README here: FNAME@' FNAME >> ${README_GEN}
 	@chmod 0444 ${README_GEN}
-
-################ "make gcov" Run tests and create document reflecting test coverage
-gcov: LDFLAGS+=${GCOV_LDFLAGS}
-gcov: CPPFLAGS+=${GCOV_FLAGS}
-gcov: CFLAGS+=${GCOV_FLAGS}
-gcov: build
-	@echo ------------- RUN coverage tests $@ ------------
-	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
-	@TESTS_ROOT=tests make -Ctests/zrt_test_suite gcov
-	@./kill_daemons.sh
-	@mkdir $(GCOV_TEMP_FOLDER) $(GCOV_HTML_FOLDER) -p
-	@tar xvf $(GCOV_DATA_TAR) -C $(GCOV_TEMP_FOLDER) > /dev/null 2>&1
-	@cp $(GCOV_TEMP_FOLDER)$(ZRT_ROOT)/lib $(ZRT_ROOT) -r
-	@rm $(GCOV_TEMP_FOLDER) -r -f
-#prepare html document covering only sources from lib folder
-	@lcov --gcov-tool=${GCOV} --directory=$(ZRT_ROOT)/lib --capture --output-file $(GCOV_HTML_FOLDER)/app.info
-	@genhtml --output-directory $(GCOV_HTML_FOLDER) $(GCOV_HTML_FOLDER)/app.info
-	@echo ------------- RUN coverage tests OK $@ ------------
-	@echo open $(GCOV_HTML_FOLDER)/index.html
 
 uninstall:
 	rm -f $(INSTALL_INCLUDE_DIR)/mapreduce/buffered_io.h

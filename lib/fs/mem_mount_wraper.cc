@@ -316,7 +316,9 @@ static int mem_mount(struct MountsPublicInterface* this_, const char* path, void
     return -1;
 }
 
-static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
+ssize_t __NON_INSTRUMENT_FUNCTION__ 
+mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte);
+ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
     if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
 	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
 	assert(ofd);
@@ -328,7 +330,9 @@ static ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, 
     }
 }
 
-static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
+ssize_t __NON_INSTRUMENT_FUNCTION__
+mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte);
+ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
     if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
 	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
 	assert(ofd);
@@ -340,8 +344,10 @@ static ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void
     }
 }
 
-static ssize_t mem_pread(struct MountsPublicInterface* this_, 
-			 int fd, void *buf, size_t nbyte, off_t offset){
+ssize_t __NON_INSTRUMENT_FUNCTION__ 
+mem_pread(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte, off_t offset);
+ssize_t mem_pread(struct MountsPublicInterface* this_, 
+		  int fd, void *buf, size_t nbyte, off_t offset){
     if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
 	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
 	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
@@ -365,7 +371,9 @@ static ssize_t mem_pread(struct MountsPublicInterface* this_,
     }
 }
 
-static ssize_t mem_pwrite(struct MountsPublicInterface* this_, 
+ssize_t __NON_INSTRUMENT_FUNCTION__
+mem_pwrite(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte, off_t offset);
+ssize_t mem_pwrite(struct MountsPublicInterface* this_, 
 			  int fd, const void *buf, size_t nbyte, off_t offset){
     if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
 	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);

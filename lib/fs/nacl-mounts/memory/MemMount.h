@@ -90,8 +90,10 @@ class MemMount {
   int Chmod(ino_t slot, mode_t mode);
   int Stat(ino_t node, struct stat *buf);
   int Getdents(ino_t node, off_t offset, off_t *newoffset, void *buf, unsigned int count);
-  ssize_t Read(ino_t node, off_t offset, void *buf, size_t count);
-  ssize_t Write(ino_t node, off_t offset, const void *buf, size_t count);
+  ssize_t __NON_INSTRUMENT_FUNCTION__
+      Read(ino_t node, off_t offset, void *buf, size_t count);
+  ssize_t __NON_INSTRUMENT_FUNCTION__
+      Write(ino_t node, off_t offset, const void *buf, size_t count);
 
   // Return the node at path.  If the path is invalid, NULL is returned.
   MemNode *GetMemNode(std::string path);
