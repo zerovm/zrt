@@ -33,6 +33,7 @@
 #include "macro_tests.h"
 #include "handle_allocator.h" //MAX_HANDLES_COUNT
 
+void test_issue_132();
 void test_zrt_issue_79();
 void test_open_limits();
 
@@ -47,6 +48,7 @@ int main(int argc, char **argv)
     TEST_OPERATION_RESULT( close(fd), &ret, ret==0&&errno==0);
 
     test_zrt_issue_79();
+    test_issue_132();
 }
 
 
@@ -98,3 +100,67 @@ void test_zrt_issue_79(){
     TEST_OPERATION_RESULT( close(fdw), &ret, ret==0&&errno==0);
     TEST_OPERATION_RESULT( close(fdr), &ret, ret==0&&errno==0);
 }
+
+void test_issue_132(){
+    int fd, ret;
+    struct stat st;
+    const char *testpath;
+
+    /*test pipe, mapped channel*/
+    testpath = "/dev/stdin";
+    fprintf(stderr, "test path %s\n", testpath);
+    TEST_OPERATION_RESULT( stat(testpath, &st), &ret, ret!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( st.st_mode&S_IFMT&S_IFIFO, &ret, ret!=0 );
+
+    TEST_OPERATION_RESULT( open(testpath, O_RDONLY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(testpath, O_RDONLY | O_TRUNC), &fd, fd!=-1&&errno==0 );
+
+    TEST_OPERATION_RESULT( open(testpath, O_WRONLY), &fd, fd==-1&&errno==EACCES );
+    TEST_OPERATION_RESULT( open(testpath, O_RDWR), &fd, fd==-1&&errno==EACCES );
+
+    /*test char, mapped channel*/
+    testpath = "/dev/stdout";
+    fprintf(stderr, "test path %s\n", testpath);
+    TEST_OPERATION_RESULT( stat(testpath, &st), &ret, ret!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( st.st_mode&S_IFMT&S_IFCHR, &ret, ret!=0 );
+
+    TEST_OPERATION_RESULT( open(testpath, O_RDONLY), &fd, fd==-1&&errno==EACCES );
+
+    TEST_OPERATION_RESULT( open(testpath, O_WRONLY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(testpath, O_WRONLY | O_TRUNC), &fd, fd!=-1&&errno==0 );
+
+    TEST_OPERATION_RESULT( open(testpath, O_RDWR), &fd, fd==-1&&errno==EACCES );
+
+    /*test file, mapped channel*/
+    testpath = "/dev/file";
+    fprintf(stderr, "test path %s\n", testpath);
+    TEST_OPERATION_RESULT( stat(testpath, &st), &ret, ret!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( st.st_mode&S_IFMT&S_IFREG, &ret, ret!=0 );
+
+    TEST_OPERATION_RESULT( open(testpath, O_RDONLY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(testpath, O_RDONLY | O_TRUNC), &fd, fd==-1&&errno==EPERM );
+
+    TEST_OPERATION_RESULT( open(testpath, O_WRONLY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(testpath, O_WRONLY | O_TRUNC), &fd, fd==-1&&errno==EPERM );
+
+    TEST_OPERATION_RESULT( open(testpath, O_RDWR), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(testpath, O_RDWR | O_TRUNC), &fd, fd==-1&&errno==EPERM );
+
+    /*test block dev, mapped channel*/
+    testpath = "/dev/blck";
+    fprintf(stderr, "test path %s\n", testpath);
+    TEST_OPERATION_RESULT( stat(testpath, &st), &ret, ret!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( st.st_mode&S_IFMT&S_IFBLK, &ret, ret!=0 );
+
+    TEST_OPERATION_RESULT( open(testpath, O_RDONLY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(testpath, O_RDONLY | O_TRUNC), &fd, fd==-1&&errno==EPERM );
+
+    TEST_OPERATION_RESULT( open(testpath, O_WRONLY), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(testpath, O_WRONLY | O_TRUNC), &fd, fd==-1&&errno==EPERM );
+
+    TEST_OPERATION_RESULT( open(testpath, O_RDWR), &fd, fd!=-1&&errno==0 );
+    TEST_OPERATION_RESULT( open(testpath, O_RDWR | O_TRUNC), &fd, fd==-1&&errno==EPERM );
+
+    /*do not close channels at all, to keep it simple*/
+}
+

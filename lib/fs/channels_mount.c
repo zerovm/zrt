@@ -266,15 +266,16 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
     /*Append only channels support
       Do not allow to open append only channel with wrong flags*/
     uint32_t permissions = channel_permissions(item);
+    uint32_t ftype = permissions&S_IFMT;
     if ( item->channel->type == RGetSPut && !CHECK_FLAG(flags, O_APPEND) &&
 	 CHECK_FLAG(permissions, S_IRUSR) && CHECK_FLAG(permissions, S_IWUSR) &&
-	 (CHECK_FLAG(permissions, S_IFBLK)||CHECK_FLAG(permissions, S_IFREG)) ){
+	 (S_IFBLK==ftype||S_IFREG==ftype) ){
         SET_ERRNO( EPERM );
         return -1;
     }
 
-    /*truncate not allowed at all for channels */
-    if ( CHECK_FLAG(flags, O_TRUNC) ){
+    /*truncate not allowed for channels except FIFO, CHR*/
+    if ( CHECK_FLAG(flags, O_TRUNC) && S_IFCHR!=ftype && S_IFIFO!=ftype ){
         SET_ERRNO( EPERM );
         return -1;
     }

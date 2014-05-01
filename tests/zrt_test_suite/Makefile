@@ -54,7 +54,8 @@ ENV-readdir.c=name=CURDIR, value=$(CURDIR) {BR}
 ENV-readdir.c+=name=HOME, value=/dev/stdin
 #set wrong home path to test behaviour in this cond
 ENV-lstat-stat-mapping.c=name=HOME, value=/dev/stdin/mount
-ENV-fdopen-open.c+=name=$(TRACE), value=1
+ENV-fdopen-open.c=name=$(TRACE), value=1
+ENV-constructor.c+=name=TESTDIR, value=/a/b/c/d
 #####################################################################
 
 
@@ -70,6 +71,8 @@ MAPPING_FORKED-fork.c =channel=/dev/read-write, mode=file
 MAPPING-readdir.c =channel=/dev/mount2, mode=file {BR}
 MAPPING-readdir.c +=channel=/dev/stdin, mode=char {BR}
 MAPPING-readdir.c +=channel=/dev/null, mode=char {BR}
+MAPPING-fdopen-open.c =channel=/dev/stdout, mode=char {BR}
+MAPPING-fdopen-open.c +=channel=/dev/file, mode=file {BR}
 #####################################################################
 
 #####################################################################
@@ -158,6 +161,8 @@ MEMMAX-mmap.c=268435456
 # add channels listed below into manifest file
 CHANNELS-readdir.c=Channel=/dev/null, /dev/mount1, 0, 0, 999999, 999999, 0, 0{BR}
 CHANNELS-readdir.c+=Channel=/dev/null, /dev/mount2, 0, 0, 999999, 999999, 0, 0{BR}
+CHANNELS-fdopen-open.c=Channel=$(shell mktemp), /dev/blck, 3, 0, 999999, 999999, 999999, 99999{BR}
+CHANNELS-fdopen-open.c+=Channel=$(shell mktemp), /dev/file, 3, 0, 999999, 999999, 999999, 99999{BR}
 #####################################################################
 
 
