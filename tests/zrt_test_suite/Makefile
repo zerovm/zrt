@@ -55,6 +55,7 @@ ENV-readdir.c+=name=HOME, value=/dev/stdin
 #set wrong home path to test behaviour in this cond
 ENV-lstat-stat-mapping.c=name=HOME, value=/dev/stdin/mount
 ENV-fdopen-open.c+=name=$(TRACE), value=1
+ENV-constructor.c+=name=TESTDIR, value=/a/b/c/d
 #####################################################################
 
 
