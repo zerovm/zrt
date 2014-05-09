@@ -104,6 +104,7 @@ void test_issue_48_dev(){
 	{"stdout", EPipe},
 	{"debug", EPipe},
 	{"trace", EPipe},
+	{"alloc_report", EPipe},
 	{"nvram", EBlockDev},
 	{"readonly", EPipe},
 	{"writeonly", EPipe},
