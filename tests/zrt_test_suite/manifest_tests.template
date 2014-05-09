@@ -13,6 +13,7 @@ Channel = {OUTFILE}.readonly.channel, /dev/readonly, {CHANNEL_READONLY_TYPE}, 0,
 Channel = {OUTFILE}.writeonly.channel, /dev/writeonly, {CHANNEL_WRITEONLY_TYPE}, 0, 0, 0, {CHANNEL_WRITEONLY_SIZE}, {CHANNEL_WRITEONLY_SIZE}
 Channel = {OUTFILE}.read-write.channel, /dev/read-write, {CHANNEL_READWRITE_TYPE}, 0, 99999, 99999, 99999, 99999
 Channel = {OUTFILE}.TRACE.unparsed, /dev/trace, 0, 0, 0, 0, 99999999, 99999999
+Channel = {OUTFILE}.alloc, /dev/alloc_report, 0, 0, 0, 0, 99999999, 99999999
 
 =====================================================================
 == channels can be added separately for every test in Makefile

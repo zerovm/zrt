@@ -37,10 +37,13 @@ TEST_TARS=$(addsuffix .$(TEST_TAR), $(basename $(TEST_SOURCES) ) )
 TEST_NEXES=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
 TEST_UNPARSED_TRACES=$(patsubst %.o, %.TRACE.unparsed, $(TEST_OBJECTS))
 TEST_TRACES=$(patsubst %.o, %.TRACE, $(TEST_OBJECTS))
+TEST_ALLOC_REPORTS=$(patsubst %.o, %.alloc, $(TEST_OBJECTS))
 TEST_HIERARCHY_TRACES=$(patsubst %.o, %.TRACE.hierarchy, $(TEST_OBJECTS))
 TEST_LIST=$(basename $(TEST_SOURCES) )
 TEST_CHANNELS=$(shell find $(TESTS_ROOT) -name "*.channel")
 COUNTER=0
+
+ALLLOC_REPORT=$(ZRT_ROOT)/lib/alloc_report.o
 
 #save failed tests to display it in report
 #if string does not contain PASS, then output error
@@ -105,6 +108,7 @@ clean:
 	@rm -f $(VERBOSE_CLEAN) $(TEST_CHANNELS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_TAR_MOUNT) $(TEST_TAR_REMOUNT)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_UNPARSED_TRACES) $(TEST_TRACES) $(TEST_HIERARCHY_TRACES)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_ALLOC_REPORTS) $(ALLLOC_REPORT)
 
 
 prepare:
@@ -121,7 +125,7 @@ $(ZEROVM):
 $(TEST_TEST_UNPARSED_TRACES): $(TEST_NEXES)
 	python $(TRACE_PARSER) $(basename $@).nexe $@
 
-$(TEST_NEXES): $(TEST_SOURCES) $(TEST_INCLUDES)
+$(TEST_NEXES): $(ALLLOC_REPORT) $(TEST_SOURCES) $(TEST_INCLUDES)
 #increase test counter
 	$(eval COUNTER:=$(shell echo $$(($(COUNTER)+1))) )
 #prrepare variables
