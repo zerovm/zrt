@@ -83,7 +83,11 @@ struct MountsPublicInterface*        s_mem_mount;
 static struct MountsManager*   s_mounts_manager;
 static struct MountsPublicInterface* s_transparent_mount;
 static int                     s_zrt_ready;
+static int                     s_is_user_main_executing;
 /****************** */
+
+
+int is_user_main_executing() { return s_is_user_main_executing; }
 
 struct MountsPublicInterface* transparent_mount() { return s_transparent_mount; }
 
@@ -466,12 +470,14 @@ void zrt_zcall_enhanced_premain(void){
     zrt_internal_session_info(MANIFEST);
     ZRT_LOG(L_SHORT, P_TEXT, "user main() begin");
     ZRT_LOG_DELIMETER;
+    s_is_user_main_executing=1;
 }
 
 void zrt_zcall_enhanced_postmain(int usercode){
     ZRT_LOG(L_SHORT, P_TEXT, "user main() end");
     get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
     ZRT_LOG_DELIMETER;
+    s_is_user_main_executing=0;
 }
 
 
