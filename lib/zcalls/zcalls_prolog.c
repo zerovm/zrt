@@ -412,6 +412,13 @@ void zrt_zcall_prolog_premain(void){
     /*last prolog callback, next folowing is main() function*/
 }
 
+void zrt_zcall_prolog_postmain(int exitcode){
+   ZRT_LOG_LOW_LEVEL(FUNC_NAME);
+   zrt_zcall_enhanced_postmain(exitcode);
+   /*this callback calling just after enetering into exit, but before
+     exit started to perform, logically this is finish of main()
+     function*/
+}
 
 /*@return records count in fstab section*/
 static int get_records_count_for_section_and_buffer_size_to_copy_contents

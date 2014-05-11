@@ -80,6 +80,7 @@ int zrt_zcall_prolog_gettime(clockid_t clk_id, struct timespec *tp);
 /************************** zcalls_zrt_t functions **************/
 void zrt_zcall_prolog_zrt_setup(void);
 void zrt_zcall_prolog_premain(void);
+void zrt_zcall_prolog_postmain(int exitcode);
 
 /************************** zcalls_prolog_t functions **************/
 void zrt_zcall_prolog_read_nvram_args_envs(int *arg_array_lengths, int *arg_count,
@@ -128,6 +129,7 @@ int zrt_zcall_enhanced_munmap(void *addr, size_t len);
 /************************** zcalls_zrt_t functions **************/
 void zrt_zcall_enhanced_zrt_setup(void);
 void zrt_zcall_enhanced_premain(void);
+void zrt_zcall_enhanced_postmain(int exitcode);
 
 /*nonsyscalls*/
 int zrt_zcall_fcntl(int fd, int cmd, ...);

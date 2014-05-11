@@ -1,5 +1,9 @@
 /*
- * fdopen test
+ * fdopen test, also this tests limit for max opened files.
+ * Additionally it writes big amount of data into testing files to
+ * locate memory leaks related to removing files that resides in
+ * InMemory fs, doing it by manually analizing /dev/stderr,
+ * /dev/alloc_report.
  *
  * Copyright (c) 2012-2013, LiteStack, Inc.
  *
@@ -25,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pwd.h>
+#include <malloc.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <error.h>
@@ -49,20 +54,29 @@ int main(int argc, char **argv)
 
     test_zrt_issue_79();
     test_issue_132();
+    exit(0); /*test exit 0 behavior*/
 }
 
 
 void test_open_limits(){
+    malloc_stats();
+    fprintf(stdout, "sbrk(0)=%p before 1000files\n", sbrk(0));fflush(0);
     int i, ret;
     int testfd = open("/dev/stdin", O_RDONLY, 0);
+    int count = 1024*1024;
+    char* data = malloc(count);
     /* keep in mind already opened channels, like dev/stdin, dev/stdout, dev/stderr */
     int maxhandlescount = MAX_HANDLES_COUNT - testfd -1 ;
-    int handles[maxhandlescount];
+    FILE* handles[maxhandlescount];
+    /*create files as many as possible, and fill it by big amount of
+      data*/
     for (i=0; i < maxhandlescount; i++){
-	TEST_OPERATION_RESULT( open("/dev/stdin", O_RDONLY, 0), &ret, ret!=-1&&errno==0);
-	fprintf(stderr, "fd=%d\n", ret );
-	handles[i] = ret;
+	handles[i] = tmpfile();
+	TEST_OPERATION_RESULT( handles[i]!=NULL, &ret, ret==1);
+	fprintf(stderr, "fd=%d\n", fileno(handles[i]) );
+	TEST_OPERATION_RESULT( fwrite(data, 1, count, handles[i]), &ret, ret==count);
     }
+    free(data);
     /*can't open more files*/
     TEST_OPERATION_RESULT( open("/dev/stdin", O_RDONLY), &ret, ret==-1&&errno==ENFILE);
     TEST_OPERATION_RESULT( open("/dev", O_RDONLY|O_DIRECTORY), &ret, ret==-1&&errno==ENFILE);
@@ -70,9 +84,14 @@ void test_open_limits(){
     TEST_OPERATION_RESULT( f==NULL, &ret, ret==1&&errno==ENFILE);
     TEST_OPERATION_RESULT( open("/tmp", O_RDONLY|O_DIRECTORY), &ret, ret==-1&&errno==ENFILE);
 
+    fprintf(stdout, "sbrk(0)=%p 1000files not removed\n", sbrk(0));fflush(0);
+    malloc_stats();
+    /*this remove all opened files*/
     for (i=0; i < maxhandlescount; i++){
-	TEST_OPERATION_RESULT( close(handles[i]), &ret, ret==0&&errno==0);
+	TEST_OPERATION_RESULT( fclose(handles[i]), &ret, ret==0&&errno==0);
     }
+    fprintf(stdout, "sbrk(0)=%p after 1000files\n", sbrk(0));fflush(0);
+    malloc_stats();
 }
 
 void test_zrt_issue_79(){

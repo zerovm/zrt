@@ -31,5 +31,13 @@ int zfork();
  @return 1 if ptrace is allowed, 0 - not allowed*/
 int __NON_INSTRUMENT_FUNCTION__ is_ptrace_allowed();
 
+/*Currently executing user main() or not. If zrt initialization code
+or session finalizing is running then it should return 0; It's normal
+always to get 1 calling it from user code.  This function is needed to
+distinguish user and system routines for cases when running various
+trace, hook functions; 
+@return 1 if now executing user code in main function, 0 if not*/
+int is_user_main_executing();
+
 
 #endif //__ZRT_API_H__

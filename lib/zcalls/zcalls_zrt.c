@@ -83,7 +83,11 @@ struct MountsPublicInterface*        s_mem_mount;
 static struct MountsManager*   s_mounts_manager;
 static struct MountsPublicInterface* s_transparent_mount;
 static int                     s_zrt_ready;
+static int                     s_is_user_main_executing;
 /****************** */
+
+
+int is_user_main_executing() { return s_is_user_main_executing; }
 
 struct MountsPublicInterface* transparent_mount() { return s_transparent_mount; }
 
@@ -118,7 +122,6 @@ void set_home_dir(const char *home)
  */
 void zrt_zcall_enhanced_exit(int status){
     ZRT_LOG(L_SHORT, "status %d exiting...", status);
-    get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
     return; 
@@ -465,8 +468,16 @@ void zrt_zcall_enhanced_zrt_setup(void){
 void zrt_zcall_enhanced_premain(void){
     set_home_dir( getenv("HOME") );
     zrt_internal_session_info(MANIFEST);
-    ZRT_LOG(L_SHORT, P_TEXT, "run user main()");
+    ZRT_LOG(L_SHORT, P_TEXT, "user main() begin");
     ZRT_LOG_DELIMETER;
+    s_is_user_main_executing=1;
+}
+
+void zrt_zcall_enhanced_postmain(int usercode){
+    ZRT_LOG(L_SHORT, P_TEXT, "user main() end");
+    get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
+    ZRT_LOG_DELIMETER;
+    s_is_user_main_executing=0;
 }
 
 

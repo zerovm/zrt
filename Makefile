@@ -71,6 +71,10 @@ libports/tar-1.11.8/libtar.a \
 libports/sqlite3/libsqlite3.a \
 libports/context-switch/libcontext.a
 
+#file inside dir will be built and installed by pth's make,
+#so we need only subpath to enter dir by make
+PTH=libports/pth-2.0.7/pthread.o
+
 ################# samples to build
 TEST_SUITES=lua_test_suite glibc_test_suite
 
@@ -131,7 +135,7 @@ autotests possible_slow_autotests: build
 	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite -j4
 	@./kill_daemons.sh
 
-build: doc ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
+build: doc ${PTH} ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
 	@make -C locale/locale_patched
 
 #build zrt0 to be used as stub inside of zlibc
@@ -153,6 +157,9 @@ ${LIBPORTS}:
 	@echo move $@ library to final folder
 	@mv -f $@ lib
 
+${PTH}:
+	@make -C$(dir $@) clean all install
+
 lua_test_suite: build
 	@make -Ctests/$@
 
@@ -165,9 +172,10 @@ glibc_test_suite: build
 ################ "make clean" Cleaning libs
 LIBS_CLEAN =$(foreach smpl, ${LIBS}, $(smpl).clean)
 LIBPORTS_CLEAN =$(foreach smpl, ${LIBPORTS}, $(smpl).clean)
+PTH_CLEAN =$(foreach smpl, ${PTH}, $(smpl).clean)
 
 ################ "make clean" Cleaning libs, tests, samples
-clean: libclean clean_ports testclean gcovclean
+clean: libclean testclean gcovclean
 	@rm -f lib/*.a
 
 gcovclean:
@@ -181,16 +189,20 @@ endif
 	@find -name "*.gcno" | xargs rm -f
 	@find -name "*.gcov" | xargs rm -f
 
-libclean: ${LIBS_CLEAN} testclean clean_ports
+libclean: ${LIBS_CLEAN} testclean libportsclean pthclean
 ${LIBS_CLEAN}: cleandep
 	@rm -f $(LIBZRT_OBJECTS)
 	@rm -f $(LIBS) $(LIBZRT)
 	@make -C$(dir $@) clean
 
-clean_ports: ${LIBPORTS_CLEAN}
+pthclean: ${PTH_CLEAN}
+${PTH_CLEAN}:
+	@make -C$(dir $@) clean
+
+libportsclean: ${LIBPORTS_CLEAN} 
 ${LIBPORTS_CLEAN}:
 	@make -C$(dir $@) clean
-	@rm -f $(LIBPORTS)
+	@rm -f $@
 
 testclean:
 	@make -C locale/locale_patched clean
@@ -214,6 +226,7 @@ uninstall:
 	rm -f $(INSTALL_INCLUDE_DIR)/mapreduce/buffered_io.h
 
 install: uninstall
+	@make -C$(dir ${PTH}) install
 	install -m 0644 lib/libzrt.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libmapreduce.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
 	install -m 0644 lib/libnetworking.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib

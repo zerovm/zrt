@@ -1,0 +1,17 @@
+./configure --host=x86_64-nacl prefix=$ZVM_PREFIX/x86_64-nacl \
+--enable-pthread --enable-shared=no --enable-tests=no --enable-optimize=no \
+--with-mctx-mth=mcsc \
+--with-mctx-dsp=sc \
+--with-mctx-stk=mc
+
+make all 
+make install
+
+pthread.h will be installed into x86_64-nacl/include/pth/, so
+explicit include path is required in your sources, for example:
+#include <pth/pthread.h>
+
+note: as pth was added into libports and it's installing at the same
+time as zrt on a clean zvm_prefix it shouldn't run configure while zrt
+not yet installed, because test executables trying to create during
+configure can't be linked

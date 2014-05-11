@@ -97,7 +97,10 @@ struct MountsPublicInterface* mm_mount_bypath( const char* path ){
 
 struct MountsPublicInterface* mm_mount_byhandle( int handle ){
     const struct HandleItem* entry = s_mounts_manager.handle_allocator->entry(handle);
-    if ( entry ) return entry->mount_fs;
+    /*if handle exist and related to opened file*/
+    if ( entry && s_mounts_manager.open_files_pool
+	 ->entry(entry->open_file_description_id) != NULL ) 
+	return entry->mount_fs;
     else return NULL;
 }
 

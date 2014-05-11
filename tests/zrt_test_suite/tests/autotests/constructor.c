@@ -35,12 +35,13 @@
 static int s_test_value;
 
 void constr() __attribute__((constructor));
+void constr2() __attribute__((constructor));
 
 void constr()
 {
     /*test constructor whatever was called*/
     int ret;
-    TEST_OPERATION_RESULT(++s_test_value, &ret, ret==1);
+    ++s_test_value;
     int res = fprintf(stderr, "constr value=%d\n", s_test_value);
     TEST_OPERATION_RESULT(res, &ret, ret>0);
     const char* envvar_testdir = getenv("TESTDIR");
@@ -50,19 +51,28 @@ void constr()
     mkpath_recursively(envvar_testdir, 0666);
 }
 
+void constr2()
+{
+    /*test constructor whatever was called*/
+    int ret;
+    ++s_test_value;
+    int res = fprintf(stderr, "constr2 value=%d\n", s_test_value);
+    TEST_OPERATION_RESULT(res, &ret, ret>0);
+}
+
 void destr() __attribute__((destructor));
 
 void destr()
 {
     int ret;
-    TEST_OPERATION_RESULT(--s_test_value, &ret, ret==0);
+    TEST_OPERATION_RESULT(--s_test_value, &ret, ret==1);
     fprintf(stderr, "destr value=%d\n", s_test_value);
 }
 
 int main(int argc, char **argv)
 {
     int ret;
-    TEST_OPERATION_RESULT(s_test_value, &ret, ret==1);
+    TEST_OPERATION_RESULT(s_test_value, &ret, ret==2);
     const char* envvar_testdir = getenv("TESTDIR");
     CHECK_PATH_EXISTANCE(envvar_testdir);
     fprintf(stderr, "main value=%d\n", s_test_value);

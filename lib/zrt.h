@@ -99,6 +99,7 @@ struct zcalls_init_t{
 struct zcalls_zrt_t{
     void (*zrt_setup)(void);
     void (*zrt_premain)(void);
+    void (*zrt_postmain)(int exitcode);
 };
 
 #define ZCALLS_NONSYSCALLS 3 /*use as type param in __query_zcalls*/
@@ -129,7 +130,6 @@ struct zcalls_env_args_init_t{
     void (*get_nvram_args_envs)( char** args, char* args_buf, int args_buf_size,
 				 char** envs, char* envs_buf, int envs_buf_size );
 };
-
 
 /*Part of LIBC, used for ZRT initialization;
  *@return retrieved table type, should be same as requested*/

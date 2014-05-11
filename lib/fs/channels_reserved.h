@@ -25,6 +25,7 @@
 #define DEV_STDERR "/dev/stderr"
 #define DEV_NVRAM  "/dev/nvram"
 #define DEV_DEBUG  "/dev/debug"
-#define DEV_TRACE  "/dev/trace"
+#define DEV_TRACE  "/dev/trace" //trace report for command 'make trace'
+#define DEV_ALLOC_REPORT "/dev/alloc_report" //report to the channel about memory leaks in user session
 
 #endif //__CHANNELS_RESERVED_H__
