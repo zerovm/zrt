@@ -43,8 +43,6 @@ TEST_LIST=$(basename $(TEST_SOURCES) )
 TEST_CHANNELS=$(shell find $(TESTS_ROOT) -name "*.channel")
 COUNTER=0
 
-ALLLOC_REPORT=$(ZRT_ROOT)/lib/alloc_report.o
-
 #save failed tests to display it in report
 #if string does not contain PASS, then output error
 AWK_HANDLE_FAIL=awk '{\
@@ -108,7 +106,7 @@ clean:
 	@rm -f $(VERBOSE_CLEAN) $(TEST_CHANNELS)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_TAR_MOUNT) $(TEST_TAR_REMOUNT)
 	@rm -f $(VERBOSE_CLEAN) $(TEST_UNPARSED_TRACES) $(TEST_TRACES) $(TEST_HIERARCHY_TRACES)
-	@rm -f $(VERBOSE_CLEAN) $(TEST_ALLOC_REPORTS) $(ALLLOC_REPORT)
+	@rm -f $(VERBOSE_CLEAN) $(TEST_ALLOC_REPORTS) $(ALLOC_REPORT_OBJ)
 
 
 prepare:
@@ -125,7 +123,10 @@ $(ZEROVM):
 $(TEST_TEST_UNPARSED_TRACES): $(TEST_NEXES)
 	python $(TRACE_PARSER) $(basename $@).nexe $@
 
-$(TEST_NEXES): $(ALLLOC_REPORT) $(TEST_SOURCES) $(TEST_INCLUDES)
+$(ALLOC_REPORT_OBJ): $(ALLOC_REPORT_SRC)
+	@$(CC) -c $(ALLOC_REPORT_SRC) $(CFLAGS) -o $(ALLOC_REPORT_OBJ)
+
+$(TEST_NEXES): $(ALLOC_REPORT_OBJ) $(TEST_SOURCES) $(TEST_INCLUDES)
 #increase test counter
 	$(eval COUNTER:=$(shell echo $$(($(COUNTER)+1))) )
 #prrepare variables
