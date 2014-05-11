@@ -101,6 +101,7 @@ check: build
 ################ "make gcov" Run tests and create document reflecting test coverage
 trace: CPPFLAGS+=${TRACE_FLAGS}
 trace: CFLAGS+=${TRACE_FLAGS}
+trace: TEST_PARAM=trace
 trace: all
 
 ################ "make gcov" Run tests and create document reflecting test coverage
@@ -124,15 +125,15 @@ gcov: build
 
 zrt_test_suite: build
 #Run different groups of zrt tests sequentially
-	@echo ------------- RUN zrt $@ ------------
+	@echo ------------- RUN zrt $@  ------------
 	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
-	@TESTS_ROOT=tests make -Ctests/zrt_test_suite -j4
+	@TESTS_ROOT=tests make -Ctests/zrt_test_suite -j4 $(TEST_PARAM)
 
 ############## "make autotests" run zrt autotests
 autotests possible_slow_autotests: build
 	@echo ------------- RUN zrt $@ ------------
 	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite clean prepare
-	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite -j4
+	@TESTS_ROOT=tests/$@ make  -Ctests/zrt_test_suite -j4 $(TEST_PARAM)
 	@./kill_daemons.sh
 
 build: doc ${PTH} ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
