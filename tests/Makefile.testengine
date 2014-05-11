@@ -1,5 +1,7 @@
 #Note1: SPECIFY TESTS_ROOT
 #Note2: RELEASE VERSION OF ZEROVM REQUIRED TO PARSE TESTS RESULTS
+#Note3: SET LIST VAR OF PARTICULAR TESTS WANT TO RUN, FOR SEVERAL
+#TESTS USE DOUBLE QUOTES
 #Given Makefile - test runner using release build of zerovm
 
 #mount/remount tar archives
@@ -34,12 +36,14 @@ TEST_STDERRS=$(addsuffix .stderr.std, $(basename $(TEST_SOURCES) ) )
 TEST_LOG_ZVM=$(addsuffix .zerovm.log, $(basename $(TEST_SOURCES) ) )
 TEST_LOG_DEBUG=$(addsuffix .zrtdebug.log, $(basename $(TEST_SOURCES) ) )
 TEST_TARS=$(addsuffix .$(TEST_TAR), $(basename $(TEST_SOURCES) ) )
-TEST_NEXES=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
-TEST_UNPARSED_TRACES=$(patsubst %.o, %.TRACE.unparsed, $(TEST_OBJECTS))
-TEST_TRACES=$(patsubst %.o, %.TRACE, $(TEST_OBJECTS))
-TEST_ALLOC_REPORTS=$(patsubst %.o, %.alloc, $(TEST_OBJECTS))
-TEST_HIERARCHY_TRACES=$(patsubst %.o, %.TRACE.hierarchy, $(TEST_OBJECTS))
-TEST_LIST=$(basename $(TEST_SOURCES) )
+#user can run only particular tests by specifying test names as they
+#displayed at report if specifying several test use double quotes
+LIST?=$(patsubst %.o, %.nexe, $(TEST_OBJECTS))
+TEST_NEXES=$(LIST)
+TEST_UNPARSED_TRACES=$(patsubst %.nexe, %.TRACE.unparsed, $(LIST))
+TEST_TRACES=$(patsubst %.nexe, %.TRACE, $(LIST))
+TEST_ALLOC_REPORTS=$(patsubst %.nexe, %.alloc, $(LIST))
+TEST_HIERARCHY_TRACES=$(patsubst %.nexe, %.TRACE.hierarchy, $(LIST))
 TEST_CHANNELS=$(shell find $(TESTS_ROOT) -name "*.channel")
 COUNTER=0
 
@@ -86,8 +90,7 @@ gcov: prepare $(ZEROVM) $(TEST_NEXES) report
 
 trace: CPPFLAGS+=${TRACE_FLAGS}
 trace: CFLAGS+=${TRACE_FLAGS}
-trace: prepare $(ZEROVM) $(TEST_UNPARSED_TRACES) report
-	python $(ZRT_ROOT)/tests/trace-parse-hierarchy.py
+trace: prepare $(ZEROVM) $(TEST_TRACES) report 
 	echo "trace success, see files: *.TRACE, *.TRACE.hierarchy"
 
 clean:
@@ -120,11 +123,13 @@ prepare:
 $(ZEROVM):
 	$(error "$(ZEROVM) does not exist")
 
-$(TEST_TEST_UNPARSED_TRACES): $(TEST_NEXES)
-	python $(TRACE_PARSER) $(basename $@).nexe $@
 
 $(ALLOC_REPORT_OBJ): $(ALLOC_REPORT_SRC)
 	@$(CC) -c $(ALLOC_REPORT_SRC) $(CFLAGS) -o $(ALLOC_REPORT_OBJ)
+
+$(TEST_TRACES): $(TEST_NEXES)
+	@echo --------------------------------------------
+	python $(TRACE_PARSER) $(basename $@).nexe $(basename $@).TRACE.unparsed
 
 $(TEST_NEXES): $(ALLOC_REPORT_OBJ) $(TEST_SOURCES) $(TEST_INCLUDES)
 #increase test counter
@@ -219,7 +224,7 @@ $(TEST_NEXES): $(ALLOC_REPORT_OBJ) $(TEST_SOURCES) $(TEST_INCLUDES)
 	fi;
 
 #completion of nexe rules is prerequisite for report
-report: $(TEST_NEXES) #$(OUTPUT_FAIL)
+report: $(TEST_NEXES)
 	$(eval FAILED_TESTS_COUNT:=$(shell echo `cat $(OUTPUT_FAIL) | wc -l`))
 #display tests resuts
 	@echo --------------------------------------------
@@ -230,7 +235,3 @@ report: $(TEST_NEXES) #$(OUTPUT_FAIL)
 	@cat $(OUTPUT_FAIL)
 	@rm -f $(OUTPUT_FAIL) $(OUTPUT_LAST)
 	@exit $(FAILED_TESTS_COUNT)
-
-#$(OUTPUT_FAIL):
-#has no output fail if this rule is active
-#	$(error Nothing output)
