@@ -122,6 +122,7 @@ void set_home_dir(const char *home)
  */
 void zrt_zcall_enhanced_exit(int status){
     ZRT_LOG(L_SHORT, "status %d exiting...", status);
+    get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
     return; 
@@ -475,7 +476,6 @@ void zrt_zcall_enhanced_premain(void){
 
 void zrt_zcall_enhanced_postmain(int usercode){
     ZRT_LOG(L_SHORT, P_TEXT, "user main() end");
-    get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
     ZRT_LOG_DELIMETER;
     s_is_user_main_executing=0;
 }
