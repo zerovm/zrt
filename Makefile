@@ -10,6 +10,7 @@ lib/zcalls/zcalls_zrt.c \
 lib/libc/fcntl.c \
 lib/libc/link.c \
 lib/libc/unlink.c \
+lib/libc/rename.c \
 lib/libc/rmdir.c \
 lib/libc/mkdir.c \
 lib/libc/chmod.c \

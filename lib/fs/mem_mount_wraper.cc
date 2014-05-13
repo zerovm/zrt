@@ -597,6 +597,30 @@ static int mem_unlink(struct MountsPublicInterface* this_, const char* path){
     return MEMOUNT_BY_MOUNT(this_)->Unlink(path);
 }
 
+/*implementation taken from zerovm/glibc, and moved to here because
+  only this filesystem is using it, and another fs has own.*/
+static int mem_rename(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath){
+    int save = errno;
+    if (this_->link(this_ ,oldpath, newpath) < 0){
+	if (errno == EEXIST){
+	    SET_ERRNO (save);
+	    /* Race condition, required for 1003.1 conformance.  */
+	    if (this_->unlink(this_, newpath) < 0 ||
+		this_->link(this_, oldpath, newpath) < 0)
+		return -1;
+	}
+	else
+	    return -1;
+    }
+    if (this_->unlink(this_, oldpath) < 0){
+	save = errno;
+	if (this_->unlink(this_, newpath) == 0)
+	    SET_ERRNO(save);
+	return -1;
+    }
+    return 0;
+}
+
 static int mem_access(struct MountsPublicInterface* this_, const char* path, int amode){
     return -1;
 }
@@ -710,6 +734,7 @@ static struct MountsPublicInterface KInMemoryMountWraper = {
     mem_fcntl,
     mem_remove,
     mem_unlink,
+    mem_rename,
     mem_access,
     mem_ftruncate_size,
     mem_truncate_size,

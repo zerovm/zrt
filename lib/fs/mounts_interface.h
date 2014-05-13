@@ -75,6 +75,8 @@ struct MountsPublicInterface{
     int (*remove)(struct MountsPublicInterface* this_,const char* path);
     // unlink() is a simple wrapper around the mount's Unlink function.
     int (*unlink)(struct MountsPublicInterface* this_,const char* path);
+    //rename call added to be more compliant to filesystem interface
+    int (*rename)(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath);
     // access() uses the Mount's Stat().
     int (*access)(struct MountsPublicInterface* this_,const char* path, int amode);
     //only reduces file size, not padding it; posix

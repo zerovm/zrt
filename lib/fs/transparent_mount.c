@@ -387,6 +387,18 @@ static int transparent_unlink(struct MountsPublicInterface *this,
     }
 }
 
+static int transparent_rename(struct MountsPublicInterface *this,
+			      const char* oldpath, const char* newpath){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(oldpath); 
+    if ( mount )
+	return mount->rename( mount, CONVERT_PATH_TO_MOUNT(oldpath), CONVERT_PATH_TO_MOUNT(newpath) );
+    else{
+        SET_ERRNO(ENOENT);
+        return -1;
+    }
+}
+
+
 static int transparent_access(struct MountsPublicInterface *this,
 			      const char* path, int amode){
     struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
@@ -551,6 +563,7 @@ static struct MountsPublicInterface s_transparent_mount = {
 	transparent_fcntl,
         transparent_remove,
         transparent_unlink,
+        transparent_rename,
         transparent_access,
 	transparent_ftruncate_size,
 	transparent_truncate_size,

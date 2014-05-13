@@ -105,6 +105,7 @@ struct zcalls_zrt_t{
 #define ZCALLS_NONSYSCALLS 3 /*use as type param in __query_zcalls*/
 struct zcalls_nonsyscalls_t{
     int  (*fcntl) (int fd, int cmd, ...);
+    int  (*rename) (const char *old, const char *new);
     int  (*link)(const char *oldpath, const char *newpath);
     int  (*unlink)(const char *pathname);
     int  (*rmdir)(const char *pathdir);

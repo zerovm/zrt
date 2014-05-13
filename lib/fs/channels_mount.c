@@ -1143,6 +1143,12 @@ static int channels_unlink(struct MountsPublicInterface* this_,const char* path)
 
     return -1;
 }
+
+int channels_rename(struct MountsPublicInterface* this_, const char *oldpath, const char *newpath){
+   SET_ERRNO( ENOSYS );
+   return -1;
+}
+
 // access() uses the Mount's Stat().
 static int channels_access(struct MountsPublicInterface* this,const char* path, int amode){
     SET_ERRNO( ENOSYS );
@@ -1219,6 +1225,7 @@ static struct MountsPublicInterface KChannels_mount = {
     channels_fcntl,
     channels_remove,
     channels_unlink,
+    channels_rename,
     channels_access,
     channels_ftruncate_size,
     channels_truncate_size,
