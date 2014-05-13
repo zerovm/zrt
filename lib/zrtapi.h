@@ -19,8 +19,6 @@
 #ifndef __ZRT_API_H__
 #define __ZRT_API_H__
 
-#include "zrt_defines.h"
-
 /*call zvm_fork() and then reread nvram file and remount removable tar images
  *@return zvm_fork result*/
 int zfork();
@@ -29,7 +27,7 @@ int zfork();
  instrumentation aka ptrace; Tracing is not allowed while environment 
  not fully constructed.
  @return 1 if ptrace is allowed, 0 - not allowed*/
-int __NON_INSTRUMENT_FUNCTION__ is_ptrace_allowed();
+int is_ptrace_allowed() __attribute__((__no_instrument_function__));
 
 /*Currently executing user main() or not. If zrt initialization code
 or session finalizing is running then it should return 0; It's normal
