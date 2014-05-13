@@ -762,16 +762,6 @@ static int channels_rmdir(struct ChannelMounts* this,const char* path){
     return -1;
 }
 
-static int channels_umount(struct ChannelMounts* this,const char* path){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
-static int channels_mount(struct ChannelMounts* this, const char* path, void *mount){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
 static ssize_t __NON_INSTRUMENT_FUNCTION__
 channels_read(struct ChannelMounts* this, int fd, void *buf, size_t nbyte){
     off_t offset;
@@ -1200,8 +1190,6 @@ static struct MountsPublicInterface KChannels_mount = {
     (void*)channels_stat,
     (void*)channels_mkdir,
     (void*)channels_rmdir,
-    (void*)channels_umount,
-    (void*)channels_mount,
     (void*)channels_read,
     (void*)channels_write,
     (void*)channels_pread,

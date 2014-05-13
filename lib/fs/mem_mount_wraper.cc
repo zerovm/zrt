@@ -306,16 +306,6 @@ static int mem_rmdir(struct MountsPublicInterface* this_, const char* path){
     return MEMOUNT_BY_MOUNT(this_)->Rmdir( st.st_ino );
 }
 
-static int mem_umount(struct MountsPublicInterface* this_, const char* path){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
-static int mem_mount(struct MountsPublicInterface* this_, const char* path, void *mount){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
 ssize_t __NON_INSTRUMENT_FUNCTION__ 
 mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte);
 ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
@@ -705,8 +695,6 @@ static struct MountsPublicInterface KInMemoryMountWraper = {
     mem_stat,
     mem_mkdir,
     mem_rmdir,
-    mem_umount,
-    mem_mount,
     mem_read,
     mem_write,
     mem_pread,

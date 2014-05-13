@@ -169,17 +169,6 @@ static int transparent_rmdir(struct MountsPublicInterface *this,
     }
 }
 
-static int transparent_umount(struct MountsPublicInterface *this, const char* path){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
-static int transparent_mount(struct MountsPublicInterface *this, 
-			     const char* path, void *mount_){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
 static ssize_t __NON_INSTRUMENT_FUNCTION__
 transparent_read(struct MountsPublicInterface *this,
 				int fd, void *buf, size_t nbyte){
@@ -547,8 +536,6 @@ static struct MountsPublicInterface s_transparent_mount = {
         transparent_stat,
         transparent_mkdir,
         transparent_rmdir,
-        transparent_umount,
-        transparent_mount,
         transparent_read,
         transparent_write,
         transparent_pread,

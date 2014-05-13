@@ -39,8 +39,6 @@ struct MountsPublicInterface{
     int (*stat)(struct MountsPublicInterface* this_,const char* path, struct stat *buf);
     int (*mkdir)(struct MountsPublicInterface* this_,const char* path, uint32_t mode);
     int (*rmdir)(struct MountsPublicInterface* this_,const char* path);
-    int (*umount)(struct MountsPublicInterface* this_,const char* path);
-    int (*mount)(struct MountsPublicInterface* this_,const char* path, void *mount);
 
     // System calls that take a file descriptor as an argument:
     // The kernel proxy will determine to which mount the file
