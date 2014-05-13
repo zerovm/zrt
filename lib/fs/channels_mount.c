@@ -718,13 +718,14 @@ update_artificial_channel_size(struct ChannelMounts* this,
 
 //////////// interface implementation
 
-static int channels_chmod(struct ChannelMounts* this,const char* path, uint32_t mode){
+static int channels_chmod(struct MountsPublicInterface* this,const char* path, uint32_t mode){
     SET_ERRNO(EPERM);
     return -1;
 }
 
-static int channels_stat(struct ChannelMounts* this,const char* path, struct stat *buf){
+static int channels_stat(struct MountsPublicInterface* this_,const char* path, struct stat *buf){
     errno = 0;
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     ZRT_LOG(L_EXTRA, "path=%s", path);
 
     if(path == NULL){
@@ -752,20 +753,21 @@ static int channels_stat(struct ChannelMounts* this,const char* path, struct sta
     return 0;
 }
 
-static int channels_mkdir(struct ChannelMounts* this,const char* path, uint32_t mode){
+static int channels_mkdir(struct MountsPublicInterface* this,const char* path, uint32_t mode){
     SET_ERRNO(ENOSYS);
     return -1;
 }
 
-static int channels_rmdir(struct ChannelMounts* this,const char* path){
+static int channels_rmdir(struct MountsPublicInterface* this,const char* path){
     SET_ERRNO(ENOSYS);
     return -1;
 }
 
 static ssize_t __NON_INSTRUMENT_FUNCTION__
-channels_read(struct ChannelMounts* this, int fd, void *buf, size_t nbyte){
+channels_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
     off_t offset;
     errno=0;
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     /*file not opened, bad descriptor*/
     if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT(this), fd) == 0 ){
 	ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
@@ -781,9 +783,10 @@ channels_read(struct ChannelMounts* this, int fd, void *buf, size_t nbyte){
 }
 
 static ssize_t __NON_INSTRUMENT_FUNCTION__
-channels_write(struct ChannelMounts* this,int fd, const void *buf, size_t nbyte){
+channels_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
     off_t offset;
     errno=0;
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     /*file not opened, bad descriptor*/
     if( CHANNEL_IS_OPENED( HALLOCATOR_BY_MOUNT(this), fd) == 0 ){
 	ZRT_LOG(L_ERROR, "invalid file descriptor fd=%d", fd);
@@ -799,8 +802,9 @@ channels_write(struct ChannelMounts* this,int fd, const void *buf, size_t nbyte)
 }
 
 static ssize_t __NON_INSTRUMENT_FUNCTION__
-channels_pread(struct ChannelMounts* this, int fd, void *buf, 
+channels_pread(struct MountsPublicInterface* this_, int fd, void *buf, 
 			      size_t nbyte, off_t offset){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     int32_t readed = 0;
     const struct HandleItem* hentry;
     const struct OpenFileDescription* ofd;
@@ -837,8 +841,9 @@ channels_pread(struct ChannelMounts* this, int fd, void *buf,
 }
 
 static ssize_t __NON_INSTRUMENT_FUNCTION__
-channels_pwrite(struct ChannelMounts* this,int fd, const void *buf, 
+channels_pwrite(struct MountsPublicInterface* this_,int fd, const void *buf, 
 			       size_t nbyte, off_t offset){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     int32_t wrote = 0;
     const struct HandleItem* hentry;
     const struct OpenFileDescription* ofd;
@@ -882,12 +887,13 @@ channels_pwrite(struct ChannelMounts* this,int fd, const void *buf,
 ////////////////
 
 
-static int channels_fchmod(struct ChannelMounts* this,int fd, mode_t mode){
+static int channels_fchmod(struct MountsPublicInterface* this,int fd, mode_t mode){
     SET_ERRNO(EPERM);
     return -1;
 }
 
-static int channels_fstat(struct ChannelMounts* this, int fd, struct stat *buf){
+static int channels_fstat(struct MountsPublicInterface* this_, int fd, struct stat *buf){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     errno=0;
 
     /*case: file not opened, bad descriptor*/
@@ -900,7 +906,7 @@ static int channels_fstat(struct ChannelMounts* this, int fd, struct stat *buf){
     return 0;
 }
 
-static int channels_getdents(struct ChannelMounts* this, int fd, void *buf, unsigned int buf_size){
+static int channels_getdents(struct MountsPublicInterface* this_, int fd, void *buf, unsigned int buf_size){
 #define GET_MODE_OF_ENTRY_BY_INODE(this, inode, mode_p){		\
 	/*choose handle type: channel handle or dir handle */		\
 	struct ChannelArrayItem* item = this->channels_array		\
@@ -917,6 +923,7 @@ static int channels_getdents(struct ChannelMounts* this, int fd, void *buf, unsi
 	}								\
     }
 
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     errno=0;
 
     /*case: file not opened, bad descriptor*/
@@ -968,12 +975,13 @@ static int channels_getdents(struct ChannelMounts* this, int fd, void *buf, unsi
     return bytes_read;
 }
 
-static int channels_fsync(struct ChannelMounts* this,int fd){
+static int channels_fsync(struct MountsPublicInterface* this,int fd){
     SET_ERRNO(ENOSYS);
     return -1;
 }
 
-static int channels_close(struct ChannelMounts* this,int fd){
+static int channels_close(struct MountsPublicInterface* this_,int fd){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     const struct HandleItem* hentry;
     errno = 0;
 
@@ -1007,7 +1015,8 @@ static int channels_close(struct ChannelMounts* this,int fd){
     return 0;
 }
 
-static off_t channels_lseek(struct ChannelMounts* this,int fd, off_t offset, int whence){
+static off_t channels_lseek(struct MountsPublicInterface* this_,int fd, off_t offset, int whence){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     const struct HandleItem* hentry;
     errno = 0;
 
@@ -1048,7 +1057,8 @@ static off_t channels_lseek(struct ChannelMounts* this,int fd, off_t offset, int
     return offset;
 }
 
-static int channels_open(struct ChannelMounts* this,const char* path, int oflag, uint32_t mode){
+static int channels_open(struct MountsPublicInterface* this_,const char* path, int oflag, uint32_t mode){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     errno=0;
 
     /*If specified open flag saying as that trying to open not directory*/
@@ -1089,7 +1099,8 @@ static int channels_open(struct ChannelMounts* this,const char* path, int oflag,
     return 0;
 }
 
-static int channels_fcntl(struct ChannelMounts* this,int fd, int cmd, ...){
+static int channels_fcntl(struct MountsPublicInterface* this_,int fd, int cmd, ...){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     if ( this->handle_allocator->check_handle_is_related_to_filesystem(fd, &this->public) == 0 ){
 	const struct HandleItem* hentry = this->handle_allocator->entry(fd);
 	ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
@@ -1105,7 +1116,8 @@ static int channels_fcntl(struct ChannelMounts* this,int fd, int cmd, ...){
     }
 }
 
-static int channels_remove(struct ChannelMounts* this,const char* path){
+static int channels_remove(struct MountsPublicInterface* this_,const char* path){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     struct ChannelArrayItem* item 
 	= this->channels_array->match_by_name(this->channels_array, path);
     if ( item == NULL ){
@@ -1118,7 +1130,8 @@ static int channels_remove(struct ChannelMounts* this,const char* path){
     return -1;
 }
 
-static int channels_unlink(struct ChannelMounts* this,const char* path){
+static int channels_unlink(struct MountsPublicInterface* this_,const char* path){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     struct ChannelArrayItem* item 
 	= this->channels_array->match_by_name(this->channels_array, path);
     if ( item == NULL ){
@@ -1131,89 +1144,90 @@ static int channels_unlink(struct ChannelMounts* this,const char* path){
     return -1;
 }
 // access() uses the Mount's Stat().
-static int channels_access(struct ChannelMounts* this,const char* path, int amode){
+static int channels_access(struct MountsPublicInterface* this,const char* path, int amode){
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-static int channels_ftruncate_size(struct ChannelMounts* this,int fd, off_t length){
+static int channels_ftruncate_size(struct MountsPublicInterface* this,int fd, off_t length){
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-static int channels_truncate_size(struct ChannelMounts* this,const char* path, off_t length){
+static int channels_truncate_size(struct MountsPublicInterface* this,const char* path, off_t length){
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-static int channels_isatty(struct ChannelMounts* this,int fd){
+static int channels_isatty(struct MountsPublicInterface* this,int fd){
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-static int channels_dup(struct ChannelMounts* this,int oldfd){
+static int channels_dup(struct MountsPublicInterface* this,int oldfd){
     /*see generic implementation in transparent_mount*/
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-static int channels_dup2(struct ChannelMounts* this,int oldfd, int newfd){
+static int channels_dup2(struct MountsPublicInterface* this,int oldfd, int newfd){
     /*see generic implementation in transparent_mount*/
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-static int channels_link(struct ChannelMounts* this,const char* path1, const char* path2){
+static int channels_link(struct MountsPublicInterface* this,const char* path1, const char* path2){
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-static int channels_chown(struct ChannelMounts* this,const char* p, uid_t u, gid_t g){
+static int channels_chown(struct MountsPublicInterface* this,const char* p, uid_t u, gid_t g){
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-static int channels_fchown(struct ChannelMounts* this,int f, uid_t u, gid_t g){
+static int channels_fchown(struct MountsPublicInterface* this,int f, uid_t u, gid_t g){
     SET_ERRNO( ENOSYS );
     return -1;
 }
 
-struct MountSpecificPublicInterface* channels_implem(struct ChannelMounts* this){
+struct MountSpecificPublicInterface* channels_implem(struct MountsPublicInterface* this_){
+    struct ChannelMounts *this = (struct ChannelMounts *)this_;
     return this->mount_specific_interface;
 }
 
 
 /*filesystem interface initialisation*/
 static struct MountsPublicInterface KChannels_mount = {
-    (void*)channels_chown,
-    (void*)channels_chmod,
-    (void*)channels_stat,
-    (void*)channels_mkdir,
-    (void*)channels_rmdir,
-    (void*)channels_read,
-    (void*)channels_write,
-    (void*)channels_pread,
-    (void*)channels_pwrite,
-    (void*)channels_fchown,
-    (void*)channels_fchmod,
-    (void*)channels_fstat,
-    (void*)channels_getdents,
-    (void*)channels_fsync,
-    (void*)channels_close,
-    (void*)channels_lseek,
-    (void*)channels_open,
-    (void*)channels_fcntl,
-    (void*)channels_remove,
-    (void*)channels_unlink,
-    (void*)channels_access,
-    (void*)channels_ftruncate_size,
-    (void*)channels_truncate_size,
-    (void*)channels_isatty,
-    (void*)channels_dup,
-    (void*)channels_dup2,
-    (void*)channels_link,
+    channels_chown,
+    channels_chmod,
+    channels_stat,
+    channels_mkdir,
+    channels_rmdir,
+    channels_read,
+    channels_write,
+    channels_pread,
+    channels_pwrite,
+    channels_fchown,
+    channels_fchmod,
+    channels_fstat,
+    channels_getdents,
+    channels_fsync,
+    channels_close,
+    channels_lseek,
+    channels_open,
+    channels_fcntl,
+    channels_remove,
+    channels_unlink,
+    channels_access,
+    channels_ftruncate_size,
+    channels_truncate_size,
+    channels_isatty,
+    channels_dup,
+    channels_dup2,
+    channels_link,
     EChannelsMountId,
-    (void*)channels_implem  /*mount_specific_interface*/
+    channels_implem  /*mount_specific_interface*/
 };
 
 struct ChannelsModeUpdater{
