@@ -1187,6 +1187,23 @@ static int channels_link(struct MountsPublicInterface* this,const char* path1, c
     return -1;
 }
 
+ssize_t channels_readlink(struct MountsPublicInterface* this,
+			  const char *path, char *buf, size_t bufsize){
+    SET_ERRNO( ENOSYS );
+    return -1;
+}
+
+int channels_symlink(struct MountsPublicInterface* this,
+		     const char *oldpath, const char *newpath){
+    SET_ERRNO( ENOSYS );
+    return -1;
+}
+
+int channels_statvfs(struct MountsPublicInterface* this_, const char* path, struct statvfs *buf){
+    SET_ERRNO( ENOSYS );
+    return -1;
+}
+
 static int channels_chown(struct MountsPublicInterface* this,const char* p, uid_t u, gid_t g){
     SET_ERRNO( ENOSYS );
     return -1;
@@ -1205,8 +1222,11 @@ struct MountSpecificPublicInterface* channels_implem(struct MountsPublicInterfac
 
 /*filesystem interface initialisation*/
 static struct MountsPublicInterface KChannels_mount = {
+    channels_readlink,
+    channels_symlink,
     channels_chown,
     channels_chmod,
+    channels_statvfs,
     channels_stat,
     channels_mkdir,
     channels_rmdir,

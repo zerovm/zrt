@@ -106,6 +106,9 @@ struct zcalls_zrt_t{
 struct zcalls_nonsyscalls_t{
     int  (*fcntl) (int fd, int cmd, ...);
     int  (*rename) (const char *old, const char *new);
+    ssize_t (*readlink)(const char *path, char *buf, size_t bufsize);
+    int  (*symlink)(const char *oldpath, const char *newpath);
+    int  (*statvfs)(const char* path, struct statvfs *buf);
     int  (*link)(const char *oldpath, const char *newpath);
     int  (*unlink)(const char *pathname);
     int  (*rmdir)(const char *pathdir);

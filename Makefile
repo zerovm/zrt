@@ -11,6 +11,9 @@ lib/libc/fcntl.c \
 lib/libc/link.c \
 lib/libc/unlink.c \
 lib/libc/rename.c \
+lib/libc/readlink.c \
+lib/libc/symlink.c \
+lib/libc/statvfs.c \
 lib/libc/rmdir.c \
 lib/libc/mkdir.c \
 lib/libc/chmod.c \

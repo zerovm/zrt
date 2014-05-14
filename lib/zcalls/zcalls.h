@@ -134,6 +134,9 @@ void zrt_zcall_enhanced_postmain(int exitcode);
 /*nonsyscalls*/
 int zrt_zcall_fcntl(int fd, int cmd, ...);
 int zrt_zcall_rename (const char *old, const char *new);
+ssize_t zrt_zcall_readlink(const char *path, char *buf, size_t bufsize);
+int zrt_zcall_symlink(const char *oldpath, const char *newpath);
+int zrt_zcall_statvfs(const char* path, struct statvfs *buf);
 int zrt_zcall_link(const char *oldpath, const char *newpath);
 int zrt_zcall_unlink(const char *pathname);
 int zrt_zcall_rmdir(const char *pathdir);

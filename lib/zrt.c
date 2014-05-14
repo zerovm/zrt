@@ -98,6 +98,9 @@ static struct zcalls_env_args_init_t KZcalls_env_args_init = {
 static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
     zrt_zcall_fcntl,
     zrt_zcall_rename,
+    zrt_zcall_readlink,
+    zrt_zcall_symlink,
+    zrt_zcall_statvfs,
     zrt_zcall_link,
     zrt_zcall_unlink,
     zrt_zcall_rmdir,

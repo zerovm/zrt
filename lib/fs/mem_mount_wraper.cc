@@ -252,6 +252,26 @@ mount_specific_construct( struct MountSpecificPublicInterface* specific_implem_i
 
 /*wraper implementation*/
 
+static ssize_t mem_readlink(struct MountsPublicInterface* this_,
+			   const char *path, char *buf, size_t bufsize){
+    (void)this_;
+    (void)path;
+    (void)buf;
+    (void)bufsize;
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+ 
+static int mem_symlink(struct MountsPublicInterface* this_,
+		      const char *oldpath, const char *newpath){
+    (void)this_;
+    (void)oldpath;
+    (void)newpath;
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+
 static int mem_chown(struct MountsPublicInterface* this_, const char* path, uid_t owner, gid_t group){
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
@@ -262,6 +282,14 @@ static int mem_chmod(struct MountsPublicInterface* this_, const char* path, uint
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
     return MEMOUNT_BY_MOUNT(this_)->Chmod( st.st_ino, mode);
+}
+
+static int mem_statvfs(struct MountsPublicInterface* this_, const char* path, struct statvfs *buf){
+    (void)this_;
+    (void)path;
+    (void)buf;
+    SET_ERRNO(ENOSYS);
+    return -1;
 }
 
 static int mem_stat(struct MountsPublicInterface* this_, const char* path, struct stat *buf){
@@ -714,8 +742,11 @@ struct MountSpecificPublicInterface* mem_implem(struct MountsPublicInterface* th
 }
 
 static struct MountsPublicInterface KInMemoryMountWraper = {
+    mem_readlink,
+    mem_symlink,
     mem_chown,
     mem_chmod,
+    mem_statvfs,
     mem_stat,
     mem_mkdir,
     mem_rmdir,

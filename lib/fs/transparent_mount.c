@@ -89,6 +89,26 @@ const char *try_lazy_mount_verify_absolute_path(const char *path, char *temp_pat
 }
 
 
+ssize_t transparent_readlink(struct MountsPublicInterface* this,
+			     const char *path, char *buf, size_t bufsize){
+    (void)this;
+    (void)path;
+    (void)buf;
+    (void)bufsize;
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+int transparent_symlink(struct MountsPublicInterface* this,
+			const char *oldpath, const char *newpath){
+    (void)this;
+    (void)oldpath;
+    (void)newpath;
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+
 static int transparent_chown(struct MountsPublicInterface *this, 
 			     const char* path, uid_t owner, gid_t group){
     const char* absolute_path;
@@ -119,6 +139,14 @@ static int transparent_chmod(struct MountsPublicInterface *this,
         errno = ENOENT;
         return -1;
     }
+}
+
+static int transparent_statvfs(struct MountsPublicInterface* this, const char* path, struct statvfs *buf){
+    (void)this;
+    (void)path;
+    (void)buf;
+    SET_ERRNO(ENOSYS);
+    return -1;
 }
 
 static int transparent_stat(struct MountsPublicInterface *this,
@@ -543,8 +571,11 @@ static int transparent_link(struct MountsPublicInterface *this,
 
 
 static struct MountsPublicInterface s_transparent_mount = {
+        transparent_readlink,
+        transparent_symlink,
         transparent_chown,
         transparent_chmod,
+        transparent_statvfs,
         transparent_stat,
         transparent_mkdir,
         transparent_rmdir,

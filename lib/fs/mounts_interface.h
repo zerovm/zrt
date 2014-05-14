@@ -34,8 +34,12 @@ struct MountsPublicInterface{
     // find the node, the kernel proxy calls the corresponding mounts GetNode()
     // method.  The corresponding  method will be called.  If the node
     // cannot be found, errno is set and -1 is returned.
+    ssize_t 
+    (*readlink)(struct MountsPublicInterface* this_,const char *path, char *buf, size_t bufsize);
+    int (*symlink)(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath);
     int (*chown)(struct MountsPublicInterface* this_,const char* path, uid_t owner, gid_t group);
     int (*chmod)(struct MountsPublicInterface* this_,const char* path, uint32_t mode);
+    int (*statvfs)(struct MountsPublicInterface* this_, const char* path, struct statvfs *buf);
     int (*stat)(struct MountsPublicInterface* this_,const char* path, struct stat *buf);
     int (*mkdir)(struct MountsPublicInterface* this_,const char* path, uint32_t mode);
     int (*rmdir)(struct MountsPublicInterface* this_,const char* path);
