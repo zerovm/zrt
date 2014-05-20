@@ -245,6 +245,13 @@ int nvram_read(struct NvramLoader* nvram, const char* nvram_file_name){
 	lseek(fd, 0, SEEK_SET);
 	nvram->nvram_data_size = read( fd, nvram->nvram_data, NVRAM_MAX_FILE_SIZE);
 	close(fd);
+	/*If nvram buffer has contents that readed previously, then
+	  add null termination char at end of data to avoid
+	  intermixing new and old data*/
+	if ( nvram->nvram_data_size >0 && 
+	     nvram->nvram_data_size < NVRAM_MAX_FILE_SIZE ){
+	    nvram->nvram_data[nvram->nvram_data_size] = '\0';
+	}
 	ZRT_LOG(L_BASE, "nvram file size=%d: \n%s", nvram->nvram_data_size, nvram->nvram_data);
     }
     return nvram->nvram_data_size;
