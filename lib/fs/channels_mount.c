@@ -274,8 +274,10 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
         return -1;
     }
 
-    /*truncate not allowed for channels except FIFO, CHR*/
-    if ( CHECK_FLAG(flags, O_TRUNC) && S_IFCHR!=ftype && S_IFIFO!=ftype ){
+    /*truncate not allowed for zerovm channels except FIFO, CHR;
+     skip check for emulated channels like /dev/null, ...*/
+    if ( !item->channel_runtime.emu &&
+	 CHECK_FLAG(flags, O_TRUNC) && S_IFCHR!=ftype && S_IFIFO!=ftype ){
         SET_ERRNO( EPERM );
         return -1;
     }
