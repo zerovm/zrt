@@ -89,6 +89,26 @@ const char *try_lazy_mount_verify_absolute_path(const char *path, char *temp_pat
 }
 
 
+ssize_t transparent_readlink(struct MountsPublicInterface* this,
+			     const char *path, char *buf, size_t bufsize){
+    (void)this;
+    (void)path;
+    (void)buf;
+    (void)bufsize;
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+int transparent_symlink(struct MountsPublicInterface* this,
+			const char *oldpath, const char *newpath){
+    (void)this;
+    (void)oldpath;
+    (void)newpath;
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+
 static int transparent_chown(struct MountsPublicInterface *this, 
 			     const char* path, uid_t owner, gid_t group){
     const char* absolute_path;
@@ -119,6 +139,14 @@ static int transparent_chmod(struct MountsPublicInterface *this,
         errno = ENOENT;
         return -1;
     }
+}
+
+static int transparent_statvfs(struct MountsPublicInterface* this, const char* path, struct statvfs *buf){
+    (void)this;
+    (void)path;
+    (void)buf;
+    SET_ERRNO(ENOSYS);
+    return -1;
 }
 
 static int transparent_stat(struct MountsPublicInterface *this,
@@ -167,17 +195,6 @@ static int transparent_rmdir(struct MountsPublicInterface *this,
         errno = ENOENT;
         return -1;
     }
-}
-
-static int transparent_umount(struct MountsPublicInterface *this, const char* path){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
-static int transparent_mount(struct MountsPublicInterface *this, 
-			     const char* path, void *mount_){
-    SET_ERRNO(ENOSYS);
-    return -1;
 }
 
 static ssize_t __NON_INSTRUMENT_FUNCTION__
@@ -398,6 +415,18 @@ static int transparent_unlink(struct MountsPublicInterface *this,
     }
 }
 
+static int transparent_rename(struct MountsPublicInterface *this,
+			      const char* oldpath, const char* newpath){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(oldpath); 
+    if ( mount )
+	return mount->rename( mount, CONVERT_PATH_TO_MOUNT(oldpath), CONVERT_PATH_TO_MOUNT(newpath) );
+    else{
+        SET_ERRNO(ENOENT);
+        return -1;
+    }
+}
+
+
 static int transparent_access(struct MountsPublicInterface *this,
 			      const char* path, int amode){
     struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
@@ -542,13 +571,14 @@ static int transparent_link(struct MountsPublicInterface *this,
 
 
 static struct MountsPublicInterface s_transparent_mount = {
+        transparent_readlink,
+        transparent_symlink,
         transparent_chown,
         transparent_chmod,
+        transparent_statvfs,
         transparent_stat,
         transparent_mkdir,
         transparent_rmdir,
-        transparent_umount,
-        transparent_mount,
         transparent_read,
         transparent_write,
         transparent_pread,
@@ -564,6 +594,7 @@ static struct MountsPublicInterface s_transparent_mount = {
 	transparent_fcntl,
         transparent_remove,
         transparent_unlink,
+        transparent_rename,
         transparent_access,
 	transparent_ftruncate_size,
 	transparent_truncate_size,

@@ -252,6 +252,26 @@ mount_specific_construct( struct MountSpecificPublicInterface* specific_implem_i
 
 /*wraper implementation*/
 
+static ssize_t mem_readlink(struct MountsPublicInterface* this_,
+			   const char *path, char *buf, size_t bufsize){
+    (void)this_;
+    (void)path;
+    (void)buf;
+    (void)bufsize;
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+ 
+static int mem_symlink(struct MountsPublicInterface* this_,
+		      const char *oldpath, const char *newpath){
+    (void)this_;
+    (void)oldpath;
+    (void)newpath;
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+
 static int mem_chown(struct MountsPublicInterface* this_, const char* path, uid_t owner, gid_t group){
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
@@ -262,6 +282,14 @@ static int mem_chmod(struct MountsPublicInterface* this_, const char* path, uint
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
     return MEMOUNT_BY_MOUNT(this_)->Chmod( st.st_ino, mode);
+}
+
+static int mem_statvfs(struct MountsPublicInterface* this_, const char* path, struct statvfs *buf){
+    (void)this_;
+    (void)path;
+    (void)buf;
+    SET_ERRNO(ENOSYS);
+    return -1;
 }
 
 static int mem_stat(struct MountsPublicInterface* this_, const char* path, struct stat *buf){
@@ -304,16 +332,6 @@ static int mem_rmdir(struct MountsPublicInterface* this_, const char* path){
 	return -1;
     }
     return MEMOUNT_BY_MOUNT(this_)->Rmdir( st.st_ino );
-}
-
-static int mem_umount(struct MountsPublicInterface* this_, const char* path){
-    SET_ERRNO(ENOSYS);
-    return -1;
-}
-
-static int mem_mount(struct MountsPublicInterface* this_, const char* path, void *mount){
-    SET_ERRNO(ENOSYS);
-    return -1;
 }
 
 ssize_t __NON_INSTRUMENT_FUNCTION__ 
@@ -607,6 +625,30 @@ static int mem_unlink(struct MountsPublicInterface* this_, const char* path){
     return MEMOUNT_BY_MOUNT(this_)->Unlink(path);
 }
 
+/*implementation taken from zerovm/glibc, and moved to here because
+  only this filesystem is using it, and another fs has own.*/
+static int mem_rename(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath){
+    int save = errno;
+    if (this_->link(this_ ,oldpath, newpath) < 0){
+	if (errno == EEXIST){
+	    SET_ERRNO (save);
+	    /* Race condition, required for 1003.1 conformance.  */
+	    if (this_->unlink(this_, newpath) < 0 ||
+		this_->link(this_, oldpath, newpath) < 0)
+		return -1;
+	}
+	else
+	    return -1;
+    }
+    if (this_->unlink(this_, oldpath) < 0){
+	save = errno;
+	if (this_->unlink(this_, newpath) == 0)
+	    SET_ERRNO(save);
+	return -1;
+    }
+    return 0;
+}
+
 static int mem_access(struct MountsPublicInterface* this_, const char* path, int amode){
     return -1;
 }
@@ -700,13 +742,14 @@ struct MountSpecificPublicInterface* mem_implem(struct MountsPublicInterface* th
 }
 
 static struct MountsPublicInterface KInMemoryMountWraper = {
+    mem_readlink,
+    mem_symlink,
     mem_chown,
     mem_chmod,
+    mem_statvfs,
     mem_stat,
     mem_mkdir,
     mem_rmdir,
-    mem_umount,
-    mem_mount,
     mem_read,
     mem_write,
     mem_pread,
@@ -722,6 +765,7 @@ static struct MountsPublicInterface KInMemoryMountWraper = {
     mem_fcntl,
     mem_remove,
     mem_unlink,
+    mem_rename,
     mem_access,
     mem_ftruncate_size,
     mem_truncate_size,

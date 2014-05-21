@@ -34,13 +34,15 @@ struct MountsPublicInterface{
     // find the node, the kernel proxy calls the corresponding mounts GetNode()
     // method.  The corresponding  method will be called.  If the node
     // cannot be found, errno is set and -1 is returned.
+    ssize_t 
+    (*readlink)(struct MountsPublicInterface* this_,const char *path, char *buf, size_t bufsize);
+    int (*symlink)(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath);
     int (*chown)(struct MountsPublicInterface* this_,const char* path, uid_t owner, gid_t group);
     int (*chmod)(struct MountsPublicInterface* this_,const char* path, uint32_t mode);
+    int (*statvfs)(struct MountsPublicInterface* this_, const char* path, struct statvfs *buf);
     int (*stat)(struct MountsPublicInterface* this_,const char* path, struct stat *buf);
     int (*mkdir)(struct MountsPublicInterface* this_,const char* path, uint32_t mode);
     int (*rmdir)(struct MountsPublicInterface* this_,const char* path);
-    int (*umount)(struct MountsPublicInterface* this_,const char* path);
-    int (*mount)(struct MountsPublicInterface* this_,const char* path, void *mount);
 
     // System calls that take a file descriptor as an argument:
     // The kernel proxy will determine to which mount the file
@@ -77,6 +79,8 @@ struct MountsPublicInterface{
     int (*remove)(struct MountsPublicInterface* this_,const char* path);
     // unlink() is a simple wrapper around the mount's Unlink function.
     int (*unlink)(struct MountsPublicInterface* this_,const char* path);
+    //rename call added to be more compliant to filesystem interface
+    int (*rename)(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath);
     // access() uses the Mount's Stat().
     int (*access)(struct MountsPublicInterface* this_,const char* path, int amode);
     //only reduces file size, not padding it; posix
