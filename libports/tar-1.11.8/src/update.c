@@ -46,15 +46,15 @@ int time_to_start_writing = 0;
    first part of the block.  */
 char *output_start;
 
-extern void skip_file ();	/* FIXME */
-extern void skip_extended_headers (); /* FIXME */
+extern void __tar_skip_file ();	/* FIXME */
+extern void __tar_skip_extended_headers (); /* FIXME */
 
 extern union record *head;
 extern struct stat hstat;
 
-static void append_file __P ((char *));
-static int move_arch __P ((int));
-static void write_block __P ((int));
+static void __tar_append_file __P ((char *));
+static int __tar_move_arch __P ((int));
+static void __tar_write_block __P ((int));
 
 /*-----------------------------------------------------------------------.
   | Implement the 'r' (add files to end of archive), and 'u' (add files to |
@@ -63,7 +63,7 @@ static void write_block __P ((int));
   `-----------------------------------------------------------------------*/
 
 void
-update_archive (void)
+__tar_update_archive (void)
 {
     int found_end = 0;
     int status = 3;
@@ -71,17 +71,17 @@ update_archive (void)
     char *p;
     struct name *name;
 
-    name_gather ();
+    __tar_name_gather ();
     if (command_mode == COMMAND_UPDATE)
-	name_expand ();
+	__tar_name_expand ();
     DEBUG_PRINT("upd1");
-    open_tar_archive (2);		/* open for updating */
+    __tar_open_tar_archive (2);		/* open for updating */
     DEBUG_PRINT("upd2");
   
     do
 	{
 	    prev_status = status;
-	    status = read_header ();
+	    status = __tar_read_header ();
 	    switch (status)
 		{
 		case EOF:
@@ -89,7 +89,7 @@ update_archive (void)
 		    break;
 
 		case 0:			/* a bad record */
-		    userec (head);
+		    __tar_userec (head);
 		    switch (prev_status)
 			{
 			case 3:
@@ -112,7 +112,7 @@ update_archive (void)
 		    head->header.name[NAMSIZ-1] = '\0';
 #endif
 		    if (command_mode == COMMAND_UPDATE
-			&& (name = name_scan (current_file_name), name))
+			&& (name = __tar_name_scan (current_file_name), name))
 			{
 #if 0
 			    struct stat hstat;
@@ -120,16 +120,16 @@ update_archive (void)
 			    struct stat nstat;
 			    int unused;
 
-			    decode_header (head, &hstat, &unused, 0);
+			    __tar_decode_header (head, &hstat, &unused, 0);
 			    if (stat (current_file_name, &nstat) < 0)
 				ERROR ((0, errno, _("Cannot stat %s"), current_file_name));
 			    else if (hstat.st_mtime >= nstat.st_mtime)
 				name->found++;
 			}
-		    userec (head);
+		    __tar_userec (head);
 		    if (head->header.isextended)
-			skip_extended_headers ();
-		    skip_file ((long) hstat.st_size);
+			__tar_skip_extended_headers ();
+		    __tar_skip_file ((long) hstat.st_size);
 		    break;
 
 		case 2:
@@ -141,31 +141,31 @@ update_archive (void)
     while (!found_end);
 
     DEBUG_PRINT("upd3");
-    reset_eof ();
+    __tar_reset_eof ();
     DEBUG_PRINT("upd3.1");
     time_to_start_writing = 1;
     output_start = ar_record->charptr;
     DEBUG_PRINT("upd3.2");
-    while (p = name_from_list (), p)
+    while (p = __tar_name_from_list (), p)
 	{
 	    DEBUG_PRINT("upd4.0");
-	    if (flag_confirm && !confirm ("add", p))
+	    if (flag_confirm && !__tar_confirm ("add", p))
 		continue;
 	    if (command_mode == COMMAND_CAT){
 		DEBUG_PRINT("upd4.1");
-		append_file (p);
+		__tar_append_file (p);
 		DEBUG_PRINT("upd4.2");
 	    }
 	    else{
 		DEBUG_PRINT("upd4.3");
-		dump_file (p, -1, 1);
+		__tar_dump_file (p, -1, 1);
 		DEBUG_PRINT("upd4.4");
 	    }
 	}
     DEBUG_PRINT("upd5");
-    write_eot ();
+    __tar_write_eot ();
     close_tar_archive ();
-    names_notfound ();
+    __tar_names_notfound ();
 }
 
 /*-------------------------------------------------------------------------.
@@ -174,7 +174,7 @@ update_archive (void)
   `-------------------------------------------------------------------------*/
 
 static void
-append_file (char *p)
+__tar_append_file (char *p)
 {
     int fd;
     struct stat statbuf;
@@ -192,8 +192,8 @@ append_file (char *p)
 
     while (bytes_left > 0)
 	{
-	    start = findrec ();
-	    bufsiz = endofrecs ()->charptr - start->charptr;
+	    start = __tar_findrec ();
+	    bufsiz = __tar_endofrecs ()->charptr - start->charptr;
 	    if (bytes_left < bufsiz)
 		{
 		    bufsiz = bytes_left;
@@ -208,7 +208,7 @@ append_file (char *p)
 			_("Read error at byte %ld reading %d bytes in file %s"),
 			statbuf.st_size - bytes_left, bufsiz, p));
 	    bytes_left -= count;
-	    userec (start + (count - 1) / RECORDSIZE);
+	    __tar_userec (start + (count - 1) / RECORDSIZE);
 	    if (count != bufsiz)
 		ERROR ((TAREXIT_FAILURE, 0, _("%s: File shrunk by %d bytes, (yark!)"),
 			p, bytes_left));
@@ -281,7 +281,7 @@ union record *save_block = 0;
   `---*/
 
 void
-junk_archive (void)
+__tar_junk_archive (void)
 {
     int found_stuff = 0;
     int status = 3;
@@ -299,13 +299,13 @@ junk_archive (void)
 #if 0
     fprintf (stderr,_("Junk files\n"));
 #endif
-    name_gather ();
-    open_tar_archive (2);
+    __tar_name_gather ();
+    __tar_open_tar_archive (2);
 
     while (!found_stuff)
 	{
 	    prev_status = status;
-	    status = read_header ();
+	    status = __tar_read_header ();
 	    switch (status)
 		{
 		case EOF:
@@ -313,7 +313,7 @@ junk_archive (void)
 		    break;
 
 		case 0:
-		    userec (head);
+		    __tar_userec (head);
 		    switch (prev_status)
 			{
 			case 3:
@@ -335,15 +335,15 @@ junk_archive (void)
 		    head->header.name[NAMSIZ-1] = '\0';
 		    fprintf (stderr, _("file %s\n"), head->header.name);
 #endif
-		    if (name = name_scan (current_file_name), !name)
+		    if (name = __tar_name_scan (current_file_name), !name)
 			{
-			    userec (head);
+			    __tar_userec (head);
 #if 0
 			    fprintf (stderr, _("Skip %ld\n"), (long) (hstat.st_size));
 #endif
 			    if (head->header.isextended)
-				skip_extended_headers ();
-			    skip_file ((long) (hstat.st_size));
+				__tar_skip_extended_headers ();
+			    __tar_skip_file ((long) (hstat.st_size));
 			    break;
 			}
 		    name->found = 1;
@@ -361,9 +361,9 @@ junk_archive (void)
 
     if (found_stuff != 2)
 	{
-	    write_eot ();
+	    __tar_write_eot ();
 	    close_tar_archive ();
-	    names_notfound ();
+	    __tar_names_notfound ();
 	    return;
 	}
 
@@ -383,10 +383,10 @@ junk_archive (void)
     fprintf (stderr, _("Saved %d recs, need %d more\n"),
 	     number_of_new_records, number_of_records_needed);
 #endif
-    userec (head);
+    __tar_userec (head);
     if (head->header.isextended)
-	skip_extended_headers ();
-    skip_file ((long) (hstat.st_size));
+	__tar_skip_extended_headers ();
+    __tar_skip_file ((long) (hstat.st_size));
     found_stuff = 0;
 #if 0
     goto flush_file;
@@ -404,17 +404,17 @@ junk_archive (void)
 #if 0
 		    fprintf (stderr, _("New block\n"));
 #endif
-		    flush_archive ();
+		    __tar_flush_archive ();
 		    number_of_blocks_read++;
 		}
-	    sub_status = read_header ();
+	    sub_status = __tar_read_header ();
 #if 0
 	    fprintf (stderr, _("Header type %d\n"), sub_status);
 #endif
 
 	    if (sub_status == 2 && flag_ignorez)
 		{
-		    userec (head);
+		    __tar_userec (head);
 		    continue;
 		}
 	    if (sub_status == EOF || sub_status == 2)
@@ -424,14 +424,14 @@ junk_archive (void)
 			    (size_t) (RECORDSIZE * number_of_records_needed));
 		    number_of_new_records += number_of_records_needed;
 		    number_of_records_needed = 0;
-		    write_block (0);
+		    __tar_write_block (0);
 		    break;
 		}
 
 	    if (sub_status == 0)
 		{
 		    ERROR ((0, 0, _("Deleting non-header from archive")));
-		    userec (head);
+		    __tar_userec (head);
 		    continue;
 		}
 
@@ -441,15 +441,15 @@ junk_archive (void)
 	    head->header.name[NAMSIZ-1] = '\0';
 	    fprintf (stderr, _("File %s "), head->header.name);
 #endif
-	    if (name = name_scan (current_file_name), name)
+	    if (name = __tar_name_scan (current_file_name), name)
 		{
 		    name->found = 1;
 #if 0
 		    fprintf (stderr, _("Flush it\n"));
 		flush_file:
-		    decode_header (head, &hstat,&dummy_head, 0);
+		    __tar_decode_header (head, &hstat,&dummy_head, 0);
 #endif
-		    userec (head);
+		    __tar_userec (head);
 		    number_of_records_to_skip = (hstat.st_size + RECORDSIZE - 1) / RECORDSIZE;
 #if 0
 		    fprintf (stderr, _("Flushing %d recs from %s\n"),
@@ -463,7 +463,7 @@ junk_archive (void)
 				     ar_last-ar_record, number_of_records_to_skip);
 #endif
 			    number_of_records_to_skip -= (ar_last - ar_record);
-			    flush_archive ();
+			    __tar_flush_archive ();
 			    number_of_blocks_read++;
 #if 0
 			    fprintf (stderr, _("Block %d left\n"),
@@ -485,9 +485,9 @@ junk_archive (void)
 	    number_of_records_needed--;
 	    number_of_records_to_keep
 		= (hstat.st_size + RECORDSIZE - 1) / RECORDSIZE;
-	    userec (head);
+	    __tar_userec (head);
 	    if (number_of_records_needed == 0)
-		write_block (1);
+		__tar_write_block (1);
 
 	    /* copy_data: */
 
@@ -510,7 +510,7 @@ junk_archive (void)
 #if 0
 			    fprintf (stderr, _("Flush...\n"));
 #endif
-			    fl_read ();
+			    __tar_fl_read ();
 			    number_of_blocks_read++;
 			    ar_record = ar_block;
 			    number_of_kept_records_in_block = blocking;
@@ -542,14 +542,14 @@ junk_archive (void)
 
 		    if (number_of_records_needed == 0)
 			{
-			    write_block (1);
+			    __tar_write_block (1);
 			}
 		}
 	}
 
-    write_eot ();
+    __tar_write_eot ();
     close_tar_archive ();
-    names_notfound ();
+    __tar_names_notfound ();
 }
 
 /*---.
@@ -557,7 +557,7 @@ junk_archive (void)
   `---*/
 
 static void
-write_block (int f)
+__tar_write_block (int f)
 {
 #if 0
     fprintf (stderr, _("Write block\n"));
@@ -567,14 +567,14 @@ write_block (int f)
        started.  */
 
     if (archive != STDIN)
-	move_arch (-(number_of_blocks_read + 1));
+	__tar_move_arch (-(number_of_blocks_read + 1));
 
     save_block = ar_block;
     ar_block = new_block;
 
     if (archive == STDIN)
 	archive = STDOUT;
-    fl_write ();
+    __tar_fl_write ();
 
     if (archive == STDOUT)
 	archive = STDIN;
@@ -586,7 +586,7 @@ write_block (int f)
 	    /* Move the tape head back to where we were.  */
 
 	    if (archive != STDIN)
-		move_arch (number_of_blocks_read);
+		__tar_move_arch (number_of_blocks_read);
 	    number_of_blocks_read--;
 	}
 
@@ -602,7 +602,7 @@ write_block (int f)
   `-----------------------------------------------------------------------*/
 
 static int
-move_arch (int n)
+__tar_move_arch (int n)
 {
     off_t cur;
 

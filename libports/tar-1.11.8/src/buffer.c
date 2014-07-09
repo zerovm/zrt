@@ -53,10 +53,10 @@ FILE *stdlis;
 #define	PREAD	0		/* read  file descriptor from pipe() */
 #define	PWRITE	1		/* write file descriptor from pipe() */
 
-static int backspace_output __P ((void));
-static int new_volume __P ((int));
-static void writeerror __P ((int));
-static void readerror __P ((void));
+static int __tar_backspace_output __P ((void));
+static int __tar_new_volume __P ((int));
+static void __tar_writeerror __P ((int));
+static void __tar_readerror __P ((void));
 
 #ifndef __MSDOS__
 /* Obnoxious test to see if dimwit is trying to dump the archive */
@@ -105,7 +105,7 @@ long save_sizeleft;		/* where we are in the file we are writing,
 
 int write_archive_to_stdout;
 
-/* Used by fl_read and fl_write to store the real info about saved names */
+/* Used by __tar_fl_read and __tar_fl_write to store the real info about saved names */
 static char real_s_name[NAMSIZ];
 static long real_s_totsize;
 static long real_s_sizeleft;
@@ -115,7 +115,7 @@ static long real_s_sizeleft;
 `---------------------------------------------------------*/
 
 void
-reset_eof (void)
+__tar_reset_eof (void)
 {
   if (hit_eof)
     {
@@ -133,13 +133,13 @@ reset_eof (void)
 `-------------------------------------------------------------------------*/
 
 union record *
-findrec (void)
+__tar_findrec (void)
 {
   if (ar_record == ar_last)
     {
       if (hit_eof)
 	return NULL;
-      flush_archive ();
+      __tar_flush_archive ();
       if (ar_record == ar_last)
 	{
 	  hit_eof++;
@@ -155,13 +155,13 @@ findrec (void)
 `----------------------------------------------------------------------*/
 
 void
-userec (union record *rec)
+__tar_userec (union record *rec)
 {
   while (rec >= ar_record)
     ar_record++;
 
   /* Do *not* flush the archive here.  If we do, the same argument to
-     userec() could mean the next record (if the input block is exactly
+     __tar_userec() could mean the next record (if the input block is exactly
      one record long), which is not what is intended.  */
 
   if (ar_record > ar_last)
@@ -170,12 +170,12 @@ userec (union record *rec)
 
 /*----------------------------------------------------------------------.
 | Return a pointer to the end of the current records buffer.  All the   |
-| space between findrec() and endofrecs() is available for filling with |
+| space between __tar_findrec() and __tar_endofrecs() is available for filling with |
 | data, or taking data from.					        |
 `----------------------------------------------------------------------*/
 
 union record *
-endofrecs (void)
+__tar_endofrecs (void)
 {
   return ar_last;
 }
@@ -186,7 +186,7 @@ endofrecs (void)
 `--------------------------------------------------------------------*/
 
 static void
-dupto (int from, int to, const char *msg)
+__tar_dupto (int from, int to, const char *msg)
 {
   int err;
 
@@ -198,7 +198,7 @@ dupto (int from, int to, const char *msg)
       err = dup (from);
       if (err != to)
 	ERROR ((TAREXIT_FAILURE, errno, _("Cannot dup %s"), msg));
-      ck_close (from);
+      __tar_ck_close (from);
     }
 }
 
@@ -208,14 +208,14 @@ dupto (int from, int to, const char *msg)
 
 #if defined(__native_client__) || defined(__MSDOS__)
 static void
-child_open (void)
+__tar_child_open (void)
 {
     ERROR ((TAREXIT_FAILURE, 0, _("Cannot use compressed or remote archives")));
 }
 
 #else
 static void
-child_open (void)
+__tar_child_open (void)
 {
   int local_pipe[2];
   int err = 0;
@@ -242,12 +242,12 @@ child_open (void)
 	{
 	  flag_reblock++;
 	  archive = local_pipe[READ];
-	  ck_close (local_pipe[WRITE]);
+	  __tar_ck_close (local_pipe[WRITE]);
 	}
       else
 	{
 	  archive = local_pipe[WRITE];
-	  ck_close (local_pipe[READ]);
+	  __tar_ck_close (local_pipe[READ]);
 	}
       return;
     }
@@ -256,13 +256,13 @@ child_open (void)
 
   if (ar_reading)
     {
-      dupto (local_pipe[WRITE], STDOUT, _("(child) Pipe to stdout"));
-      ck_close (local_pipe[READ]);
+      __tar_dupto (local_pipe[WRITE], STDOUT, _("(child) Pipe to stdout"));
+      __tar_ck_close (local_pipe[READ]);
     }
   else
     {
-      dupto (local_pipe[READ], STDIN, _("(child) Pipe to stdin"));
-      ck_close (local_pipe[WRITE]);
+      __tar_dupto (local_pipe[READ], STDIN, _("(child) Pipe to stdin"));
+      __tar_ck_close (local_pipe[WRITE]);
     }
 
   /* We need a child tar only if
@@ -283,7 +283,7 @@ child_open (void)
 	  if (archive < 0)
 	    ERROR ((TAREXIT_FAILURE, errno, _("Cannot open archive %s"),
 		    archive_name_array[0]));
-	  dupto (archive, STDIN, _("Archive to stdin"));
+	  __tar_dupto (archive, STDIN, _("Archive to stdin"));
 #if 0
 	  close (archive);
 #endif
@@ -294,7 +294,7 @@ child_open (void)
 	  if (archive < 0)
 	    ERROR ((TAREXIT_FAILURE, errno, _("Cannot open archive %s"),
 		    archive_name_array[0]));
-	  dupto (archive, STDOUT, _("Archive to stdout"));
+	  __tar_dupto (archive, STDOUT, _("Archive to stdout"));
 #if 0
 	  close (archive);
 #endif
@@ -318,8 +318,8 @@ child_open (void)
 
 	  if (ar_reading)
 	    {
-	      dupto (kidpipe[READ], STDIN, _("((child)) Pipe to stdin"));
-	      ck_close (kidpipe[WRITE]);
+	      __tar_dupto (kidpipe[READ], STDIN, _("((child)) Pipe to stdin"));
+	      __tar_ck_close (kidpipe[WRITE]);
 #if 0
 	      dup2 (local_pipe[WRITE], STDOUT);
 #endif
@@ -329,14 +329,14 @@ child_open (void)
 #if 0
 	      dup2 (local_pipe[READ], STDIN);
 #endif
-	      dupto (kidpipe[WRITE], STDOUT, _("((child)) Pipe to stdout"));
-	      ck_close (kidpipe[READ]);
+	      __tar_dupto (kidpipe[WRITE], STDOUT, _("((child)) Pipe to stdout"));
+	      __tar_ck_close (kidpipe[READ]);
 	    }
 #if 0
-	  ck_close (local_pipe[READ]);
-	  ck_close (local_pipe[WRITE]);
-	  ck_close (kidpipe[READ]);
-	  ck_close (kidpipe[WRITE]);
+	  __tar_ck_close (local_pipe[READ]);
+	  __tar_ck_close (local_pipe[WRITE]);
+	  __tar_ck_close (kidpipe[READ]);
+	  __tar_ck_close (kidpipe[WRITE]);
 #endif
 	}
       else
@@ -348,13 +348,13 @@ child_open (void)
 	  program_name = _("tar (child)");
 	  if (ar_reading)
 	    {
-	      dupto (kidpipe[WRITE], STDOUT, _("[child] Pipe to stdout"));
-	      ck_close (kidpipe[READ]);
+	      __tar_dupto (kidpipe[WRITE], STDOUT, _("[child] Pipe to stdout"));
+	      __tar_ck_close (kidpipe[READ]);
 	    }
 	  else
 	    {
-	      dupto (kidpipe[READ], STDIN, _("[child] Pipe to stdin"));
-	      ck_close (kidpipe[WRITE]);
+	      __tar_dupto (kidpipe[READ], STDIN, _("[child] Pipe to stdin"));
+	      __tar_ck_close (kidpipe[WRITE]);
 	    }
 
 	  if (strcmp (archive_name_array[0], "-") == 0)
@@ -398,7 +398,7 @@ child_open (void)
 				 (unsigned int) (blocksize));
 		  if (err < 0)
 		    {
-		      readerror ();
+		      __tar_readerror ();
 		      goto error_loop;
 		    }
 		  if (err == 0)
@@ -457,7 +457,7 @@ Write to compression program short %d bytes"),
 		      err = rmtwrite (archive, ar_block->charptr,
 				      (unsigned int) blocksize);
 		      if (err != (blocksize))
-			writeerror (err);
+			__tar_writeerror (err);
 		      if (!flag_compress_block)
 			blocksize += n;
 		      break;
@@ -470,7 +470,7 @@ Write to compression program short %d bytes"),
 		  err = rmtwrite (archive, ar_block->charptr,
 				  (unsigned int) blocksize);
 		  if (err != blocksize)
-		    writeerror (err);
+		    __tar_writeerror (err);
 		}
 	    }
 
@@ -518,7 +518,7 @@ isfile (const char *p)
 /* JF if the arg is 2, open for reading and writing.  */
 
 void
-open_tar_archive (int reading)
+__tar_open_tar_archive (int reading)
 {
   stdlis = flag_exstdout ? stderr : stdout;
 
@@ -561,11 +561,11 @@ open_tar_archive (int reading)
       if (flag_multivol)
 	ERROR ((TAREXIT_FAILURE, 0,
 		_("Cannot use multi-volume compressed archives")));
-      child_open ();
+      __tar_child_open ();
       if (!reading && strcmp (archive_name_array[0], "-") == 0)
 	stdlis = stderr;
 #if 0
-      child_open (rem_host, rem_file);
+      __tar_child_open (rem_host, rem_file);
 #endif
     }
   else if (strcmp (archive_name_array[0], "-") == 0)
@@ -627,7 +627,7 @@ open_tar_archive (int reading)
   if (reading)
     {
       ar_last = ar_block;	/* set up for 1st block = # 0 */
-      findrec ();		/* read it in, check for EOF */
+      __tar_findrec ();		/* read it in, check for EOF */
 
       if (flag_volhdr)
 	{
@@ -643,7 +643,7 @@ open_tar_archive (int reading)
 	  else
 	    ptr = flag_volhdr;
 #endif
-	  label = findrec ();
+	  label = __tar_findrec ();
 	  if (!label)
 	    ERROR ((TAREXIT_FAILURE, 0, _("Archive not labelled to match %s"),
 		    flag_volhdr));
@@ -669,11 +669,11 @@ open_tar_archive (int reading)
       else
 	strcpy (ar_block->header.arch_name, flag_volhdr);
 
-      assign_string (&current_file_name, ar_block->header.arch_name);
+      __tar_assign_string (&current_file_name, ar_block->header.arch_name);
 
       ar_block->header.linkflag = LF_VOLHDR;
-      to_oct (time (0), 1 + 12, ar_block->header.mtime);
-      finish_header (ar_block);
+      __tar_to_oct (time (0), 1 + 12, ar_block->header.mtime);
+      __tar_finish_header (ar_block);
 #if 0
       ar_record++;
 #endif
@@ -691,7 +691,7 @@ open_tar_archive (int reading)
    ar_block from that, shifting it back, losing the top 9 bits.  */
 
 void
-saverec (union record **pointer)
+__tar_saverec (union record **pointer)
 {
   long offset;
 
@@ -706,15 +706,15 @@ saverec (union record **pointer)
 
 #if 0
    send_buffer_to_file ();
-   if (new_volume)
+   if (__tar_new_volume)
      {
-       deal_with_new_volume_stuff ();
+       deal_with___tar_new_volume_stuff ();
        send_buffer_to_file ();
      }
 #endif
 
 void
-fl_write (void)
+__tar_fl_write (void)
 {
   int err;
   int copy_back;
@@ -731,7 +731,7 @@ fl_write (void)
   else
     err = rmtwrite (archive, ar_block->charptr, (unsigned int) blocksize);
   if (err != blocksize && !flag_multivol)
-    writeerror (err);
+    __tar_writeerror (err);
   else if (flag_totals)
     tot_written += blocksize;
 
@@ -770,11 +770,11 @@ fl_write (void)
 
   /* ENXIO is for the UNIX PC.  */
   if (err < 0 && errno != ENOSPC && errno != EIO && errno != ENXIO)
-    writeerror (err);
+    __tar_writeerror (err);
 
   /* If error indicates a short write, we just move to the next tape.  */
 
-  if (new_volume (0) < 0)
+  if (__tar_new_volume (0) < 0)
     return;
   bytes_written = 0;
   if (flag_volhdr && real_s_name[0])
@@ -793,9 +793,9 @@ fl_write (void)
     {
       memset ((void *) ar_block, 0, RECORDSIZE);
       sprintf (ar_block->header.arch_name, "%s Volume %d", flag_volhdr, volno);
-      to_oct (time (0), 1 + 12, ar_block->header.mtime);
+      __tar_to_oct (time (0), 1 + 12, ar_block->header.mtime);
       ar_block->header.linkflag = LF_VOLHDR;
-      finish_header (ar_block);
+      __tar_finish_header (ar_block);
     }
   if (real_s_name[0])
     {
@@ -806,13 +806,13 @@ fl_write (void)
       memset ((void *) ar_block, 0, RECORDSIZE);
       strcpy (ar_block->header.arch_name, real_s_name);
       ar_block->header.linkflag = LF_MULTIVOL;
-      to_oct ((long) real_s_sizeleft, 1 + 12,
+      __tar_to_oct ((long) real_s_sizeleft, 1 + 12,
 	      ar_block->header.size);
-      to_oct ((long) real_s_totsize - real_s_sizeleft,
+      __tar_to_oct ((long) real_s_totsize - real_s_sizeleft,
 	      1 + 12, ar_block->header.offset);
       tmp = flag_verbose;
       flag_verbose = 0;
-      finish_header (ar_block);
+      __tar_finish_header (ar_block);
       flag_verbose = tmp;
       if (flag_volhdr)
 	ar_block--;
@@ -820,7 +820,7 @@ fl_write (void)
 
   err = rmtwrite (archive, ar_block->charptr, (unsigned int) blocksize);
   if (err != blocksize)
-    writeerror (err);
+    __tar_writeerror (err);
   else if (flag_totals)
     tot_written += blocksize;
 
@@ -864,7 +864,7 @@ fl_write (void)
 `---------------------------------------------------------------------*/
 
 static void
-writeerror (int err)
+__tar_writeerror (int err)
 {
   if (err < 0)
     ERROR ((TAREXIT_FAILURE, errno, _("Cannot write to %s"),
@@ -876,11 +876,11 @@ writeerror (int err)
 
 /*-------------------------------------------------------------------.
 | Handle read errors on the archive.  If the read should be retried, |
-| readerror() returns to the caller.				     |
+| __tar_readerror() returns to the caller.				     |
 `-------------------------------------------------------------------*/
 
 static void
-readerror (void)
+__tar_readerror (void)
 {
 #define	READ_ERROR_MAX	10
 
@@ -905,7 +905,7 @@ readerror (void)
 `-------------------------------------*/
 
 void
-fl_read (void)
+__tar_fl_read (void)
 {
   int err;			/* result from system call */
   int left;			/* bytes left */
@@ -915,7 +915,7 @@ fl_read (void)
     WARN ((0, 0, _("Read checkpoint %d"), checkpoint));
 
   /* Clear the count of errors.  This only applies to a single call to
-     fl_read.  We leave read_error_flag alone; it is only turned off by
+     __tar_fl_read.  We leave read_error_flag alone; it is only turned off by
      higher level software.  */
 
   r_error_count = 0;		/* clear error count */
@@ -934,7 +934,7 @@ fl_read (void)
     {
       err = rmtwrite (1, ar_block->charptr, (unsigned int) blocksize);
       if (err != blocksize)
-	writeerror (err);
+	__tar_writeerror (err);
     }
   if (flag_multivol)
     if (save_name)
@@ -972,7 +972,7 @@ error_loop:
       union record *cursor;
 
     try_volume:
-      if (new_volume ((command_mode == COMMAND_APPEND
+      if (__tar_new_volume ((command_mode == COMMAND_APPEND
 		       || command_mode == COMMAND_CAT
 		       || command_mode == COMMAND_UPDATE) ? 2 : 1)
 	  < 0)
@@ -982,7 +982,7 @@ error_loop:
       err = rmtread (archive, ar_block->charptr, (unsigned int) blocksize);
       if (err < 0)
 	{
-	  readerror ();
+	  __tar_readerror ();
 	  goto vol_error;
 	}
       if (err != blocksize)
@@ -1042,19 +1042,19 @@ error_loop:
 	      global_volno--;
 	      goto try_volume;
 	    }
-	  if (real_s_totsize != (from_oct (1 + 12, cursor->header.size)
-				 + from_oct (1 + 12, cursor->header.offset)))
+	  if (real_s_totsize != (__tar_from_oct (1 + 12, cursor->header.size)
+				 + __tar_from_oct (1 + 12, cursor->header.offset)))
 	    {
 	      WARN ((0, 0, _("%s is the wrong size (%ld != %ld + %ld)"),
 			 cursor->header.arch_name, save_totsize,
-			 from_oct (1 + 12, cursor->header.size),
-			 from_oct (1 + 12, cursor->header.offset)));
+			 __tar_from_oct (1 + 12, cursor->header.size),
+			 __tar_from_oct (1 + 12, cursor->header.offset)));
 	      volno--;
 	      global_volno--;
 	      goto try_volume;
 	    }
 	  if (real_s_totsize - real_s_sizeleft
-	      != from_oct (1 + 12, cursor->header.offset))
+	      != __tar_from_oct (1 + 12, cursor->header.offset))
 	    {
 	      WARN ((0, 0, _("This volume is out of sequence")));
 	      volno--;
@@ -1068,7 +1068,7 @@ error_loop:
     }
   else if (err < 0)
     {
-      readerror ();
+      __tar_readerror ();
       goto error_loop;		/* try again */
     }
 
@@ -1100,7 +1100,7 @@ again:
 	  err = rmtread (archive, more, (unsigned int) left);
 	  if (err < 0)
 	    {
-	      readerror ();
+	      __tar_readerror ();
 	      goto error2loop;	/* try again */
 	    }
 	  if (err == 0)
@@ -1122,7 +1122,7 @@ again:
 `-----------------------------------------------*/
 
 void
-flush_archive (void)
+__tar_flush_archive (void)
 {
   int c;
 
@@ -1146,15 +1146,15 @@ flush_archive (void)
 	      archive = file_to_switch_to;
 	    }
 	  else
-	    backspace_output ();
-	  fl_write ();
+	    __tar_backspace_output ();
+	  __tar_fl_write ();
 	}
       else
-	fl_read ();
+	__tar_fl_read ();
     }
   else
     {
-      fl_write ();
+      __tar_fl_write ();
     }
 }
 
@@ -1165,7 +1165,7 @@ flush_archive (void)
 `-------------------------------------------------------------------------*/
 
 static int
-backspace_output (void)
+__tar_backspace_output (void)
 {
   off_t cur;
 #if 0
@@ -1218,7 +1218,7 @@ close_tar_archive (void)
   int c;
 
   if (time_to_start_writing || !ar_reading)
-    flush_archive ();
+    __tar_flush_archive ();
   if (command_mode == COMMAND_DELETE)
     {
       off_t pos;
@@ -1231,7 +1231,7 @@ close_tar_archive (void)
 #endif
     }
   if (flag_verify)
-    verify_volume ();
+    __tar_verify_volume ();
 
   if (c = rmtclose (archive), c < 0)
     WARN ((0, errno, _("WARNING: Cannot close %s (%d, %d)"),
@@ -1290,7 +1290,7 @@ close_tar_archive (void)
 `------------------------------------------------*/
 
 void
-init_volume_number (void)
+__tar_init_volume_number (void)
 {
   FILE *vf;
 
@@ -1310,7 +1310,7 @@ init_volume_number (void)
 `-------------------------------------------------------*/
 
 void
-closeout_volume_number (void)
+__tar_closeout_volume_number (void)
 {
   FILE *vf;
 
@@ -1330,7 +1330,7 @@ closeout_volume_number (void)
 `---------------------------------------------------------------------*/
 
 static int
-new_volume (int type)
+__tar_new_volume (int type)
 {
   int c;
   char inbuf[80];
@@ -1345,7 +1345,7 @@ new_volume (int type)
   if (now_verifying)
     return -1;
   if (flag_verify)
-    verify_volume ();
+    __tar_verify_volume ();
   if (c = rmtclose (archive), c < 0)
     WARN ((0, errno, _("WARNING: Cannot close %s (%d, %d)"),
 	   *archive_name_cursor, archive, c));
@@ -1367,7 +1367,7 @@ tryagain:
 
       if (flag_run_script_at_end)
 	{
-	  closeout_volume_number ();
+	  __tar_closeout_volume_number ();
 	  system (info_script);
 	}
       else
@@ -1488,8 +1488,8 @@ tryagain:
 }
 
 /*-------------------------------------------------------------------------.
-| This is a useless function that takes a buffer returned by wantbytes and |
-| does nothing with it.  If the function called by wantbytes returns an	   |
+| This is a useless function that takes a buffer returned by __tar_wantbytes and |
+| does nothing with it.  If the function called by __tar_wantbytes returns an	   |
 | error indicator (non-zero), this function is called for the rest of the  |
 | file.									   |
 `-------------------------------------------------------------------------*/
@@ -1498,7 +1498,7 @@ tryagain:
    might even trigger some compiler warnings.  That's OK!  Relax.  */
 
 int
-no_op (int size, char *data)
+__tar_no_op (int size, char *data)
 {
   return 0;
 }
@@ -1510,7 +1510,7 @@ no_op (int size, char *data)
 `-----------------------------------------------------------------------*/
 
 int
-wantbytes (long size, int (*func) ())
+__tar_wantbytes (long size, int (*func) ())
 {
   char *data;
   long data_size;
@@ -1519,7 +1519,7 @@ wantbytes (long size, int (*func) ())
     save_sizeleft = size;
   while (size)
     {
-      data = findrec ()->charptr;
+      data = __tar_findrec ()->charptr;
       if (data == NULL)
 	{
 
@@ -1528,12 +1528,12 @@ wantbytes (long size, int (*func) ())
 	  ERROR ((0, 0, _("Unexpected EOF on archive file")));
 	  return -1;
 	}
-      data_size = endofrecs ()->charptr - data;
+      data_size = __tar_endofrecs ()->charptr - data;
       if (data_size > size)
 	data_size = size;
       if ((*func) (data_size, data))
-	func = no_op;
-      userec ((union record *) (data + data_size - 1));
+	func = __tar_no_op;
+      __tar_userec ((union record *) (data + data_size - 1));
       size -= data_size;
       if (flag_multivol)
 	save_sizeleft -= data_size;

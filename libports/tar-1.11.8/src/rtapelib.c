@@ -80,7 +80,7 @@ char *__rmt_path;
 `-----------------------------------------------*/
 
 static void
-_rmt_shutdown (int file_descriptor)
+__tar_rmt_shutdown (int file_descriptor)
 {
   close (READ (file_descriptor));
   close (WRITE (file_descriptor));
@@ -94,7 +94,7 @@ _rmt_shutdown (int file_descriptor)
 `------------------------------------------------------------------------*/
 
 static int
-do_command (int file_descriptor, const char *buf)
+__tar_do_command (int file_descriptor, const char *buf)
 {
   register int buflen;
   RETSIGTYPE (*pipe_handler) ();
@@ -112,7 +112,7 @@ do_command (int file_descriptor, const char *buf)
   /* Something went wrong.  Close down and go home.  */
 
   signal (SIGPIPE, pipe_handler);
-  _rmt_shutdown (file_descriptor);
+  __tar_rmt_shutdown (file_descriptor);
   errno = EIO;
   return -1;
 }
@@ -123,7 +123,7 @@ do_command (int file_descriptor, const char *buf)
 `-------------------------------------------------------------------------*/
 
 static int
-get_status (int file_descriptor)
+__tar_get_status (int file_descriptor)
 {
   int i;
   char c, *cp;
@@ -135,7 +135,7 @@ get_status (int file_descriptor)
     {
       if (read (READ (file_descriptor), cp, 1) != 1)
 	{
-	  _rmt_shutdown (file_descriptor);
+	  __tar_rmt_shutdown (file_descriptor);
 	  errno = EIO;
 	  return -1;
 	}
@@ -148,7 +148,7 @@ get_status (int file_descriptor)
 
   if (i == CMDBUFSIZE)
     {
-      _rmt_shutdown (file_descriptor);
+      __tar_rmt_shutdown (file_descriptor);
       errno = EIO;
       return -1;
     }
@@ -170,7 +170,7 @@ get_status (int file_descriptor)
 	  break;
 
       if (*cp == 'F')
-	_rmt_shutdown (file_descriptor);
+	__tar_rmt_shutdown (file_descriptor);
 
       return -1;
     }
@@ -179,7 +179,7 @@ get_status (int file_descriptor)
 
   if (*cp != 'A')
     {
-      _rmt_shutdown (file_descriptor);
+      __tar_rmt_shutdown (file_descriptor);
       errno = EIO;
       return -1;
     }
@@ -246,13 +246,13 @@ _rmt_rexec (char *host, char *user)
 
 #ifdef __native_client__
 int
-__rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
+__tar_rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
 {
     return -1;
 }
 #else
 int
-__rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
+__tar_rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
 {
   int remote_pipe_number;	/* pseudo, biased file descriptor */
   char *path_copy;		/* copy of path string */
@@ -408,8 +408,8 @@ __rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
   /* Attempt to open the tape device.  */
 
   sprintf (command_buffer, "O%s\n%d\n", remote_file, oflag);
-  if (do_command (remote_pipe_number, command_buffer) == -1
-      || get_status (remote_pipe_number) == -1)
+  if (__tar_do_command (remote_pipe_number, command_buffer) == -1
+      || __tar_get_status (remote_pipe_number) == -1)
     {
       free (path_copy);
       return -1;
@@ -426,15 +426,15 @@ __rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
 `-------------------------------------------------------------------------*/
 
 int
-__rmt_close (int file_descriptor)
+__tar_rmt_close (int file_descriptor)
 {
   int status;
 
-  if (do_command (file_descriptor, "C\n") == -1)
+  if (__tar_do_command (file_descriptor, "C\n") == -1)
     return -1;
 
-  status = get_status (file_descriptor);
-  _rmt_shutdown (file_descriptor);
+  status = __tar_get_status (file_descriptor);
+  __tar_rmt_shutdown (file_descriptor);
   return status;
 }
 
@@ -445,14 +445,14 @@ __rmt_close (int file_descriptor)
 `--------------------------------------------------------------------*/
 
 int
-__rmt_read (int file_descriptor, char *buf, unsigned int nbyte)
+__tar_rmt_read (int file_descriptor, char *buf, unsigned int nbyte)
 {
   int status, i;
   char command_buffer[CMDBUFSIZE];
 
   sprintf (command_buffer, "R%d\n", nbyte);
-  if (do_command (file_descriptor, command_buffer) == -1
-      || (status = get_status (file_descriptor)) == -1)
+  if (__tar_do_command (file_descriptor, command_buffer) == -1
+      || (status = __tar_get_status (file_descriptor)) == -1)
     return -1;
 
   for (i = 0; i < status; i += nbyte, buf += nbyte)
@@ -460,7 +460,7 @@ __rmt_read (int file_descriptor, char *buf, unsigned int nbyte)
       nbyte = read (READ (file_descriptor), buf, (size_t) (status - i));
       if (nbyte <= 0)
 	{
-	  _rmt_shutdown (file_descriptor);
+	  __tar_rmt_shutdown (file_descriptor);
 	  errno = EIO;
 	  return -1;
 	}
@@ -475,26 +475,26 @@ __rmt_read (int file_descriptor, char *buf, unsigned int nbyte)
 `-----------------------------------------------------------------------*/
 
 int
-__rmt_write (int file_descriptor, char *buf, unsigned int nbyte)
+__tar_rmt_write (int file_descriptor, char *buf, unsigned int nbyte)
 {
   char command_buffer[CMDBUFSIZE];
   RETSIGTYPE (*pipe_handler) ();
 
   sprintf (command_buffer, "W%d\n", nbyte);
-  if (do_command (file_descriptor, command_buffer) == -1)
+  if (__tar_do_command (file_descriptor, command_buffer) == -1)
     return -1;
 
   pipe_handler = signal (SIGPIPE, SIG_IGN);
   if (write (WRITE (file_descriptor), buf, nbyte) == nbyte)
     {
       signal (SIGPIPE, pipe_handler);
-      return get_status (file_descriptor);
+      return __tar_get_status (file_descriptor);
     }
 
   /* Write error.  */
 
   signal (SIGPIPE, pipe_handler);
-  _rmt_shutdown (file_descriptor);
+  __tar_rmt_shutdown (file_descriptor);
   errno = EIO;
   return -1;
 }
@@ -506,15 +506,15 @@ __rmt_write (int file_descriptor, char *buf, unsigned int nbyte)
 `---------------------------------------------------------------------*/
 
 long
-__rmt_lseek (int file_descriptor, off_t offset, int whence)
+__tar_rmt_lseek (int file_descriptor, off_t offset, int whence)
 {
   char command_buffer[CMDBUFSIZE];
 
   sprintf (command_buffer, "L%ld\n%d\n", offset, whence);
-  if (do_command (file_descriptor, command_buffer) == -1)
+  if (__tar_do_command (file_descriptor, command_buffer) == -1)
     return -1;
 
-  return get_status (file_descriptor);
+  return __tar_get_status (file_descriptor);
 }
 
 /*-------------------------------------------------------------------------.
@@ -523,7 +523,7 @@ __rmt_lseek (int file_descriptor, off_t offset, int whence)
 `-------------------------------------------------------------------------*/
 
 int
-__rmt_ioctl (int file_descriptor, int op, char *arg)
+__tar_rmt_ioctl (int file_descriptor, int op, char *arg)
 {
   char c;
   int status, cnt;
@@ -543,12 +543,12 @@ __rmt_ioctl (int file_descriptor, int op, char *arg)
 
       sprintf (command_buffer, "I%d\n%d\n", ((struct mtop *) arg)->mt_op,
 	       ((struct mtop *) arg)->mt_count);
-      if (do_command (file_descriptor, command_buffer) == -1)
+      if (__tar_do_command (file_descriptor, command_buffer) == -1)
 	return -1;
 
       /* Return the count.  */
 
-      return get_status (file_descriptor);
+      return __tar_get_status (file_descriptor);
 
 #endif /* MTIOCTOP */
 
@@ -562,8 +562,8 @@ __rmt_ioctl (int file_descriptor, int op, char *arg)
 	 whole struct is contiguous.  NOTE - this is probably NOT a good
 	 assumption.  */
 
-      if (do_command (file_descriptor, "S") == -1
-	  || (status = get_status (file_descriptor), status == -1))
+      if (__tar_do_command (file_descriptor, "S") == -1
+	  || (status = __tar_get_status (file_descriptor), status == -1))
 	return -1;
 
       for (; status > 0; status -= cnt, arg += cnt)
@@ -571,7 +571,7 @@ __rmt_ioctl (int file_descriptor, int op, char *arg)
 	  cnt = read (READ (file_descriptor), arg, (size_t) status);
 	  if (cnt <= 0)
 	    {
-	      _rmt_shutdown (file_descriptor);
+	      __tar_rmt_shutdown (file_descriptor);
 	      errno = EIO;
 	      return -1;
 	    }

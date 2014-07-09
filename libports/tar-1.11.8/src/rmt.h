@@ -17,12 +17,12 @@
 
 extern char *__rmt_path;
 
-int __rmt_open __P ((const char *, int, int, const char *));
-int __rmt_close __P ((int));
-int __rmt_read __P ((int, char *, unsigned int));
-int __rmt_write __P ((int, char *, unsigned int));
+int __tar_rmt_open __P ((const char *, int, int, const char *));
+int __tar_rmt_close __P ((int));
+int __tar_rmt_read __P ((int, char *, unsigned int));
+int __tar_rmt_write __P ((int, char *, unsigned int));
 long __rmt_lseek __P ((int, off_t, int));
-int __rmt_ioctl __P ((int, int, char *));
+int __tar_rmt_ioctl __P ((int, int, char *));
 
 /* A filename is remote if it contains a colon not preceeded by a slash,
    to take care of `/:/' which is a shorthand for `/.../<CELL-NAME>/fs'
@@ -46,7 +46,7 @@ int __rmt_ioctl __P ((int, int, char *));
 #endif
 
 #define rmtopen(Path, Oflag, Mode, Command) \
-  (_remdev (Path) ? __rmt_open (Path, Oflag, __REM_BIAS, Command) \
+  (_remdev (Path) ? __tar_rmt_open (Path, Oflag, __REM_BIAS, Command) \
    : open (Path, Oflag, Mode))
 
 #define rmtaccess(Path, Amode) \
@@ -57,29 +57,29 @@ int __rmt_ioctl __P ((int, int, char *));
 
 #define rmtcreat(Path, Mode, Command) \
    (_remdev (Path) \
-    ? __rmt_open (Path, 1 | O_CREAT, __REM_BIAS, Command) \
+    ? __tar_rmt_open (Path, 1 | O_CREAT, __REM_BIAS, Command) \
     : creat (Path, Mode))
 
 #define rmtlstat(Path, Buffer) \
   (_remdev (Path) ? (errno = EOPNOTSUPP), -1 : lstat (Path, Buffer))
 
 #define rmtread(Fd, Buffer, Length) \
-  (_isrmt (Fd) ? __rmt_read (Fd - __REM_BIAS, Buffer, Length) \
+  (_isrmt (Fd) ? __tar_rmt_read (Fd - __REM_BIAS, Buffer, Length) \
    : read (Fd, Buffer, Length))
 
 #define rmtwrite(Fd, Buffer, Length) \
-  (_isrmt (Fd) ? __rmt_write (Fd - __REM_BIAS, Buffer, Length) \
+  (_isrmt (Fd) ? __tar_rmt_write (Fd - __REM_BIAS, Buffer, Length) \
    : write (Fd, Buffer, Length))
 
 #define rmtlseek(Fd, Offset, Where) \
-  (_isrmt (Fd) ? __rmt_lseek (Fd - __REM_BIAS, Offset, Where) \
+  (_isrmt (Fd) ? __tar_rmt_lseek (Fd - __REM_BIAS, Offset, Where) \
    : lseek (Fd, Offset, Where))
 
 #define rmtclose(Fd) \
-  (_isrmt (Fd) ? __rmt_close (Fd - __REM_BIAS) : close (Fd))
+  (_isrmt (Fd) ? __tar_rmt_close (Fd - __REM_BIAS) : close (Fd))
 
 #define rmtioctl(Fd, Request, Argument) \
-  (_isrmt (Fd) ? __rmt_ioctl (Fd - __REM_BIAS, Request, Argument) \
+  (_isrmt (Fd) ? __tar_rmt_ioctl (Fd - __REM_BIAS, Request, Argument) \
    : ioctl (Fd, Request, Argument))
 
 #define rmtdup(Fd) \

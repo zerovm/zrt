@@ -29,7 +29,7 @@ char *tar_xmalloc ();
 /* Return a newly allocated copy of STRING.  */
 
 char *
-xstrdup (string)
+__tar_xstrdup (string)
      char *string;
 {
   return strcpy (tar_xmalloc (strlen (string) + 1), string);

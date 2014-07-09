@@ -74,7 +74,7 @@ struct link *linklist;		/* points to first link in list */
 | null.  "digs"==3 means 1 digit, a space, and room for a null.		   |
 | 									   |
 | We assume the trailing null is already there and don't fill it in.  This |
-| fact is used by start_header and finish_header, so don't change it!	   |
+| fact is used by __tar_start_header and __tar_finish_header, so don't change it!	   |
 `-------------------------------------------------------------------------*/
 
 /* This should be equivalent to:
@@ -82,7 +82,7 @@ struct link *linklist;		/* points to first link in list */
    except that sprintf fills in the trailing null and we don't.  */
 
 void
-to_oct (register long value, register int digs, register char *where)
+__tar_to_oct (register long value, register int digs, register char *where)
 {
   --digs;			/* Trailing null slot is left alone */
   where[--digs] = ' ';		/* put in the space, though */
@@ -109,7 +109,7 @@ to_oct (register long value, register int digs, register char *where)
 `-----------------------------------------------------------------------*/
 
 static void
-clear_buffer (char *buf)
+__tar_clear_buffer (char *buf)
 {
   register int i;
 
@@ -124,17 +124,17 @@ clear_buffer (char *buf)
 `------------------------------------------------------------------------*/
 
 void
-write_eot (void)
+__tar_write_eot (void)
 {
   union record *p;
   int bufsize;
 
-  p = findrec ();
+  p = __tar_findrec ();
   if (p)
     {
-      bufsize = endofrecs ()->charptr - p->charptr;
+      bufsize = __tar_endofrecs ()->charptr - p->charptr;
       memset (p->charptr, 0, (size_t) bufsize);
-      userec (p);
+      __tar_userec (p);
     }
 }
 
@@ -142,15 +142,15 @@ write_eot (void)
 | Write a LF_LONGLINK or LF_LONGNAME record.  |
 `--------------------------------------------*/
 
-/* FIXME: Cross recursion between start_header and write_long!  */
+/* FIXME: Cross recursion between __tar_start_header and __tar_write_long!  */
 
-static union record *start_header __P ((const char *, register struct stat *));
+static union record *__tar_start_header __P ((const char *, register struct stat *));
 #if 0
-static void write_long (const char *, char);
+static void __tar_write_long (const char *, char);
 #endif
 
 static void
-write_long (const char *p, char type)
+__tar_write_long (const char *p, char type)
 {
   int size = strlen (p) + 1;
   int bufsize;
@@ -160,26 +160,26 @@ write_long (const char *p, char type)
   memset (&foo, 0, sizeof foo);
   foo.st_size = size;
 
-  header = start_header ("././@LongLink", &foo);
+  header = __tar_start_header ("././@LongLink", &foo);
   header->header.linkflag = type;
-  finish_header (header);
+  __tar_finish_header (header);
 
-  header = findrec ();
+  header = __tar_findrec ();
 
-  bufsize = endofrecs ()->charptr - header->charptr;
+  bufsize = __tar_endofrecs ()->charptr - header->charptr;
 
   while (bufsize < size)
     {
       memcpy (header->charptr, p, (size_t) bufsize);
       p += bufsize;
       size -= bufsize;
-      userec (header + (bufsize - 1) / RECORDSIZE);
-      header = findrec ();
-      bufsize = endofrecs ()->charptr - header->charptr;
+      __tar_userec (header + (bufsize - 1) / RECORDSIZE);
+      header = __tar_findrec ();
+      bufsize = __tar_endofrecs ()->charptr - header->charptr;
     }
   memcpy (header->charptr, p, (size_t) size);
   memset (header->charptr + size, 0, (size_t) (bufsize - size));
-  userec (header + (size - 1) / RECORDSIZE);
+  __tar_userec (header + (size - 1) / RECORDSIZE);
 }
 
 /* Header handling.  */
@@ -190,14 +190,14 @@ write_long (const char *p, char type)
 `---------------------------------------------------------------------*/
 
 static union record *
-start_header (const char *name, register struct stat *st)
+__tar_start_header (const char *name, register struct stat *st)
 {
   register union record *header;
 
   if (strlen (name) >= (size_t) NAMSIZ)
-    write_long (name, LF_LONGNAME);
+    __tar_write_long (name, LF_LONGNAME);
 
-  header = (union record *) findrec ();
+  header = (union record *) __tar_findrec ();
   memset (header->charptr, 0, sizeof (*header));	/* FIXME: speed up */
 
   /* Check the file name and put it in the record.  */
@@ -224,7 +224,7 @@ Removing leading / from absolute path names in the archive")));
 	}
     }
 
-  assign_string (&current_file_name, name);
+  __tar_assign_string (&current_file_name, name);
 
   strncpy (header->header.arch_name, name, NAMSIZ);
   header->header.arch_name[NAMSIZ - 1] = '\0';
@@ -252,20 +252,20 @@ Removing leading / from absolute path names in the archive")));
      above, thus making GNU tar both a universal donor and a universal
      acceptor for Paul's test.  */
 
-  to_oct ((long) (flag_oldarch ? (st->st_mode & 07777) : st->st_mode),
+  __tar_to_oct ((long) (flag_oldarch ? (st->st_mode & 07777) : st->st_mode),
 	  8, header->header.mode);
 
-  to_oct ((long) st->st_uid, 8, header->header.uid);
-  to_oct ((long) st->st_gid, 8, header->header.gid);
-  to_oct ((long) st->st_size, 1 + 12, header->header.size);
-  to_oct ((long) st->st_mtime, 1 + 12, header->header.mtime);
+  __tar_to_oct ((long) st->st_uid, 8, header->header.uid);
+  __tar_to_oct ((long) st->st_gid, 8, header->header.gid);
+  __tar_to_oct ((long) st->st_size, 1 + 12, header->header.size);
+  __tar_to_oct ((long) st->st_mtime, 1 + 12, header->header.mtime);
 
   /* header->header.linkflag is left as null.  */
 
   if (flag_gnudump)
     {
-      to_oct ((long) st->st_atime, 1 + 12, header->header.atime);
-      to_oct ((long) st->st_ctime, 1 + 12, header->header.ctime);
+      __tar_to_oct ((long) st->st_atime, 1 + 12, header->header.atime);
+      __tar_to_oct ((long) st->st_ctime, 1 + 12, header->header.ctime);
     }
 
 #ifndef NONAMES
@@ -275,8 +275,8 @@ Removing leading / from absolute path names in the archive")));
     {
       header->header.linkflag = LF_NORMAL;	/* new default */
       strcpy (header->header.magic, TMAGIC);	/* mark as Unix Std */
-      finduname (header->header.uname, st->st_uid);
-      findgname (header->header.gname, st->st_gid);
+      __tar_finduname (header->header.uname, st->st_uid);
+      __tar_findgname (header->header.gname, st->st_gid);
     }
 #endif
 
@@ -289,7 +289,7 @@ Removing leading / from absolute path names in the archive")));
 `-------------------------------------------------------------------------*/
 
 void
-finish_header (register union record *header)
+__tar_finish_header (register union record *header)
 {
   register int i, sum;
   register char *p;
@@ -307,28 +307,28 @@ finish_header (register union record *header)
 
   /* Fill in the checksum field.  It's formatted differently from the
      other fields: it has [6] digits, a null, then a space -- rather than
-     digits, a space, then a null.  We use to_oct then write the null in
-     over to_oct's space.  The final space is already there, from
-     checksumming, and to_oct doesn't modify it.
+     digits, a space, then a null.  We use __tar_to_oct then write the null in
+     over __tar_to_oct's space.  The final space is already there, from
+     checksumming, and __tar_to_oct doesn't modify it.
 
      This is a fast way to do:
 
      sprintf(header->header.chksum, "%6o", sum);  */
 
-  to_oct ((long) sum, 8, header->header.chksum);
+  __tar_to_oct ((long) sum, 8, header->header.chksum);
   header->header.chksum[6] = '\0';	/* zap the space */
 
-  userec (header);
+  __tar_userec (header);
 
   if (flag_verbose)
     {
 
-      /* These globals are parameters to print_header, sigh.  */
+      /* These globals are parameters to __tar_print_header, sigh.  */
 
       head = header;
       /* hstat is already set up.  */
       head_standard = flag_standard;
-      print_header ();
+      __tar_print_header ();
     }
 
   return;
@@ -343,7 +343,7 @@ finish_header (register union record *header)
 `---------------------------------------------------------------------*/
 
 static int
-zero_record (char *buffer)
+__tar_zero_record (char *buffer)
 {
   register int i;
 
@@ -358,7 +358,7 @@ zero_record (char *buffer)
 `---*/
 
 static void
-init_sparsearray (void)
+__tar_init_sparsearray (void)
 {
   register int i;
 
@@ -380,7 +380,7 @@ init_sparsearray (void)
 `---*/
 
 static void
-find_new_file_size (int *filesize, int highest_index)
+__tar_find_new_file_size (int *filesize, int highest_index)
 {
   register int i;
 
@@ -407,7 +407,7 @@ find_new_file_size (int *filesize, int highest_index)
    complete null data.  */
 
 static int
-deal_with_sparse (char *name, union record *header)
+__tar_deal_with_sparse (char *name, union record *header)
 {
   long numbytes = 0;
   long offset = 0;
@@ -433,8 +433,8 @@ deal_with_sparse (char *name, union record *header)
   if (fd = open (name, O_RDONLY), fd < 0)
     return 0;
 
-  init_sparsearray ();
-  clear_buffer (buf);
+  __tar_init_sparsearray ();
+  __tar_clear_buffer (buf);
 
   while (cc = read (fd, buf, sizeof buf), cc != 0)
     {
@@ -450,7 +450,7 @@ deal_with_sparse (char *name, union record *header)
 	}
       if (cc == sizeof buf)
 	{
-	  if (zero_record (buf))
+	  if (__tar_zero_record (buf))
 	    {
 	      if (amidst_data)
 		{
@@ -474,7 +474,7 @@ deal_with_sparse (char *name, union record *header)
 	  /* This has to be the last bit of the file, so this is somewhat
 	     shorter than the above.  */
 
-	  if (!zero_record (buf))
+	  if (!__tar_zero_record (buf))
 	    {
 	      if (amidst_data)
 		numbytes += cc;
@@ -487,7 +487,7 @@ deal_with_sparse (char *name, union record *header)
 	    }
 	}
       offset += cc;
-      clear_buffer (buf);
+      __tar_clear_buffer (buf);
     }
   if (amidst_data)
     sparsearray[sparse_ind++].numbytes = numbytes;
@@ -506,7 +506,7 @@ deal_with_sparse (char *name, union record *header)
 `---*/
 
 static int
-finish_sparse_file (int fd, long *sizeleft, long fullsize, char *name)
+__tar_finish_sparse_file (int fd, long *sizeleft, long fullsize, char *name)
 {
   union record *start;
   char tempbuf[RECORDSIZE];
@@ -516,7 +516,7 @@ finish_sparse_file (int fd, long *sizeleft, long fullsize, char *name)
 
   while (*sizeleft > 0)
     {
-      start = findrec ();
+      start = __tar_findrec ();
       memset (start->charptr, 0, RECORDSIZE);
       bufsize = sparsearray[sparse_ind].numbytes;
       if (!bufsize)
@@ -541,8 +541,8 @@ finish_sparse_file (int fd, long *sizeleft, long fullsize, char *name)
 	      count = read (fd, start->charptr+amt_read, RECORDSIZE-amt_read);
 	      bufsize -= RECORDSIZE - amt_read;
 	      amt_read = 0;
-	      userec (start);
-	      start = findrec ();
+	      __tar_userec (start);
+	      start = __tar_findrec ();
 	      memset (start->charptr, 0, RECORDSIZE);
 	    }
 #endif
@@ -558,13 +558,13 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 	    }
 	  bufsize -= count;
 	  *sizeleft -= count;
-	  userec (start);
+	  __tar_userec (start);
 	  nwritten += RECORDSIZE;	/* FIXME */
-	  start = findrec ();
+	  start = __tar_findrec ();
 	  memset (start->charptr, 0, RECORDSIZE);
 	}
 
-      clear_buffer (tempbuf);
+      __tar_clear_buffer (tempbuf);
       count = read (fd, tempbuf, (size_t) bufsize);
       memcpy (start->charptr, tempbuf, RECORDSIZE);
       if (count < 0)
@@ -578,7 +578,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
       if (amt_read >= RECORDSIZE)
 	{
 	  amt_read = 0;
-	  userec (start + (count - 1) / RECORDSIZE);
+	  __tar_userec (start + (count - 1) / RECORDSIZE);
 	  if (count != bufsize)
 	    {
 	      ERROR ((0, 0,
@@ -586,20 +586,20 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 		      name, sizeleft));
 	      return 1;
 	    }
-	  start = findrec ();
+	  start = __tar_findrec ();
 	}
       else
 	amt_read += bufsize;
 #endif
       nwritten += count;	/* FIXME */
       *sizeleft -= count;
-      userec (start);
+      __tar_userec (start);
 
     }
   free (sparsearray);
 #if 0
   printf (_("Amount actually written is (I hope) %d.\n"), nwritten);
-  userec (start + (count - 1) / RECORDSIZE);
+  __tar_userec (start + (count - 1) / RECORDSIZE);
 #endif
   return 0;
 }
@@ -611,27 +611,27 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 `---*/
 
 void
-create_archive (void)
+__tar_create_archive (void)
 {
   register char *p;
 
-  open_tar_archive (0);		/* open for writing */
+  __tar_open_tar_archive (0);		/* open for writing */
 
   if (flag_gnudump)
     {
       char *buf = tar_xmalloc (PATH_MAX);
       char *q, *bufp;
 
-      collect_and_sort_names ();
+      __tar_collect_and_sort_names ();
 
-      while (p = name_from_list (), p)
-	dump_file (p, -1, 1);
+      while (p = __tar_name_from_list (), p)
+	__tar_dump_file (p, -1, 1);
 #if 0
       if (!flag_dironly)
 	{
 #endif
-	  blank_name_list ();
-	  while (p = name_from_list (), p)
+	  __tar_blank_name_list ();
+	  while (p = __tar_name_from_list (), p)
 	    {
 	      strcpy (buf, p);
 	      if (p[strlen (p) - 1] != '/')
@@ -644,7 +644,7 @@ create_archive (void)
 		  if (*q == 'Y')
 		    {
 		      strcpy (bufp, q + 1);
-		      dump_file (buf, -1, 1);
+		      __tar_dump_file (buf, -1, 1);
 		    }
 		}
 	    }
@@ -655,15 +655,15 @@ create_archive (void)
     }
   else
     {
-      while (p = name_next (1), p)
-	dump_file (p, -1, 1);
+      while (p = __tar_name_next (1), p)
+	__tar_dump_file (p, -1, 1);
     }
 
-  write_eot ();
+  __tar_write_eot ();
   close_tar_archive ();
   if (flag_gnudump && gnu_dumpfile)
-    write_dir_file ();
-  name_close ();
+    __tar_write_dir_file ();
+  __tar_name_close ();
 }
 
 /*-------------------------------------------------------------------------.
@@ -674,7 +674,7 @@ create_archive (void)
 `-------------------------------------------------------------------------*/
 
 void
-dump_file (char *p, int curdev, int toplevel)
+__tar_dump_file (char *p, int curdev, int toplevel)
 {
   union record *header;
   char type;
@@ -692,7 +692,7 @@ dump_file (char *p, int curdev, int toplevel)
   /* FIXME: `upperbound' might be used uninitialized in this function.
      Reported by Bruno Haible.  */
 
-  if (flag_confirm && !confirm ("add", p))
+  if (flag_confirm && !__tar_confirm ("add", p))
     return;
 
   /* Use stat if following (rather than dumping) 4.2BSD's symbolic links.
@@ -812,11 +812,11 @@ dump_file (char *p, int curdev, int toplevel)
 		link_name++;
 	      }
 	    if (link_name - lp->name >= NAMSIZ)
-	      write_long (link_name, LF_LONGLINK);
-	    assign_string (&current_link_name, link_name);
+	      __tar_write_long (link_name, LF_LONGLINK);
+	    __tar_assign_string (&current_link_name, link_name);
 
 	    hstat.st_size = 0;
-	    header = start_header (p, &hstat);
+	    header = __tar_start_header (p, &hstat);
 	    if (header == NULL)
 	      {
 		critical_error = 1;
@@ -830,7 +830,7 @@ dump_file (char *p, int curdev, int toplevel)
 	    header->header.arch_linkname[NAMSIZ - 1] = 0;
 
 	    header->header.linkflag = LF_LINK;
-	    finish_header (header);
+	    __tar_finish_header (header);
 
 	    /* FIXME: Maybe remove from list after all links found?  */
 
@@ -907,7 +907,7 @@ dump_file (char *p, int curdev, int toplevel)
 	      int filesize = hstat.st_size;
 	      register int i;
 
-	      header = start_header (p, &hstat);
+	      header = __tar_start_header (p, &hstat);
 	      if (header == NULL)
 		{
 		  critical_error = 1;
@@ -921,7 +921,7 @@ dump_file (char *p, int curdev, int toplevel)
 		 last element of the "sparsearray," i.e., the number of
 		 elements it needed to describe the file.  */
 
-	      upperbound = deal_with_sparse (p, header);
+	      upperbound = __tar_deal_with_sparse (p, header);
 
 	      /* See if we'll need an extended header later.  */
 
@@ -933,26 +933,26 @@ dump_file (char *p, int curdev, int toplevel)
 		 <file>.  It might be kind of disconcerting if the
 		 shrunken file size was the one that showed up.  */
 
-	      to_oct ((long) hstat.st_size, 1 + 12, header->header.realsize);
+	      __tar_to_oct ((long) hstat.st_size, 1 + 12, header->header.realsize);
 
 	      /* This will be the new "size" of the file, i.e., the size
 		 of the file minus the records of holes that we're
 		 skipping over.  */
 
-	      find_new_file_size (&filesize, upperbound);
+	      __tar_find_new_file_size (&filesize, upperbound);
 	      hstat.st_size = filesize;
-	      to_oct ((long) filesize, 1 + 12, header->header.size);
+	      __tar_to_oct ((long) filesize, 1 + 12, header->header.size);
 #if 0
-	      to_oct ((long) end_nulls, 1 + 12, header->header.ending_blanks);
+	      __tar_to_oct ((long) end_nulls, 1 + 12, header->header.ending_blanks);
 #endif
 
 	      for (i = 0; i < SPARSE_IN_HDR; i++)
 		{
 		  if (!sparsearray[i].numbytes)
 		    break;
-		  to_oct (sparsearray[i].offset, 1 + 12,
+		  __tar_to_oct (sparsearray[i].offset, 1 + 12,
 			  header->header.sp[i].offset);
-		  to_oct (sparsearray[i].numbytes, 1 + 12,
+		  __tar_to_oct (sparsearray[i].numbytes, 1 + 12,
 			  header->header.sp[i].numbytes);
 		}
 
@@ -978,7 +978,7 @@ dump_file (char *p, int curdev, int toplevel)
 
       if (!header_moved)
 	{
-	  header = start_header (p, &hstat);
+	  header = __tar_start_header (p, &hstat);
 	  if (header == NULL)
 	    {
 	      if (f >= 0)
@@ -995,7 +995,7 @@ dump_file (char *p, int curdev, int toplevel)
 #endif
       isextended = header->header.isextended;
       save_linkflag = header->header.linkflag;
-      finish_header (header);
+      __tar_finish_header (header);
       if (isextended)
 	{
 #if 0
@@ -1009,7 +1009,7 @@ dump_file (char *p, int curdev, int toplevel)
 	  /* static */ int index_offset = SPARSE_IN_HDR;
 
 	extend:
-	  exhdr = findrec ();
+	  exhdr = __tar_findrec ();
 
 	  if (exhdr == NULL)
 	    {
@@ -1021,14 +1021,14 @@ dump_file (char *p, int curdev, int toplevel)
 	    {
 	      if (i + index_offset > upperbound)
 		break;
-	      to_oct ((long) sparsearray[i + index_offset].numbytes,
+	      __tar_to_oct ((long) sparsearray[i + index_offset].numbytes,
 		      1 + 12,
 		      exhdr->ext_hdr.sp[i].numbytes);
-	      to_oct ((long) sparsearray[i + index_offset].offset,
+	      __tar_to_oct ((long) sparsearray[i + index_offset].offset,
 		      1 + 12,
 		      exhdr->ext_hdr.sp[i].offset);
 	    }
-	  userec (exhdr);
+	  __tar_userec (exhdr);
 #if 0
 	  sum += i;
 	  if (sum < upperbound)
@@ -1044,7 +1044,7 @@ dump_file (char *p, int curdev, int toplevel)
 	}
       if (save_linkflag == LF_SPARSE)
 	{
-	  if (finish_sparse_file (f, &sizeleft, hstat.st_size, p))
+	  if (__tar_finish_sparse_file (f, &sizeleft, hstat.st_size, p))
 	    goto padit;
 	}
       else
@@ -1052,13 +1052,13 @@ dump_file (char *p, int curdev, int toplevel)
 	  {
 	    if (flag_multivol)
 	      {
-		assign_string (&save_name, p);
+		__tar_assign_string (&save_name, p);
 		save_sizeleft = sizeleft;
 		save_totsize = hstat.st_size;
 	      }
-	    start = findrec ();
+	    start = __tar_findrec ();
 
-	    bufsize = endofrecs ()->charptr - start->charptr;
+	    bufsize = __tar_endofrecs ()->charptr - start->charptr;
 
 	    if (sizeleft < bufsize)
 	      {
@@ -1083,7 +1083,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 
 	    /* This is nonportable (the type of userec's arg).  */
 
-	    userec (start + (count - 1) / RECORDSIZE);
+	    __tar_userec (start + (count - 1) / RECORDSIZE);
 
 	    if (count == bufsize)
 	      continue;
@@ -1093,7 +1093,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 	  }
 
       if (flag_multivol)
-	assign_string (&save_name, NULL);
+	__tar_assign_string (&save_name, NULL);
 
       if (f >= 0)
 	close (f);
@@ -1114,13 +1114,13 @@ Read error at byte %ld, reading %d bytes, in file %s"),
       while (sizeleft > 0)
 	{
 	  save_sizeleft = sizeleft;
-	  start = findrec ();
+	  start = __tar_findrec ();
 	  memset (start->charptr, 0, RECORDSIZE);
-	  userec (start);
+	  __tar_userec (start);
 	  sizeleft -= RECORDSIZE;
 	}
       if (flag_multivol)
-	assign_string (&save_name, NULL);
+	__tar_assign_string (&save_name, NULL);
       if (f >= 0)
 	close (f);
       if (flag_atime_preserve)
@@ -1139,11 +1139,11 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 	goto badperror;
       buf[size] = '\0';
       if (size >= NAMSIZ)
-	write_long (buf, LF_LONGLINK);
-      assign_string (&current_link_name, buf);
+	__tar_write_long (buf, LF_LONGLINK);
+      __tar_assign_string (&current_link_name, buf);
 
       hstat.st_size = 0;	/* force 0 size on symlink */
-      header = start_header (p, &hstat);
+      header = __tar_start_header (p, &hstat);
       if (header == NULL)
 	{
 	  critical_error = 1;
@@ -1152,7 +1152,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
       strncpy (header->header.arch_linkname, buf, NAMSIZ);
       header->header.arch_linkname[NAMSIZ - 1] = '\0';
       header->header.linkflag = LF_SYMLINK;
-      finish_header (header);	/* nothing more to do to it */
+      __tar_finish_header (header);	/* nothing more to do to it */
       if (flag_remove_files)
 	{
 	  if (unlink (p) == -1)
@@ -1193,12 +1193,12 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 	  /* If people could really read standard archives, this should
 	     be: (FIXME)
 
-	     header = start_header (flag_standard ? p : namebuf, &hstat);
+	     header = __tar_start_header (flag_standard ? p : namebuf, &hstat);
 
 	     but since they'd interpret LF_DIR records as regular files,
 	     we'd better put the / on the name.  */
 
-	  header = start_header (namebuf, &hstat);
+	  header = __tar_start_header (namebuf, &hstat);
 	  if (header == NULL)
 	    {
 	      critical_error = 1;
@@ -1213,7 +1213,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 	  /* If we're gnudumping, we aren't done yet so don't close it.  */
 
 	  if (!flag_gnudump)
-	    finish_header (header);	/* done with directory header */
+	    __tar_finish_header (header);	/* done with directory header */
 	}
 
       if (flag_gnudump && gnu_list_name->dir_contents)
@@ -1236,20 +1236,20 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 	      p_buf += tmp;
 	    }
 	  totsize++;
-	  to_oct ((long) totsize, 1 + 12, header->header.size);
-	  finish_header (header);
+	  __tar_to_oct ((long) totsize, 1 + 12, header->header.size);
+	  __tar_finish_header (header);
 	  p_buf = buf;
 	  sizeleft = totsize;
 	  while (sizeleft > 0)
 	    {
 	      if (flag_multivol)
 		{
-		  assign_string (&save_name, p);
+		  __tar_assign_string (&save_name, p);
 		  save_sizeleft = sizeleft;
 		  save_totsize = totsize;
 		}
-	      start = findrec ();
-	      bufsize = endofrecs ()->charptr - start->charptr;
+	      start = __tar_findrec ();
+	      bufsize = __tar_endofrecs ()->charptr - start->charptr;
 	      if (sizeleft < bufsize)
 		{
 		  bufsize = sizeleft;
@@ -1261,10 +1261,10 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 	      memcpy (start->charptr, p_buf, (size_t) bufsize);
 	      sizeleft -= bufsize;
 	      p_buf += bufsize;
-	      userec (start + (bufsize - 1) / RECORDSIZE);
+	      __tar_userec (start + (bufsize - 1) / RECORDSIZE);
 	    }
 	  if (flag_multivol)
-	    assign_string (&save_name, NULL);
+	    __tar_assign_string (&save_name, NULL);
 	  if (flag_atime_preserve)
 	    utime (p, &restore_times);
 	  return;
@@ -1307,7 +1307,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 
 	  /* Skip `.' and `..'.  */
 
-	  if (is_dot_or_dotdot (d->d_name))
+	  if (__tar_is_dot_or_dotdot (d->d_name))
 	    continue;
 
 	  if ((int) NAMLEN (d) + len >= buflen)
@@ -1321,9 +1321,9 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 #endif
 	    }
 	  strcpy (namebuf + len, d->d_name);
-	  if (flag_exclude && check_exclude (namebuf))
+	  if (flag_exclude && __tar_check_exclude (namebuf))
 	    continue;
-	  dump_file (namebuf, our_device, 0);
+	  __tar_dump_file (namebuf, our_device, 0);
 	}
 
       closedir (dirp);
@@ -1362,7 +1362,7 @@ Read error at byte %ld, reading %d bytes, in file %s"),
     goto unknown;
 
   hstat.st_size = 0;		/* force 0 size */
-  header = start_header (p, &hstat);
+  header = __tar_start_header (p, &hstat);
   if (header == NULL)
     {
       critical_error = 1;
@@ -1374,14 +1374,14 @@ Read error at byte %ld, reading %d bytes, in file %s"),
 #if defined(S_IFBLK) || defined(S_IFCHR)
   if (type != LF_FIFO)
     {
-      to_oct ((long) major (hstat.st_rdev), 8,
+      __tar_to_oct ((long) major (hstat.st_rdev), 8,
 	      header->header.devmajor);
-      to_oct ((long) minor (hstat.st_rdev), 8,
+      __tar_to_oct ((long) minor (hstat.st_rdev), 8,
 	      header->header.devminor);
     }
 #endif
 
-  finish_header (header);
+  __tar_finish_header (header);
   if (flag_remove_files)
     {
       if (unlink (p) == -1)

@@ -72,7 +72,7 @@
    -- atoi doesn't.  For now, punt.  FIXME.  */
 
 
-time_t get_date ();
+time_t __tar_get_date ();
 
 /* Local declarations.  */
 
@@ -94,11 +94,11 @@ time_t new_time;
   `-------------------------------------------------------------------------*/
 
 void
-assign_string (char **string, const char *value)
+__tar_assign_string (char **string, const char *value)
 {
     if (*string)
 	free (*string);
-    *string = value ? xstrdup (value) : NULL;
+    *string = value ? __tar_xstrdup (value) : NULL;
 }
 
 /*-----------------------------------------------------------------.
@@ -106,7 +106,7 @@ assign_string (char **string, const char *value)
   `-----------------------------------------------------------------*/
 
 int
-confirm (const char *action, const char *file)
+__tar_confirm (const char *action, const char *file)
 {
     int c, nl;
     static FILE *confirm_file = 0;
@@ -137,7 +137,7 @@ static int name_index = 0;	/* how many of the entries have we scanned? */
   `--------------------------------------------------------------*/
 
 static void
-name_add (const char *name)
+__tar_name_add (const char *name)
 {
     if (names == allocated_names)
 	{
@@ -163,7 +163,7 @@ static size_t name_buffer_length; /* allocated length of name_buffer */
   `-------------------------------------------------------------------------*/
 
 static void
-name_init (int argc, char *const *argv)
+__tar_name_init (int argc, char *const *argv)
 {
     if (flag_namefile)
 	{
@@ -192,7 +192,7 @@ name_init (int argc, char *const *argv)
   `---------------------------------------------------------------------*/
 
 static int
-read_name_from_file (void)
+__tar_read_name_from_file (void)
 {
     register int c;
     register int counter = 0;
@@ -231,7 +231,7 @@ read_name_from_file (void)
   `-------------------------------------------------------------------------*/
 
 char *
-name_next (int change_dirs)
+__tar_name_next (int change_dirs)
 {
     const char *source;
     char *cursor;
@@ -245,7 +245,7 @@ name_next (int change_dirs)
 
 	    /* Read from file.  */
 
-	    while (read_name_from_file ())
+	    while (__tar_read_name_from_file ())
 		if (*name_buffer)	/* ignore emtpy lines */
 		    {
 
@@ -266,9 +266,9 @@ name_next (int change_dirs)
 			    chdir_flag = 1;
 			else
 #if 0
-			    if (!flag_exclude || !check_exclude (name_buffer))
+			    if (!flag_exclude || !__tar_check_exclude (name_buffer))
 #endif
-				return un_quote_string (name_buffer);
+				return __tar_un_quote_string (name_buffer);
 		    }
 
 	    /* No more names in file.  */
@@ -313,9 +313,9 @@ name_next (int change_dirs)
 			chdir_flag = 1;
 		    else
 #if 0
-			if (!flag_exclude || !check_exclude (name_buffer))
+			if (!flag_exclude || !__tar_check_exclude (name_buffer))
 #endif
-			    return un_quote_string (name_buffer);
+			    return __tar_un_quote_string (name_buffer);
 		}
 	}
 
@@ -329,7 +329,7 @@ name_next (int change_dirs)
   `------------------------------*/
 
 void
-name_close (void)
+__tar_name_close (void)
 {
     if (name_file != NULL && name_file != stdin)
 	fclose (name_file);
@@ -340,19 +340,19 @@ name_close (void)
   | care.									   |
   | 									   |
   | If the names are already sorted to match the archive, we just read them  |
-  | one by one.  name_gather reads the first one, and it is called by	   |
-  | name_match as appropriate to read the next ones.  At EOF, the last name  |
+  | one by one.  __tar_name_gather reads the first one, and it is called by	   |
+  | __tar_name_match as appropriate to read the next ones.  At EOF, the last name  |
   | read is just left in the buffer.  This option lets users of small	   |
   | machines extract an arbitrary number of files by doing "tar t" and	   |
   | editing down the list of files.					   |
   `-------------------------------------------------------------------------*/
 
 void
-name_gather (void)
+__tar_name_gather (void)
 {
     register char *p;
     static struct name *namebuf;	/* one-name buffer */
-    static namelen;
+    static int namelen;
     static char *chdir_name = NULL;
 
     if (flag_sorted_names)
@@ -362,13 +362,13 @@ name_gather (void)
 		    namelen = NAMSIZ;
 		    namebuf = (struct name *) tar_xmalloc (sizeof (struct name) + NAMSIZ);
 		}
-	    p = name_next (0);
+	    p = __tar_name_next (0);
 	    if (p)
 		{
 		    if (strcmp (p, "-C") == 0)
 			{
-			    chdir_name = xstrdup (name_next (0));
-			    p = name_next (0);
+			    chdir_name = __tar_xstrdup (__tar_name_next (0));
+			    p = __tar_name_next (0);
 			    if (!p)
 				ERROR ((TAREXIT_FAILURE, 0, _("Missing file name after -C")));
 			    namebuf->change_dir = chdir_name;
@@ -392,8 +392,8 @@ name_gather (void)
 
     /* Non sorted names -- read them all in.  */
 
-    while (p = name_next (0), p)
-	addname (p);
+    while (p = __tar_name_next (0), p)
+	__tar_addname (p);
 }
 
 /*-----------------------------.
@@ -401,7 +401,7 @@ name_gather (void)
   `-----------------------------*/
 
 void
-addname (const char *name)
+__tar_addname (const char *name)
 {
     register int i;		/* length of string */
     register struct name *p;	/* current struct pointer */
@@ -409,8 +409,8 @@ addname (const char *name)
 
     if (strcmp (name, "-C") == 0)
 	{
-	    chdir_name = xstrdup (name_next (0));
-	    name = name_next (0);
+	    chdir_name = __tar_xstrdup (__tar_name_next (0));
+	    name = __tar_name_next (0);
 	    if (!chdir_name)
 		ERROR ((TAREXIT_FAILURE, 0, _("Missing file name after -C")));
 	    if (chdir_name[0] != '/')
@@ -426,7 +426,7 @@ addname (const char *name)
 			ERROR ((TAREXIT_FAILURE, 0,
 				_("Could not get current directory: %s"), path));
 #endif
-		    chdir_name = xstrdup (new_name (path, chdir_name));
+		    chdir_name = __tar_xstrdup (__tar_new_name (path, chdir_name));
 		    free (path);
 		}
 	}
@@ -471,7 +471,7 @@ addname (const char *name)
   `---------------------------------------------------------------------*/
 
 int
-name_match (register const char *p)
+__tar_name_match (register const char *p)
 {
     register struct name *nlp;
     register int len;
@@ -548,7 +548,7 @@ name_match (register const char *p)
 
     if (flag_sorted_names && namelist->found)
 	{
-	    name_gather ();		/* read one more */
+	    __tar_name_gather ();		/* read one more */
 	    if (!namelist->found)
 		goto again;
 	}
@@ -560,7 +560,7 @@ name_match (register const char *p)
   `------------------------------------------------------------------*/
 
 void
-names_notfound (void)
+__tar_names_notfound (void)
 {
     register struct name *nlp, *next;
     register char *p;
@@ -585,7 +585,7 @@ names_notfound (void)
 
     if (flag_sorted_names)
 	{
-	    while (p = name_next (1), p)
+	    while (p = __tar_name_next (1), p)
 		ERROR ((0, 0, _("%s: Not found in archive"), p));
 	}
 }
@@ -597,20 +597,20 @@ names_notfound (void)
   `---*/
 
 void
-name_expand (void)
+__tar_name_expand (void)
 {
     ;
 }
 
 /*------------------------------------------------------------------------.
-  | This is like name_match(), except that it returns a pointer to the name |
+  | This is like __tar_name_match(), except that it returns a pointer to the name |
   | it matched, and doesn't set ->found The caller will have to do that if  |
   | it wants to.  Oh, and if the namelist is empty, it returns 0, unlike	  |
-  | name_match(), which returns TRUE					  |
+  | __tar_name_match(), which returns TRUE					  |
   `------------------------------------------------------------------------*/
 
 struct name *
-name_scan (register const char *p)
+__tar_name_scan (register const char *p)
 {
     register struct name *nlp;
     register int len;
@@ -653,7 +653,7 @@ name_scan (register const char *p)
 
     if (flag_sorted_names && namelist->found)
 	{
-	    name_gather ();		/* read one more */
+	    __tar_name_gather ();		/* read one more */
 	    if (!namelist->found)
 		goto again;
 	}
@@ -669,7 +669,7 @@ name_scan (register const char *p)
 struct name *gnu_list_name;
 
 char *
-name_from_list (void)
+__tar_name_from_list (void)
 {
     if (!gnu_list_name)
 	gnu_list_name = namelist;
@@ -692,7 +692,7 @@ name_from_list (void)
   `---*/
 
 void
-blank_name_list (void)
+__tar_blank_name_list (void)
 {
     struct name *n;
 
@@ -706,7 +706,7 @@ blank_name_list (void)
   `---*/
 
 char *
-new_name (char *path, char *name)
+__tar_new_name (char *path, char *name)
 {
     char *path_buf;
 
@@ -734,7 +734,7 @@ int free_re_exclude = 0;
   `---*/
 
 static int
-is_regex (const char *str)
+__tar_is_regex (const char *str)
 {
     return strchr (str, '*') || strchr (str, '[') || strchr (str, '?');
 }
@@ -744,11 +744,11 @@ is_regex (const char *str)
   `---*/
 
 static void
-add_exclude (char *name)
+__tar_add_exclude (char *name)
 {
     int size_buf;
 
-    un_quote_string (name);
+    __tar_un_quote_string (name);
     size_buf = strlen (name);
 
     if (x_buffer == 0)
@@ -772,7 +772,7 @@ add_exclude (char *name)
 		*tmp_ptr = x_buffer + ((*tmp_ptr) - old_x_buffer);
 	}
 
-    if (is_regex (name))
+    if (__tar_is_regex (name))
 	{
 	    if (free_re_exclude == 0)
 		{
@@ -806,7 +806,7 @@ add_exclude (char *name)
   `---*/
 
 static void
-add_exclude_file (char *file)
+__tar_add_exclude_file (char *file)
 {
     FILE *fp;
     char buf[1024];
@@ -833,7 +833,7 @@ add_exclude_file (char *file)
 	    end_str = strrchr (buf, '\n');
 	    if (end_str)
 		*end_str = '\0';
-	    add_exclude (buf);
+	    __tar_add_exclude (buf);
 
 	}
     fclose (fp);
@@ -844,7 +844,7 @@ add_exclude_file (char *file)
   `--------------------------------------------------------------------*/
 
 int
-check_exclude (const char *name)
+__tar_check_exclude (const char *name)
 {
     int n;
     char *str;
@@ -979,7 +979,7 @@ struct option long_options[] =
   `---------------------------------------------*/
 
 static void
-usage (int status)
+__tar_usage (int status)
 {
     if (status != TAREXIT_SUCCESS)
 	fprintf (stderr, _("Try `%s --help' for more information.\n"),
@@ -1107,7 +1107,7 @@ On *this* particular tar, the defaults are -f %s and -b %d.\n"),
     (command_mode = command_mode == COMMAND_NONE ? (Mode) : COMMAND_TOO_MANY)
 
 static void
-decode_options (int argc, char *const *argv)
+__tar_decode_options (int argc, char *const *argv)
 {
     int optchar;			/* option letter */
 
@@ -1151,7 +1151,7 @@ decode_options (int argc, char *const *argv)
 	    for (letter = *in++; *letter; letter++)
 		{
 		    buffer[1] = *letter;
-		    *out++ = xstrdup (buffer);
+		    *out++ = __tar_xstrdup (buffer);
 		    cursor = strchr (OPTION_STRING, *letter);
 		    if (cursor && cursor[1] == ':')
 			*out++ = *in++;
@@ -1187,20 +1187,20 @@ decode_options (int argc, char *const *argv)
 	    switch (optchar)
 		{
 		case '?':
-		    usage (TAREXIT_FAILURE);
+		    __tar_usage (TAREXIT_FAILURE);
 
 		case 0:
 		    break;
 
 		case 'C':
-		    name_add ("-C");
+		    __tar_name_add ("-C");
 		    /* Fall through.  */
 
 		case 1:
 		    /* File name or non-parsed option, because of RETURN_IN_ORDER
 		       ordering triggerred by the leading dash in OPTION_STRING.  */
 
-		    name_add (optarg);
+		    __tar_name_add (optarg);
 		    break;
 
 		case OPTION_PRESERVE:
@@ -1218,7 +1218,7 @@ decode_options (int argc, char *const *argv)
 		    /* Only write files newer than X.  */
 
 		    flag_new_files++;
-		    new_time = get_date (optarg, (voidstar) 0);
+		    new_time = __tar_get_date (optarg, (voidstar) 0);
 		    if (new_time == (time_t) -1)
 			ERROR ((TAREXIT_FAILURE, 0, _("Invalid date format `%s'"),
 				optarg));
@@ -1231,7 +1231,7 @@ decode_options (int argc, char *const *argv)
 
 		case OPTION_EXCLUDE:
 		    flag_exclude++;
-		    add_exclude (optarg);
+		    __tar_add_exclude (optarg);
 		    break;
 
 		case OPTION_NULL:
@@ -1258,7 +1258,7 @@ decode_options (int argc, char *const *argv)
 		       of the archive, and include in each directory its contents.  */
 
 		    if (flag_oldarch)
-			usage (TAREXIT_FAILURE);
+			__tar_usage (TAREXIT_FAILURE);
 		    flag_gnudump++;
 		    gnu_dumpfile = optarg;
 		    break;
@@ -1314,7 +1314,7 @@ decode_options (int argc, char *const *argv)
 				break;
 
 			    default:
-				usage (TAREXIT_FAILURE);
+				__tar_usage (TAREXIT_FAILURE);
 			    }
 			sprintf (cursor, "%d", device);
 
@@ -1336,7 +1336,7 @@ decode_options (int argc, char *const *argv)
 #else /* not DEVICE_PREFIX */
 
 		    ERROR ((0, 0, _("Options [0-7][lmh] not supported by *this* tar")));
-		    usage (TAREXIT_FAILURE);
+		    __tar_usage (TAREXIT_FAILURE);
 
 #endif /* not DEVICE_PREFIX */
 
@@ -1399,7 +1399,7 @@ decode_options (int argc, char *const *argv)
 		       of the archive, and include in each directory its contents  */
 
 		    if (flag_oldarch)
-			usage (TAREXIT_FAILURE);
+			__tar_usage (TAREXIT_FAILURE);
 		    flag_gnudump++;
 		    gnu_dumpfile = 0;
 		    break;
@@ -1431,7 +1431,7 @@ decode_options (int argc, char *const *argv)
 
 		case 'K':
 		    flag_startfile++;
-		    addname (optarg);
+		    __tar_addname (optarg);
 		    break;
 
 		case 'l':
@@ -1465,7 +1465,7 @@ decode_options (int argc, char *const *argv)
 			|| flag_dironly
 #endif
 			)
-			usage (TAREXIT_FAILURE);
+			__tar_usage (TAREXIT_FAILURE);
 		    flag_oldarch++;
 		    break;
 
@@ -1549,7 +1549,7 @@ decode_options (int argc, char *const *argv)
 
 		case 'X':
 		    flag_exclude++;
-		    add_exclude_file (optarg);
+		    __tar_add_exclude_file (optarg);
 		    break;
 
 		case 'z':
@@ -1580,7 +1580,7 @@ decode_options (int argc, char *const *argv)
 	}
 
     if (show_help)
-	usage (TAREXIT_SUCCESS);
+	__tar_usage (TAREXIT_SUCCESS);
 
     /* Derive option values and check option consistency.  */
 
@@ -1618,28 +1618,28 @@ static void tar_parameters_switcher(){
 	case COMMAND_NONE:
 	    WARN ((0, 0, _("\
 You must specify one of the r, c, t, x, or d options")));
-	    usage (TAREXIT_FAILURE);
+	    __tar_usage (TAREXIT_FAILURE);
 
 	case COMMAND_TOO_MANY:
 	    WARN ((0, 0, _("\
 You may not specify more than one of the r, c, t, x, or d options")));
-	    usage (TAREXIT_FAILURE);
+	    __tar_usage (TAREXIT_FAILURE);
 
 	case COMMAND_CAT:
 	case COMMAND_UPDATE:
 	case COMMAND_APPEND:
 	    DEBUG_PRINT("COMMAND_APPEND");
-	    update_archive ();
+	    __tar_update_archive ();
 	    DEBUG_PRINT("COMMAND_APPEND OK");
 	    break;
 
 	case COMMAND_DELETE:
-	    junk_archive ();
+	    __tar_junk_archive ();
 	    break;
 
 	case COMMAND_CREATE:
 	    DEBUG_PRINT("COMMAND_CREATE");
-	    create_archive ();
+	    __tar_create_archive ();
 	    DEBUG_PRINT("COMMAND_CREATE OK");
 	    if (flag_totals)
 		fprintf (stderr, _("Total bytes written: %d\n"), tot_written);
@@ -1661,8 +1661,8 @@ You may not specify more than one of the r, c, t, x, or d options")));
 			    break;
 			}
 		}
-	    extr_init ();
-	    read_and (extract_archive);
+	    __tar_extr_init ();
+	    __tar_read_and (__tar_extract_archive);
 	    break;
 
 	case COMMAND_LIST:
@@ -1681,7 +1681,7 @@ You may not specify more than one of the r, c, t, x, or d options")));
 			    break;
 			}
 		}
-	    read_and (list_archive);
+	    __tar_read_and (__tar_list_archive);
 #if 0
 	    if (!errors)
 		errors = different;
@@ -1689,8 +1689,8 @@ You may not specify more than one of the r, c, t, x, or d options")));
 	    break;
 
 	case COMMAND_DIFF:
-	    diff_init ();
-	    read_and (diff_archive);
+	    __tar_diff_init ();
+	    __tar_read_and (__tar_diff_archive);
 	    break;
 	}
 }
@@ -1718,12 +1718,12 @@ int save_as_tar(const char *dir_path, const char *tar_path ){
     DEBUG_PRINT(argv[3]);
 
     DEBUG_PRINT("3");
-    decode_options (argc, argv);
+    __tar_decode_options (argc, argv);
     DEBUG_PRINT("4");
 
     if (!names_argv){
 	DEBUG_PRINT("5");
-	name_init (argc, argv);
+	__tar_name_init (argc, argv);
 	DEBUG_PRINT("6");
     }
 
@@ -1731,7 +1731,7 @@ int save_as_tar(const char *dir_path, const char *tar_path ){
     /* Main command execution.  */
     if (flag_volno_file){
 	DEBUG_PRINT("8");
-	init_volume_number ();
+	__tar_init_volume_number ();
 	DEBUG_PRINT("9");
     }
 
@@ -1741,7 +1741,7 @@ int save_as_tar(const char *dir_path, const char *tar_path ){
 
     if (flag_volno_file){
 	DEBUG_PRINT("12");
-	closeout_volume_number ();
+	__tar_closeout_volume_number ();
 	DEBUG_PRINT("13");
     }
 

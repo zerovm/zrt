@@ -29,11 +29,11 @@
 #include "tar.h"
 #include "rmt.h"
 
-static int compare_chunk __P ((long, char *));
-static int compare_dir __P ((long, char *));
-static void diff_sparse_files __P ((int));
-static int do_stat __P ((struct stat *));
-static void fill_in_sparse_array __P ((void));
+static int __tar_compare_chunk __P ((long, char *));
+static int __tar_compare_dir __P ((long, char *));
+static void __tar_diff_sparse_files __P ((int));
+static int __tar_do_stat __P ((struct stat *));
+static void __tar_fill_in_sparse_array __P ((void));
 
 int now_verifying = 0;		/* are we verifying at the moment? */
 
@@ -55,7 +55,7 @@ int sp_ar_size = 10;
 `------------------------------------*/
 
 static void
-sigh (const char *what)
+__tar_sigh (const char *what)
 {
   fprintf (stdlis, _("%s: %s differs\n"), current_file_name, what);
   if (exit_status == TAREXIT_SUCCESS)
@@ -67,7 +67,7 @@ sigh (const char *what)
 `--------------------------------*/
 
 void
-diff_init (void)
+__tar_diff_init (void)
 {
   diff_buf = (char *) valloc ((unsigned) blocksize);
   if (!diff_buf)
@@ -81,7 +81,7 @@ diff_init (void)
 `----------------------------------*/
 
 void
-diff_archive (void)
+__tar_diff_archive (void)
 {
   register char *data;
   int check, namelen;
@@ -96,9 +96,9 @@ diff_archive (void)
 
   errno = EPIPE;		/* FIXME, remove perrors */
 
-  saverec (&head);		/* make sure it sticks around */
-  userec (head);		/* and go past it in the archive */
-  decode_header (head, &hstat, &head_standard, 1);	/* snarf fields */
+  __tar_saverec (&head);		/* make sure it sticks around */
+  __tar_userec (head);		/* and go past it in the archive */
+  __tar_decode_header (head, &hstat, &head_standard, 1);	/* snarf fields */
 
   /* Print the record from `head' and `hstat'.  */
 
@@ -106,7 +106,7 @@ diff_archive (void)
     {
       if (now_verifying)
 	fprintf (stdlis, _("Verify "));
-      print_header ();
+      __tar_print_header ();
     }
 
   switch (head->header.linkflag)
@@ -128,11 +128,11 @@ diff_archive (void)
       if (current_file_name[namelen] == '/')
 	goto really_dir;
 
-      if (do_stat (&filestat))
+      if (__tar_do_stat (&filestat))
 	{
 	  if (head->header.isextended)
-	    skip_extended_headers ();
-	  skip_file ((long) hstat.st_size);
+	    __tar_skip_extended_headers ();
+	  __tar_skip_file ((long) hstat.st_size);
 	  different++;
 	  goto quit;
 	}
@@ -140,25 +140,25 @@ diff_archive (void)
       if (!S_ISREG (filestat.st_mode))
 	{
 	  fprintf (stdlis, _("%s: Not a regular file\n"), current_file_name);
-	  skip_file ((long) hstat.st_size);
+	  __tar_skip_file ((long) hstat.st_size);
 	  different++;
 	  goto quit;
 	}
 
       filestat.st_mode &= 07777;
       if (filestat.st_mode != hstat.st_mode)
-	sigh (_("Mode"));
+	__tar_sigh (_("Mode"));
       if (filestat.st_uid != hstat.st_uid)
-	sigh (_("Uid"));
+	__tar_sigh (_("Uid"));
       if (filestat.st_gid != hstat.st_gid)
-	sigh (_("Gid"));
+	__tar_sigh (_("Gid"));
       if (filestat.st_mtime != hstat.st_mtime)
-	sigh (_("Mod time"));
+	__tar_sigh (_("Mod time"));
       if (head->header.linkflag != LF_SPARSE &&
 	  filestat.st_size != hstat.st_size)
 	{
-	  sigh (_("Size"));
-	  skip_file ((long) hstat.st_size);
+	  __tar_sigh (_("Size"));
+	  __tar_skip_file ((long) hstat.st_size);
 	  goto quit;
 	}
 
@@ -177,8 +177,8 @@ diff_archive (void)
 	{
 	  ERROR ((0, errno, _("Cannot open %s"), current_file_name));
 	  if (head->header.isextended)
-	    skip_extended_headers ();
-	  skip_file ((long) hstat.st_size);
+	    __tar_skip_extended_headers ();
+	  __tar_skip_file ((long) hstat.st_size);
 	  different++;
 	  goto quit;
 	}
@@ -186,18 +186,18 @@ diff_archive (void)
       /* Need to treat sparse files completely differently here.  */
 
       if (head->header.linkflag == LF_SPARSE)
-	diff_sparse_files (hstat.st_size);
+	__tar_diff_sparse_files (hstat.st_size);
       else
 	{
 	  if (flag_multivol)
 	    {
-	      assign_string (&save_name, current_file_name);
+	      __tar_assign_string (&save_name, current_file_name);
 	      save_totsize = hstat.st_size;
-	      /* save_size is set in wantbytes ().  */
+	      /* save_size is set in __tar_wantbytes ().  */
 	    }
-	  wantbytes ((long) (hstat.st_size), compare_chunk);
+	  __tar_wantbytes ((long) (hstat.st_size), __tar_compare_chunk);
 	  if (flag_multivol)
-	    assign_string (&save_name, NULL);
+	    __tar_assign_string (&save_name, NULL);
 	}
 
       check = close (diff_fd);
@@ -209,7 +209,7 @@ diff_archive (void)
 
 #ifndef __MSDOS__
     case LF_LINK:
-      if (do_stat (&filestat))
+      if (__tar_do_stat (&filestat))
 	break;
       dev = filestat.st_dev;
       ino = filestat.st_ino;
@@ -288,7 +288,7 @@ diff_archive (void)
     check_node:
       /* FIXME, deal with umask.  */
 
-      if (do_stat (&filestat))
+      if (__tar_do_stat (&filestat))
 	break;
       if (hstat.st_rdev != filestat.st_rdev)
 	{
@@ -314,22 +314,22 @@ diff_archive (void)
       break;
 
     case LF_DUMPDIR:
-      data = diff_dir = get_dir_contents (current_file_name, 0);
+      data = diff_dir = __tar_get_dir_contents (current_file_name, 0);
       if (flag_multivol)
 	{
-	  assign_string (&save_name, current_file_name);
+	  __tar_assign_string (&save_name, current_file_name);
 	  save_totsize = hstat.st_size;
-	  /* save_size is set in wantbytes ().  */
+	  /* save_size is set in __tar_wantbytes ().  */
 	}
       if (data)
 	{
-	  wantbytes ((long) (hstat.st_size), compare_dir);
+	  __tar_wantbytes ((long) (hstat.st_size), __tar_compare_dir);
 	  free (data);
 	}
       else
-	wantbytes ((long) (hstat.st_size), no_op);
+	__tar_wantbytes ((long) (hstat.st_size), __tar_no_op);
       if (flag_multivol)
-	assign_string (&save_name, NULL);
+	__tar_assign_string (&save_name, NULL);
       /* Fall through.  */
 
     case LF_DIR:
@@ -341,7 +341,7 @@ diff_archive (void)
       while (namelen && current_file_name[namelen] == '/')
 	current_file_name[namelen--] = '\0';	/* zap / */
 
-      if (do_stat (&filestat))
+      if (__tar_do_stat (&filestat))
 	break;
       if (!S_ISDIR (filestat.st_mode))
 	{
@@ -351,7 +351,7 @@ diff_archive (void)
 	  break;
 	}
       if ((filestat.st_mode & 07777) != (hstat.st_mode & 07777))
-	sigh (_("Mode"));
+	__tar_sigh (_("Mode"));
       break;
 
     case LF_VOLHDR:
@@ -362,23 +362,23 @@ diff_archive (void)
       if (current_file_name[namelen] == '/')
 	goto really_dir;
 
-      if (do_stat (&filestat))
+      if (__tar_do_stat (&filestat))
 	break;
 
       if (!S_ISREG (filestat.st_mode))
 	{
 	  fprintf (stdlis, _("%s: Not a regular file\n"), current_file_name);
-	  skip_file ((long) hstat.st_size);
+	  __tar_skip_file ((long) hstat.st_size);
 	  different++;
 	  break;
 	}
 
       filestat.st_mode &= 07777;
-      offset = from_oct (1 + 12, head->header.offset);
+      offset = __tar_from_oct (1 + 12, head->header.offset);
       if (filestat.st_size != hstat.st_size + offset)
 	{
-	  sigh (_("Size"));
-	  skip_file ((long) hstat.st_size);
+	  __tar_sigh (_("Size"));
+	  __tar_skip_file ((long) hstat.st_size);
 	  different++;
 	  break;
 	}
@@ -388,7 +388,7 @@ diff_archive (void)
       if (diff_fd < 0)
 	{
 	  WARN ((0, errno, _("Cannot open file %s"), current_file_name));
-	  skip_file ((long) hstat.st_size);
+	  __tar_skip_file ((long) hstat.st_size);
 	  different++;
 	  break;
 	}
@@ -403,13 +403,13 @@ diff_archive (void)
 
       if (flag_multivol)
 	{
-	  assign_string (&save_name, current_file_name);
+	  __tar_assign_string (&save_name, current_file_name);
 	  save_totsize = filestat.st_size;
-	  /* save_size is set in wantbytes ().  */
+	  /* save_size is set in __tar_wantbytes ().  */
 	}
-      wantbytes ((long) (hstat.st_size), compare_chunk);
+      __tar_wantbytes ((long) (hstat.st_size), __tar_compare_chunk);
       if (flag_multivol)
-	assign_string (&save_name, NULL);
+	__tar_assign_string (&save_name, NULL);
 
       check = close (diff_fd);
       if (check < 0)
@@ -420,7 +420,7 @@ diff_archive (void)
 
   /* We don't need to save it any longer. */
 
-  saverec ((union record **) 0);	/* unsave it */
+  __tar_saverec ((union record **) 0);	/* unsave it */
 }
 
 /*---.
@@ -428,7 +428,7 @@ diff_archive (void)
 `---*/
 
 static int
-compare_chunk (long bytes, char *buffer)
+__tar_compare_chunk (long bytes, char *buffer)
 {
   int err;
 
@@ -457,7 +457,7 @@ compare_chunk (long bytes, char *buffer)
 `---*/
 
 static int
-compare_dir (long bytes, char *buffer)
+__tar_compare_dir (long bytes, char *buffer)
 {
   if (memcmp (buffer, diff_dir, (size_t) bytes))
     {
@@ -474,7 +474,7 @@ compare_dir (long bytes, char *buffer)
 `---*/
 
 void
-verify_volume (void)
+__tar_verify_volume (void)
 {
   int status;
 #ifdef MTIOCTOP
@@ -483,7 +483,7 @@ verify_volume (void)
 #endif
 
   if (!diff_buf)
-    diff_init ();
+    __tar_diff_init ();
 #ifdef MTIOCTOP
   t.mt_op = MTBSF;
   t.mt_count = 1;
@@ -507,10 +507,10 @@ verify_volume (void)
 #endif
   ar_reading = 1;
   now_verifying = 1;
-  fl_read ();
+  __tar_fl_read ();
   while (1)
     {
-      status = read_header ();
+      status = __tar_read_header ();
       if (status == 0)
 	{
 	  unsigned n;
@@ -519,7 +519,7 @@ verify_volume (void)
 	  do
 	    {
 	      n++;
-	      status = read_header ();
+	      status = __tar_read_header ();
 	    }
 	  while (status == 0);
 	  ERROR ((0, 0,
@@ -527,7 +527,7 @@ verify_volume (void)
 	}
       if (status == 2 || status == EOF)
 	break;
-      diff_archive ();
+      __tar_diff_archive ();
     }
   ar_reading = 0;
   now_verifying = 0;
@@ -539,7 +539,7 @@ verify_volume (void)
 `---*/
 
 static int
-do_stat (struct stat *statp)
+__tar_do_stat (struct stat *statp)
 {
   int err;
 
@@ -552,7 +552,7 @@ do_stat (struct stat *statp)
       else
 	ERROR ((0, errno, _("Cannot stat file %s"), current_file_name));
 #if 0
-      skip_file ((long) hstat.st_size);
+      __tar_skip_file ((long) hstat.st_size);
       different++;
 #endif
       return 1;
@@ -572,7 +572,7 @@ do_stat (struct stat *statp)
    compare small amounts of data at a time as we find it.  */
 
 static void
-diff_sparse_files (int filesize)
+__tar_diff_sparse_files (int filesize)
 {
   int sparse_ind = 0;
   char *buf;
@@ -590,12 +590,12 @@ diff_sparse_files (int filesize)
 
   buf = (char *) tar_xmalloc (buf_size * sizeof (char));
 
-  fill_in_sparse_array ();
+  __tar_fill_in_sparse_array ();
 
 
   while (size > 0)
     {
-      datarec = findrec ();
+      datarec = __tar_findrec ();
       if (!sparsearray[sparse_ind].numbytes)
 	break;
 
@@ -631,8 +631,8 @@ diff_sparse_files (int filesize)
 	    }
 	  numbytes -= err;
 	  size -= err;
-	  userec (datarec);
-	  datarec = findrec ();
+	  __tar_userec (datarec);
+	  datarec = __tar_findrec ();
 	}
       if (err = read (diff_fd, buf, (size_t) numbytes), err != numbytes)
 	{
@@ -654,11 +654,11 @@ diff_sparse_files (int filesize)
       if (amt_read >= RECORDSIZE)
 	{
 	  amt_read = 0;
-	  userec (datarec);
-	  datarec = findrec ();
+	  __tar_userec (datarec);
+	  datarec = __tar_findrec ();
 	}
 #endif
-      userec (datarec);
+      __tar_userec (datarec);
       sparse_ind++;
       size -= numbytes;
     }
@@ -671,7 +671,7 @@ diff_sparse_files (int filesize)
     different++;
 #endif
 
-  userec (datarec);
+  __tar_userec (datarec);
   free (sparsearray);
   if (different)
     {
@@ -693,7 +693,7 @@ diff_sparse_files (int filesize)
    */
 
 static void
-fill_in_sparse_array (void)
+__tar_fill_in_sparse_array (void)
 {
   int ind;
 
@@ -712,9 +712,9 @@ fill_in_sparse_array (void)
       if (head->header.sp[ind].numbytes == 0)
 	break;
       sparsearray[ind].offset =
-	from_oct (1 + 12, head->header.sp[ind].offset);
+	__tar_from_oct (1 + 12, head->header.sp[ind].offset);
       sparsearray[ind].numbytes =
-	from_oct (1 + 12, head->header.sp[ind].numbytes);
+	__tar_from_oct (1 + 12, head->header.sp[ind].numbytes);
     }
 
   /* If the header's extended, we gotta read in exhdr's till we're done.  */
@@ -728,7 +728,7 @@ fill_in_sparse_array (void)
 
       while (1)
 	{
-	  exhdr = findrec ();
+	  exhdr = __tar_findrec ();
 	  for (ind = 0; ind < SPARSE_EXT_HDR; ind++)
 	    {
 	      if (ind + so_far_ind > sp_array_size - 1)
@@ -746,9 +746,9 @@ fill_in_sparse_array (void)
 	      /* Convert the character strings into longs.  */
 
 	      sparsearray[ind + so_far_ind].offset =
-		from_oct (1 + 12, exhdr->ext_hdr.sp[ind].offset);
+		__tar_from_oct (1 + 12, exhdr->ext_hdr.sp[ind].offset);
 	      sparsearray[ind + so_far_ind].numbytes =
-		from_oct (1 + 12, exhdr->ext_hdr.sp[ind].numbytes);
+		__tar_from_oct (1 + 12, exhdr->ext_hdr.sp[ind].numbytes);
 	    }
 
 	  /* If this is the last extended header for this file, we can
@@ -759,12 +759,12 @@ fill_in_sparse_array (void)
 	  else
 	    {
 	      so_far_ind += SPARSE_EXT_HDR;
-	      userec (exhdr);
+	      __tar_userec (exhdr);
 	    }
 	}
 
       /* Be sure to skip past the last one.  */
 
-      userec (exhdr);
+      __tar_userec (exhdr);
     }
 }

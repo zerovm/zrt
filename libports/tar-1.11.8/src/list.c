@@ -32,7 +32,7 @@
 
 #include "tar.h"
 
-static void demode __P ((unsigned, char *));
+static void __tar_demode __P ((unsigned, char *));
 
 union record *head;		/* points to current archive header */
 struct stat hstat;		/* stat struct corresponding */
@@ -43,19 +43,19 @@ int head_standard;		/* tape header is in ANSI format */
 `-----------------------------------*/
 
 void
-read_and (void (*do_something) ())
+__tar_read_and (void (*do_something) ())
 {
   int status = 3;		/* initial status at start of archive */
   int prev_status;
   char save_linkflag;
 
-  name_gather ();		/* gather all the names */
-  open_tar_archive (1);		/* open for reading */
+  __tar_name_gather ();		/* gather all the names */
+  __tar_open_tar_archive (1);		/* open for reading */
 
   while (1)
     {
       prev_status = status;
-      status = read_header ();
+      status = __tar_read_header ();
       switch (status)
 	{
 
@@ -64,9 +64,9 @@ read_and (void (*do_something) ())
 	  /* Valid header.  We should decode next field (mode) first.
 	     Ensure incoming names are null terminated.  */
 
-	  if (!name_match (current_file_name)
+	  if (!__tar_name_match (current_file_name)
 	      || (flag_new_files && hstat.st_mtime < new_time)
-	      || (flag_exclude && check_exclude (current_file_name)))
+	      || (flag_exclude && __tar_check_exclude (current_file_name)))
 	    {
 
 	      int isextended = 0;
@@ -86,7 +86,7 @@ read_and (void (*do_something) ())
 	      if (head->header.isextended)
 		isextended = 1;
 	      save_linkflag = head->header.linkflag;
-	      userec (head);
+	      __tar_userec (head);
 	      if (isextended)
 		{
 #if 0
@@ -94,22 +94,22 @@ read_and (void (*do_something) ())
 
 		  while (1)
 		    {
-		      exhdr = findrec ();
+		      exhdr = __tar_findrec ();
 		      if (!exhdr->ext_hdr.isextended)
 			{
-			  userec (exhdr);
+			  __tar_userec (exhdr);
 			  break;
 			}
 		    }
-		  userec (exhdr);
+		  __tar_userec (exhdr);
 #endif
-		  skip_extended_headers ();
+		  __tar_skip_extended_headers ();
 		}
 
 	      /* Skip to the next header on the archive.  */
 
 	      if (save_linkflag != LF_DIR)
-		skip_file ((long) hstat.st_size);
+		__tar_skip_file ((long) hstat.st_size);
 	      continue;
 	    }
 
@@ -120,7 +120,7 @@ read_and (void (*do_something) ())
 	     skipping bad ones.  */
 
 	case 0:			/* invalid header */
-	  userec (head);
+	  __tar_userec (head);
 	  switch (prev_status)
 	    {
 	    case 3:		/* error on first record */
@@ -136,7 +136,7 @@ read_and (void (*do_something) ())
 	  continue;
 
 	case 2:			/* record of zeroes */
-	  userec (head);
+	  __tar_userec (head);
 	  status = prev_status;	/* if error after 0's */
 	  if (flag_ignorez)
 	    continue;
@@ -148,9 +148,9 @@ read_and (void (*do_something) ())
       break;
     };
 
-  restore_saved_dir_info ();
+  __tar_restore_saved_dir_info ();
   close_tar_archive ();
-  names_notfound ();		/* print names not found */
+  __tar_names_notfound ();		/* print names not found */
 }
 
 /*----------------------------------------------.
@@ -158,21 +158,21 @@ read_and (void (*do_something) ())
 `----------------------------------------------*/
 
 void
-list_archive (void)
+__tar_list_archive (void)
 {
   int isextended = 0;		/* flag to remember if head is extended */
 
   /* Save the record.  */
 
-  saverec (&head);
+  __tar_saverec (&head);
 
   /* Print the header record.  */
 
   if (flag_verbose)
     {
       if (flag_verbose > 1)
-	decode_header (head, &hstat, &head_standard, 0);
-      print_header ();
+	__tar_decode_header (head, &hstat, &head_standard, 0);
+      __tar_print_header ();
     }
 
   if (flag_gnudump && head->header.linkflag == LF_DUMPDIR)
@@ -180,45 +180,45 @@ list_archive (void)
       size_t size, written, check;
       char *data;
 
-      userec (head);
+      __tar_userec (head);
       if (flag_multivol)
 	{
-	  assign_string (&save_name, current_file_name);
+	  __tar_assign_string (&save_name, current_file_name);
 	  save_totsize = hstat.st_size;
 	}
       for (size = hstat.st_size; size > 0; size -= written)
 	{
 	  if (flag_multivol)
 	    save_sizeleft = size;
-	  data = findrec ()->charptr;
+	  data = __tar_findrec ()->charptr;
 	  if (data == NULL)
 	    {
 	      ERROR ((0, 0, _("EOF in archive file")));
 	      break;
 	    }
-	  written = endofrecs ()->charptr - data;
+	  written = __tar_endofrecs ()->charptr - data;
 	  if (written > size)
 	    written = size;
 	  errno = 0;
 	  check = fwrite (data, sizeof (char), written, stdlis);
-	  userec ((union record *) (data + written - 1));
+	  __tar_userec ((union record *) (data + written - 1));
 	  if (check != written)
 	    {
 	      ERROR ((0, errno, _("Only wrote %ld of %ld bytes to file %s"),
 		      check, written, current_file_name));
-	      skip_file ((long) (size - written));
+	      __tar_skip_file ((long) (size - written));
 	      break;
 	    }
 	}
       if (flag_multivol)
-	assign_string (&save_name, NULL);
-      saverec (NULL);		/* unsave it */
+	__tar_assign_string (&save_name, NULL);
+      __tar_saverec (NULL);		/* unsave it */
       fputc ('\n', stdlis);
       fflush (stdlis);
       return;
 
     }
-  saverec ((union record **) 0);	/* unsave it */
+  __tar_saverec ((union record **) 0);	/* unsave it */
 
   /* Check to see if we have an extended header to skip over also.  */
 
@@ -227,7 +227,7 @@ list_archive (void)
 
   /* Skip past the header in the archive.  */
 
-  userec (head);
+  __tar_userec (head);
 
   /* If we needed to skip any extended headers, do so now, by reading
      extended headers and skipping past them in the archive.  */
@@ -239,28 +239,28 @@ list_archive (void)
 
       while (1)
 	{
-	  exhdr = findrec ();
+	  exhdr = __tar_findrec ();
 
 	  if (!exhdr->ext_hdr.isextended)
 	    {
-	      userec (exhdr);
+	      __tar_userec (exhdr);
 	      break;
 	    }
-	  userec (exhdr);
+	  __tar_userec (exhdr);
 	}
 #endif
-      skip_extended_headers ();
+      __tar_skip_extended_headers ();
     }
 
   if (flag_multivol)
-    assign_string (&save_name, current_file_name);
+    __tar_assign_string (&save_name, current_file_name);
 
   /* Skip to the next header on the archive.  */
 
-  skip_file ((long) hstat.st_size);
+  __tar_skip_file ((long) hstat.st_size);
 
   if (flag_multivol)
-    assign_string (&save_name, NULL);
+    __tar_assign_string (&save_name, NULL);
 }
 
 /*-------------------------------------------------------------------------.
@@ -270,7 +270,7 @@ list_archive (void)
 | Return 1 for success, 0 if the checksum is bad, EOF on eof, 2 for a	   |
 | record full of zeros (EOF marker).					   |
 | 									   |
-| You must always userec(head) to skip past the header which this routine  |
+| You must always __tar_userec(head) to skip past the header which this routine  |
 | reads.								   |
 `-------------------------------------------------------------------------*/
 
@@ -280,11 +280,11 @@ list_archive (void)
    sources to BSD tar were never changed to compute the checksum
    currectly, so both the Sun and Next add the bytes of the header as
    signed chars.  This doesn't cause a problem until you get a file with
-   a name containing characters with the high bit set.  So read_header
+   a name containing characters with the high bit set.  So __tar_read_header
    computes two checksums -- signed and unsigned.  */
 
 int
-read_header (void)
+__tar_read_header (void)
 {
   register int i;
   register long sum, signed_sum, recsum;
@@ -297,12 +297,12 @@ read_header (void)
 
   while (1)
     {
-      header = findrec ();
+      header = __tar_findrec ();
       head = header;		/* this is our current header */
       if (!header)
 	return EOF;
 
-      recsum = from_oct (8, header->header.chksum);
+      recsum = __tar_from_oct (8, header->header.chksum);
 
       sum = 0;
       signed_sum = 0;
@@ -344,7 +344,7 @@ read_header (void)
       if (header->header.linkflag == LF_LINK)
 	hstat.st_size = 0;	/* links 0 size on tape */
       else
-	hstat.st_size = from_oct (1 + 12, header->header.size);
+	hstat.st_size = __tar_from_oct (1 + 12, header->header.size);
 
       header->header.arch_name[NAMSIZ - 1] = '\0';
       if (header->header.linkflag == LF_LONGNAME
@@ -354,26 +354,26 @@ read_header (void)
 		   ? &next_long_name
 		   : &next_long_link);
 
-	  userec (header);
+	  __tar_userec (header);
 	  if (*longp)
 	    free (*longp);
-	  bp = *longp = (char *) ck_malloc ((size_t) hstat.st_size);
+	  bp = *longp = (char *) __tar_ck_malloc ((size_t) hstat.st_size);
 
 	  for (size = hstat.st_size; size > 0; size -= written)
 	    {
-	      data = findrec ()->charptr;
+	      data = __tar_findrec ()->charptr;
 	      if (data == NULL)
 		{
 		  ERROR ((0, 0, _("Unexpected EOF on archive file")));
 		  break;
 		}
-	      written = endofrecs ()->charptr - data;
+	      written = __tar_endofrecs ()->charptr - data;
 	      if (written > size)
 		written = size;
 
 	      memcpy (bp, data, (size_t) written);
 	      bp += written;
-	      userec ((union record *) (data + written - 1));
+	      __tar_userec ((union record *) (data + written - 1));
 	    }
 
 	  /* Loop!  */
@@ -381,9 +381,9 @@ read_header (void)
 	}
       else
 	{
-	  assign_string (&current_file_name, (next_long_name ? next_long_name
+	  __tar_assign_string (&current_file_name, (next_long_name ? next_long_name
 					      : head->header.arch_name));
-	  assign_string (&current_link_name, (next_long_link ? next_long_link
+	  __tar_assign_string (&current_link_name, (next_long_link ? next_long_link
 					      : head->header.arch_linkname));
 	  next_long_link = next_long_name = 0;
 	  return 1;
@@ -396,31 +396,31 @@ read_header (void)
 | "*stdp" to !=0 or ==0 depending whether header record is "Unix Standard" |
 | tar format or regular old tar format.					   |
 | 									   |
-| read_header() has already decoded the checksum and length, so we don't.  |
+| __tar_read_header() has already decoded the checksum and length, so we don't.  |
 | 									   |
 | If wantug != 0, we want the uid/group info decoded from Unix Standard	   |
 | tapes (for extraction).  If == 0, we are just printing anyway, so save   |
 | time.									   |
 | 									   |
-| decode_header should NOT be called twice for the same record, since the  |
+| __tar_decode_header should NOT be called twice for the same record, since the  |
 | two calls might use different "wantug" values and thus might end up with |
 | different uid/gid for the two calls.  If anybody wants the uid/gid they  |
 | should decode it first, and other callers should decode it without	   |
-| uid/gid before calling a routine, e.g. print_header, that assumes	   |
+| uid/gid before calling a routine, e.g. __tar_print_header, that assumes	   |
 | decoded data.								   |
 `-------------------------------------------------------------------------*/
 
 void
-decode_header (register union record *header, register struct stat *st,
+__tar_decode_header (register union record *header, register struct stat *st,
 	       int *stdp, int wantug)
 {
-  st->st_mode = from_oct (8, header->header.mode);
+  st->st_mode = __tar_from_oct (8, header->header.mode);
   st->st_mode &= 07777;
-  st->st_mtime = from_oct (1 + 12, header->header.mtime);
+  st->st_mtime = __tar_from_oct (1 + 12, header->header.mtime);
   if (flag_gnudump)
     {
-      st->st_atime = from_oct (1 + 12, header->header.atime);
-      st->st_ctime = from_oct (1 + 12, header->header.ctime);
+      st->st_atime = __tar_from_oct (1 + 12, header->header.atime);
+      st->st_ctime = __tar_from_oct (1 + 12, header->header.ctime);
     }
 
   if (strcmp (header->header.magic, TMAGIC) == 0)
@@ -432,17 +432,17 @@ decode_header (register union record *header, register struct stat *st,
       if (wantug)
 	{
 #ifdef NONAMES
-	  st->st_uid = from_oct (8, header->header.uid);
-	  st->st_gid = from_oct (8, header->header.gid);
+	  st->st_uid = __tar_from_oct (8, header->header.uid);
+	  st->st_gid = __tar_from_oct (8, header->header.gid);
 #else
 	  st->st_uid =
 	    (*header->header.uname
-	     ? finduid (header->header.uname)
-	     : from_oct (8, header->header.uid));
+	     ? __tar_finduid (header->header.uname)
+	     : __tar_from_oct (8, header->header.uid));
 	  st->st_gid =
 	    (*header->header.gname
-	     ? findgid (header->header.gname)
-	     : from_oct (8, header->header.gid));
+	     ? __tar_findgid (header->header.gname)
+	     : __tar_from_oct (8, header->header.gid));
 #endif
 	}
 #if defined(S_IFBLK) || defined(S_IFCHR)
@@ -450,8 +450,8 @@ decode_header (register union record *header, register struct stat *st,
 	{
 	case LF_BLK:
 	case LF_CHR:
-	  st->st_rdev = makedev (from_oct (8, header->header.devmajor),
-				 from_oct (8, header->header.devminor));
+	  st->st_rdev = makedev (__tar_from_oct (8, header->header.devmajor),
+				 __tar_from_oct (8, header->header.devminor));
 	}
 #endif
     }
@@ -461,8 +461,8 @@ decode_header (register union record *header, register struct stat *st,
       /* Old fashioned tar archive.  */
 
       *stdp = 0;
-      st->st_uid = from_oct (8, header->header.uid);
-      st->st_gid = from_oct (8, header->header.gid);
+      st->st_uid = __tar_from_oct (8, header->header.uid);
+      st->st_gid = __tar_from_oct (8, header->header.gid);
       st->st_rdev = 0;
     }
 }
@@ -473,7 +473,7 @@ decode_header (register union record *header, register struct stat *st,
 `------------------------------------------------------------------------*/
 
 long
-from_oct (register int digs, register char *where)
+__tar_from_oct (register int digs, register char *where)
 {
   register long value;
 
@@ -510,7 +510,7 @@ from_oct (register int digs, register char *where)
 | tar is pretty random here anyway.					   |
 `-------------------------------------------------------------------------*/
 
-/* Note that print_header uses the globals <head>, <hstat>, and
+/* Note that __tar_print_header uses the globals <head>, <hstat>, and
    <head_standard>, which must be set up in advance.  This is not very
    clean and should be cleaned up.  FIXME.  */
 
@@ -521,7 +521,7 @@ from_oct (register int digs, register char *where)
 static int ugswidth = UGSWIDTH;	/* max width encountered so far */
 
 void
-print_header (void)
+__tar_print_header (void)
 {
   char modes[11];
   char *timestamp;
@@ -543,7 +543,7 @@ print_header (void)
 
       /* Just the fax, mam.  */
 
-      char *quoted_name = quote_copy_string (current_file_name);
+      char *quoted_name = __tar_quote_copy_string (current_file_name);
 
       if (quoted_name)
 	{
@@ -609,7 +609,7 @@ print_header (void)
 	  break;
 	}
 
-      demode ((unsigned) hstat.st_mode, modes + 1);
+      __tar_demode ((unsigned) hstat.st_mode, modes + 1);
 
       /* Timestamp.  */
 
@@ -627,7 +627,7 @@ print_header (void)
       else
 	{
 	  user = uform;
-	  sprintf (uform, "%ld", from_oct (8, head->header.uid));
+	  sprintf (uform, "%ld", __tar_from_oct (8, head->header.uid));
 	}
       if (*head->header.gname && head_standard)
 	{
@@ -636,7 +636,7 @@ print_header (void)
       else
 	{
 	  group = gform;
-	  sprintf (gform, "%ld", from_oct (8, head->header.gid));
+	  sprintf (gform, "%ld", __tar_from_oct (8, head->header.gid));
 	}
 
       /* Format the file size or major/minor device numbers.  */
@@ -651,7 +651,7 @@ print_header (void)
 	  break;
 #endif
 	case LF_SPARSE:
-	  sprintf (size, "%ld", from_oct (1 + 12, head->header.realsize));
+	  sprintf (size, "%ld", __tar_from_oct (1 + 12, head->header.realsize));
 	  break;
 	default:
 	  sprintf (size, "%ld", (long) hstat.st_size);
@@ -667,7 +667,7 @@ print_header (void)
 	       modes, user, group, ugswidth - pad, "",
 	       size, timestamp + 4, timestamp + 20);
 
-      name = quote_copy_string (current_file_name);
+      name = __tar_quote_copy_string (current_file_name);
       if (name)
 	{
 	  fprintf (stdlis, " %s", name);
@@ -679,7 +679,7 @@ print_header (void)
       switch (head->header.linkflag)
 	{
 	case LF_SYMLINK:
-	  name = quote_copy_string (current_link_name);
+	  name = __tar_quote_copy_string (current_link_name);
 	  if (name)
 	    {
 	      fprintf (stdlis, " -> %s\n", name);
@@ -690,7 +690,7 @@ print_header (void)
 	  break;
 
 	case LF_LINK:
-	  name = quote_copy_string (current_link_name);
+	  name = __tar_quote_copy_string (current_link_name);
 	  if (name)
 	    {
 	      fprintf (stdlis, _(" link to %s\n"), name);
@@ -723,7 +723,7 @@ print_header (void)
 
 	case LF_MULTIVOL:
 	  fprintf (stdlis, _("--Continued at byte %ld--\n"),
-		   from_oct (1 + 12, head->header.offset));
+		   __tar_from_oct (1 + 12, head->header.offset));
 	  break;
 
 	case LF_NAMES:
@@ -739,7 +739,7 @@ print_header (void)
 `--------------------------------------------------------------*/
 
 void
-pr_mkdir (char *pathname, int length, int mode)
+__tar_pr_mkdir (char *pathname, int length, int mode)
 {
   char modes[11];
   char *name;
@@ -750,14 +750,14 @@ pr_mkdir (char *pathname, int length, int mode)
       /* File type and modes.  */
 
       modes[0] = 'd';
-      demode ((unsigned) mode, modes + 1);
+      __tar_demode ((unsigned) mode, modes + 1);
 
       if (flag_sayblock)
 	fprintf (stdlis, _("rec %10ld: "), baserec + (ar_record - ar_block));
 #if 0
       annofile (stdlis, (char *) NULL);
 #endif
-      name = quote_copy_string (pathname);
+      name = __tar_quote_copy_string (pathname);
       if (!name)
 	name = pathname;
       fprintf (stdlis, "%s %*s %.*s\n", modes, ugswidth + DATEWIDTH,
@@ -772,7 +772,7 @@ pr_mkdir (char *pathname, int length, int mode)
 `-----------------------------------------------------------*/
 
 void
-skip_file (register long size)
+__tar_skip_file (register long size)
 {
   union record *x;
 
@@ -784,11 +784,11 @@ skip_file (register long size)
 
   while (size > 0)
     {
-      x = findrec ();
+      x = __tar_findrec ();
       if (x == NULL)
 	ERROR ((TAREXIT_FAILURE, 0, _("Unexpected EOF on archive file")));
 
-      userec (x);
+      __tar_userec (x);
       size -= RECORDSIZE;
       if (flag_multivol)
 	save_sizeleft -= RECORDSIZE;
@@ -800,19 +800,19 @@ skip_file (register long size)
 `---*/
 
 void
-skip_extended_headers (void)
+__tar_skip_extended_headers (void)
 {
   register union record *exhdr;
 
   while (1)
     {
-      exhdr = findrec ();
+      exhdr = __tar_findrec ();
       if (!exhdr->ext_hdr.isextended)
 	{
-	  userec (exhdr);
+	  __tar_userec (exhdr);
 	  break;
 	}
-      userec (exhdr);
+      __tar_userec (exhdr);
     }
 }
 
@@ -822,7 +822,7 @@ skip_extended_headers (void)
 `--------------------------------------------------------------------*/
 
 static void
-demode (register unsigned mode, register char *string)
+__tar_demode (register unsigned mode, register char *string)
 {
   register unsigned mask;
   register const char *rwx = "rwxrwxrwx";

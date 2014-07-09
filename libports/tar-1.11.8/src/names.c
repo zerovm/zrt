@@ -60,7 +60,7 @@ static int my_gid = -993;
    pages" code, roughly doubling the program size.  Thanks guys.  */
 
 void
-finduname (char uname[TUNMLEN], int uid)
+__tar_finduname (char uname[TUNMLEN], int uid)
 {
   struct passwd *pw;
 
@@ -81,14 +81,14 @@ finduname (char uname[TUNMLEN], int uid)
 
 #ifdef __native_client__
 int
-finduid (char uname[TUNMLEN])
+__tar_finduid (char uname[TUNMLEN])
 {
     saveuid = myuid;
     return saveuid;
 }
 #else
 int
-finduid (char uname[TUNMLEN])
+__tar_finduid (char uname[TUNMLEN])
 {
   struct passwd *pw;
 
@@ -115,7 +115,7 @@ finduid (char uname[TUNMLEN])
 `---*/
 
 void
-findgname (char gname[TGNMLEN], int gid)
+__tar_findgname (char gname[TGNMLEN], int gid)
 {
 #ifndef __native_client__
   struct group *gr;
@@ -141,7 +141,7 @@ findgname (char gname[TGNMLEN], int gid)
 `---*/
 
 int
-findgid (char gname[TUNMLEN])
+__tar_findgid (char gname[TUNMLEN])
 {
 #ifdef __native_client__
     savegid = mygid;

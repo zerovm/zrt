@@ -22,7 +22,7 @@
 /* Copy SRC to DEST, returning the address of the terminating '\0' in DEST.  */
 
 char *
-stpcpy (dest, src)
+__tar_stpcpy (dest, src)
      char *dest;
      const char *src;
 {
