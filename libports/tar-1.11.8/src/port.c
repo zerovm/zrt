@@ -465,7 +465,7 @@ utime (char *filename, struct utimbuf *utb)
 `---*/
 
 voidstar
-ck_malloc (size_t size)
+__tar_ck_malloc (size_t size)
 {
   if (!size)
     size++;
@@ -490,7 +490,7 @@ struct buffer
 #define MIN_ALLOCATE 50
 
 char *
-init_buffer (void)
+__tar_init_buffer (void)
 {
   struct buffer *b;
 
@@ -506,7 +506,7 @@ init_buffer (void)
 `---*/
 
 void
-flush_buffer (char *bb)
+__tar_flush_buffer (char *bb)
 {
   struct buffer *b;
 
@@ -523,7 +523,7 @@ flush_buffer (char *bb)
 `---*/
 
 void
-add_buffer (char *bb, const char *p, int n)
+__tar_add_buffer (char *bb, const char *p, int n)
 {
   struct buffer *b;
 
@@ -542,7 +542,7 @@ add_buffer (char *bb, const char *p, int n)
 `---*/
 
 char *
-get_buffer (char *bb)
+__tar_get_buffer (char *bb)
 {
   struct buffer *b;
 
@@ -555,7 +555,7 @@ get_buffer (char *bb)
 `---*/
 
 char *
-merge_sort (char *list, unsigned n, int off, int (*cmp) ())
+__tar_merge_sort (char *list, unsigned n, int off, int (*cmp) ())
 {
   char *ret;
 
@@ -587,8 +587,8 @@ merge_sort (char *list, unsigned n, int off, int (*cmp) ())
   blist = NEXTOF (tptr);
   NEXTOF (tptr) = 0;
 
-  alist = merge_sort (alist, alength, off, cmp);
-  blist = merge_sort (blist, blength, off, cmp);
+  alist = __tar_merge_sort (alist, alength, off, cmp);
+  blist = __tar_merge_sort (blist, blength, off, cmp);
   prev = &ret;
   for (; alist && blist;)
     {
@@ -620,7 +620,7 @@ merge_sort (char *list, unsigned n, int off, int (*cmp) ())
 `---*/
 
 void
-ck_close (int fd)
+__tar_ck_close (int fd)
 {
   if (close (fd) < 0)
     ERROR ((TAREXIT_FAILURE, errno, _("Cannot close a file #%d"), fd));
@@ -637,7 +637,7 @@ ck_close (int fd)
 `-------------------------------------------------------------------------*/
 
 char *
-quote_copy_string (const char *string)
+__tar_quote_copy_string (const char *string)
 {
   const char *from_here;
   char *to_there = NULL;
@@ -720,7 +720,7 @@ quote_copy_string (const char *string)
 /* There is no un-quote-copy-string.  Write it yourself */
 
 char *
-un_quote_string (char *string)
+__tar_un_quote_string (char *string)
 {
   char *ret;
   char *from_here;
@@ -814,7 +814,7 @@ un_quote_string (char *string)
 `---*/
 
 void
-ck_pipe (int *pipes)
+__tar_ck_pipe (int *pipes)
 {
   if (pipe (pipes) < 0)
     ERROR ((TAREXIT_FAILURE, errno, _("Cannot open a pipe")));

@@ -44,7 +44,7 @@ int mangled_num = 0;
 `---*/
 
 void
-extract_mangle (void)
+__tar_extract_mangle (void)
 {
   char *buf;
   char *fromtape;
@@ -59,19 +59,19 @@ extract_mangle (void)
   buf[size] = '\0';
   while (size > 0)
     {
-      fromtape = findrec ()->charptr;
+      fromtape = __tar_findrec ()->charptr;
       if (fromtape == 0)
 	{
 	  ERROR ((0, 0, _("Unexpected EOF in mangled names")));
 	  return;
 	}
-      copied = endofrecs ()->charptr - fromtape;
+      copied = __tar_endofrecs ()->charptr - fromtape;
       if (copied > size)
 	copied = size;
       memcpy (to, fromtape, (size_t) copied);
       to += copied;
       size -= copied;
-      userec ((union record *) (fromtape + copied - 1));
+      __tar_userec ((union record *) (fromtape + copied - 1));
     }
   for (ptr = buf; *ptr; ptr = ptrend)
     {
@@ -90,7 +90,7 @@ extract_mangle (void)
 	  *nam1end = '\0';
 	  if (ptrend[-2] == '/')
 	    ptrend[-2] = '\0';
-	  un_quote_string (nam1end + 4);
+	  __tar_un_quote_string (nam1end + 4);
 	  if (rename (nam1, nam1end + 4))
 	    ERROR ((0, errno, _("Cannot rename %s to %s"), nam1, nam1end + 4));
 	  else if (flag_verbose)
@@ -107,8 +107,8 @@ extract_mangle (void)
 	      nam1end = strchr (nam1end, ' ');
 	    }
 	  *nam1end = '\0';
-	  un_quote_string (nam1);
-	  un_quote_string (nam1end + 4);
+	  __tar_un_quote_string (nam1);
+	  __tar_un_quote_string (nam1end + 4);
 	  if (symlink (nam1, nam1end + 4)
 	      && (unlink (nam1end + 4) || symlink (nam1, nam1end + 4)))
 	    ERROR ((0, errno, _("Cannot symlink %s to %s"),

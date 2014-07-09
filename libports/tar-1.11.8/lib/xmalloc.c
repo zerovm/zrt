@@ -58,7 +58,7 @@ void error ();
 #endif
 
 static VOID *
-fixup_null_alloc (n)
+__tar_fixup_null_alloc (n)
      size_t n;
 {
   VOID *p;
@@ -81,7 +81,7 @@ tar_xmalloc (n)
 
   p = malloc (n);
   if (p == 0)
-    p = fixup_null_alloc (n);
+    p = __tar_fixup_null_alloc (n);
   return p;
 }
 
@@ -98,6 +98,6 @@ tar_realloc (p, n)
     return tar_xmalloc (n);
   p = realloc (p, n);
   if (p == 0)
-    p = fixup_null_alloc (n);
+    p = __tar_fixup_null_alloc (n);
   return p;
 }

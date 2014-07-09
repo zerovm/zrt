@@ -53,8 +53,8 @@ extern union record *head;	/* points to current tape header */
 extern struct stat hstat;	/* stat struct corresponding */
 extern int head_standard;	/* tape header is in ANSI format */
 
-static void extract_sparse_file __P ((int, long *, long, char *));
-static int make_dirs __P ((char *));
+static void __tar_extract_sparse_file __P ((int, long *, long, char *));
+static int __tar_make_dirs __P ((char *));
 
 static time_t now = 0;		/* current time */
 static we_are_root = 0;		/* true if our effective uid == 0 */
@@ -87,7 +87,7 @@ struct saved_dir_info *saved_dir_info_head;
 `--------------------------*/
 
 void
-extr_init (void)
+__tar_extr_init (void)
 {
   int ourmask;
 
@@ -111,7 +111,7 @@ extr_init (void)
 `----------------------------------*/
 
 void
-extract_archive (void)
+__tar_extract_archive (void)
 {
   register char *data;
   int fd, check, namelen, written, openflag;
@@ -135,28 +135,28 @@ extract_archive (void)
 
 #define CURRENT_FILE_NAME (skipcrud + current_file_name)
 
-  saverec (&head);		/* make sure it sticks around */
-  userec (head);		/* and go past it in the archive */
-  decode_header (head, &hstat, &head_standard, 1);
+  __tar_saverec (&head);		/* make sure it sticks around */
+  __tar_userec (head);		/* and go past it in the archive */
+  __tar_decode_header (head, &hstat, &head_standard, 1);
 
-  if (flag_confirm && !confirm ("extract", current_file_name))
+  if (flag_confirm && !__tar_confirm ("extract", current_file_name))
     {
       if (head->header.isextended)
-	skip_extended_headers ();
-      skip_file ((long) hstat.st_size);
-      saverec ((union record **) 0);
+	__tar_skip_extended_headers ();
+      __tar_skip_file ((long) hstat.st_size);
+      __tar_saverec ((union record **) 0);
       return;
     }
 
   /* Print the record from `head' and `hstat'.  */
 
   if (flag_verbose)
-    print_header ();
+    __tar_print_header ();
 
   /* Check for fully specified pathnames and other atrocities.
 
      Note, we can't just make a pointer to the new file name, since
-     saverec() might move the header and adjust "head".  We have to start
+     __tar_saverec() might move the header and adjust "head".  We have to start
      from "head" every time we want to touch the header record.  */
 
   skipcrud = 0;
@@ -200,14 +200,14 @@ Removing leading / from absolute path names in the archive")));
       for (i = 0; i < SPARSE_IN_HDR; i++)
 	{
 	  sparsearray[i].offset =
-	    from_oct (1 + 12, head->header.sp[i].offset);
+	    __tar_from_oct (1 + 12, head->header.sp[i].offset);
 	  sparsearray[i].numbytes =
-	    from_oct (1 + 12, head->header.sp[i].numbytes);
+	    __tar_from_oct (1 + 12, head->header.sp[i].numbytes);
 	  if (!sparsearray[i].numbytes)
 	    break;
 	}
 #if 0
-      end_nulls = from_oct (1 + 12, head->header.ending_blanks);
+      end_nulls = __tar_from_oct (1 + 12, head->header.ending_blanks);
 #endif
 
       if (head->header.isextended)
@@ -221,7 +221,7 @@ Removing leading / from absolute path names in the archive")));
 	  while (1)
 	    {
 
-	      exhdr = findrec ();
+	      exhdr = __tar_findrec ();
 	      for (i = 0; i < SPARSE_EXT_HDR; i++)
 		{
 
@@ -241,19 +241,19 @@ Removing leading / from absolute path names in the archive")));
 		  if (exhdr->ext_hdr.sp[i].numbytes == 0)
 		    break;
 		  sparsearray[i + ind].offset =
-		    from_oct (1 + 12, exhdr->ext_hdr.sp[i].offset);
+		    __tar_from_oct (1 + 12, exhdr->ext_hdr.sp[i].offset);
 		  sparsearray[i + ind].numbytes =
-		    from_oct (1 + 12, exhdr->ext_hdr.sp[i].numbytes);
+		    __tar_from_oct (1 + 12, exhdr->ext_hdr.sp[i].numbytes);
 		}
 	      if (!exhdr->ext_hdr.isextended)
 		break;
 	      else
 		{
 		  ind += SPARSE_EXT_HDR;
-		  userec (exhdr);
+		  __tar_userec (exhdr);
 		}
 	    }
-	  userec (exhdr);
+	  __tar_userec (exhdr);
 	}
       /* Fall through.  */
 
@@ -314,13 +314,13 @@ Removing leading / from absolute path names in the archive")));
 
       if (fd < 0)
 	{
-	  if (make_dirs (CURRENT_FILE_NAME))
+	  if (__tar_make_dirs (CURRENT_FILE_NAME))
 	    goto again_file;
 
 	  ERROR ((0, errno, _("Could not create file %s"), CURRENT_FILE_NAME));
 	  if (head->header.isextended)
-	    skip_extended_headers ();
-	  skip_file ((long) hstat.st_size);
+	    __tar_skip_extended_headers ();
+	  __tar_skip_file ((long) hstat.st_size);
 	  goto quit;
 	}
 
@@ -340,7 +340,7 @@ Removing leading / from absolute path names in the archive")));
 	  name = (char *) tar_xmalloc ((sizeof (char)) * namelen_bis);
 	  memcpy (name, CURRENT_FILE_NAME, (size_t) namelen_bis);
 	  size = hstat.st_size;
-	  extract_sparse_file (fd, &size, hstat.st_size, name);
+	  __tar_extract_sparse_file (fd, &size, hstat.st_size, name);
 	}
       else
 	for (size = hstat.st_size;
@@ -352,7 +352,7 @@ Removing leading / from absolute path names in the archive")));
 #endif
 	    if (flag_multivol)
 	      {
-		assign_string (&save_name, current_file_name);
+		__tar_assign_string (&save_name, current_file_name);
 		save_totsize = hstat.st_size;
 		save_sizeleft = size;
 	      }
@@ -361,7 +361,7 @@ Removing leading / from absolute path names in the archive")));
 	       record that we have used the data, then check if the write
 	       worked.  */
 
-	    data = findrec ()->charptr;
+	    data = __tar_findrec ()->charptr;
 	    if (data == NULL)
 	      {
 
@@ -387,7 +387,7 @@ Removing leading / from absolute path names in the archive")));
 	      }
 	    else
 #endif
-	      written = endofrecs ()->charptr - data;
+	      written = __tar_endofrecs ()->charptr - data;
 
 	    if (written > size)
 	      written = size;
@@ -395,9 +395,9 @@ Removing leading / from absolute path names in the archive")));
 	    check = write (fd, data, (size_t) written);
 
 	    /* The following is in violation of strict typing, since the
-	       arg to userec should be a struct rec *.  FIXME.  */
+	       arg to __tar_userec should be a struct rec *.  FIXME.  */
 
-	    userec ((union record *) (data + written - 1));
+	    __tar_userec ((union record *) (data + written - 1));
 	    if (check == written)
 	      continue;
 
@@ -410,12 +410,12 @@ Removing leading / from absolute path names in the archive")));
 	    else
 	      ERROR ((0, 0, _("Could only write %d of %d bytes to file %s"),
 		      check, written, CURRENT_FILE_NAME));
-	    skip_file ((long) (size - written));
+	    __tar_skip_file ((long) (size - written));
 	    break;		/* still do the close, mod time, chmod, etc */
 	  }
 
       if (flag_multivol)
-	assign_string (&save_name, NULL);
+	__tar_assign_string (&save_name, NULL);
 
       /* If writing to stdout, don't try to do anything to the filename;
 	 it doesn't exist, or we don't want to touch it anyway.  */
@@ -435,8 +435,8 @@ Removing leading / from absolute path names in the archive")));
 
 	      if (!exhdr->ext_hdr.sp[i].numbytes)
 		break;
-	      offset = from_oct (1 + 12, exhdr->ext_hdr.sp[i].offset);
-	      written = from_oct (1 + 12, exhdr->ext_hdr.sp[i].numbytes);
+	      offset = __tar_from_oct (1 + 12, exhdr->ext_hdr.sp[i].offset);
+	      written = __tar_from_oct (1 + 12, exhdr->ext_hdr.sp[i].numbytes);
 	      lseek (fd, offset, 0);
 	      check = write (fd, data, written);
 	      if (check == written)
@@ -515,7 +515,7 @@ Removing leading / from absolute path names in the archive")));
 
 	if (check == 0)
 	  break;
-	if (make_dirs (CURRENT_FILE_NAME))
+	if (__tar_make_dirs (CURRENT_FILE_NAME))
 	  goto again_link;
 	if (flag_gnudump && errno == EEXIST)
 	  break;
@@ -538,7 +538,7 @@ Removing leading / from absolute path names in the archive")));
 
       if (check == 0)
 	break;
-      if (make_dirs (CURRENT_FILE_NAME))
+      if (__tar_make_dirs (CURRENT_FILE_NAME))
 	goto again_symlink;
 
       ERROR ((0, errno, _("Could not create symlink to %s"),
@@ -562,7 +562,7 @@ Removing leading / from absolute path names in the archive")));
 		     (int) hstat.st_rdev);
       if (check != 0)
 	{
-	  if (make_dirs (CURRENT_FILE_NAME))
+	  if (__tar_make_dirs (CURRENT_FILE_NAME))
 	    goto make_node;
 	  ERROR ((0, errno, _("Could not make %s"), CURRENT_FILE_NAME));
 	  break;
@@ -578,7 +578,7 @@ Removing leading / from absolute path names in the archive")));
       check = mkfifo (CURRENT_FILE_NAME, (int) hstat.st_mode);
       if (check != 0)
 	{
-	  if (make_dirs (CURRENT_FILE_NAME))
+	  if (__tar_make_dirs (CURRENT_FILE_NAME))
 	    goto make_fifo;
 	  ERROR ((0, errno, _("Could not make %s"), CURRENT_FILE_NAME));
 	  break;
@@ -601,10 +601,10 @@ Removing leading / from absolute path names in the archive")));
 	  /* Read the entry and delete files that aren't listed in the
 	     archive.  */
 
-	  gnu_restore (skipcrud);
+	  __tar_gnu_restore (skipcrud);
 	}
       else if (head->header.linkflag == LF_DUMPDIR)
-	skip_file ((long) (hstat.st_size));
+	__tar_skip_file ((long) (hstat.st_size));
 
 
     again_dir:
@@ -614,7 +614,7 @@ Removing leading / from absolute path names in the archive")));
 	{
 	  struct stat st1;
 
-	  if (make_dirs (CURRENT_FILE_NAME))
+	  if (__tar_make_dirs (CURRENT_FILE_NAME))
 	    goto again_dir;
 
 	  /* If we're trying to create '.', let it be.  */
@@ -645,7 +645,7 @@ Removing leading / from absolute path names in the archive")));
 	  tmp = ((struct saved_dir_info *)
 		 tar_xmalloc (sizeof (struct saved_dir_info)));
 
-	  tmp->path = xstrdup (CURRENT_FILE_NAME);
+	  tmp->path = __tar_xstrdup (CURRENT_FILE_NAME);
 	  tmp->mode = hstat.st_mode;
 	  tmp->atime = hstat.st_atime;
 	  tmp->mtime = hstat.st_mtime;
@@ -671,26 +671,26 @@ Removing leading / from absolute path names in the archive")));
       break;
 
     case LF_NAMES:
-      extract_mangle ();
+      __tar_extract_mangle ();
       break;
 
     case LF_MULTIVOL:
       ERROR ((0, 0, _("\
 Cannot extract `%s' -- file is continued from another volume"),
 	      current_file_name));
-      skip_file ((long) hstat.st_size);
+      __tar_skip_file ((long) hstat.st_size);
       break;
 
     case LF_LONGNAME:
     case LF_LONGLINK:
       ERROR ((0, 0, _("Visible long name error")));
-      skip_file ((long) hstat.st_size);
+      __tar_skip_file ((long) hstat.st_size);
       break;
     }
 
   /* We don't need to save it any longer.  */
 
-  saverec (NULL);		/* unsave it */
+  __tar_saverec (NULL);		/* unsave it */
 
 #undef CURRENT_FILE_NAME
 }
@@ -702,7 +702,7 @@ Cannot extract `%s' -- file is continued from another volume"),
 `------------------------------------------------------------------------*/
 
 static int
-make_dirs (char *pathname)
+__tar_make_dirs (char *pathname)
 {
   char *p;			/* points into path */
   int madeone = 0;		/* did we do anything yet? */
@@ -737,7 +737,7 @@ make_dirs (char *pathname)
 		      _("Cannot change owner of %s to uid %d gid %d"),
 		      pathname, hstat.st_uid, hstat.st_gid));
 
-	  pr_mkdir (pathname, p - pathname, notumask & 0777);
+	  __tar_pr_mkdir (pathname, p - pathname, notumask & 0777);
 	  madeone++;		/* remember if we made one */
 	  *p = '/';
 	  continue;
@@ -766,7 +766,7 @@ make_dirs (char *pathname)
 `---*/
 
 static void
-extract_sparse_file (int fd, long *sizeleft, long totalsize, char *name)
+__tar_extract_sparse_file (int fd, long *sizeleft, long totalsize, char *name)
 {
 #if 0
   register char *data;
@@ -782,7 +782,7 @@ extract_sparse_file (int fd, long *sizeleft, long totalsize, char *name)
 
   while (*sizeleft > 0)
     {
-      datarec = findrec ();
+      datarec = __tar_findrec ();
       if (datarec == NULL)
 	{
 	  ERROR ((0, 0, _("Unexpected EOF on archive file")));
@@ -797,8 +797,8 @@ extract_sparse_file (int fd, long *sizeleft, long totalsize, char *name)
 	    ERROR ((0, errno, _("Could not write to file %s"), name));
 	  written -= count;
 	  *sizeleft -= count;
-	  userec (datarec);
-	  datarec = findrec ();
+	  __tar_userec (datarec);
+	  datarec = __tar_findrec ();
 	}
 
       count = write (fd, datarec->charptr, (size_t) written);
@@ -809,12 +809,12 @@ extract_sparse_file (int fd, long *sizeleft, long totalsize, char *name)
 	{
 	  ERROR ((0, 0, _("Could only write %d of %d bytes to file %s"),
 		     count, totalsize, name));
-	  skip_file ((long) (*sizeleft));
+	  __tar_skip_file ((long) (*sizeleft));
 	}
 
       written -= count;
       *sizeleft -= count;
-      userec (datarec);
+      __tar_userec (datarec);
     }
   free (sparsearray);
 #if 0
@@ -827,7 +827,7 @@ extract_sparse_file (int fd, long *sizeleft, long totalsize, char *name)
 	write (fd, "\000", 1);
     }
 #endif
-  userec (datarec);
+  __tar_userec (datarec);
 }
 
 /*----------------------------------------------------------------.
@@ -835,7 +835,7 @@ extract_sparse_file (int fd, long *sizeleft, long totalsize, char *name)
 `----------------------------------------------------------------*/
 
 void
-restore_saved_dir_info (void)
+__tar_restore_saved_dir_info (void)
 {
   struct utimbuf acc_upd_times;
 

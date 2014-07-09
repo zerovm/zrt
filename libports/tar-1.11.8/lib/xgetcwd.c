@@ -47,7 +47,7 @@ void free ();
    Return NULL and set errno on error. */
 
 char *
-xgetcwd ()
+__tar_xgetcwd ()
 {
   char *cwd;
   char *ret;

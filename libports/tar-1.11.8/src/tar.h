@@ -358,50 +358,50 @@ extern long save_totsize;
 extern int write_archive_to_stdout;
 
 void close_tar_archive __P ((void));
-void closeout_volume_number __P ((void));
-union record *endofrecs __P ((void));
-union record *findrec __P ((void));
-void fl_read __P ((void));
-void fl_write __P ((void));
-void flush_archive __P ((void));
-void init_volume_number __P ((void));
-int isfile __P ((const char *));
-int no_op __P ((int, char *));
-void open_tar_archive __P ((int));
-void reset_eof __P ((void));
-void saverec __P ((union record **));
-void userec __P ((union record *));
-int wantbytes __P ((long, int (*) ()));
+void __tar_closeout_volume_number __P ((void));
+union record *__tar_endofrecs __P ((void));
+union record *__tar_findrec __P ((void));
+void __tar_fl_read __P ((void));
+void __tar_fl_write __P ((void));
+void __tar_flush_archive __P ((void));
+void __tar_init_volume_number __P ((void));
+int __tar_isfile __P ((const char *));
+int __tar_no_op __P ((int, char *));
+void __tar_open_tar_archive __P ((int));
+void __tar_reset_eof __P ((void));
+void __tar_saverec __P ((union record **));
+void __tar_userec __P ((union record *));
+int __tar_wantbytes __P ((long, int (*) ()));
 
 /* Module create.c.  */
 
-void create_archive __P ((void));
-void dump_file __P ((char *, int, int));
-void finish_header __P ((union record *));
-void to_oct __P ((long, int, char *));
-void write_eot __P ((void));
+void __tar_create_archive __P ((void));
+void __tar_dump_file __P ((char *, int, int));
+void __tar_finish_header __P ((union record *));
+void __tar_to_oct __P ((long, int, char *));
+void __tar_write_eot __P ((void));
 
 /* Module diffarch.c.  */
 
 extern int now_verifying;
 
-void diff_archive __P ((void));
-void diff_init __P ((void));
-void verify_volume __P ((void));
+void __tar_diff_archive __P ((void));
+void __tar_diff_init __P ((void));
+void __tar_verify_volume __P ((void));
 
 /* Module extract.c.  */
 
-void extr_init __P ((void));
-void extract_archive __P ((void));
-void restore_saved_dir_info __P ((void));
+void __tar_extr_init __P ((void));
+void __tar_extract_archive __P ((void));
+void __tar_restore_saved_dir_info __P ((void));
 
 /* Module gnu.c.  */
 
-void collect_and_sort_names __P ((void));
-char *get_dir_contents __P ((char *, int));
-void gnu_restore __P ((int));
-int is_dot_or_dotdot __P ((char *));
-void write_dir_file __P ((void));
+void __tar_collect_and_sort_names __P ((void));
+char *__tar_get_dir_contents __P ((char *, int));
+void __tar_gnu_restore __P ((int));
+int __tar_is_dot_or_dotdot __P ((char *));
+void __tar_write_dir_file __P ((void));
 
 /* Module list.c.  */
 
@@ -409,75 +409,75 @@ extern union record *head;
 extern struct stat hstat;
 extern int head_standard;
 
-void decode_header __P ((union record *, struct stat *, int *, int));
-long from_oct __P ((int, char *));
-void list_archive __P ((void));
-void pr_mkdir __P ((char *, int, int));
-void print_header __P ((void));
-void read_and __P ((void (*do_) ()));
-int read_header __P ((void));
-void skip_extended_headers __P ((void));
-void skip_file __P ((long));
+void __tar_decode_header __P ((union record *, struct stat *, int *, int));
+long __tar_from_oct __P ((int, char *));
+void __tar_list_archive __P ((void));
+void __tar_pr_mkdir __P ((char *, int, int));
+void __tar_print_header __P ((void));
+void __tar_read_and __P ((void (*do_) ()));
+int __tar_read_header __P ((void));
+void __tar_skip_extended_headers __P ((void));
+void __tar_skip_file __P ((long));
 
 /* Module mangle.c.  */
 
-void extract_mangle __P ((void));
+void __tar_extract_mangle __P ((void));
 
 /* Module names.c.  */
 
-int findgid __P ((char gname[TUNMLEN]));
-void findgname __P ((char gname[TGNMLEN], int));
-int finduid __P ((char uname[TUNMLEN]));
-void finduname __P ((char uname[TUNMLEN], int));
+int __tar_findgid __P ((char gname[TUNMLEN]));
+void __tar_findgname __P ((char gname[TGNMLEN], int));
+int __tar_finduid __P ((char uname[TUNMLEN]));
+void __tar_finduname __P ((char uname[TUNMLEN], int));
 
 /* Module port.c.  */
 
 extern char TTY_NAME[];
 
-void add_buffer __P ((char *, const char *, int));
-void ck_close __P ((int));
-voidstar ck_malloc __P ((size_t));
-void ck_pipe __P ((int *));
-void flush_buffer __P ((char *));
-char *get_buffer __P ((char *));
-char *init_buffer __P ((void));
-char *merge_sort __P ((char *, unsigned, int, int (*) ()));
-char *quote_copy_string __P ((const char *));
-char *un_quote_string __P ((char *));
+void __tar_add_buffer __P ((char *, const char *, int));
+void __tar_ck_close __P ((int));
+voidstar __tar_ck_malloc __P ((size_t));
+void __tar_ck_pipe __P ((int *));
+void __tar_flush_buffer __P ((char *));
+char *__tar_get_buffer __P ((char *));
+char *__tar_init_buffer __P ((void));
+char *__tar_merge_sort __P ((char *, unsigned, int, int (*) ()));
+char *__tar_quote_copy_string __P ((const char *));
+char *__tar_un_quote_string __P ((char *));
 
 /* Module rtapelib.c.  */
 
-int __rmt_close __P ((int));
-long __rmt_lseek __P ((int, off_t, int));
-int __rmt_open __P ((const char *, int, int, const char *));
-int __rmt_read __P ((int, char *, unsigned int));
-int __rmt_write __P ((int, char *, unsigned int));
+int __tar_rmt_close __P ((int));
+long __tar_rmt_lseek __P ((int, off_t, int));
+int __tar_rmt_open __P ((const char *, int, int, const char *));
+int __tar_rmt_read __P ((int, char *, unsigned int));
+int __tar_rmt_write __P ((int, char *, unsigned int));
 
 /* Module tar.c.  */
 
 extern time_t new_time;
 
-void addname __P ((const char *));
-void assign_string __P ((char **, const char *));
-void blank_name_list __P ((void));
-int check_exclude __P ((const char *));
-int confirm __P ((const char *, const char *));
-void name_close __P ((void));
-void name_expand __P ((void));
-char *name_from_list __P ((void));
-void name_gather __P ((void));
-int name_match __P ((const char *));
-char *name_next __P ((int change_));
-struct name *name_scan __P ((const char *));
-void names_notfound __P ((void));
-char *new_name __P ((char *, char *));
+void __tar_addname __P ((const char *));
+void __tar_assign_string __P ((char **, const char *));
+void __tar_blank_name_list __P ((void));
+int __tar_check_exclude __P ((const char *));
+int __tar_confirm __P ((const char *, const char *));
+void __tar_name_close __P ((void));
+void __tar_name_expand __P ((void));
+char *__tar_name_from_list __P ((void));
+void __tar_name_gather __P ((void));
+int __tar_name_match __P ((const char *));
+char *__tar_name_next __P ((int change_));
+struct name *__tar_name_scan __P ((const char *));
+void __tar_names_notfound __P ((void));
+char *__tar_new_name __P ((char *, char *));
 
 /* Module update.c.  */
 
 extern char *output_start;
 
-void junk_archive __P ((void));
-void update_archive __P ((void));
+void __tar_junk_archive __P ((void));
+void __tar_update_archive __P ((void));
 
 /*Wrapper tarwrapper.c*/
 /*add directory contents located at dir_path into archive tar_path

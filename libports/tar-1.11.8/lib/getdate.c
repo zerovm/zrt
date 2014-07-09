@@ -62,7 +62,7 @@
 #define ISUPPER(c) (ISASCII (c) && isupper (c))
 #define ISDIGIT(c) (ISASCII (c) && isdigit (c))
 
-/* The code at the top of get_date which figures out the offset of the
+/* The code at the top of __tar_get_date which figures out the offset of the
    current time zone checks various CPP symbols to see if special
    tricks are need, but defaults to using the gettimeofday system call.
    Include <sys/time.h> if that will be used.  */
@@ -123,9 +123,9 @@ struct timeb {
 extern struct tm	*gmtime ();
 extern struct tm	*localtime ();
 
-#define yyparse getdate_yyparse
-#define yylex getdate_yylex
-#define yyerror getdate_yyerror
+#define yyparse __tar_getdate_yyparse
+#define yylex __tar_getdate_yylex
+#define yyerror __tar_getdate_yyerror
 
 static int yylex ();
 static int yyerror ();
@@ -1508,7 +1508,7 @@ yyerror (s)
 
 
 static time_t
-ToSeconds (Hours, Minutes, Seconds, Meridian)
+__tar_ToSeconds (Hours, Minutes, Seconds, Meridian)
     time_t	Hours;
     time_t	Minutes;
     time_t	Seconds;
@@ -1541,7 +1541,7 @@ ToSeconds (Hours, Minutes, Seconds, Meridian)
 
 
 static time_t
-Convert (Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
+__tar_Convert (Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
     time_t	Month;
     time_t	Day;
     time_t	Year;
@@ -1581,7 +1581,7 @@ Convert (Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
     Julian += yyTimezone * 60L;
   else
     Julian += yyTimezone;
-  if ((tod = ToSeconds (Hours, Minutes, Seconds, Meridian)) < 0)
+  if ((tod = __tar_ToSeconds (Hours, Minutes, Seconds, Meridian)) < 0)
     return -1;
   Julian += tod;
   if (DSTmode == DSTon
@@ -1592,7 +1592,7 @@ Convert (Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
 
 
 static time_t
-DSTcorrect (Start, Future)
+__tar_DSTcorrect (Start, Future)
     time_t	Start;
     time_t	Future;
 {
@@ -1606,7 +1606,7 @@ DSTcorrect (Start, Future)
 
 
 static time_t
-RelativeDate (Start, DayOrdinal, DayNumber)
+__tar_RelativeDate (Start, DayOrdinal, DayNumber)
     time_t	Start;
     time_t	DayOrdinal;
     time_t	DayNumber;
@@ -1618,12 +1618,12 @@ RelativeDate (Start, DayOrdinal, DayNumber)
   tm = localtime (&now);
   now += SECSPERDAY * ((DayNumber - tm->tm_wday + 7) % 7);
   now += 7 * SECSPERDAY * (DayOrdinal <= 0 ? DayOrdinal : DayOrdinal - 1);
-  return DSTcorrect (Start, now);
+  return __tar_DSTcorrect (Start, now);
 }
 
 
 static time_t
-RelativeMonth (Start, RelMonth)
+__tar_RelativeMonth (Start, RelMonth)
     time_t	Start;
     time_t	RelMonth;
 {
@@ -1637,15 +1637,15 @@ RelativeMonth (Start, RelMonth)
   Month = 12 * tm->tm_year + tm->tm_mon + RelMonth;
   Year = Month / 12;
   Month = Month % 12 + 1;
-  return DSTcorrect (Start,
-		     Convert (Month, (time_t)tm->tm_mday, Year,
+  return __tar_DSTcorrect (Start,
+		     __tar_Convert (Month, (time_t)tm->tm_mday, Year,
 			      (time_t)tm->tm_hour, (time_t)tm->tm_min, (time_t)tm->tm_sec,
 			      MER24, DSTmaybe));
 }
 
 
 static int
-LookupWord (buff)
+__tar_LookupWord (buff)
     char		*buff;
 {
   register char	*p;
@@ -1787,7 +1787,7 @@ yylex ()
 	  *p++ = c;
       *p = '\0';
       yyInput--;
-      return LookupWord (buff);
+      return __tar_LookupWord (buff);
     }
     if (c != '(')
       return *yyInput++;
@@ -1808,7 +1808,7 @@ yylex ()
 
 /* Yield A - B, measured in seconds.  */
 static long
-difftm (a, b)
+__tar_difftm (a, b)
      struct tm *a, *b;
 {
   int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
@@ -1829,7 +1829,7 @@ difftm (a, b)
 }
 
 time_t
-get_date (p, now)
+__tar_get_date (p, now)
     char		*p;
     struct timeb	*now;
 {
@@ -1850,7 +1850,7 @@ get_date (p, now)
     if (! (tm = localtime (&ftz.time)))
       return -1;
 	
-    ftz.timezone = difftm (&gmt, tm) / 60;
+    ftz.timezone = __tar_difftm (&gmt, tm) / 60;
     if (tm->tm_isdst)
       ftz.timezone += 60;
   }
@@ -1878,7 +1878,7 @@ get_date (p, now)
     return -1;
 
   if (yyHaveDate || yyHaveTime || yyHaveDay) {
-    Start = Convert (yyMonth, yyDay, yyYear, yyHour, yyMinutes, yySeconds,
+    Start = __tar_Convert (yyMonth, yyDay, yyYear, yyHour, yyMinutes, yySeconds,
 		     yyMeridian, yyDSTmode);
     if (Start < 0)
       return -1;
@@ -1890,10 +1890,10 @@ get_date (p, now)
   }
 
   Start += yyRelSeconds;
-  Start += RelativeMonth (Start, yyRelMonth);
+  Start += __tar_RelativeMonth (Start, yyRelMonth);
 
   if (yyHaveDay && !yyHaveDate) {
-    tod = RelativeDate (Start, yyDayOrdinal, yyDayNumber);
+    tod = __tar_RelativeDate (Start, yyDayOrdinal, yyDayNumber);
     Start += tod;
   }
 
@@ -1919,7 +1919,7 @@ main (ac, av)
 
   buff[MAX_BUFF_LEN] = 0;
   while (fgets (buff, MAX_BUFF_LEN, stdin) && buff[0]) {
-    d = get_date (buff, (struct timeb *)NULL);
+    d = __tar_get_date (buff, (struct timeb *)NULL);
     if (d == -1)
       (void)printf ("Bad format - couldn't convert.\n");
     else
