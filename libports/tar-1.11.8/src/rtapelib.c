@@ -284,7 +284,7 @@ __tar_rmt_open (const char *path, int oflag, int bias, const char *remote_shell)
 
   /* Pull apart the system and device, and optional user.  */
 
-  path_copy = xstrdup (path);
+  path_copy = __tar_xstrdup (path);
   remote_host = path_copy;
   remote_user = NULL;
   remote_file = NULL;
