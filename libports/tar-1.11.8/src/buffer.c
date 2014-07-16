@@ -226,7 +226,7 @@ __tar_child_open (void)
 #define READ	0
 #define WRITE	1
 
-  ck_pipe (local_pipe);
+  __tar_ck_pipe (local_pipe);
 
   childpid = fork ();
   if (childpid < 0)
@@ -305,7 +305,7 @@ __tar_child_open (void)
 
       /* We need a child tar.  */
 
-      ck_pipe (kidpipe);
+      __tar_ck_pipe (kidpipe);
 
       kidchildpid = fork ();
       if (kidchildpid < 0)
