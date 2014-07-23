@@ -140,7 +140,7 @@ size_t bit_mask_after_hi(size_t x)
 
 static void
 memory_init(struct MemoryManager* this, 
-	    void *heap_ptr, uint32_t heap_size, void *brk){
+	    void *heap_ptr, size_t heap_size, void *brk){
     /*save data into this object*/
     this->heap_start_ptr = heap_ptr;
     this->heap_size = heap_size;
@@ -171,7 +171,7 @@ memory_init(struct MemoryManager* this,
 
 
 /**/
-static int32_t 
+static void* 
 memory_sysbrk(struct MemoryManager* this, void *addr){
     /*if requested addr is in range of available heap range then it's
       would be returned as heap bound*/
@@ -191,7 +191,7 @@ memory_sysbrk(struct MemoryManager* this, void *addr){
     }
 }
 
-static int32_t
+static void*
 memory_mmap(struct MemoryManager* this, void *addr, size_t length, int prot, 
 	    int flags, int fd, off_t offset){
     void* alloc_addr = NULL;
@@ -257,7 +257,7 @@ memory_mmap(struct MemoryManager* this, void *addr, size_t length, int prot,
 	/*update lowest mmap addr, for future check sbrk/mmap intersections*/
 	if ( alloc_addr < this->heap_lowest_mmap_addr )
 	    this->heap_lowest_mmap_addr = alloc_addr;
-	return (intptr_t)alloc_addr;
+	return alloc_addr;
     }
     else{
 	errno = errcode;
@@ -300,8 +300,8 @@ memory_munmap(struct MemoryManager* this, void *addr, size_t length){
 
 static long int memory_get_phys_pages(struct MemoryManager* this){
     /*all pages count provided by zerovm (memory rounded up to page size)*/
-    uint32_t beginaddr = ROUND_UP((uint32_t)this->heap_start_ptr, PAGE_SIZE);
-    uint32_t endaddr = (uint32_t)MMAP_HIGHEST_PAGE_ADDR(this);
+    intptr_t beginaddr = ROUND_UP((uint32_t)this->heap_start_ptr, PAGE_SIZE);
+    intptr_t endaddr = (intptr_t)MMAP_HIGHEST_PAGE_ADDR(this);
 
     return (endaddr - beginaddr)/PAGE_SIZE + 1;
 }
@@ -325,7 +325,7 @@ struct MemoryManagerPublicInterface* memory_interface_instance(){
     return (struct MemoryManagerPublicInterface*)&KMemoryManager;
 }
 
-struct MemoryManagerPublicInterface* memory_interface_construct( void *heap_ptr, uint32_t heap_size, void *brk ){
+struct MemoryManagerPublicInterface* memory_interface_construct( void *heap_ptr, size_t heap_size, void *brk ){
     /*init static variable */
     struct MemoryManager* this = &KMemoryManager;
 
