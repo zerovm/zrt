@@ -19,6 +19,8 @@
 #define __ZCALLS_H__
 
 #include <time.h>   /*clock_t*/
+#include <sys/statvfs.h> /*statvfs*/
+#include <sys/stat.h> /*mode_t*/
 
 #include "zrt.h"
 #include "zrt_defines.h"
@@ -41,6 +43,7 @@ struct NvramLoader;
 int is_zrt_ready();
 
 /******************* zcalls_init_t functions **************/
+void zrt_zcall_prolog_preinit(void);
 void zrt_zcall_prolog_init(void);
 /* irt basic *************************/
 void zrt_zcall_prolog_exit(int status);
