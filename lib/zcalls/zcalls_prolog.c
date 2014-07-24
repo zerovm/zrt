@@ -93,6 +93,14 @@ static inline void increment_cached_time(time_t seconds, suseconds_t microsecond
     timeradd(&s_cached_timeval, &delta, &s_cached_timeval);
 }
 
+void zrt_zcall_prolog_preinit(){
+#ifdef __ZRT_HOST
+    prepare_zrt_host();
+#else
+    if ( MANIFEST )
+	sbrk_default = MANIFEST->heap_ptr;
+#endif 
+}
 
 void zrt_zcall_prolog_init(){
     /*set root dir as current dir*/
@@ -102,9 +110,6 @@ void zrt_zcall_prolog_init(){
     __zrt_log_init( DEV_DEBUG );
     ZRT_LOG(L_BASE, P_TEXT, "prolog init");
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
-
-    if ( MANIFEST )
-	sbrk_default = MANIFEST->heap_ptr;
 
     /*Folowing nvram handlers using only stack and nor heap*/
     struct NvramLoaderPublicInterface* nvram = INSTANCE_L(NVRAM_LOADER)();

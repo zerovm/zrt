@@ -36,6 +36,8 @@ struct NvramLoader;
 
 #define ZCALLS_INIT 1   /*use as type param in __query_zcalls*/
 struct zcalls_init_t{
+    /*init heap, mainly for __ZRT_HOST*/
+    void (*preinit)(void);
     /*zcalls initializer, coming just after __zcalls_query*/
     void (*init)(void);
     /* irt basic *************************/

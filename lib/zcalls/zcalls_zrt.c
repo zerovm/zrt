@@ -122,7 +122,6 @@ void set_home_dir(const char *home)
  */
 void zrt_zcall_enhanced_exit(int status){
     ZRT_LOG(L_SHORT, "status %d exiting...", status);
-    zrt_zcall_enhanced_postmain(status);
     get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
@@ -351,10 +350,10 @@ int  zrt_zcall_enhanced_sysbrk(void **newbrk){
     int ret=-1;
     LOG_SYSCALL_START("*newbrk=%p", *newbrk);
     struct MemoryManagerPublicInterface* memif = memory_interface_instance();
-    int32_t retaddr = memif->sysbrk(memif, *newbrk );
-    if ( retaddr != -1 ){
+    void* retaddr = memif->sysbrk(memif, *newbrk );
+    if ( (intptr_t)retaddr != -1 ){
 	/*get new address via pointer*/
-	*newbrk = (void*)retaddr;
+	*newbrk = retaddr;
 	ret=0;
     }
     LOG_INFO_SYSCALL_FINISH( retaddr, "*newbrk=%p", *newbrk);
@@ -362,25 +361,26 @@ int  zrt_zcall_enhanced_sysbrk(void **newbrk){
 }
 
 int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, int fd, off_t off){
-    int32_t retcode = -1;
+    int ret = -1;
+    void *retaddr;
     LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u off=%lld",
     		      *addr, length, prot, flags, fd, off);
 
     struct MemoryManagerPublicInterface* memif = memory_interface_instance();
-    retcode = memif->mmap(memif, *addr, length, prot,
+    retaddr = memif->mmap(memif, *addr, length, prot,
 				       flags, fd, off);
-    if ( (void*)retcode != MAP_FAILED ){
-	*addr = (void*)retcode;
-	retcode=0;
+    if ( retaddr != MAP_FAILED ){
+	*addr = retaddr;
+	ret=0;
     }
   
-    LOG_INFO_SYSCALL_FINISH( retcode,
+    LOG_INFO_SYSCALL_FINISH( ret,
 			     "addr=%p length=%u prot=%s flags=%s fd=%u off=%lld",
 			     *addr, length, 
 			     STR_ALLOCA_COPY(STR_MMAP_PROT_FLAGS(prot)), 
 			     STR_ALLOCA_COPY(STR_MMAP_FLAGS(flags)),
 			     fd, off);
-    return retcode;
+    return ret;
 }
 
 int  zrt_zcall_enhanced_munmap(void *addr, size_t len){

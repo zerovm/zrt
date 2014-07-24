@@ -28,6 +28,7 @@ static void zcall_stub(void){}
 #  include "zcalls.h"
 
 static struct zcalls_init_t KZcalls_init = {
+    zrt_zcall_prolog_preinit,
     zrt_zcall_prolog_init,
     zrt_zcall_prolog_exit,
     zrt_zcall_prolog_gettod,

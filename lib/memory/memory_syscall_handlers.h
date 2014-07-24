@@ -53,8 +53,8 @@ struct MemoryManagerPublicInterface{
      overlaped then get ENOMEM errro; 
      @param heap_ptr 
      @param heap_size */
-    void (*init)(struct MemoryManagerPublicInterface* this, void *heap_ptr, uint32_t heap_size, void *brk);
-    int (*sysbrk)(struct MemoryManagerPublicInterface* this, void *addr);
+    void (*init)(struct MemoryManagerPublicInterface* this, void *heap_ptr, size_t heap_size, void *brk);
+    void* (*sysbrk)(struct MemoryManagerPublicInterface* this, void *addr);
     
     /* MMAP emulation in user-space implementation.
      * @param addr ignored
@@ -69,7 +69,7 @@ struct MemoryManagerPublicInterface{
      * case3: for any another prot flag will returned error, and ENOSYS set to errno;
      * @param flags see above MAP_ANONYMOUS flag using;
      */
-    int32_t (*mmap)(struct MemoryManagerPublicInterface* this, void *addr, size_t length, int prot, 
+    void* (*mmap)(struct MemoryManagerPublicInterface* this, void *addr, size_t length, int prot, 
 		    int flags, int fd, off_t offset);
     
     /* MUNMAP emulation in user-space implementation.
@@ -92,7 +92,7 @@ struct MemoryManager{
     //data
     void*    heap_start_ptr; /*heap memory left bound*/
     void*    heap_brk;       /*current brk pointer*/
-    uint32_t heap_size;      /*entire heap size*/
+    size_t   heap_size;      /*entire heap size*/
     void*    heap_lowest_mmap_addr;
     //
     /*map_chunks_bit_array is used for bitarray, were are only 1bit per
@@ -102,7 +102,7 @@ struct MemoryManager{
     struct BitArray bitarray;
 };
 
-struct MemoryManagerPublicInterface* memory_interface_construct( void *heap_ptr, uint32_t heap_size, void *brk );
+struct MemoryManagerPublicInterface* memory_interface_construct( void *heap_ptr, size_t heap_size, void *brk );
 /*MemoryManager object internally it's a static variable, so we can
   just get instance */
 struct MemoryManagerPublicInterface* memory_interface_instance();
