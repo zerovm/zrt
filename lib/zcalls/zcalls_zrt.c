@@ -38,6 +38,12 @@
 #include <dirent.h>     /* Defines DT_* constants */
 #include <assert.h>
 
+#ifdef __ZRT_HOST
+# define _GNU_SOURCE         /* See feature_test_macros(7) */
+# include <unistd.h>
+# include <sys/syscall.h>   /* For SYS_xxx definitions */
+#endif
+
 #include "zvm.h"
 #include "zrt.h"
 #include "zrtapi.h"
