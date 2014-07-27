@@ -96,10 +96,9 @@ static inline void increment_cached_time(time_t seconds, suseconds_t microsecond
 void zrt_zcall_prolog_preinit(){
 #ifdef __ZRT_HOST
     prepare_zrt_host();
-#else
+#endif
     if ( MANIFEST )
 	sbrk_default = MANIFEST->heap_ptr;
-#endif 
 }
 
 void zrt_zcall_prolog_init(){
