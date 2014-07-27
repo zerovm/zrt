@@ -240,7 +240,7 @@
 # define GTEST_OS_AIX 1
 #elif defined(__hpux)
 # define GTEST_OS_HPUX 1
-#elif defined __native_client__
+#elif defined __ZRT__
 # define GTEST_OS_NACL 1
 #endif  // __CYGWIN__
 

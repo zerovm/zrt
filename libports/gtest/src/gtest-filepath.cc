@@ -40,7 +40,7 @@
 # include <direct.h>
 # include <io.h>
 #elif GTEST_OS_SYMBIAN || GTEST_OS_NACL
-#  ifdef __native_client__
+#  ifdef __ZRT__
 // for NACL pepper
 #  include <limits.h>
 #  else

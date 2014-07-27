@@ -206,7 +206,7 @@ __tar_dupto (int from, int to, const char *msg)
 | ?  |
 `---*/
 
-#if defined(__native_client__) || defined(__MSDOS__)
+#if defined(__ZRT__) || defined(__MSDOS__)
 static void
 __tar_child_open (void)
 {
@@ -508,7 +508,7 @@ isfile (const char *p)
   return 0;
 }
 
-#endif
+#endif //__ZRT__
 
 /*------------------------------------------------------------------------.
 | Open an archive file.  The argument specifies whether we are reading or |
@@ -594,12 +594,12 @@ __tar_open_tar_archive (int reading)
     archive = rmtopen (archive_name_array[0], O_RDONLY | O_BINARY, 0666,
 		       flag_rsh_command);
   else{
-#ifdef __native_client__
+#ifdef __ZRT__
       /*O_TRUNC, O_CREAT doesn't supported for zerovm channels, so unset truncate flag*/
       archive = open (archive_name_array[0], O_WRONLY, 0666);
 #else
     archive = rmtcreat (archive_name_array[0], 0666, flag_rsh_command);
-#endif
+#endif //__ZRT__
   }
 
   if (archive < 0)
@@ -1237,7 +1237,7 @@ close_tar_archive (void)
     WARN ((0, errno, _("WARNING: Cannot close %s (%d, %d)"),
 	   *archive_name_cursor, archive, c));
 
-#if !defined(__MSDOS__) && !defined(__native_client__)
+#if !defined(__MSDOS__) && !defined(__ZRT__)
 
   if (childpid)
     {
@@ -1274,7 +1274,7 @@ close_tar_archive (void)
 		      WEXITSTATUS (status)));
 	  }
     }
-#endif /* not __MSDOS__ */
+#endif /* not __MSDOS__ && !defined __ZRT__ */
 
   if (current_file_name)
     free (current_file_name);
