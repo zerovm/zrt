@@ -79,7 +79,7 @@ __tar_finduname (char uname[TUNMLEN], int uid)
 | ?  |
 `---*/
 
-#ifdef __native_client__
+#ifdef __ZRT__
 int
 __tar_finduid (char uname[TUNMLEN])
 {
@@ -108,7 +108,7 @@ __tar_finduid (char uname[TUNMLEN])
     }
   return saveuid;
 }
-#endif
+#endif //__ZRT__
 
 /*---.
 | ?  |
@@ -117,7 +117,7 @@ __tar_finduid (char uname[TUNMLEN])
 void
 __tar_findgname (char gname[TGNMLEN], int gid)
 {
-#ifndef __native_client__
+#ifndef __ZRT__
   struct group *gr;
 #ifndef HAVE_GETGRGID
   extern struct group *getgrgid ();
@@ -143,7 +143,7 @@ __tar_findgname (char gname[TGNMLEN], int gid)
 int
 __tar_findgid (char gname[TUNMLEN])
 {
-#ifdef __native_client__
+#ifdef __ZRT__
     savegid = mygid;
     return savegid;
 #else
@@ -164,7 +164,7 @@ __tar_findgid (char gname[TUNMLEN])
 	}
     }
   return savegid;
-#endif //__native_client__
+#endif //__ZRT__
 }
 
 #endif

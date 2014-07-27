@@ -72,8 +72,10 @@ LIBPORTS= \
 libports/gtest/libgtest.a \
 libports/lua-5.2.1/liblua.a \
 libports/tar-1.11.8/libtar.a \
-libports/sqlite3/libsqlite3.a \
-libports/context-switch/libcontext.a
+libports/sqlite3/libsqlite3.a
+ifndef __ZRT_HOST
+LIBPORTS+= libports/context-switch/libcontext.a
+endif
 
 #file inside dir will be built and installed by pth's make,
 #so we need only subpath to enter dir by make
@@ -163,7 +165,9 @@ ${LIBPORTS}:
 	@mv -f $@ lib
 
 ${PTH}:
+ifndef __ZRT_HOST
 	@make -C$(dir $@) clean all install
+endif
 
 lua_test_suite: build
 	@make -Ctests/$@
@@ -231,16 +235,20 @@ uninstall:
 	rm -f $(INSTALL_INCLUDE_DIR)/mapreduce/buffered_io.h
 
 install: uninstall
+ifndef __ZRT_HOST
 	@make -C$(dir ${PTH}) install
-	install -m 0644 lib/libzrt.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
-	install -m 0644 lib/libmapreduce.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
-	install -m 0644 lib/libnetworking.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
-	install -m 0644 lib/libfs.a $(ZVM_DESTDIR)$(ZVM_PREFIX)/${ARCH}/lib
+endif
+	install -m 0644 lib/libzrt.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libmapreduce.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libnetworking.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libfs.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/liblua.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libgtest.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libtar.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libsqlite3.a $(INSTALL_LIB_DIR)
+ifndef __ZRT_HOST
 	install -m 0644 lib/libcontext.a $(INSTALL_LIB_DIR)
+endif
 	install -d $(INSTALL_INCLUDE_DIR)/sqlite3 $(INSTALL_INCLUDE_DIR)/lua $(INSTALL_INCLUDE_DIR)/helpers \
 		$(INSTALL_INCLUDE_DIR)/networking $(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR)
 	install -m 0644 lib/zrtapi.h $(INSTALL_INCLUDE_DIR)
