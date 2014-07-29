@@ -55,7 +55,7 @@ do_test (void)
 	    printf ("fseek() for r to before start of file worked!\n");
 	    result = 1;
 	}
-#ifdef __native_client__ 
+#ifdef __ZRT__ 
     /*YaroslavLitvinov
       nacl glibc fseek function always set errno to EPERM if error occured, 
       though zrt set correct errno*/
@@ -87,7 +87,7 @@ Got %d instead\n",
 	    printf ("fseek() for r+ to before start of file worked!\n");
 	    result = 1;
 	}
-#ifdef __native_client__ 
+#ifdef __ZRT__ 
     /*YaroslavLitvinov
       nacl glibc fseek function always set errno to EPERM if error occured, 
       though zrt set correct errno*/

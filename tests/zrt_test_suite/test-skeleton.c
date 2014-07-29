@@ -36,7 +36,7 @@
 #include <time.h>
 #include "zrt.h"
 
-#ifdef __native_client__
+#ifdef __ZRT__
 # define fork(...) (-1)
 # define kill(...) (-1)
 # define waitpid(...) (-1)

@@ -50,7 +50,7 @@ static pth_time_t   pth_loadtickgap = PTH_TIME(1,0);
 /* initialize the scheduler ingredients */
 intern int pth_scheduler_init(void)
 {
-#ifndef __native_client__
+#ifndef __ZRT__
     /* create the internal signal pipe */
     if (pipe(pth_sigpipe) == -1)
         return pth_error(FALSE, errno);
@@ -58,7 +58,7 @@ intern int pth_scheduler_init(void)
         return pth_error(FALSE, errno);
     if (pth_fdmode(pth_sigpipe[1], PTH_FDMODE_NONBLOCK) == PTH_FDMODE_ERROR)
         return pth_error(FALSE, errno);
-#endif //__native_client__
+#endif //__ZRT__
     /* initialize the essential threads */
     pth_sched   = NULL;
     pth_current = NULL;
@@ -118,11 +118,11 @@ intern void pth_scheduler_kill(void)
     /* drop all threads */
     pth_scheduler_drop();
 
-#ifdef __native_client__
+#ifdef __ZRT__
     /* remove the internal signal pipe */
     close(pth_sigpipe[0]);
     close(pth_sigpipe[1]);
-#endif //__native_client__
+#endif //__ZRT__
     return;
 }
 
