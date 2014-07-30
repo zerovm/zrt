@@ -23,6 +23,7 @@
 #include <time.h>   /*clock_t*/
 #include <stdint.h>
 #include <sys/types.h>
+#include <sys/statvfs.h>
 
 #define UMASK_ENV "UMASK"
 
