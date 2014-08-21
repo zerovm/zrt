@@ -41,6 +41,7 @@ lib/nvram/observers/settime_observer.c \
 lib/nvram/observers/debug_observer.c \
 lib/nvram/observers/mapping_observer.c \
 lib/nvram/observers/precache_observer.c \
+lib/fs/dirent_engine.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
@@ -259,6 +260,9 @@ endif
 	install -m 0644 lib/lua/lualib.h $(INSTALL_INCLUDE_DIR)/lua
 	install -m 0644 lib/lua/lua.h $(INSTALL_INCLUDE_DIR)/lua
 	install -m 0644 lib/lua/luaconf.h $(INSTALL_INCLUDE_DIR)/lua
+ifndef __ZRT_SO
+	install -m 0644 lib/libfs.a $(INSTALL_LIB_DIR)
+endif
 	install -m 0644 lib/networking/channels_conf.h $(INSTALL_INCLUDE_DIR)/networking
 	install -m 0644 lib/networking/channels_conf_reader.h $(INSTALL_INCLUDE_DIR)/networking
 	install -m 0644 lib/networking/eachtoother_comm.h $(INSTALL_INCLUDE_DIR)/networking

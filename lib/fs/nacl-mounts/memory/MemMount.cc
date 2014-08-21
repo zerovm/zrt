@@ -11,7 +11,7 @@
 extern "C" {
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
-#include "fs/channels_readdir.h"
+#include "fs/dirent_engine.h"
 #include "enum_strings.h"
 }
 #include "MemMount.h"
@@ -513,11 +513,10 @@ int MemMount::Getdents(ino_t slot, off_t offset, off_t *newoffset, void *buf, un
 	ZRT_LOG(L_SHORT, "getdents entity: %s", node->name().c_str());
 	/*format in buf dirent structure, of variable size, and save current file data;
 	  original MemMount implementation was used dirent as having constant size */
-	bytes_read += 
-	    put_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
-				 node->slot(), 0, 
-				 d_type_from_mode(st.st_mode),
-				 node->name().c_str(), node->name().length() );
+	bytes_read += get_dirent_engine()
+	    ->add_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
+				   node->slot(), 0, st.st_mode,
+				   node->name().c_str() );
         ++pos;
     }
     *newoffset=pos;

@@ -26,6 +26,7 @@
 #include "channels_readdir.h"
 #include "zrtlog.h"
 #include "nacl_struct.h"
+#include "dirent_engine.h"
 #include "channels_mount.h"
 #include "channels_array.h"
 
@@ -197,69 +198,3 @@ int get_sub_dir_index( struct manifest_loaded_directories_t *manifest_dirs, cons
     return -1;
 }
 
-
-int d_type_from_mode(unsigned int mode){
-    switch (mode & S_IFMT) {
-    case S_IFBLK:  return DT_BLK;
-    case S_IFCHR:  return DT_CHR;
-    case S_IFDIR:  return DT_DIR;
-    case S_IFIFO:  return DT_FIFO;
-    case S_IFLNK:  return DT_LNK;
-    case S_IFREG:  return DT_REG;
-    case S_IFSOCK: return DT_SOCK;
-    default:       return DT_UNKNOWN;
-    }
-}
-
-
-size_t put_dirent_into_buf( char *buf, 
-			    int buf_size, 
-			    unsigned long d_ino, 
-			    unsigned long d_off,
-			    unsigned char d_type,
-			    const char *d_name, 
-			    int namelength ){
-    #define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
-    DIRENT *dirent = (DIRENT *) buf;
-    ZRT_LOG(L_EXTRA, "dirent offset: ino_off=%u, off_off=%u, reclen_off=%u, name_off=%u",
-            offsetof( DIRENT, d_ino ),
-            offsetof( DIRENT, d_off ),
-            offsetof( DIRENT, d_reclen ),
-            offsetof( DIRENT, d_name ) );
-
-    /*dirent structure not have constant size it's can be vary depends on name length.       
-      also dirent size should be multiple of the 8 bytes, so adjust it*/
-    uint32_t adjusted_size = 
-	offsetof(DIRENT, d_name) + namelength +1 /* NUL termination */;
-    adjusted_size = ROUND_UP( adjusted_size, 8 );
-
-    /*if size of the current dirent data is less than available buffer size
-     then fill it by data*/
-    if ( adjusted_size < buf_size ){
-        dirent->d_reclen = adjusted_size;
-        dirent->d_ino = d_ino;
-	dirent->d_type = d_type;
-        if ( d_off == 0x7fffffff )
-            dirent->d_off = 0x7fffffff;
-        else
-            dirent->d_off = d_off+dirent->d_reclen;
-
-        memcpy( dirent->d_name, d_name, namelength );
-        ((char*)dirent->d_name)[namelength] = '\0';
-
-        ZRT_LOG(L_SHORT, "dirent: name=%s, ino=%u, d_off=%u, d_reclen=%d, d_type=%d",
-                d_name, 
-		(unsigned int)d_ino, 
-		(unsigned int)d_off, 
-		dirent->d_reclen, 
-		d_type );
-        return dirent->d_reclen;
-    }
-    /*buffer is not enough to save current dirent structure*/
-    else{
-        ZRT_LOG(L_EXTRA, "no enough buffer, "
-		"data_size=%d, buf_size=%d", 
-		adjusted_size, buf_size);
-        return -1; /*no enough buffer size*/
-    }
-}
