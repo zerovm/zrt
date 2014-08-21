@@ -50,13 +50,16 @@ lib/fs/channels_array.c \
 lib/fs/channels_mount.c \
 lib/fs/channels_readdir.c \
 lib/fs/transparent_mount.c \
-lib/fs/mem_mount_wraper.cc \
 lib/fs/unpack/mounts_reader.c \
 lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c \
 lib/zrt.c \
 lib/ptrace.c 
+
+ifndef __ZRT_SO
+LIBZRT_SOURCES += lib/fs/mem_mount_wraper.cc
+endif
 
 LIBDEP_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBDEP_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBDEP_OBJECTS_NO_PREFIX))
@@ -89,7 +92,10 @@ CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 
 ################# "make all" Build zrt & run minimal tests set
-all: build autotests
+all: build 
+ifndef __ZRT_SO
+all: autotests
+endif
 
 ############## "make test" Run all test suites available for ZRT
 check: build
