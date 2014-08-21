@@ -147,9 +147,7 @@ autotests possible_slow_autotests: build
 	@TESTS_ROOT=tests/$@ make  -Ctests/zrt_test_suite -j4 $(TEST_PARAM)
 	@./kill_daemons.sh
 
-#ifndef __ZRT_HOST
 build: ${PTH}
-#endif
 build: doc  ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
 ifndef __ZRT_HOST
 	@make -C locale/locale_patched
@@ -259,6 +257,10 @@ ifndef __ZRT_HOST
 	install -m 0644 lib/libgtest.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libsqlite3.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libcontext.a $(INSTALL_LIB_DIR)
+endif
+	install -d $(INSTALL_INCLUDE_DIR)/helpers $(INSTALL_INCLUDE_DIR)/networking \
+	$(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR)
+	install -m 0644 lib/zrtapi.h $(INSTALL_INCLUDE_DIR)
 	install -m 0644 libports/sqlite3/vfs_channel.h $(INSTALL_INCLUDE_DIR)/sqlite3
 	install -m 0644 libports/sqlite3/sqlite3.h $(INSTALL_INCLUDE_DIR)/sqlite3
 	install -m 0644 libports/sqlite3/sqlite3ext.h $(INSTALL_INCLUDE_DIR)/sqlite3
@@ -266,7 +268,6 @@ ifndef __ZRT_HOST
 	install -m 0644 lib/lua/lualib.h $(INSTALL_INCLUDE_DIR)/lua
 	install -m 0644 lib/lua/lua.h $(INSTALL_INCLUDE_DIR)/lua
 	install -m 0644 lib/lua/luaconf.h $(INSTALL_INCLUDE_DIR)/lua
-endif
 ifndef __ZRT_SO
 	install -m 0644 lib/libfs.a $(INSTALL_LIB_DIR)
 endif
