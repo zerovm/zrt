@@ -75,9 +75,9 @@ LIBPORTS= libports/gtest/libgtest.a \
 libports/lua-5.2.1/liblua.a \
 libports/sqlite3/libsqlite3.a \
 libports/context-switch/libcontext.a
-else
-LIBPORTS= libports/tar-1.11.8/libtar.a
 endif
+
+LIBPORTS+= libports/tar-1.11.8/libtar.a
 
 #file inside dir will be built and installed by pth's make,
 #so we need only subpath to enter dir by make
