@@ -43,6 +43,7 @@
 #include "open_file_description.h" //struct OpenFilesPool, struct OpenFileDescription
 #include "fcntl_implem.h"
 #include "enum_strings.h"
+#include "dirent_engine.h"
 #include "channels_readdir.h"
 #include "channels_mount.h"
 #include "channels_mount_magic_numbers.h"
@@ -958,11 +959,10 @@ static int channels_getdents(struct MountsPublicInterface* this_, int fd, void *
 	GET_MODE_OF_ENTRY_BY_INODE(this, iter_inode, &mode);
 	/*format in buf dirent structure, of variable size, and save current file data;
 	  original MemMount implementation was used dirent as having constant size */
-	int ret = 
-	    put_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
-				 iter_inode, 0,
-				 d_type_from_mode(mode),
-				 iter_item_name, strlen(iter_item_name) );
+	int ret = get_dirent_engine()
+	    ->add_dirent_into_buf( ((char*)buf)+bytes_read, buf_size-bytes_read, 
+				   iter_inode, 0,
+				   mode, iter_item_name );
 	/*if put into dirent was success*/
 	if ( ret > 0 ){
 	    bytes_read += ret;

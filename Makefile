@@ -41,6 +41,7 @@ lib/nvram/observers/settime_observer.c \
 lib/nvram/observers/debug_observer.c \
 lib/nvram/observers/mapping_observer.c \
 lib/nvram/observers/precache_observer.c \
+lib/fs/dirent_engine.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
 lib/fs/handle_allocator.c \
@@ -49,7 +50,6 @@ lib/fs/channels_array.c \
 lib/fs/channels_mount.c \
 lib/fs/channels_readdir.c \
 lib/fs/transparent_mount.c \
-lib/fs/mem_mount_wraper.cc \
 lib/fs/unpack/mounts_reader.c \
 lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
@@ -57,25 +57,28 @@ lib/fs/unpack/parse_path.c \
 lib/zrt.c \
 lib/ptrace.c 
 
+ifndef __ZRT_SO
+LIBZRT_SOURCES += lib/fs/mem_mount_wraper.cc
+endif
+
 LIBDEP_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBDEP_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBDEP_OBJECTS_NO_PREFIX))
 LIBZRT_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 LIBZRT_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBZRT_OBJECTS_NO_PREFIX))
 
 ############## zrtlibs and ported libraries build
-LIBS= \
-lib/mapreduce/libmapreduce.a \
-lib/networking/libnetworking.a \
-lib/fs/nacl-mounts/libfs.a
+LIBS= lib/mapreduce/libmapreduce.a \
+lib/networking/libnetworking.a
 
-LIBPORTS= \
+ifndef __ZRT_HOST
+LIBPORTS=lib/fs/nacl-mounts/libfs.a \
 libports/gtest/libgtest.a \
 libports/lua-5.2.1/liblua.a \
-libports/tar-1.11.8/libtar.a \
-libports/sqlite3/libsqlite3.a
-ifndef __ZRT_HOST
-LIBPORTS+= libports/context-switch/libcontext.a
+libports/sqlite3/libsqlite3.a \
+libports/context-switch/libcontext.a
 endif
+
+LIBPORTS+= libports/tar-1.11.8/libtar.a
 
 #file inside dir will be built and installed by pth's make,
 #so we need only subpath to enter dir by make
@@ -90,7 +93,10 @@ CFLAGS += -DDEBUG
 CFLAGS += -DUSER_SIDE
 
 ################# "make all" Build zrt & run minimal tests set
-all: build autotests
+all: build 
+ifndef __ZRT_SO
+all: autotests
+endif
 
 ############## "make test" Run all test suites available for ZRT
 check: build
@@ -142,11 +148,11 @@ autotests possible_slow_autotests: build
 	@TESTS_ROOT=tests/$@ make  -Ctests/zrt_test_suite -j4 $(TEST_PARAM)
 	@./kill_daemons.sh
 
-ifndef __ZRT_HOST
 build: ${PTH}
-endif
 build: doc  ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
+ifndef __ZRT_HOST
 	@make -C locale/locale_patched
+endif
 
 #build zrt0 to be used as stub inside of zlibc
 zlibc_dep: CFLAGS+=-DZLIBC_STUB
@@ -168,9 +174,17 @@ ${LIBPORTS}:
 	@mv -f $@ lib
 
 ${PTH}:
-ifndef __ZRT_HOST
+ifdef __ZRT_HOST
+	cd $(dir ${PTH}) && ./configure CFLAGS=-fPIC prefix=$(ZVM_PREFIX)/x86_64 \
+	--enable-pthread --enable-shared=no --enable-tests=no --enable-optimize=no \
+	--with-mctx-mth=mcsc \
+	--with-mctx-dsp=sc \
+	--with-mctx-stk=mc
+	cd $(CURDIR)
+else
 	@make -C$(dir $@) clean all install
 endif
+	@make -C$(dir $@) clean all
 
 lua_test_suite: build
 	@make -Ctests/$@
@@ -217,12 +231,13 @@ ${LIBPORTS_CLEAN}:
 	@rm -f $@
 
 testclean:
+ifndef __ZRT_HOST
 	@make -C locale/locale_patched clean
 	@make -Ctests/glibc_test_suite clean
 	@make -Ctests/lua_test_suite clean
 	@TESTS_ROOT=tests/autotests make -Ctests/zrt_test_suite clean
 	@TESTS_ROOT=tests/possible_slow_autotests make -Ctests/zrt_test_suite clean
-
+endif
 cleandep:
 	@rm -f ${LIBDEP_OBJECTS}
 
@@ -238,22 +253,16 @@ uninstall:
 	rm -f $(INSTALL_INCLUDE_DIR)/mapreduce/buffered_io.h
 
 install: uninstall
-ifndef __ZRT_HOST
 	@make -C$(dir ${PTH}) install
-endif
-	install -m 0644 lib/libzrt.a $(INSTALL_LIB_DIR)
-	install -m 0644 lib/libmapreduce.a $(INSTALL_LIB_DIR)
-	install -m 0644 lib/libnetworking.a $(INSTALL_LIB_DIR)
-	install -m 0644 lib/libfs.a $(INSTALL_LIB_DIR)
+ifndef __ZRT_HOST
+	install -d $(INSTALL_INCLUDE_DIR)/sqlite3 $(INSTALL_INCLUDE_DIR)/lua 
 	install -m 0644 lib/liblua.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libgtest.a $(INSTALL_LIB_DIR)
-	install -m 0644 lib/libtar.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libsqlite3.a $(INSTALL_LIB_DIR)
-ifndef __ZRT_HOST
 	install -m 0644 lib/libcontext.a $(INSTALL_LIB_DIR)
 endif
-	install -d $(INSTALL_INCLUDE_DIR)/sqlite3 $(INSTALL_INCLUDE_DIR)/lua $(INSTALL_INCLUDE_DIR)/helpers \
-		$(INSTALL_INCLUDE_DIR)/networking $(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR)
+	install -d $(INSTALL_INCLUDE_DIR)/helpers $(INSTALL_INCLUDE_DIR)/networking \
+	$(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR)
 	install -m 0644 lib/zrtapi.h $(INSTALL_INCLUDE_DIR)
 	install -m 0644 libports/sqlite3/vfs_channel.h $(INSTALL_INCLUDE_DIR)/sqlite3
 	install -m 0644 libports/sqlite3/sqlite3.h $(INSTALL_INCLUDE_DIR)/sqlite3
@@ -262,6 +271,16 @@ endif
 	install -m 0644 lib/lua/lualib.h $(INSTALL_INCLUDE_DIR)/lua
 	install -m 0644 lib/lua/lua.h $(INSTALL_INCLUDE_DIR)/lua
 	install -m 0644 lib/lua/luaconf.h $(INSTALL_INCLUDE_DIR)/lua
+ifndef __ZRT_SO
+	install -m 0644 lib/libfs.a $(INSTALL_LIB_DIR)
+endif
+	install -d $(INSTALL_INCLUDE_DIR)/networking $(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR) \
+	$(INSTALL_INCLUDE_DIR)/helpers $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libzrt.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libmapreduce.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libnetworking.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libtar.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/zrtapi.h $(INSTALL_INCLUDE_DIR)
 	install -m 0644 lib/networking/channels_conf.h $(INSTALL_INCLUDE_DIR)/networking
 	install -m 0644 lib/networking/channels_conf_reader.h $(INSTALL_INCLUDE_DIR)/networking
 	install -m 0644 lib/networking/eachtoother_comm.h $(INSTALL_INCLUDE_DIR)/networking

@@ -52,7 +52,7 @@ ptrace_init()
 /* Function called by every function event */
 void
 __NON_INSTRUMENT_FUNCTION__
-ptrace(entry_t e, void *p)
+_ptrace(entry_t e, void *p)
 {
     static active_t active = A_UNINITIALIZED;
     static FILE *f = NULL;
@@ -88,11 +88,11 @@ ptrace(entry_t e, void *p)
 /* According to gcc documentation: called upon function entry */
 void
 __NON_INSTRUMENT_FUNCTION__
-__cyg_profile_func_enter(void *this_fn, void *call_site)
+___cyg_profile_func_enter(void *this_fn, void *call_site)
 {
     if ( is_ptrace_allowed() ) {
 	int backup_errno = errno;
-	ptrace(FUNCTION_ENTRY, this_fn);
+	_ptrace(FUNCTION_ENTRY, this_fn);
 	errno = backup_errno;
     }
     (void) call_site;
@@ -101,11 +101,11 @@ __cyg_profile_func_enter(void *this_fn, void *call_site)
 /* According to gcc documentation: called upon function exit */
 void
 __NON_INSTRUMENT_FUNCTION__
-__cyg_profile_func_exit(void *this_fn, void *call_site)
+___cyg_profile_func_exit(void *this_fn, void *call_site)
 {
     if ( is_ptrace_allowed() ) {
 	int backup_errno = errno;
-	ptrace(FUNCTION_EXIT, this_fn);
+	_ptrace(FUNCTION_EXIT, this_fn);
 	errno = backup_errno;
     }
     (void) call_site;

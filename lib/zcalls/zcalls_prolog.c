@@ -104,8 +104,11 @@ void zrt_zcall_prolog_preinit(){
 void zrt_zcall_prolog_init(){
     /*set root dir as current dir*/
     extern char __curr_dir_path[];
+#ifndef __ZRT_SO
     strcpy(__curr_dir_path, "/\0" );
-
+#else
+    strcpy(__curr_dir_path, "/dev\0" ); //temporary while has no filesystem at root
+#endif
     __zrt_log_init( DEV_DEBUG );
     ZRT_LOG(L_BASE, P_TEXT, "prolog init");
     ZRT_LOG_LOW_LEVEL(FUNC_NAME);
@@ -433,6 +436,7 @@ static int get_records_count_for_section_and_buffer_size_to_copy_contents
       as into null terminated strings folowing each after other*/
     ZRT_LOG(L_INFO, "For nvram section '%s' calculations", section_name);
     int records_count = 0;
+    *buf_size=0;
     struct ParsedRecords* section = nvram->section_by_name( nvram, section_name );
     if ( section != NULL ){
 	struct ParsedRecord* current_rec;

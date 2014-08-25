@@ -901,7 +901,7 @@ difftm (a, b)
 }
 
 time_t
-get_date (p, now)
+__tar_get_date (p, now)
     char		*p;
     struct timeb	*now;
 {
@@ -991,7 +991,7 @@ main (ac, av)
 
   buff[MAX_BUFF_LEN] = 0;
   while (fgets (buff, MAX_BUFF_LEN, stdin) && buff[0]) {
-    d = get_date (buff, (struct timeb *)NULL);
+    d = __tar_get_date (buff, (struct timeb *)NULL);
     if (d == -1)
       (void)printf ("Bad format - couldn't convert.\n");
     else

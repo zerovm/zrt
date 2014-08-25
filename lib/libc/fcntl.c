@@ -83,8 +83,6 @@ int zrt_zcall_fcntl(int fd, int cmd, ... /* arg */ ){
 	fflush(0);
     }
     else if ( cmd == F_SETFL ){
-	va_list args;
-	va_start(args, cmd);
 	long flags = va_arg(args, long);
 	ret = transpar_mount->fcntl(transpar_mount, fd, cmd, flags);
     }

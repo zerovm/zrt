@@ -19,7 +19,7 @@
 #define __ZRTLOGBASE_H__
 
 #define MAX_TEMP_BUFFER_SIZE 100
-#define MAX_ITEMS_SIZE 10
+#define MAX_ITEMS_COUNT 10
 
 /*Log Items*/
 typedef enum {ELogLength=0, 
@@ -32,12 +32,22 @@ typedef enum {ELogLength=0,
 	      ELogPath
 } log_item;
 
-extern char* s_log_items[MAX_ITEMS_SIZE];
+#ifdef __ZRT_SO
+extern char s_log_items[MAX_ITEMS_COUNT][MAX_TEMP_BUFFER_SIZE];
+#else
+extern char *s_log_items[MAX_ITEMS_COUNT];
+#endif //__ZRT_SO
 extern int   s_log_items_count;
 
-#define LOG_BASE_ENABLE				\
-    char* s_log_items[MAX_ITEMS_SIZE];		\
+#ifdef __ZRT_SO
+# define LOG_BASE_ENABLE			\
+    char s_log_items[MAX_ITEMS_COUNT][MAX_TEMP_BUFFER_SIZE];	\
     int s_log_items_count = 0
+#else
+# define LOG_BASE_ENABLE			\
+    char* s_log_items[MAX_ITEMS_COUNT];		\
+    int s_log_items_count = 0
+#endif
 
 #define LOG_DEBUG(item_id, value, comment)				\
     if( __zrt_log_is_enabled() ){					\
@@ -69,7 +79,20 @@ extern int   s_log_items_count;
 	}								\
     }
 
-#define ITEM(itemid, name, format){					\
+
+#ifdef __ZRT_SO
+# define ITEM(itemid, name, format)				\
+    {								\
+	assert(s_log_items_count == itemid);			\
+	snprintf(s_log_items[itemid], MAX_TEMP_BUFFER_SIZE,	\
+		 "%s "#name"=%s\n",				\
+		 "%-30s", format );				\
+    }								\
+	++s_log_items_count
+
+#else
+# define ITEM(itemid, name, format)					\
+    {									\
 	assert(s_log_items_count == itemid);				\
 	char buf[MAX_TEMP_BUFFER_SIZE];					\
 	int  buf_length = snprintf(buf, MAX_TEMP_BUFFER_SIZE,		\
@@ -78,12 +101,13 @@ extern int   s_log_items_count;
 	s_log_items[itemid] = memcpy( malloc(buf_length), buf, buf_length); \
     }									\
 	++s_log_items_count
-    
+#endif    
+
 
 /*put items creator of ITEM macroses into zrtlog.c*/
 #define ITEMS_CREATOR				\
     ITEM(ELogLength,     length,     "%d" );	\
-    ITEM(ELogAddress,    address,    "0x%x" );	\
+    ITEM(ELogAddress,    address,    "%p" );	\
     ITEM(ELogSize,       size,       "%u" );	\
     ITEM(ELogTitle,      =======,    "%s" );	\
     ITEM(ELogTime,       time,       "%s" );	\
