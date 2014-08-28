@@ -29,6 +29,7 @@ struct MountsPublicInterface;
 
 struct HandleItem{
     ino_t inode;
+    ino_t parent_dir_inode;
     int   open_file_description_id;
     struct MountsPublicInterface* mount_fs;
 };
@@ -37,8 +38,15 @@ struct HandleItem{
 /*interface*/
 struct HandleAllocator{
     /**/
-    int (*allocate_handle)(struct MountsPublicInterface* mount_fs, ino_t inode, int open_file_desc_id);
-    int (*allocate_handle2)(struct MountsPublicInterface* mount_fs, ino_t inode, int open_file_desc_id, int handle);
+    int (*allocate_handle)(struct MountsPublicInterface* mount_fs, 
+			   ino_t inode, 
+			   ino_t parent_dir_inode, 
+			   int open_file_desc_id);
+    int (*allocate_handle2)(struct MountsPublicInterface* mount_fs, 
+			    ino_t inode, 
+			    ino_t parent_dir_inode,
+			    int open_file_desc_id, 
+			    int handle);
     int (*free_handle)(int handle);
 
     /*Check if handle is related to the specified fs

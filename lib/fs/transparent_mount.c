@@ -490,6 +490,7 @@ static int transparent_dup(struct MountsPublicInterface *this, int oldfd){
 	/*get dup handle */
 	int handle = get_handle_allocator()->allocate_handle(mount,
 							     hentry->inode,
+							     hentry->parent_dir_inode,
 							     hentry->open_file_description_id);
 	if ( handle == -1 ){
 	    get_open_files_pool()->release_ofd(hentry->open_file_description_id);
@@ -532,6 +533,7 @@ static int transparent_dup2(struct MountsPublicInterface *this, int oldfd, int n
 	/*get dup handle */
 	int handle = get_handle_allocator()->allocate_handle2(mount,
 							      hentry->inode,
+							      hentry->parent_dir_inode,
 							      hentry->open_file_description_id,
 							      newfd);
 	if ( handle == -1 ){
