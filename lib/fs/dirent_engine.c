@@ -31,12 +31,11 @@
     ROUND_UP( (offsetof(DIRENT, d_name) + d_name_len +1 /* NUL termination */), 8 )
 
 #define	NON_ZRT_DIRENTLEN(d_name_len)	\
-    ((offsetof(DIRENT, d_name[0]) + 1 + (d_name_len) + 7) & ~ 7)
+    ROUND_UP( (offsetof(DIRENT, d_name) + d_name_len +1 /* NUL termination */ + 1 /*d_type*/), 8 )
 
 #define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
 
 
-#ifdef ZRTDIRENT
 static int d_type_from_mode(unsigned int mode){
     switch (mode & S_IFMT) {
     case S_IFBLK:  return DT_BLK;
@@ -49,7 +48,6 @@ static int d_type_from_mode(unsigned int mode){
     default:       return DT_UNKNOWN;
     }
 }
-#endif //ZRTDIRENT
 
 static size_t adjusted_dirent_size(int d_name_len){
 #ifdef ZRTDIRENT
@@ -83,6 +81,8 @@ static ssize_t put_dirent_into_buf( char *buf,
         dirent->d_ino = d_ino;
 #ifdef ZRTDIRENT
 	dirent->d_type = d_type_from_mode(mode);
+#else
+	buf[adjusted_size-1] = d_type_from_mode(mode);
 #endif //ZRTDIRENT
         if ( d_off == 0x7fffffff )
             dirent->d_off = 0x7fffffff;
