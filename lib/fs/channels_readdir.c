@@ -96,12 +96,9 @@ int callback_add_dir(struct manifest_loaded_directories_t *manifest_dirs, const 
 		    d->parent_dir_inode = parentdir_data->dir_inode;
 		}
 		else{
-		    /*probably dirpath it's a root*/
-#ifdef __ZRT_SO
-		    /*ZRT_SO currently has no filesystem at root path,
-		      so /dev will be a root itself*/
+		    /*for cases when MemoryFS itself a root filesystem
+		      mounted into /dev */
 		    d->parent_dir_inode = d->dir_inode;
-#endif //__ZRT_SO
 		}
 	    }
             d->nlink =2;
