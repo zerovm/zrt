@@ -177,6 +177,36 @@ int MemMount::Mkdir(const std::string& path, mode_t mode, struct stat *buf,
     return Stat(slot, buf);
 }
 
+int MemMount::GetParentNode(const std::string& path, struct stat *buf) {
+    Path path_name(path);
+    path_name.Last();
+    /*if name too long*/
+    if ( path_name.Last().length() > NAME_MAX ){
+        ZRT_LOG(L_ERROR, "path=%s, namelen=%d, NAME_MAX=%d", 
+		path.c_str(), path_name.Last().length(), NAME_MAX );
+	SET_ERRNO(ENAMETOOLONG);
+        return -1;
+    }
+    /*if path too long*/
+    if  ( path.length() > PATH_MAX ){
+        ZRT_LOG(L_ERROR, "path=%s, path.length()=%d, PATH_MAX=%d", 
+		path.c_str(), path.length(), PATH_MAX );
+	SET_ERRNO(ENAMETOOLONG);
+        return -1;
+    }
+    // Get the directory its in.
+    int parent_slot = GetParentSlot(path);
+    if (parent_slot == -1) {
+	SET_ERRNO(ENOTDIR);
+        return -1;
+    }
+    if (!buf) {
+        return 0;
+    }
+    return Stat(parent_slot, buf);
+}
+
+
 int MemMount::GetNode(const std::string& path, struct stat *buf) {
     Path path_name(path);
     path_name.Last();

@@ -555,11 +555,15 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
     /* get node from memory FS for specified type, if no errors occured 
      * then file allocated in memory FS and require file desc - fd*/
     struct stat st;
+    struct stat st_parent;
     if ( ret == 0 && MEMOUNT_BY_MOUNT(this_)->GetNode( path, &st) == 0 ){
+	if ( MEMOUNT_BY_MOUNT(this_)->GetParentNode( path, &st_parent) != 0 )
+	    st_parent = st;
 	int open_file_description_id = OFILESPOOL_BY_MOUNT(this_)->getnew_ofd(oflag);
 	/*ask for file descriptor in handle allocator*/
 	int fd = HALLOCATOR_BY_MOUNT(this_)->allocate_handle( this_, 
 							      st.st_ino,
+							      st_parent.st_ino,
 							      open_file_description_id);
 	if ( fd < 0 ){
 	    /*it's hipotetical but possible case if amount of open files 
