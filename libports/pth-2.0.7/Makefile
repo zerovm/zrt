@@ -55,7 +55,7 @@ DESTDIR     =
 SHELL       = /bin/sh
 CC          = $(ARCH)-gcc
 CPPFLAGS    =  -I.
-CFLAGS      = -O2 -pipe -funroll-loops -fstrength-reduce -fomit-frame-pointer -ffast-math -D__ZRT__
+CFLAGS      = -pipe -funroll-loops -fstrength-reduce -fomit-frame-pointer -ffast-math -D__ZRT__ -g -DPTH_DEBUG #-O2
 LDFLAGS     = 
 MKFLAGS     = $(MFLAGS) DESTDIR=$(DESTDIR)
 LIBS        = -ldl -lnsl 
@@ -241,6 +241,10 @@ install-pthread:
 	$(SHTOOL) install -c -m 755 pthread-config $(DESTDIR)$(bindir)/pthread-config
 	$(SHTOOL) install -c -m 644 $(S)pthread-config.1 $(DESTDIR)$(mandir)/man1/pthread-config.1
 	$(SHTOOL) install -c -m 644 pthread.h $(DESTDIR)$(includedir)/pth/pthread.h
+	if [ ! -f $(DESTDIR)$(includedir)/pthread-glibc.h ]; then \
+	$(SHTOOL) install -c -m 644 $(DESTDIR)$(includedir)/pthread.h $(DESTDIR)$(includedir)/pthread-glibc.h; \
+	$(SHTOOL) install -c -m 644 pthread_.h.in $(DESTDIR)$(includedir)/pthread.h; \
+	fi;
 	$(SHTOOL) install -c -m 644 $(S)pthread.3 $(DESTDIR)$(mandir)/man3/pthread.3
 	@umask 022; $(LIBTOOL) --mode=install \
 	$(SHTOOL) install -c libpthread.la $(DESTDIR)$(libdir)/libpthread.la
