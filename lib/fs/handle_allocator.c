@@ -54,22 +54,31 @@ static int seek_unused_slot( int starting_from ){
 }
 
 
-static int allocate_handle(struct MountsPublicInterface* mount_fs, ino_t inode, int open_file_desc_id){
+static int allocate_handle(struct MountsPublicInterface* mount_fs, 
+			   ino_t inode, 
+			   ino_t parent_dir_inode,
+			   int open_file_desc_id){
     s_first_unused_slot = seek_unused_slot( s_first_unused_slot );
     if ( s_first_unused_slot == -1 ) return -1;
     s_handle_slots[s_first_unused_slot].used = EHandleUsed;
     s_handle_slots[s_first_unused_slot].public_.mount_fs = mount_fs;
     s_handle_slots[s_first_unused_slot].public_.open_file_description_id = open_file_desc_id;
     s_handle_slots[s_first_unused_slot].public_.inode = inode;
+    s_handle_slots[s_first_unused_slot].public_.parent_dir_inode = parent_dir_inode;
     return s_first_unused_slot;
 }
 
-static int allocate_handle2(struct MountsPublicInterface* mount_fs, ino_t inode, int open_file_desc_id, int handle){
+static int allocate_handle2(struct MountsPublicInterface* mount_fs, 
+			    ino_t inode, 
+			    ino_t parent_dir_inode,
+			    int open_file_desc_id, 
+			    int handle){
     if ( !VERIFY_HANDLE(handle, EHandleAvailable) ) return -1;
     s_handle_slots[handle].used = EHandleUsed;
     s_handle_slots[handle].public_.mount_fs = mount_fs;
     s_handle_slots[handle].public_.open_file_description_id = open_file_desc_id;
     s_handle_slots[handle].public_.inode = inode;
+    s_handle_slots[handle].public_.parent_dir_inode = parent_dir_inode;
     return handle;
 }
 
