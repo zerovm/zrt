@@ -478,7 +478,6 @@ void zrt_zcall_enhanced_zrt_setup(void){
 void zrt_zcall_enhanced_premain(void){
     set_home_dir( getenv("HOME") );
     zrt_internal_session_info(MANIFEST);
-
     ZRT_LOG(L_SHORT, P_TEXT, "user main() begin");
     ZRT_LOG_DELIMETER;
     s_is_user_main_executing=1;
