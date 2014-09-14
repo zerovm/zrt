@@ -100,6 +100,8 @@ void readdir_test_engine(const char *path, const struct direntry_t expected[], i
 
 void test_issue_48_dev(){
     const struct direntry_t slash_dev_expected[] = { 
+	{".", EDir},
+	{"..", EDir},
 	{"stdin", ECharDev}, //mapping enabled
 	{"stdout", EPipe},
 	{"debug", EPipe},
@@ -121,6 +123,8 @@ void test_issue_48_dev(){
     readdir_test_engine("/dev", slash_dev_expected, sizeof(slash_dev_expected)/sizeof(struct direntry_t) );
 
     const struct direntry_t slash_dev_mount_expected[] = { 
+	{".", EDir},
+	{"..", EDir},
 	{"import.tar", EBlockDev},
 	{"gcov.gcda.tar", EBlockDev}
     };
