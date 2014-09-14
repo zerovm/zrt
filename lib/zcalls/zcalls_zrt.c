@@ -371,7 +371,7 @@ int  zrt_zcall_enhanced_sysbrk(void **newbrk){
 int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, int fd, off_t off){
     int ret = -1;
     void *retaddr;
-    LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u off=%lld",
+    LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%d off=%lld",
     		      *addr, length, prot, flags, fd, off);
 
     struct MemoryManagerPublicInterface* memif = memory_interface_instance();
@@ -476,8 +476,6 @@ void zrt_zcall_enhanced_zrt_setup(void){
 
 
 void zrt_zcall_enhanced_premain(void){
-    set_home_dir( getenv("HOME") );
-    zrt_internal_session_info(MANIFEST);
     ZRT_LOG(L_SHORT, P_TEXT, "user main() begin");
     ZRT_LOG_DELIMETER;
     s_is_user_main_executing=1;
@@ -543,7 +541,9 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     /*add directories here that can be expected by some user applications */
     s_mem_mount->mkdir( s_mem_mount, "/tmp", 0777 );
 #endif //__NO_MEMORY_FS
-    /*user main execution just after zrt initialization*/
+
+    set_home_dir( getenv("HOME") );
+    zrt_internal_session_info(MANIFEST);
 }
 
 int is_zrt_ready(){
