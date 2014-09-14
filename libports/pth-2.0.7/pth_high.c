@@ -57,7 +57,9 @@ int pth_nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
     /* calculate asleep time */
     offset = pth_time((long)(rqtp->tv_sec), (long)(rqtp->tv_nsec) / 1000);
     pth_time_set(&until, PTH_TIME_NOW);
-    pth_time_add(&until, &offset);
+    /*Do not actually set time to wait under zerovm,
+     it's just emulating time functions */
+    /* pth_time_add(&until, &offset); */
 
     /* and let thread sleep until this time is elapsed */
     if ((ev = pth_event(PTH_EVENT_TIME|PTH_MODE_STATIC, &ev_key, until)) == NULL)
@@ -72,7 +74,8 @@ int pth_nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
         rmtp->tv_nsec = until.tv_usec * 1000;
     }
 
-    return 0;
+    /*run zrt emulation*/
+    return nanosleep(rqtp, rmtp);
 }
 
 /* Pth variant of usleep(3) */
@@ -115,14 +118,17 @@ unsigned int pth_sleep(unsigned int sec)
     /* calculate asleep time */
     offset = pth_time(sec, 0);
     pth_time_set(&until, PTH_TIME_NOW);
-    pth_time_add(&until, &offset);
+    /*Do not actually set time to wait under zerovm,
+     it's just emulating time functions */
+    /* pth_time_add(&until, &offset); */
 
     /* and let thread sleep until this time is elapsed */
     if ((ev = pth_event(PTH_EVENT_TIME|PTH_MODE_STATIC, &ev_key, until)) == NULL)
         return sec;
     pth_wait(ev);
 
-    return 0;
+    /*run zrt emulation*/
+    return sleep(sec);
 }
 
 /* Pth variant of POSIX pthread_sigmask(3) */
