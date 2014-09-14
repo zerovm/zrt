@@ -28,7 +28,10 @@ MemData::MemData() {
     use_count_ = 0;
     nlink_ = 1; /*new file/dir has 1 hardlink at creature time*/
     want_unlink_ = 0;
+    mode_=0;
+    uid_ = gid_ = 0;
     hardinode_ = 0;
+    memset(&flock_, '\0', sizeof(flock_));
 }
 
 
