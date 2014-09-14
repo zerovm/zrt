@@ -272,6 +272,7 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
     if ( item->channel->type == RGetSPut && !CHECK_FLAG(flags, O_APPEND) &&
 	 CHECK_FLAG(permissions, S_IRUSR) && CHECK_FLAG(permissions, S_IWUSR) &&
 	 (S_IFBLK==ftype||S_IFREG==ftype) ){
+        ZRT_LOG(L_ERROR, "Channel %s treated as append only channel and must be opened with O_APPEND flag", name );
         SET_ERRNO( EPERM );
         return -1;
     }
