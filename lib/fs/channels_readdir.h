@@ -30,6 +30,7 @@ struct dir_data_t {
     /*directory dir_inode should be in range starting just after channels fd range;
      * can be used also to get inode by INODE_FROM_ZVM_INODE*/
     int dir_inode;
+    int parent_dir_inode;
     int nlink;
     char* path;
 };

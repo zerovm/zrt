@@ -36,6 +36,7 @@
 #include "zvm.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
+#include "path_utils.h"
 #include "nacl_struct.h"
 #include "mount_specific_interface.h"
 #include "mounts_interface.h"
@@ -271,6 +272,7 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
     if ( item->channel->type == RGetSPut && !CHECK_FLAG(flags, O_APPEND) &&
 	 CHECK_FLAG(permissions, S_IRUSR) && CHECK_FLAG(permissions, S_IWUSR) &&
 	 (S_IFBLK==ftype||S_IFREG==ftype) ){
+        ZRT_LOG(L_ERROR, "Channel %s treated as append only channel and must be opened with O_APPEND flag", name );
         SET_ERRNO( EPERM );
         return -1;
     }
@@ -295,6 +297,7 @@ static int open_channel( struct ChannelMounts* this, const char *name, int flags
       and can be used in order to do multiple opens of single file */
     int handle = this->handle_allocator->allocate_handle(&this->public,
 							 item->channel_runtime.inode,
+							 item->channel_runtime.parent_inode,
 							 open_file_descr);
     if ( handle == -1 ){
 	this->open_files_pool->release_ofd(open_file_descr);
@@ -581,9 +584,24 @@ static int iterate_dir_contents( struct ChannelMounts* this, int dir_handle, int
     struct dir_data_t* dir_pattern =
 	match_inode_in_directory_list(&this->manifest_dirs, inode);
 
+    /*add '.' item*/
+    if ( index == 0 ){
+	*iter_inode = inode; /*get directory inode*/
+	*iter_name = "."; /*get name of item*/
+	*iter_is_dir = 1;
+	return 0;
+    }
+    /*add '..' item*/
+    if ( index == 1 ){
+	*iter_inode = dir_pattern->parent_dir_inode; /*get parent directory inode*/
+	*iter_name = ".."; /*get name of item*/
+	*iter_is_dir = 1;
+	return 0;
+    }
+
     /*nested dirs & files count*/
-    int subdir_index = 0;
-    int file_index = 0;
+    int subdir_index = 2;     /*'.', '..'*/
+    int file_index = 2;     /*'.', '..'*/
 
     /*match subdirs*/
     struct dir_data_t* loop_d = NULL; /*loop dir used as loop variable*/
@@ -1079,6 +1097,7 @@ static int channels_open(struct MountsPublicInterface* this_,const char* path, i
 		/*it's allowed to open in read only mode*/
 		int handle = this->handle_allocator->allocate_handle(&this->public,
 								     dir->dir_inode,
+								     dir->parent_dir_inode,
 								     ofd_id);
 		if ( handle == -1 ){
 		    this->open_files_pool->release_ofd(ofd_id);
@@ -1315,6 +1334,21 @@ channels_filesystem_construct( struct ChannelsModeUpdaterPublicInterface** mode_
     
     /*perform object construct*/
     process_channels_create_dir_list( this->channels_array, &this->manifest_dirs );
+
+    /*assign parent_inode for channel items*/
+    int i;
+    for ( i=0; i < this->channels_array->count(this->channels_array); i++ ){
+	struct ChannelArrayItem* current_chan =  this->channels_array->get(this->channels_array, i);
+	int parentdir_len=0;
+	int cursor;
+	INIT_TEMP_CURSOR(&cursor) ;
+	path_subpath_backward(&cursor, current_chan->channel->name, &parentdir_len); /*skip full component*/
+	const char *parentdir_path = path_subpath_backward(&cursor, current_chan->channel->name, &parentdir_len);
+	assert(parentdir_path);
+	struct dir_data_t *parentdir_data = match_dir_in_directory_list(&this->manifest_dirs, parentdir_path, parentdir_len);
+	assert(parentdir_data!=NULL);
+	current_chan->channel_runtime.parent_inode = parentdir_data->dir_inode;
+    }
 
     /*this info will not be logged here because logs not yet created */
 #if 0

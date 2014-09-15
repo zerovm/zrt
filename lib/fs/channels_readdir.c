@@ -25,6 +25,7 @@
 #include "zvm.h"
 #include "channels_readdir.h"
 #include "zrtlog.h"
+#include "path_utils.h"
 #include "nacl_struct.h"
 #include "dirent_engine.h"
 #include "channels_mount.h"
@@ -77,6 +78,29 @@ int callback_add_dir(struct manifest_loaded_directories_t *manifest_dirs, const 
              *nlink assigned now 2, should be increased on subdirs number*/
             struct dir_data_t *d = &manifest_dirs->dir_array[manifest_dirs->dircount];
             d->dir_inode = manifest_dirs->dircount;
+		/*assign parent dir inode*/
+	    {
+		char *path = alloca(len+1);
+		strncpy(path, dirpath, len);
+		path[len] = '\0';
+		int cursor;
+		int parentdir_len;
+		INIT_TEMP_CURSOR(&cursor) ;
+		path_subpath_backward(&cursor, path, &parentdir_len); /*skip full component*/
+		const char *parentdir_path = path_subpath_backward(&cursor, path, &parentdir_len);
+		struct dir_data_t *parentdir_data = NULL;
+		if ( parentdir_path != NULL )
+		    parentdir_data = match_dir_in_directory_list(manifest_dirs, parentdir_path, parentdir_len);
+		/*if subdir not a root path*/
+		if ( parentdir_data != NULL ){
+		    d->parent_dir_inode = parentdir_data->dir_inode;
+		}
+		else{
+		    /*for cases when MemoryFS itself a root filesystem
+		      mounted into /dev */
+		    d->parent_dir_inode = d->dir_inode;
+		}
+	    }
             d->nlink =2;
             d->path = calloc(sizeof(char), len+1);
             memcpy( d->path, dirpath, len );
@@ -136,7 +160,7 @@ const char* name_from_path_get_path_len(const char *fullpath, int *pathlen){
 
 
 void process_channels_create_dir_list( const struct ChannelsArrayPublicInterface *channels_if,
-        struct manifest_loaded_directories_t *manifest_dirs )
+				       struct manifest_loaded_directories_t *manifest_dirs )
 {
     struct ChannelArrayItem* item;
     int i;
@@ -166,9 +190,14 @@ void process_channels_create_dir_list( const struct ChannelsArrayPublicInterface
         manifest_dirs->dir_array[i].dir_inode += 
 	    channels_if->count((struct ChannelsArrayPublicInterface *)channels_if);
 	manifest_dirs->dir_array[i].dir_inode = INODE_FROM_ZVM_INODE(manifest_dirs->dir_array[i].dir_inode);
-	ZRT_LOG(L_SHORT, "Directory %10s, inode=%d",
+
+	manifest_dirs->dir_array[i].parent_dir_inode += 
+	    channels_if->count((struct ChannelsArrayPublicInterface *)channels_if);
+	manifest_dirs->dir_array[i].parent_dir_inode = INODE_FROM_ZVM_INODE(manifest_dirs->dir_array[i].parent_dir_inode);
+	ZRT_LOG(L_SHORT, "Directory %10s, inode=%d, parent inode=%d",
 		manifest_dirs->dir_array[i].path, 
-		manifest_dirs->dir_array[i].dir_inode );
+		manifest_dirs->dir_array[i].dir_inode,
+		manifest_dirs->dir_array[i].parent_dir_inode);
         /*get subdirs count, update nlink*/
         manifest_dirs->dir_array[i].nlink += subdirs_count;
     }

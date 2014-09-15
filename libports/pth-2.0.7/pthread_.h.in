@@ -23,6 +23,7 @@
 
 
 #ifdef _GLIBCXX_GCC_GTHR_POSIX_H
+#  undef _PTHREAD_H
 #  include <pthread-glibc.h>
 #else
 #  include <pth/pthread.h>

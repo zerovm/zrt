@@ -94,9 +94,6 @@ static inline void increment_cached_time(time_t seconds, suseconds_t microsecond
 }
 
 void zrt_zcall_prolog_preinit(){
-#ifdef __ZRT_HOST
-    prepare_zrt_host();
-#endif
     if ( MANIFEST )
 	sbrk_default = MANIFEST->heap_ptr;
 }
@@ -104,7 +101,7 @@ void zrt_zcall_prolog_preinit(){
 void zrt_zcall_prolog_init(){
     /*set root dir as current dir*/
     extern char __curr_dir_path[];
-#ifndef __ZRT_SO
+#ifndef __NO_MEMORY_FS
     strcpy(__curr_dir_path, "/\0" );
 #else
     strcpy(__curr_dir_path, "/dev\0" ); //temporary while has no filesystem at root

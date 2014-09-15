@@ -57,7 +57,7 @@ lib/fs/unpack/parse_path.c \
 lib/zrt.c \
 lib/ptrace.c 
 
-ifndef __ZRT_SO
+ifndef __NO_MEMORY_FS
 LIBZRT_SOURCES += lib/fs/mem_mount_wraper.cc
 endif
 
@@ -69,10 +69,12 @@ LIBZRT_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBZRT_OBJECTS_NO_PREFIX))
 ############## zrtlibs and ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a \
 lib/networking/libnetworking.a
+ifndef __NO_MEMORY_FS
+LIBS+=lib/fs/nacl-mounts/libfs.a
+endif
 
 ifndef __ZRT_HOST
-LIBPORTS=lib/fs/nacl-mounts/libfs.a \
-libports/gtest/libgtest.a \
+LIBPORTS=libports/gtest/libgtest.a \
 libports/lua-5.2.1/liblua.a \
 libports/sqlite3/libsqlite3.a \
 libports/context-switch/libcontext.a
@@ -94,7 +96,7 @@ CFLAGS += -DUSER_SIDE
 
 ################# "make all" Build zrt & run minimal tests set
 all: build 
-ifndef __ZRT_SO
+ifndef __ZRT_HOST
 all: autotests
 endif
 
@@ -271,7 +273,7 @@ endif
 	install -m 0644 lib/lua/lualib.h $(INSTALL_INCLUDE_DIR)/lua
 	install -m 0644 lib/lua/lua.h $(INSTALL_INCLUDE_DIR)/lua
 	install -m 0644 lib/lua/luaconf.h $(INSTALL_INCLUDE_DIR)/lua
-ifndef __ZRT_SO
+ifndef __NO_MEMORY_FS
 	install -m 0644 lib/libfs.a $(INSTALL_LIB_DIR)
 endif
 	install -d $(INSTALL_INCLUDE_DIR)/networking $(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR) \

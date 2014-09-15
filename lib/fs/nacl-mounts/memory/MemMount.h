@@ -71,6 +71,7 @@ class MemMount {
 
   // Return the node corresponding to path.
   int GetNode(const std::string& path, struct stat *st);
+  int GetParentNode(const std::string& path, struct stat *buf);
 
   /*Create new hardlink newpath for an oldpath, only for directories */
   int Link(const std::string& oldpath, const std::string& newpath);

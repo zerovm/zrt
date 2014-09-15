@@ -85,9 +85,9 @@ static struct ZVMChannel s_emu_channels[]
     {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/urandom"}};
 
 struct MountsPublicInterface*        s_channels_mount;
-#ifndef __ZRT_SO
+#ifndef __NO_MEMORY_FS
 struct MountsPublicInterface*        s_mem_mount;
-#endif //__ZRT_SO
+#endif //__NO_MEMORY_FS
 static struct MountsManager*   s_mounts_manager;
 static struct MountsPublicInterface* s_transparent_mount;
 static int                     s_zrt_ready;
@@ -371,7 +371,7 @@ int  zrt_zcall_enhanced_sysbrk(void **newbrk){
 int  zrt_zcall_enhanced_mmap(void **addr, size_t length, int prot, int flags, int fd, off_t off){
     int ret = -1;
     void *retaddr;
-    LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%u off=%lld",
+    LOG_SYSCALL_START("addr=%p length=%u prot=%u flags=%u fd=%d off=%lld",
     		      *addr, length, prot, flags, fd, off);
 
     struct MemoryManagerPublicInterface* memif = memory_interface_instance();
@@ -528,13 +528,13 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     s_channels_mount->open( s_channels_mount, DEV_STDERR, O_WRONLY, 0 );
 
     /*create mem mount*/
-#ifndef __ZRT_SO
+#ifndef __NO_MEMORY_FS
     s_mem_mount = CONSTRUCT_L(INMEMORY_FILESYSTEM)( s_mounts_manager->handle_allocator,
 						    s_mounts_manager->open_files_pool);
-#endif //__ZRT_SO
+#endif //__NO_MEMORY_FS
     /*Mount filesystems*/
     s_mounts_manager->mount_add( "/dev", s_channels_mount );
-#ifndef __ZRT_SO
+#ifndef __NO_MEMORY_FS
     s_mounts_manager->mount_add( "/", s_mem_mount );
 
     /*explicitly create /dev directory in memmount, it's required for consistent
@@ -542,8 +542,7 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     s_mem_mount->mkdir( s_mem_mount, "/dev", 0777 );
     /*add directories here that can be expected by some user applications */
     s_mem_mount->mkdir( s_mem_mount, "/tmp", 0777 );
-#endif //__ZRT_SO
-    /*user main execution just after zrt initialization*/
+#endif //__NO_MEMORY_FS
 }
 
 int is_zrt_ready(){

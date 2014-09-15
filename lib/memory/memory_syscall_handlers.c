@@ -238,9 +238,16 @@ memory_mmap(struct MemoryManager* this, void *addr, size_t length, int prot,
 	    errcode = EBADF;
 	}
     }
+    //MAP_PRIVATE|MAP_ANON|MAP_ANONYMOUS|MAP_NORESERVE fd=4294967295
     /*if anonymous mapping requested then do it*/
-    else if ( CHECK_FLAG(prot, PROT_READ|PROT_WRITE) &&
-	      CHECK_FLAG(flags, MAP_ANONYMOUS) && length >0 ){
+    else if (
+	     /*Very limited support provided by mmap in user space, so
+	       just ignoring prots, flags for __ZRT_HOST*/
+#ifndef __ZRT_HOST 
+	     CHECK_FLAG(prot, PROT_READ|PROT_WRITE) &&
+	      CHECK_FLAG(flags, MAP_ANONYMOUS) &&
+#endif //__ZRT_HOST 
+	     length >0 ){
 	alloc_addr = alloc_memory_pseudo_mmap( this, wanted_mem_block_size );
 	if ( alloc_addr != NULL )
 	    errcode = 0;

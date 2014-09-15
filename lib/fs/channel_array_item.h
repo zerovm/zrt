@@ -27,6 +27,7 @@
  *suitable data is: opened flags, mode, i/o positions*/
 struct ZrtChannelRt{
     int     inode;
+    int     parent_inode;
     /*For currently opened file flags, refer to handle_alocator*/
     int64_t maxsize;               /*synthethic size. based on maximum position of cursor pos 
 				     channel for all I/O requests*/

@@ -22,7 +22,7 @@
 /*name of constructor*/
 #define DIRENT_ENGINE get_dirent_engine
 
-#if (defined __native_client__ || defined __ZRT_HOST) && !defined(__ZRT_SO)
+#if defined __native_client__
 # define ZRTDIRENT
 #endif
 

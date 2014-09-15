@@ -18,8 +18,12 @@
 #ifndef __ZRTLOGBASE_H__
 #define __ZRTLOGBASE_H__
 
+#ifdef __ZRT_HOST
+# define DONOT_USE_DYNMEMORY_FOR_LOGBASE
+#endif //__ZRT_HOST
+
 #define MAX_TEMP_BUFFER_SIZE 100
-#define MAX_ITEMS_COUNT 10
+#define MAX_ITEMS_COUNT ELogItemsCount
 
 /*Log Items*/
 typedef enum {ELogLength=0, 
@@ -29,17 +33,18 @@ typedef enum {ELogLength=0,
 	      ELogTime, 
 	      ELogCount, 
 	      ELogIndex,
-	      ELogPath
+	      ELogPath,
+	      ELogItemsCount
 } log_item;
 
-#ifdef __ZRT_SO
+#ifdef DONOT_USE_DYNMEMORY_FOR_LOGBASE
 extern char s_log_items[MAX_ITEMS_COUNT][MAX_TEMP_BUFFER_SIZE];
 #else
 extern char *s_log_items[MAX_ITEMS_COUNT];
-#endif //__ZRT_SO
+#endif //DONOT_USE_DYNMEMORY_FOR_LOGBASE
 extern int   s_log_items_count;
 
-#ifdef __ZRT_SO
+#ifdef DONOT_USE_DYNMEMORY_FOR_LOGBASE
 # define LOG_BASE_ENABLE			\
     char s_log_items[MAX_ITEMS_COUNT][MAX_TEMP_BUFFER_SIZE];	\
     int s_log_items_count = 0
@@ -47,7 +52,7 @@ extern int   s_log_items_count;
 # define LOG_BASE_ENABLE			\
     char* s_log_items[MAX_ITEMS_COUNT];		\
     int s_log_items_count = 0
-#endif
+#endif //DONOT_USE_DYNMEMORY_FOR_LOGBASE
 
 #define LOG_DEBUG(item_id, value, comment)				\
     if( __zrt_log_is_enabled() ){					\
@@ -80,10 +85,11 @@ extern int   s_log_items_count;
     }
 
 
-#ifdef __ZRT_SO
+#ifdef DONOT_USE_DYNMEMORY_FOR_LOGBASE
 # define ITEM(itemid, name, format)				\
     {								\
 	assert(s_log_items_count == itemid);			\
+	assert(s_log_items_count < MAX_ITEMS_COUNT);		\
 	snprintf(s_log_items[itemid], MAX_TEMP_BUFFER_SIZE,	\
 		 "%s "#name"=%s\n",				\
 		 "%-30s", format );				\
@@ -101,7 +107,7 @@ extern int   s_log_items_count;
 	s_log_items[itemid] = memcpy( malloc(buf_length), buf, buf_length); \
     }									\
 	++s_log_items_count
-#endif    
+#endif //DONOT_USE_DYNMEMORY_FOR_LOGBASE
 
 
 /*put items creator of ITEM macroses into zrtlog.c*/
