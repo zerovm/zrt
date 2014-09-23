@@ -44,6 +44,7 @@ lib/nvram/observers/precache_observer.c \
 lib/fs/dirent_engine.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
+lib/fs/user_space_fs.c \
 lib/fs/handle_allocator.c \
 lib/fs/open_file_description.c \
 lib/fs/channels_array.c \
@@ -55,6 +56,7 @@ lib/fs/unpack/unpack_tar.c \
 lib/fs/unpack/image_engine.c \
 lib/fs/unpack/parse_path.c \
 lib/zrt.c \
+lib/original_nonpth_syscalls.c \
 lib/ptrace.c 
 
 ifndef __NO_MEMORY_FS
@@ -101,7 +103,7 @@ all: autotests
 endif
 
 ############## "make test" Run all test suites available for ZRT
-check: build
+check: build trace
 	@echo ------------- RUN zrt tests ------------
 #zrt tests
 	@TESTS_ROOT=tests make -Ctests/zrt_test_suite clean prepare
@@ -111,6 +113,8 @@ check: build
 #lua tests
 	@make -Ctests/lua_test_suite
 	@./kill_daemons.sh
+#run make gcov
+	@make gcov
 
 ################ "make gcov" Run tests and create document reflecting test coverage
 trace: CPPFLAGS+=${TRACE_FLAGS}
@@ -132,7 +136,7 @@ gcov: build
 	@cp $(GCOV_TEMP_FOLDER)$(ZRT_ROOT)/lib $(ZRT_ROOT) -r
 	@rm $(GCOV_TEMP_FOLDER) -r -f
 #prepare html document covering only sources from lib folder
-	@lcov --gcov-tool=${GCOV} --directory=$(ZRT_ROOT)/lib --capture --output-file $(GCOV_HTML_FOLDER)/app.info
+	@lcov --gcov-tool=${GCOV} --directory=$(ZRT_ROOT) --capture --output-file $(GCOV_HTML_FOLDER)/app.info
 	@genhtml --output-directory $(GCOV_HTML_FOLDER) $(GCOV_HTML_FOLDER)/app.info
 	@echo ------------- RUN coverage tests OK $@ ------------
 	@echo open $(GCOV_HTML_FOLDER)/index.html
@@ -176,6 +180,9 @@ ${LIBPORTS}:
 	@mv -f $@ lib
 
 ${PTH}:
+	if [ ! -f libports/pth-2.0.7/original_nonpth_syscalls.h ]; then \
+	ln lib/original_nonpth_syscalls.h libports/pth-2.0.7/original_nonpth_syscalls.h; \
+	fi;
 ifdef __ZRT_HOST
 	cd $(dir ${PTH}) && ./configure CFLAGS=-fPIC prefix=$(ZVM_PREFIX)/x86_64 \
 	--enable-pthread --enable-shared=no --enable-tests=no --enable-optimize=no \
@@ -277,7 +284,7 @@ ifndef __NO_MEMORY_FS
 	install -m 0644 lib/libfs.a $(INSTALL_LIB_DIR)
 endif
 	install -d $(INSTALL_INCLUDE_DIR)/networking $(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR) \
-	$(INSTALL_INCLUDE_DIR)/helpers $(INSTALL_LIB_DIR)
+	$(INSTALL_INCLUDE_DIR)/helpers $(INSTALL_INCLUDE_DIR)/fs $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libzrt.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libmapreduce.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libnetworking.a $(INSTALL_LIB_DIR)
@@ -293,6 +300,10 @@ endif
 	install -m 0644 lib/mapreduce/elastic_mr_item.h $(INSTALL_INCLUDE_DIR)/mapreduce
 	install -m 0644 lib/helpers/dyn_array.h $(INSTALL_INCLUDE_DIR)/helpers
 	install -m 0644 lib/helpers/buffered_io.h $(INSTALL_INCLUDE_DIR)/helpers
+	install -m 0644 lib/fs/mounts_interface.h $(INSTALL_INCLUDE_DIR)/fs
+	install -m 0644 lib/fs/user_space_fs.h $(INSTALL_INCLUDE_DIR)/fs
+	install -m 0644 lib/helpers/path_utils.h $(INSTALL_INCLUDE_DIR)/helpers
+	install -m 0644 lib/original_nonpth_syscalls.h $(INSTALL_INCLUDE_DIR)
 
 .PHONY: install
 

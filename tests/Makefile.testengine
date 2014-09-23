@@ -171,7 +171,7 @@ $(TEST_NEXES): $(ALLOC_REPORT_OBJ) $(TEST_SOURCES) $(TEST_INCLUDES)
 	@echo "RUN TEST $@ "
 #compile
 	@$(CC) -c -o $(BASENAME).o $(CFLAGS) $(SPECIFIC_TEST_FLAGS) $(BASENAME).c
-	@$(CC) -o $@ $(BASENAME).o $(LDFLAGS)
+	@$(CC) -o $@ $(BASENAME).o -Wl,--start-group $(LDFLAGS) -Wl,--end-group 
 #prepare scripts for debug purposes with GDB
 	@sed s@{NEXE_FULL_PATH}@$(CURDIR)/$(BASENAME).nexe@g $(ZRT_ROOT)/gdb_commands.template > $(CURDIR)/$(BASENAME).scp
 #prepare manifest
