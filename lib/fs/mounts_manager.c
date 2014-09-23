@@ -19,9 +19,11 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <linux/limits.h>
+#include <errno.h>
 #include <assert.h>
 
 #include "zrtlog.h"
+#include "zrt_helper_macros.h" //SET_ERRNO
 #include "mounts_manager.h"
 #include "mounts_interface.h"
 #include "handle_allocator.h"
@@ -52,6 +54,18 @@ static struct MountsManager s_mounts_manager = {
 
 int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mount ){
     assert( s_mount_items_count < EMountsCount );
+    /*if no empty slots*/
+    if ( s_mount_items_count >= EMountsCount ){
+	SET_ERRNO(ENOTEMPTY);
+	return -1; /*no empty slots*/
+    }
+    /*check if the same mountpoint haven't used by another mount*/
+    struct MountInfo* existing_mount = mm_mountinfo_bypath( path );
+    if ( existing_mount && !strcmp(existing_mount->mount_path, path) ){
+	SET_ERRNO(EBUSY);
+	return -1;
+    }
+    /*add mount*/
     memcpy( s_mount_items[s_mount_items_count].mount_path, path, MIN( strlen(path), PATH_MAX ) );
     s_mount_items[s_mount_items_count].mount = filesystem_mount;
     ++s_mount_items_count;
