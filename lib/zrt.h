@@ -96,6 +96,9 @@ struct zcalls_init_t{
     int (*gettime)(clockid_t clk_id, struct timespec *tp);
     /* another ***************************/
     int (*chdir)(const char *path);
+    int (*select)(int *err, int nfds, fd_set *readfds,
+		  fd_set *writefds, fd_set *exceptfds,
+		  const struct timeval *timeout);
 };
 
 #define ZCALLS_ZRT 2         /*use as type param in __query_zcalls*/

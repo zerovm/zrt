@@ -23,6 +23,7 @@
 
 #define _GNU_SOURCE
 
+//#include <pthread.h> //including first because of non standard threads implementation
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h> //off_t
@@ -50,27 +51,29 @@
 #include "zrt_defines.h"
 #include "zcalls.h"
 #include "zcalls_zrt.h"
-#include "memory_syscall_handlers.h"
 #include "zrtlog.h"
 #include "zrt_helper_macros.h"
 #include "transparent_mount.h"
-#include "parse_path.h"
-#include "mounts_reader.h"
 #include "settime_observer.h"
-#include "args_observer.h"
-#include "environment_observer.h"
-#include "fstab_observer.h"
-#include "mapping_observer.h"
+#include "original_nonpth_syscalls.h"
 #include "precache_observer.h"
-#include "debug_observer.h"
+#include "parse_path.h"
 #include "nvram_loader.h"
+#include "nacl_struct.h"
+#include "memory_syscall_handlers.h"
+#include "mounts_reader.h"
 #include "mounts_manager.h"
 #include "mem_mount_wraper.h"
-#include "nacl_struct.h"
+#include "mapping_observer.h"
 #include "image_engine.h"
+#include "handle_allocator.h"
+#include "fstab_observer.h"
 #include "enum_strings.h"
+#include "environment_observer.h"
+#include "debug_observer.h"
 #include "channels_reserved.h"
 #include "channels_mount.h"
+#include "args_observer.h"
 
 extern char **environ;
 
@@ -397,6 +400,22 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
     int32_t retcode = memif->munmap(memif, addr, len);
     LOG_INFO_SYSCALL_FINISH( retcode, "addr=%p, len=%u", addr, len);
     return retcode;
+}
+
+int zrt_zcall_select(int nfds, fd_set *readfds,
+		     fd_set *writefds, fd_set *exceptfds,
+		     const struct timeval *timeout, int *count){
+    LOG_SYSCALL_START("nfds=%d, timeout.sec=%lld, timeout.usec=%lld",
+    		      nfds, (int64_t)timeout->tv_sec, (int64_t)timeout->tv_usec);
+    int ret=-1;
+    errno = 0;
+    if ( timeout != NULL ){
+    	struct timespec req, rem;
+    	TIMEVAL_TO_TIMESPEC(timeout, &req);
+    	if ( !syscall_nanosleep(&req, &rem) )
+    	    ret=0;
+    }
+    return ret;
 }
 
 /***********************************************************

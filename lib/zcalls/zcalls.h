@@ -21,6 +21,7 @@
 #include <time.h>   /*clock_t*/
 #include <sys/statvfs.h> /*statvfs*/
 #include <sys/stat.h> /*mode_t*/
+#include <sys/select.h> /*fd_set*/
 
 #include "zrt.h"
 #include "zrt_defines.h"
@@ -155,6 +156,10 @@ int zrt_zcall_stat_realpath(const char *abspathname, struct stat *stat);
 int zrt_zcall_get_phys_pages(void);
 int zrt_zcall_get_avphys_pages(void);
 int zrt_zcall_fchdir(int fd);
+int zrt_zcall_select(int nfds, fd_set *readfds,
+		     fd_set *writefds, fd_set *exceptfds,
+		     const struct timeval *timeout,
+		     int *count);
 
 #endif //__ZCALLS_H__
 
