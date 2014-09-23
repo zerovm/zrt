@@ -26,7 +26,9 @@
 #  undef _PTHREAD_H
 #  include <pthread-glibc.h>
 #else
-#  include <pth/pthread.h>
+#  ifndef _BITS_PTHREADTYPES_H
+#    include <pth/pthread.h>
+#  endif
 #endif
 
 

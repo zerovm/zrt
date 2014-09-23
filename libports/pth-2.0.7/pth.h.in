@@ -180,7 +180,9 @@ struct pth_event_st;
     /* event subject classes */
 #define PTH_EVENT_FD                 _BIT(1)
 #define PTH_EVENT_SELECT             _BIT(2)
-#define PTH_EVENT_SIGS               _BIT(3)
+#ifndef __ZRT__
+# define PTH_EVENT_SIGS               _BIT(3)
+#endif //__ZRT__
 #define PTH_EVENT_TIME               _BIT(4)
 #define PTH_EVENT_MSG                _BIT(5)
 #define PTH_EVENT_MUTEX              _BIT(6)

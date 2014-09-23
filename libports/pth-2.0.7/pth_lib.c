@@ -605,6 +605,7 @@ int pth_fdmode(int fd, int newmode)
 /* wait for specific amount of time */
 int pth_nap(pth_time_t naptime)
 {
+#ifndef __ZRT__
     pth_time_t until;
     pth_event_t ev;
     static pth_key_t ev_key = PTH_KEY_INIT;
@@ -615,6 +616,7 @@ int pth_nap(pth_time_t naptime)
     pth_time_add(&until, &naptime);
     ev = pth_event(PTH_EVENT_TIME|PTH_MODE_STATIC, &ev_key, until);
     pth_wait(ev);
+#endif //__ZRT__
     return TRUE;
 }
 

@@ -294,6 +294,11 @@ dopr(
                 break;
             case 's':
                 strvalue = va_arg(args, char *);
+#ifdef __native_client__
+		if ( 0x00000010 == strvalue ){
+		    break;
+		}
+#endif
                 if (max < 0)
                     max = maxlen;
                 fmtstr(buffer, &currlen, maxlen, strvalue, flags, min, max);
