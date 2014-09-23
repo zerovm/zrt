@@ -30,6 +30,12 @@ struct MountInfo{
 
 
 struct MountsManager{
+    /*Add to list of mounts the new one, caller should not destroy
+      filesystem_mount upon delete; Slots count is limited by
+      EMountsCount.  
+      *@return 0 if OK, on error it returns -1 and set errno:
+      *ENOTEMPTY - no empty slots to add mount; 
+      *EBUSY - mount with specified mountpoint already exist*/
     int (*mount_add)( const char* path, struct MountsPublicInterface* filesystem_mount );
     int (*mount_remove)( const char* path );
 

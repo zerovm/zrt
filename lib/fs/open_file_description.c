@@ -29,7 +29,7 @@ struct OpenFileDescInternal{
     int refcount;
 };
 
-static int s_first_unused_slot;
+static int s_first_unused_slot=0;
 static struct OpenFileDescInternal s_open_files_array[MAX_HANDLES_COUNT];
 
 static int seek_unused_slot( int starting_from ){

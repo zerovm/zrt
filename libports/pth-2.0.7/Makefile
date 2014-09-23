@@ -55,7 +55,7 @@ DESTDIR     =
 SHELL       = /bin/sh
 CC          = $(ARCH)-gcc
 CPPFLAGS    =  -I.
-CFLAGS      = -pipe -funroll-loops -fstrength-reduce -fomit-frame-pointer -ffast-math -D__ZRT__ -g -DPTH_DEBUG #-O2
+CFLAGS      = -pipe -funroll-loops -fstrength-reduce -fomit-frame-pointer -ffast-math -D__ZRT__ -g -O2 #-DPTH_DEBUG
 LDFLAGS     = 
 MKFLAGS     = $(MFLAGS) DESTDIR=$(DESTDIR)
 LIBS        = -ldl -lnsl 

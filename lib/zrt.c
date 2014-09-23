@@ -83,6 +83,7 @@ static struct zcalls_init_t KZcalls_init = {
     zrt_zcall_prolog_gettime,
 
     (void*)zcall_stub, //chdir (seems it's not used)
+    zrt_zcall_select
 };
 
 static struct zcalls_zrt_t KZcalls_zrt = {

@@ -1,10 +1,7 @@
 /*
- * combined pthread stub from glibc which works only in single
- * threaded mode but it uses by many headers and needed for
- * compatibility; and pth implementation of pthread which intended to
- * use by third-party applications
+ * USER SPACE FILESYSTEM API
  *
- * Copyright (c) 2014, LiteStack, Inc.
+ * Copyright (c) 2013, LiteStack, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _PTHREAD_H
-#define _PTHREAD_H
 
+#ifndef __USER_SPACE_FS_H__
+#define __USER_SPACE_FS_H__
 
-#ifdef _GLIBCXX_GCC_GTHR_POSIX_H
-#  undef _PTHREAD_H
-#  include <pthread-glibc.h>
-#else
-#  ifndef _BITS_PTHREADTYPES_H
-#    include <pth/pthread.h>
-#  endif
-#endif
+#include "mounts_interface.h"
 
+int mount_user_fs(struct MountsPublicInterface* fs, const char *mountpoint);
 
-#endif /* _PTH_PTHREAD_H_ */
-
+#endif //__USER_SPACE_FS_H__

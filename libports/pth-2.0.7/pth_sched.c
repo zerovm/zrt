@@ -38,7 +38,9 @@ intern pth_pqueue_t pth_DQ;         /* queue of terminated threads           */
 intern int          pth_favournew;  /* favour new threads on startup         */
 intern float        pth_loadval;    /* average scheduler load value          */
 
+#ifndef __ZRT__
 static int          pth_sigpipe[2]; /* internal signal occurrence pipe       */
+#endif //__ZRT__
 static sigset_t     pth_sigpending; /* mask of pending signals               */
 static sigset_t     pth_sigblock;   /* mask of signals we block in scheduler */
 static sigset_t     pth_sigcatch;   /* mask of signals we have to catch      */
@@ -118,7 +120,7 @@ intern void pth_scheduler_kill(void)
     /* drop all threads */
     pth_scheduler_drop();
 
-#ifdef __ZRT__
+#ifndef __ZRT__
     /* remove the internal signal pipe */
     close(pth_sigpipe[0]);
     close(pth_sigpipe[1]);
@@ -482,6 +484,7 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
                     if (fdmax < ev->ev_args.SELECT.nfd-1)
                         fdmax = ev->ev_args.SELECT.nfd-1;
                 }
+#ifndef __ZRT__
                 /* Signal Set */
                 else if (ev->ev_type == PTH_EVENT_SIGS) {
                     for (sig = 1; sig < PTH_NSIG; sig++) {
@@ -508,6 +511,7 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
                         }
                     }
                 }
+#endif //__ZRT__
                 /* Timer */
                 else if (ev->ev_type == PTH_EVENT_TIME) {
                     if (pth_time_cmp(&(ev->ev_args.TIME.tv), now) < 0)
@@ -602,11 +606,13 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
         pdelay = NULL;
     }
 
+#ifndef __ZRT__
     /* clear pipe and let select() wait for the read-part of the pipe */
     while (pth_sc(read)(pth_sigpipe[0], minibuf, sizeof(minibuf)) > 0) ;
     FD_SET(pth_sigpipe[0], &rfds);
     if (fdmax < pth_sigpipe[0])
         fdmax = pth_sigpipe[0];
+#endif //__ZRT__
 
     /* replace signal actions for signals we've to catch for events */
     for (sig = 1; sig < PTH_NSIG; sig++) {
@@ -651,6 +657,7 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
         }
     }
 
+#ifndef __ZRT__
     /* if the internal signal pipe was used, adjust the select() results */
     if (!dopoll && rc > 0 && FD_ISSET(pth_sigpipe[0], &rfds)) {
         FD_CLR(pth_sigpipe[0], &rfds);
@@ -663,6 +670,7 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
         FD_ZERO(&wfds);
         FD_ZERO(&efds);
     }
+#endif //__ZRT__
 
     /* now comes the final cleanup loop where we've to
        do two jobs: first we've to do the late handling of the fd I/O events and
@@ -770,6 +778,7 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
                             }
                         }
                     }
+#ifndef __ZRT__
                     /* Signal Set */
                     else if (ev->ev_type == PTH_EVENT_SIGS) {
                         for (sig = 1; sig < PTH_NSIG; sig++) {
@@ -785,6 +794,7 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
                             }
                         }
                     }
+#endif //__ZRT__
                 }
                 /*
                  * post-processing for already occured events
@@ -846,6 +856,7 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
 
 intern void pth_sched_eventmanager_sighandler(int sig)
 {
+#ifndef __ZRT__
     char c;
 
     /* remember raised signal */
@@ -854,6 +865,7 @@ intern void pth_sched_eventmanager_sighandler(int sig)
     /* write signal to signal pipe in order to awake the select() */
     c = (int)sig;
     pth_sc(write)(pth_sigpipe[1], &c, sizeof(char));
+#endif //__ZRT__
     return;
 }
 

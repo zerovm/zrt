@@ -141,6 +141,7 @@ pth_event_t pth_event(unsigned long spec, ...)
         ev->ev_args.SELECT.wfds = wfds;
         ev->ev_args.SELECT.efds = efds;
     }
+#ifndef __ZRT__
     else if (spec & PTH_EVENT_SIGS) {
         /* signal set event */
         sigset_t *sigs = va_arg(ap, sigset_t *);
@@ -150,12 +151,13 @@ pth_event_t pth_event(unsigned long spec, ...)
         ev->ev_args.SIGS.sigs = sigs;
         ev->ev_args.SIGS.sig = sig;
     }
+#endif //__ZRT__
     else if (spec & PTH_EVENT_TIME) {
         /* interrupt request event */
         pth_time_t tv = va_arg(ap, pth_time_t);
         ev->ev_type = PTH_EVENT_TIME;
         ev->ev_goal = (int)(spec & (PTH_UNTIL_OCCURRED));
-        ev->ev_args.TIME.tv = tv;
+	ev->ev_args.TIME.tv = tv;
     }
     else if (spec & PTH_EVENT_MSG) {
         /* message port event */
@@ -236,6 +238,7 @@ int pth_event_extract(pth_event_t ev, ...)
         int *fd = va_arg(ap, int *);
         *fd = ev->ev_args.FD.fd;
     }
+#ifndef __ZRT__
     else if (ev->ev_type & PTH_EVENT_SIGS) {
         /* signal set event */
         sigset_t **sigs = va_arg(ap, sigset_t **);
@@ -243,6 +246,7 @@ int pth_event_extract(pth_event_t ev, ...)
         *sigs = ev->ev_args.SIGS.sigs;
         *sig = ev->ev_args.SIGS.sig;
     }
+#endif //__ZRT__
     else if (ev->ev_type & PTH_EVENT_TIME) {
         /* interrupt request event */
         pth_time_t *tv = va_arg(ap, pth_time_t *);

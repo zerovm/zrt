@@ -25,15 +25,15 @@
 
 struct stat;
 
-typedef enum { EChannelsMountId=0, EMemMountId=1, EMountsCount } MountId;
+/*Reserved filesystem ids, value to be used as mount_id*/
+typedef enum { 
+    EChannelsMountId=0, 
+    EMemMountId=1, 
+    EUserFsId=2, /*For filesystem added by user via user_space_fs API*/
+    EMountsCount /*Static count of filesystem slots that is supported*/
+} MountId;
 
 struct MountsPublicInterface{
-
-    // System calls that take a path as an argument:
-    // The kernel proxy will look for the Node associated to the path.  To
-    // find the node, the kernel proxy calls the corresponding mounts GetNode()
-    // method.  The corresponding  method will be called.  If the node
-    // cannot be found, errno is set and -1 is returned.
     ssize_t 
     (*readlink)(struct MountsPublicInterface* this_,const char *path, char *buf, size_t bufsize);
     int (*symlink)(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath);
@@ -60,7 +60,6 @@ struct MountsPublicInterface{
     int (*getdents)(struct MountsPublicInterface* this_,int fd, void *buf, unsigned int count);
     int (*fsync)(struct MountsPublicInterface* this_,int fd);
 
-    // System calls handled by KernelProxy that rely on mount-specific calls
     // close() calls the mount's Unref() if the file handle corresponding to
     // fd was open
     int (*close)(struct MountsPublicInterface* this_,int fd);

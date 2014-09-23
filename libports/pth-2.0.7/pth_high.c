@@ -51,16 +51,18 @@ int pth_nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
         return pth_error(-1, EINVAL);
 
     /* short-circuit */
+#ifndef __ZRT__
     if (rqtp->tv_sec == 0 && rqtp->tv_nsec == 0)
         return 0;
-
+#endif //__ZRT__
     /* calculate asleep time */
     offset = pth_time((long)(rqtp->tv_sec), (long)(rqtp->tv_nsec) / 1000);
     pth_time_set(&until, PTH_TIME_NOW);
+#ifndef __ZRT__
     /*Do not actually set time to wait under zerovm,
      it's just emulating time functions */
-    /* pth_time_add(&until, &offset); */
-
+    pth_time_add(&until, &offset);
+#endif //__ZRT__
     /* and let thread sleep until this time is elapsed */
     if ((ev = pth_event(PTH_EVENT_TIME|PTH_MODE_STATIC, &ev_key, until)) == NULL)
         return pth_error(-1, errno);
@@ -86,14 +88,20 @@ int pth_usleep(unsigned int usec)
     pth_event_t ev;
     static pth_key_t ev_key = PTH_KEY_INIT;
 
+#ifndef __ZRT__
     /* short-circuit */
     if (usec == 0)
         return 0;
+#endif //__ZRT__
 
     /* calculate asleep time */
     offset = pth_time((long)(usec / 1000000), (long)(usec % 1000000));
     pth_time_set(&until, PTH_TIME_NOW);
+#ifndef __ZRT__
+    /*Do not actually set time to wait under zerovm,
+     it's just emulating time functions */
     pth_time_add(&until, &offset);
+#endif //__ZRT__
 
     /* and let thread sleep until this time is elapsed */
     if ((ev = pth_event(PTH_EVENT_TIME|PTH_MODE_STATIC, &ev_key, until)) == NULL)
@@ -112,16 +120,18 @@ unsigned int pth_sleep(unsigned int sec)
     static pth_key_t ev_key = PTH_KEY_INIT;
 
     /* consistency check */
+#ifndef __ZRT__
     if (sec == 0)
         return 0;
-
+#endif //__ZRT__
     /* calculate asleep time */
     offset = pth_time(sec, 0);
     pth_time_set(&until, PTH_TIME_NOW);
+#ifndef __ZRT__
     /*Do not actually set time to wait under zerovm,
      it's just emulating time functions */
-    /* pth_time_add(&until, &offset); */
-
+    pth_time_add(&until, &offset);
+#endif //__ZRT__
     /* and let thread sleep until this time is elapsed */
     if ((ev = pth_event(PTH_EVENT_TIME|PTH_MODE_STATIC, &ev_key, until)) == NULL)
         return sec;
@@ -155,6 +165,7 @@ int pth_sigwait(const sigset_t *set, int *sigp)
 /* Pth variant of POSIX sigwait(3) with extra events */
 int pth_sigwait_ev(const sigset_t *set, int *sigp, pth_event_t ev_extra)
 {
+#ifndef __ZRT__
     pth_event_t ev;
     static pth_key_t ev_key = PTH_KEY_INIT;
     sigset_t pending;
@@ -185,7 +196,7 @@ int pth_sigwait_ev(const sigset_t *set, int *sigp, pth_event_t ev_extra)
         if (pth_event_status(ev) != PTH_STATUS_OCCURRED)
             return pth_error(EINTR, EINTR);
     }
-
+#endif //__ZRT__
     /* nothing to do, scheduler has already set *sigp for us */
     return 0;
 }
@@ -368,6 +379,9 @@ int pth_select_ev(int nfd, fd_set *rfds, fd_set *wfds,
         memcpy(&espare, efds, sizeof(fd_set));
         etmp = &espare;
     }
+    /*syscall_select is an extension of ZRT version and doesn't handle
+     i/o events, but always skipping artificial select's timeout and
+     returns OK=0*/
     while ((rc = pth_sc(select)(nfd, rtmp, wtmp, etmp, &delay)) < 0
            && errno == EINTR)
         ;
@@ -394,11 +408,14 @@ int pth_select_ev(int nfd, fd_set *rfds, fd_set *wfds,
     ev = ev_select = pth_event(PTH_EVENT_SELECT|PTH_MODE_STATIC,
                                &ev_key_select, &rc, nfd, rfds, wfds, efds);
     ev_timeout = NULL;
+#ifndef __ZRT__
+    /*Do not allow timeout event for zrt, only i/o event for now*/
     if (timeout != NULL) {
         ev_timeout = pth_event(PTH_EVENT_TIME|PTH_MODE_STATIC, &ev_key_timeout,
                                pth_timeout(timeout->tv_sec, timeout->tv_usec));
         pth_event_concat(ev, ev_timeout, NULL);
     }
+#endif //__ZRT__
     if (ev_extra != NULL)
         pth_event_concat(ev, ev_extra, NULL);
     pth_wait(ev);
@@ -813,6 +830,7 @@ ssize_t pth_write_ev(int fd, const void *buf, size_t nbytes, pth_event_t ev_extr
     if ((fdmode = pth_fdmode(fd, PTH_FDMODE_NONBLOCK)) == PTH_FDMODE_ERROR)
         return pth_error(-1, EBADF);
 
+#ifndef __ZRT__
     /* poll filedescriptor if not already in non-blocking operation */
     if (fdmode != PTH_FDMODE_NONBLOCK) {
 
@@ -870,7 +888,9 @@ ssize_t pth_write_ev(int fd, const void *buf, size_t nbytes, pth_event_t ev_extr
             break;
         }
     }
-    else {
+    else
+#endif //__ZRT__
+    {
         /* just perform the actual write operation */
         while ((rv = pth_sc(write)(fd, buf, nbytes)) < 0
                && errno == EINTR) ;

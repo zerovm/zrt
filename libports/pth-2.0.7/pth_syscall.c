@@ -58,8 +58,10 @@
 #define pread         __pth_sys_pread
 #define pwrite        __pth_sys_pwrite
 
+
 /* include the private header and this way system headers */
 #include "pth_p.h"
+#include "original_nonpth_syscalls.h"
 
 /* some exported variables for object layer checks */
 int pth_syscall_soft = PTH_SYSCALL_SOFT;
@@ -160,25 +162,25 @@ intern pth_syscall_fct_tab_t pth_syscall_fct_tab[] = {
     { "fork",        NULL },
     { "waitpid",     NULL },
     { "system",      NULL },
-    { "nanosleep",   NULL },
+    { "nanosleep",   syscall_nanosleep },
     { "usleep",      NULL },
-    { "sleep",       NULL },
+    { "sleep",       syscall_sleep },
     { "sigprocmask", NULL },
     { "sigwait",     NULL },
-    { "select",      NULL },
+    { "select",      syscall_select },
     { "poll",        NULL },
     { "connect",     NULL },
     { "accept",      NULL },
-    { "read",        NULL },
-    { "write",       NULL },
+    { "read",        syscall_read },
+    { "write",       syscall_write },
     { "readv",       NULL },
     { "writev",      NULL },
     { "recv",        NULL },
     { "send",        NULL },
     { "recvfrom",    NULL },
     { "sendto",      NULL },
-    { "pread",       NULL },
-    { "pwrite",      NULL },
+    { "pread",       syscall_pread },
+    { "pwrite",      syscall_pwrite },
     { NULL,          NULL }
 };
 #endif
