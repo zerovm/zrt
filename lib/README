@@ -167,7 +167,23 @@ variables:
 "HOME" - home directory, if not specified '/' will used;
 "SHELL" - shell program
 note that /etc/passwd still dosn't exist
-4. ZRT has gcov support, and 'make gcov' can be used to get report
+4.Tools / instruments
+4.1. ZRT has gcov support, and 'make gcov' can be used to get report
 about test coverage for zrt module;
-5. ZRT has tracing feature, which creates TRACE files for tests
+4.2. ZRT has tracing feature, which creates TRACE files for tests
 running in test suite by command: 'make trace'.
+5. Threading support
+5.1. This feature become with GNU Pth library, and polished for zerovm
+platform which is: one process per user, one thread. It provides
+cooperative threads implementation built without support of Signals
+and Timer;
+5.2. It's using "hard" binding of GNU Pth which replaces some syscalls
+by PTH syscalls and original syscalls in this case can be accessed as
+weak_alias function.
+6. Known issues
+6.1. The truncate is not allowed for zerovm channels except channel
+types FIFO, CHR and for emulated channels;
+6.2. The channels of type "random get/sequential put" are treated as
+append only files and should be opened with flag O_APPEND;
+6.3. Error message "Only wrote xxx of 10240 bytes to
+/dev/mount/export", reproducable with zerovm-samples/tarimage.
