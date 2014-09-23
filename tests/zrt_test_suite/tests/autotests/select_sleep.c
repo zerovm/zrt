@@ -15,7 +15,7 @@
  */
 
 
-
+#include <pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h> //gettimeofday
@@ -51,7 +51,7 @@ void complete_nanosec_test(struct timespec *prepared_ts, struct timespec *timeou
     struct timeval tv_inc;
     timeradd(&prepared_tv, &timeout_tv, &tv_inc);
 
-    TEST_OPERATION_RESULT( timercmp(&tv_inc, &new_tv, == ), &ret, ret==1);
+    TEST_OPERATION_RESULT( timercmp(&tv_inc, &new_tv, <= ), &ret, ret==1);
 }
 
 void test_clock(){
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
     test_issue_128();
 
     test_sleep(1, 0, 1, 0);
-
+    
     test_nanosleep(0, 0, 0, 1000); /*if 0 time is passed it should take anyway 1 microsecond*/
     test_nanosleep(0, 1998, 0, 1998);
 
@@ -143,33 +143,33 @@ int main(int argc, char **argv)
     test_select_timeout(0, 1000, 0, 1000);
 
     {
-	struct timespec ts, ts2;
-	struct timeval tv_inc, tv, tv2;
+    	struct timespec ts, ts2;
+    	struct timeval tv_inc, tv, tv2;
 
-	/*compare time before and after select, measure in nanoseconds*/
-	TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, &ts), &ret, ret==0 );
+    	/*compare time before and after select, measure in nanoseconds*/
+    	TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, &ts), &ret, ret==0 );
 
-	/*select can only wait for timeout when no file descriptors specified*/
-	struct timeval timeout;
-	timeout.tv_sec = 1;
-	timeout.tv_usec = 1000;
-	TEST_OPERATION_RESULT( select(0, NULL, NULL,
-				      NULL, &timeout), &ret, ret==0);
-	timeout.tv_usec += 1; /*clock_gettime done +1 microsecond*/
-	TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, &ts2), &ret, ret==0 );
+    	/*select can only wait for timeout when no file descriptors specified*/
+    	struct timeval timeout;
+    	timeout.tv_sec = 1;
+    	timeout.tv_usec = 1000;
+    	TEST_OPERATION_RESULT( select(0, NULL, NULL,
+    				      NULL, &timeout), &ret, ret==0);
+    	timeout.tv_usec += 1; /*clock_gettime done +1 microsecond*/
+    	TEST_OPERATION_RESULT( clock_gettime(CLOCK_REALTIME, &ts2), &ret, ret==0 );
 
-	TIMESPEC_TO_TIMEVAL(&tv, &ts);
-	TIMESPEC_TO_TIMEVAL(&tv2, &ts2);
-	timeradd(&tv, &timeout, &tv_inc);
+    	TIMESPEC_TO_TIMEVAL(&tv, &ts);
+    	TIMESPEC_TO_TIMEVAL(&tv2, &ts2);
+    	timeradd(&tv, &timeout, &tv_inc);
 
-	TEST_OPERATION_RESULT( timercmp(&tv_inc, &tv2, == ), &ret, ret==1);
+    	TEST_OPERATION_RESULT( timercmp(&tv_inc, &tv2, <= ), &ret, ret==1);
 
-	/*select's synchronous multiplexing is not supported*/
-	fd_set readfds;
-	FD_ZERO (&readfds);
-	FD_SET (0, &readfds);
-	TEST_OPERATION_RESULT( select(FD_SETSIZE, &readfds, NULL,
-				      NULL, &timeout), &ret, errno==ENOSYS&&ret!=0);
+    	/*select's synchronous multiplexing is supported now*/
+    	fd_set readfds;
+    	FD_ZERO (&readfds);
+    	FD_SET (0, &readfds);
+    	TEST_OPERATION_RESULT( select(FD_SETSIZE, &readfds, NULL,
+    				      NULL, &timeout), &ret, errno!=ENOSYS&&ret!=0);
     }
 
     return 0;
