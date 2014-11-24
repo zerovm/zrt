@@ -1,0 +1,32 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  if ENV["JENKINS_HOME"]
+    # If we're running in Jenkins, chances are that Jenkins is running on a
+    # virtualized server and therefore we must something other than VirtualBox
+    # to provide the VM.
+    # We assume a pre-built lxc machine with a working toolchain is available
+    # for a base box, since we need that to build ZRT (and don't necessarily
+    # want to re-build the toolchain all the time).
+    # See https://github.com/zerovm/toolchain/tree/master/contrib/vagrant
+    config.vm.box = ENV["JENKINS_HOME"] + "/zerovm-toolchain-precise64-lxc.box"
+  else
+    # Otherwise, just use VirtualBox. We'll have to build the toolchain, though.
+    # TODO(larsbutler): Publish base box with pre-built toolchain and use it
+    # here, to save time.
+    config.vm.box = "hashicorp/precise64"
+    config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 4096
+      v.cpus = 4
+    end
+    config.vm.provision "shell", privileged: false, path: "toolchain-bootstrap.sh"
+  end
+
+  config.vm.provision "shell", privileged: false, path: "bootstrap.sh"
+  # Folder to share artifacts with jenkins
+  config.vm.synced_folder "../..", "/host-workspace"
+end
