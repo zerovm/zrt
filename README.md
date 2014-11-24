@@ -12,11 +12,11 @@ toolchain must be used in order to create user applications;
 
 2. Install ZVM SDK. Consult https://github.com/zerovm/toolchain/blob/master/README.md
 
-3. Install zrt
+3. Clone zrt source
 
         git clone https://github.com/zerovm/zrt.git
 
-4. Set environmant variables on ~/.bashrc
+4. Set environment variables (in ~/.bashrc, for example)
 
         ZVM_PREFIX    -path to zvm toolchain
         ZEROVM_ROOT   -path to ZEROVM folder, used for debugging with gdb
@@ -29,7 +29,7 @@ toolchain must be used in order to create user applications;
         export ZRT_ROOT=${HOME}/zrt
         export ZPYTHON_ROOT=${HOME}/zpython
 
-5. run
+5. Build
 
         cd ${ZRT_ROOT}
         make
