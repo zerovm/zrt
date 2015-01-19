@@ -51,6 +51,7 @@ struct pth_event_st {
         struct { pth_cond_t *cond; }                                COND;
         struct { pth_t tid; }                                       TID;
         struct { pth_event_func_t func; void *arg; pth_time_t tv; } FUNC;
+        struct { pth_sem_t *sem; unsigned count; }                  SEM;
     } ev_args;
 };
 
@@ -206,6 +207,20 @@ pth_event_t pth_event(unsigned long spec, ...)
         ev->ev_args.FUNC.arg   = va_arg(ap, void *);
         ev->ev_args.FUNC.tv    = va_arg(ap, pth_time_t);
     }
+    else if (spec & PTH_EVENT_SEM) {
+        /* semaphore variable */
+        pth_sem_t *sem = va_arg(ap, pth_sem_t *);
+	if (spec & PTH_UNTIL_COUNT)
+	  ev->ev_args.SEM.count = va_arg(ap, unsigned);
+	else
+	  ev->ev_args.SEM.count = 1;
+        ev->ev_type = PTH_EVENT_SEM;
+	if (spec & PTH_UNTIL_DECREMENT)
+	  ev->ev_goal = PTH_UNTIL_DECREMENT;
+	else
+	  ev->ev_goal = PTH_UNTIL_OCCURRED;
+        ev->ev_args.SEM.sem = sem;
+    }
     else
         return pth_error((pth_event_t)NULL, EINVAL);
 
@@ -280,6 +295,11 @@ int pth_event_extract(pth_event_t ev, ...)
         *func = ev->ev_args.FUNC.func;
         *arg  = ev->ev_args.FUNC.arg;
         *tv   = ev->ev_args.FUNC.tv;
+    }
+    else if (ev->ev_type & PTH_EVENT_SEM) {
+        /* condition variable */
+        pth_sem_t **sem = va_arg(ap, pth_sem_t **);
+        *sem = ev->ev_args.SEM.sem;
     }
     else
         return pth_error(FALSE, EINVAL);

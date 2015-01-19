@@ -549,6 +549,17 @@ intern void pth_sched_eventmanager(pth_time_t *now, int dopoll)
                         }
                     }
                 }
+                /* Semaphore */
+                else if (ev->ev_type == PTH_EVENT_SEM) {
+                    if (ev->ev_args.SEM.sem->sem_state & PTH_SEM_INITIALIZED) {
+                        if (ev->ev_args.SEM.sem->sem_count >= ev->ev_args.SEM.count)
+			  {
+                            this_occurred = TRUE;
+			    if(ev->ev_goal & PTH_UNTIL_DECREMENT)
+			      ev->ev_args.SEM.sem->sem_count -= ev->ev_args.SEM.count;
+			  }
+		    }
+                }
                 /* Thread Termination */
                 else if (ev->ev_type == PTH_EVENT_TID) {
                     if (   (   ev->ev_args.TID.tid == NULL
