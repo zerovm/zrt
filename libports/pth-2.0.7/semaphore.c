@@ -31,22 +31,45 @@
 #include "semaphore.h"
 #include "pth_p.h"
 
+static pthread_t s_foo_semaphore_thread;
+
+static void *foo_thread_semaphore_func(void *a)
+{
+	(void)a;
+    return NULL;
+}
+
 
 /* Initialize semaphore object SEM to VALUE.  If PSHARED then share it
    with other processes.  */
 int sem_init (sem_t *sem, int pshared, unsigned int value){
-	int ret = pth_sem_init(sem);
-	if (ret==0)
-		ret = pth_sem_set_value(sem, value);
+  /*as pthread, semaphore implementation expect that any thread was
+	created previously therefore we check it and if not created then
+	do it now*/
+	if (pth_current == NULL && s_foo_semaphore_thread == NULL ){
+		pthread_create(&s_foo_semaphore_thread, NULL, foo_thread_semaphore_func, NULL);
+	}
+
+	*sem = malloc(sizeof(pth_sem_t));
+	if ( pth_sem_init(*sem) == TRUE ){
+		if ( pth_sem_set_value(*sem, value) == FALSE ){
+			errno=EINVAL;
+			return -1;
+		}
+	}
 	/*pshared not relevant for single process single threaded
 	  environment*/
 	(void)pshared;
-	return ret;
+	return 0;
 }
 
 /* Free resources associated with semaphore object SEM.  */
 int sem_destroy (sem_t *sem){
-	if (sem != NULL) return 0;
+	if (*sem != NULL){ 
+		free(*sem);
+		*sem = NULL;
+		return 0;
+	}
 	else{
 		errno = EINVAL;
 		return -1;
@@ -80,44 +103,68 @@ int sem_unlink (const char *name){
 
 /* Wait for SEM being posted.*/
 int sem_wait (sem_t *sem){
-	return pth_sem_dec(sem);
+	if ( pth_sem_dec(*sem) == TRUE )
+		return 0;
+	else
+		return -1;
 }
 
-#ifdef __USE_XOPEN2K
 /* Similar to `sem_wait' but wait only until ABSTIME.*/
 int sem_timedwait (sem_t *sem, const struct timespec *abstime){
-	errno=ENOSYS;
-	return -1;
+	unsigned int value;
+	if ( pth_sem_get_value(*sem, &value) == TRUE ){
+		if (value>0){
+			return pth_sem_dec(*sem) == TRUE? 0 : -1;
+		}
+		else{
+			struct timespec rem_unused;
+			nanosleep(abstime, &rem_unused);
+			if ( pth_sem_get_value(*sem, &value) == TRUE ){
+				if (value>0){
+					return pth_sem_dec(*sem) == TRUE? 0 : -1;
+				}
+				else{
+					errno=ETIMEDOUT;
+					return -1;
+				}
+			}
+		}
+	}
+	return 0;
 }
-#endif
 
 /* Test whether SEM is posted.  */
 int sem_trywait (sem_t *sem){
 	int ret;
-	unsigned val;
-	ret = pth_sem_get_value(sem, &val);
-	if (ret==0){
-			/*if can be decremented then do it*/
-		if (val>0){
-			return pth_sem_dec(sem);
+	unsigned value;
+	if ( pth_sem_get_value(*sem, &value) == TRUE ){
+		/*if can be decremented then do it*/
+		if (value>0){
+			return pth_sem_dec(*sem) == TRUE? 0 : -1;
 		}
-		ret=-1;
-		errno=EAGAIN;
+		else{
+			errno=EAGAIN;
+			return -1;
+		}
 	}
-	return ret;
+	return 0;
 }
 
 /* Post SEM.  */
 int sem_post (sem_t *sem){
-	return pth_sem_inc(sem, 1);
+	if ( pth_sem_inc(*sem, 1) == TRUE )
+		return 0;
+	else
+		return -1;
 }
 
 /* Get current value of SEM and store it in *SVAL.  */
 int sem_getvalue (sem_t *sem, int *sval){
-	unsigned value;
-	int ret = pth_sem_get_value(sem, value);
-	if (ret==0)
+	unsigned int value;
+	if ( pth_sem_get_value(*sem, &value) == TRUE ){
 		*sval = value;
-	return ret;
+		return 0;
+	}
+	else return -1;
 }
 

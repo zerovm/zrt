@@ -524,9 +524,9 @@ extern int            pth_sem_init(pth_sem_t *);
 extern int            pth_sem_dec(pth_sem_t *);
 extern int            pth_sem_dec_value(pth_sem_t *, unsigned);
 extern int            pth_sem_inc(pth_sem_t *, int);
-extern int            pth_sem_inc_value(pth_sem_t *, unsigned, int);
-extern int            pth_sem_set_value(pth_sem_t *, unsigned);
-extern int            pth_sem_get_value(pth_sem_t *, unsigned *);
+extern int            pth_sem_inc_value(pth_sem_t *, unsigned int, int);
+extern int            pth_sem_set_value(pth_sem_t *, unsigned int);
+extern int            pth_sem_get_value(pth_sem_t *, unsigned int*);
 
     /* user-space context functions */
 extern int            pth_uctx_create(pth_uctx_t *);

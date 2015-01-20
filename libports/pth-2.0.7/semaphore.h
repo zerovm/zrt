@@ -33,15 +33,18 @@
 #define _SEMAPHORE_H
 
 /* Value returned if `sem_open' failed.  */
-#define SEM_FAILED      ((pth_sem_t *) 0)
+#define SEM_FAILED      ((sem_t *) 0)
 
+/*define stubs*/
+#define NAMED_SEMAPHORE_ENABLE
 /*
 Macro NAMED_SEMAPHORE_ENABLE
 to enable stubbed implementation of named semaphores*/
 
 struct timespec;
+struct pth_sem_st;
 
-typedef pth_sem_t sem_t;
+typedef struct pth_sem_st *sem_t;
 
 /*
 **

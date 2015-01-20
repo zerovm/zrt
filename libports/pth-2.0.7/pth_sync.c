@@ -401,7 +401,7 @@ int pth_sem_dec(pth_sem_t * sem)
   return pth_sem_dec_value(sem, 1);
 }
 
-int pth_sem_dec_value(pth_sem_t * sem, unsigned count)
+int pth_sem_dec_value(pth_sem_t * sem, unsigned int count)
 {
     static pth_key_t ev_key = PTH_KEY_INIT;
     pth_event_t ev;
@@ -421,7 +421,7 @@ int pth_sem_inc(pth_sem_t * sem, int yield)
   return pth_sem_inc_value(sem, 1, yield);
 }
 
-int pth_sem_inc_value(pth_sem_t * sem, unsigned count, int yield)
+int pth_sem_inc_value(pth_sem_t * sem, unsigned int count, int yield)
 {
     /* consistency checks */
     if (sem == NULL)
@@ -435,7 +435,7 @@ int pth_sem_inc_value(pth_sem_t * sem, unsigned count, int yield)
     return TRUE;
 }
 
-int pth_sem_set_value(pth_sem_t * sem, unsigned value)
+int pth_sem_set_value(pth_sem_t * sem, unsigned int value)
 {
     /* consistency checks */
     if (sem == NULL)
@@ -447,7 +447,7 @@ int pth_sem_set_value(pth_sem_t * sem, unsigned value)
     return TRUE;
 }
 
-int pth_sem_get_value(pth_sem_t * sem, unsigned *value)
+int pth_sem_get_value(pth_sem_t * sem, unsigned int*value)
 {
     /* consistency checks */
     if (sem == NULL)
