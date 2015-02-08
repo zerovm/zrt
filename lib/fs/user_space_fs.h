@@ -21,6 +21,12 @@
 
 #include "mounts_interface.h"
 
+struct fuse_operations;
+
+/*original zrt fs*/
 int mount_user_fs(struct MountsPublicInterface* fs, const char *mountpoint);
+
+/*fuse fs*/
+int mount_fuse_fs(struct fuse_operations* fs, const char *mountpoint);
 
 #endif //__USER_SPACE_FS_H__

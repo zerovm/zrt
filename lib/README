@@ -4,8 +4,8 @@ ZRT - ZeroVM runtime library
 {DOCPATH}
 
 1. ZRT it is an environment for user application, simple POSIX
-Operating System that itself implements system calls handlers. ZRT is a
-part of GNU libc that using plaggable interface to access syscall
+Operating System that itself implements system call handlers. ZRT is a
+part of GNU libc that using pluggable interface to access syscall
 handlers implemented on side of ZRT environment. Direct syscalls from
 user code to host system are not allowed, untrusted code at all should
 be prevalidated by ZeroVM before execution, see ZeroVM docs.
@@ -93,7 +93,7 @@ Keywords are valid for fstab:
   'wo' is for saving contents of filesystem into tar archive, but
   don't specify mountpoint=/, because the saving into TAR image of
   entire filesystem is not supported;
-- removable : (yes / no)
+- removable : (yes / no), optional parameter, 'no' - by default
   'no' with it do complete mount at session start, can't be remounted
   at zfork();
   'yes' means that the mounting of image must be initiated at session

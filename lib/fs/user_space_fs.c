@@ -21,10 +21,15 @@
 #include "user_space_fs.h"
 #include "mounts_manager.h"
 
+
 int mount_user_fs(struct MountsPublicInterface* fs, const char *mountpoint){
     struct MountsManager *man = mounts_manager();
     assert(man!=NULL);
     return man->mount_add(mountpoint, fs);
 }
 
-
+int mount_fuse_fs(struct fuse_operations* fuse_op, const char *mountpoint){
+    struct MountsManager *man = mounts_manager();
+    assert(man!=NULL);
+    return man->fusemount_add(mountpoint, fuse_op);
+}

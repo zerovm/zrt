@@ -44,6 +44,7 @@ lib/nvram/observers/precache_observer.c \
 lib/fs/dirent_engine.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
+lib/fs/fuse_operations_mount.c \
 lib/fs/user_space_fs.c \
 lib/fs/handle_allocator.c \
 lib/fs/open_file_description.c \
@@ -63,14 +64,19 @@ ifndef __NO_MEMORY_FS
 LIBZRT_SOURCES += lib/fs/mem_mount_wraper.cc
 endif
 
+LIBFUSE=lib/libfuse.a
+LIBFUSE_SOURCES=lib/fs/fuse.c
+
 LIBDEP_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBDEP_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBDEP_OBJECTS_NO_PREFIX))
 LIBZRT_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 LIBZRT_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBZRT_OBJECTS_NO_PREFIX))
+LIBFUSE_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBFUSE_SOURCES) ) )
+LIBFUSE_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBFUSE_OBJECTS_NO_PREFIX))
 
 ############## zrtlibs and ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a \
-lib/networking/libnetworking.a
+lib/networking/libnetworking.a 
 ifndef __NO_MEMORY_FS
 LIBS+=lib/fs/nacl-mounts/libfs.a
 endif
@@ -155,7 +161,7 @@ autotests possible_slow_autotests: build
 	@./kill_daemons.sh
 
 build: ${PTH}
-build: doc  ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT}
+build: doc  ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} ${LIBFUSE}
 ifndef __ZRT_HOST
 	@make -C locale/locale_patched
 endif
@@ -166,6 +172,10 @@ zlibc_dep: ${LIBDEP_OBJECTS}
 
 ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
+	@echo $@ updated
+
+${LIBFUSE} : $(LIBFUSE_OBJECTS)
+	$(AR) rcs $@ $(LIBFUSE_OBJECTS)
 	@echo $@ updated
 
 ############## Build libs, invoke nested Makefiles
@@ -226,8 +236,8 @@ endif
 
 libclean: ${LIBS_CLEAN} testclean libportsclean pthclean
 ${LIBS_CLEAN}: cleandep
-	@rm -f $(LIBZRT_OBJECTS)
-	@rm -f $(LIBS) $(LIBZRT)
+	@rm -f $(LIBZRT_OBJECTS) $(LIBFUSE_OBJECTS)
+	@rm -f $(LIBS) $(LIBZRT) $(LIBFUSE)
 	@make -C$(dir $@) clean
 
 pthclean: ${PTH_CLEAN}
@@ -286,6 +296,7 @@ endif
 	install -d $(INSTALL_INCLUDE_DIR)/networking $(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR) \
 	$(INSTALL_INCLUDE_DIR)/helpers $(INSTALL_INCLUDE_DIR)/fs $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libzrt.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libfuse.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libmapreduce.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libnetworking.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libtar.a $(INSTALL_LIB_DIR)
@@ -304,6 +315,7 @@ endif
 	install -m 0644 lib/fs/user_space_fs.h $(INSTALL_INCLUDE_DIR)/fs
 	install -m 0644 lib/helpers/path_utils.h $(INSTALL_INCLUDE_DIR)/helpers
 	install -m 0644 lib/original_nonpth_syscalls.h $(INSTALL_INCLUDE_DIR)
+	install -m 0644 lib/fuse.h $(INSTALL_INCLUDE_DIR)
 
 .PHONY: install
 

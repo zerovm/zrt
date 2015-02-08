@@ -24,6 +24,7 @@
 #include <unistd.h> //ssize_t
 
 struct stat;
+struct statvfs;
 
 /*Reserved filesystem ids, value to be used as mount_id*/
 typedef enum { 

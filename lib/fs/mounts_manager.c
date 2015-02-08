@@ -26,12 +26,16 @@
 #include "zrt_helper_macros.h" //SET_ERRNO
 #include "mounts_manager.h"
 #include "mounts_interface.h"
+#include "fuse_operations_mount.h"
 #include "handle_allocator.h"
 #include "open_file_description.h"
 
-#define MIN(a,b)( a<b?a:b )
+#ifndef MIN
+#  define MIN(a,b)( a<b?a:b )
+#endif
 
 int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mount );
+int mm_fusemount_add( const char* path, struct fuse_operations* fuse_mount );
 int mm_mount_remove( const char* path );
 struct MountInfo* mm_mountinfo_bypath( const char* path );
 struct MountsPublicInterface* mm_mount_bypath( const char* path );
@@ -42,6 +46,7 @@ static int s_mount_items_count;
 static struct MountInfo s_mount_items[EMountsCount];
 static struct MountsManager s_mounts_manager = {
         mm_mount_add,
+	mm_fusemount_add,
         mm_mount_remove,
         mm_mountinfo_bypath,
         mm_mount_bypath,
@@ -70,6 +75,15 @@ int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mou
     s_mount_items[s_mount_items_count].mount = filesystem_mount;
     ++s_mount_items_count;
     return 0;
+}
+
+
+int mm_fusemount_add( const char* path, struct fuse_operations* fuse_mount ){
+    struct MountsPublicInterface* fs 
+	= CONSTRUCT_L(FUSE_OPERATIONS_MOUNT)( get_handle_allocator(),
+					      get_open_files_pool(),
+					      fuse_mount );
+    return mm_mount_add( path, fs );
 }
 
 int mm_mount_remove( const char* path ){

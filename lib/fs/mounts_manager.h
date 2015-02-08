@@ -20,6 +20,7 @@
 
 #include <linux/limits.h>
 
+struct fuse_operations;
 struct MountsPublicInterface;
 struct OpenFilesPool;
 
@@ -37,6 +38,8 @@ struct MountsManager{
       *ENOTEMPTY - no empty slots to add mount; 
       *EBUSY - mount with specified mountpoint already exist*/
     int (*mount_add)( const char* path, struct MountsPublicInterface* filesystem_mount );
+    /*fuse support, the same as mount_add*/
+    int (*fusemount_add)( const char* path, struct fuse_operations* fuse_mount );
     int (*mount_remove)( const char* path );
 
     struct MountInfo* (*mountinfo_bypath)(const char* path);
