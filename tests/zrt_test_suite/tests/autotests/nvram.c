@@ -53,10 +53,6 @@ int main(int argc, char**argv){
     sprintf(path, "/warm/%s", FILENAME );
     CHECK_PATH_EXISTANCE( path );
 
-    CHECK_PATH_NOT_EXIST("/bad");
-    sprintf(path, "/bad/%s", FILENAME );
-    CHECK_PATH_NOT_EXIST( path );
-
     //files injected twice here, need to check files validity
     CHECK_PATH_EXISTANCE("/ok");
     sprintf(path, "/ok/%s", FILENAME );
@@ -75,7 +71,9 @@ int main(int argc, char**argv){
     TEST_OPERATION_RESULT( sz1!=sz2,
     			   &ret, ret!=0);
 
-    CHECK_PATH_NOT_EXIST("/bad1");
+    /*this mountpoint was mounted without explicit specifying of
+      'removable' option as optional with default value removable=no*/
+    CHECK_PATH_EXISTANCE("/ok1");
     CHECK_PATH_NOT_EXIST("/bad2");
     return 0;
 }

@@ -23,11 +23,18 @@
 /*Expected keys for single record in config file. */
 struct KeyList{
     //functions
-    int (*add_key)(struct KeyList* list, const char* key);
+    /*Add key and default value to keys_list, this just saves a
+     *pointer, it is expected that values are stored in BSS 
+     @param key
+     *@param optional_default_value not NULL if param is optional then
+     *assign default value*/
+    int (*add_key)(struct KeyList* list, const char* key, const char* optional_default_value);
     /*@return index of key in array if specified key is found, -1 if not*/
     int (*find)(const struct KeyList* list, const char* key, int keylen);
     //preallocated space for keys
-    char keys[NVRAM_MAX_KEYS_COUNT_IN_RECORD][NVRAM_MAX_KEY_LENGTH];
+    char *keys[NVRAM_MAX_KEYS_COUNT_IN_RECORD];
+    /*preallocated space for values of optinal keys*/
+    char *optional_default_values[NVRAM_MAX_KEYS_COUNT_IN_RECORD];
     int  count;
 };
 

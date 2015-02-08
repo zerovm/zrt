@@ -86,9 +86,6 @@ void free_record_memories(struct ParsedRecord* record);
 
 const char* strip_all(const char* str, int len, uint16_t* striped_len );
 
-int parse_args(struct ParsedParam* parsed_args_array, int args_array_len,
-	       const char* args_buf, int bufsize);
-
 /*unescape characters: 
   \d2c into ','  
   \d22 into '"'

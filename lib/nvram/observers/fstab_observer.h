@@ -27,13 +27,16 @@
 #define FSTAB_PARAM_CHANNEL_KEY    "channel"
 #define FSTAB_PARAM_MOUNTPOINT_KEY "mountpoint"
 #define FSTAB_PARAM_ACCESS_KEY     "access"
-#define FSTAB_PARAM_REMOVABLE         "removable"
+#define FSTAB_PARAM_REMOVABLE      "removable"
+#define FSTAB_PARAM_FSNAME_KEY     "fsname"
 
 #define FSTAB_VAL_ACCESS_READ      "ro"  /*for injecting files into FS*/
 #define FSTAB_VAL_ACCESS_WRITE     "wo"  /*for copying files into image*/
 
-#define FSTAB_VAL_REMOVABLE_YES       "yes"
-#define FSTAB_VAL_REMOVABLE_NO        "no"
+#define FSTAB_VAL_REMOVABLE_YES    "yes"
+#define FSTAB_VAL_REMOVABLE_NO     "no" /*by default*/
+
+#define FSTAB_VAL_FSNAME_DEFAULT   "tar" /*by default*/
 
 enum {EFstabMountWaiting, EFstabMountProcessing, EFstabMountComplete};
 struct FstabRecordContainer{

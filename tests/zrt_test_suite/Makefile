@@ -80,10 +80,10 @@ MAPPING-fdopen-open.c +=channel=/dev/file, mode=file {BR}
 #fstab section for mounting tar archive
 #usng many tests for fstab for access=ro
 FSTAB-nvram.c =channel=/dev/mount/import.tar, mountpoint=/warm, access=ro, removable=no {BR}
-FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad, access=ro, bad=removable {BR}
+#FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad, access=ro, bad=removable {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, removable=yes {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok, access=ro, removable=yes {BR}
-FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad1, access=ro {BR}
+FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/ok1, access=ro {BR}
 FSTAB-nvram.c+=channel=/dev/mount/import.tar, mountpoint=/bad2, access=re, removable=yes {BR}
 FSTAB-nvram.c+=channel=/dev/mount/non_existing.tar, mountpoint=/bad3, access=ro, removable=yes {BR}
 FSTAB-nvram.c+=channel=/dev/stdout, mountpoint=/bad3, access=ro, removable=no {BR}

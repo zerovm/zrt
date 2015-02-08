@@ -29,11 +29,13 @@
  *****************************************/
 
 
-static int add_key_to_list(struct KeyList* list, const char* key){
+static int add_key_to_list(struct KeyList* list, const char* key, const char* optional_default_value){
     assert(list);
     /*copy key up to maximum length*/
-    strncpy( list->keys[list->count], key, NVRAM_MAX_KEY_LENGTH );
-    ZRT_LOG(L_INFO, "%s", key);
+    list->keys[list->count] = key;
+    list->optional_default_values[list->count] = optional_default_value;
+
+    ZRT_LOG(L_INFO, "%s, optional=%s", key, optional_default_value);
     /*if folowing assert is raised then just increase NVRAM_MAX_KEYS_COUNT_IN_RECORD value*/
     assert(list->count<NVRAM_MAX_KEYS_COUNT_IN_RECORD);
     return list->count++; /*get index of added key*/
