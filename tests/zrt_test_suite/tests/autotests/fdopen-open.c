@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <error.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "macro_tests.h"
 #include "handle_allocator.h" //MAX_HANDLES_COUNT
@@ -57,16 +58,33 @@ int main(int argc, char **argv)
     exit(0); /*test exit 0 behavior*/
 }
 
+/*determine how many files can be opened additionally*/
+static int can_open_max_files_count(){
+#define PREOPEN_FILES_COUNT 10
+    int handles[PREOPEN_FILES_COUNT];
+    int max_handle=0;
+    int i;
+    for (i=0; i < PREOPEN_FILES_COUNT; i++){
+        handles[i] = open("/dev/stdin", O_RDONLY, 0);
+        /*if this fail further testings makes no sence*/
+        assert(handles[i]!=-1);
+    }
+    for (i=0; i < PREOPEN_FILES_COUNT; i++){
+        if (handles[i]>max_handle)
+            max_handle = handles[i];
+        close(handles[i]);
+    }
+    return MAX_HANDLES_COUNT - (1 + max_handle - PREOPEN_FILES_COUNT);
+#undef PREOPEN_FILES_COUNT
+}
 
 void test_open_limits(){
     malloc_stats();
     fprintf(stdout, "sbrk(0)=%p before 1000files\n", sbrk(0));fflush(0);
     int i, ret;
-    int testfd = open("/dev/stdin", O_RDONLY, 0);
     int count = 1024*1024;
     char* data = malloc(count);
-    /* keep in mind already opened channels, like dev/stdin, dev/stdout, dev/stderr */
-    int maxhandlescount = MAX_HANDLES_COUNT - testfd -1 ;
+    int maxhandlescount = can_open_max_files_count();
     FILE* handles[maxhandlescount];
     /*create files as many as possible, and fill it by big amount of
       data*/
