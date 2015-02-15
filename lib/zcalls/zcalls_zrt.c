@@ -68,6 +68,7 @@
 #include "image_engine.h"
 #include "handle_allocator.h"
 #include "fstab_observer.h"
+#include "fuseglue.h"
 #include "enum_strings.h"
 #include "environment_observer.h"
 #include "debug_observer.h"
@@ -134,6 +135,7 @@ void set_home_dir(const char *home)
 void zrt_zcall_enhanced_exit(int status){
     ZRT_LOG(L_SHORT, "status %d exiting...", status);
     get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
+    mount_exit();
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
     return; 

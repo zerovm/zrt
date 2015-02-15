@@ -62,6 +62,8 @@ static struct MountsManager* s_mounts_manager;
 /*Try to mount postponed mount, in case if sub path matched.
   @return 0 if success, -1 if we don't need to mount*/
 static int lazy_mount(const char* path){
+    /*lazy mount is not supported under modern file system*/
+#ifndef FUSEGLUE_EXT
     /*if it's time to do mount, then do all waiting mounts*/
     struct FstabObserver* observer = get_fstab_observer();
     struct FstabRecordContainer* record;
@@ -70,6 +72,7 @@ static int lazy_mount(const char* path){
 	observer->mount_import(observer, record);
 	return 0;
     }
+#endif //FUSEGLUE_EXT
     return -1;
 }
 

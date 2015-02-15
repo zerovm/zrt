@@ -32,13 +32,19 @@
 
 #include "fuse_operations_mount.h"
 
-#include <fuse.h>
+#include <fuseglue.h>
 #include <fs/mounts_interface.h>
 #include <helpers/path_utils.h>
 #include "handle_allocator.h" //struct HandleAllocator, struct HandleItem
 #include "open_file_description.h" //struct OpenFilesPool, struct OpenFileDescription
 #include "dirent_engine.h"
 #include "enum_strings.h"
+
+#ifdef FUSEGLUE_EXT
+#  define FUSE_USE_VERSION 28
+#  include <fuse.h>
+#endif
+
 
 #define GET_STAT_HANDLE_CHECK(fs, fd, stat_p)	\
     entry_p = (fs)->handle_allocator->entry( (fd) );	\
@@ -93,8 +99,10 @@ struct FuseOperationsMount{
     struct OpenFilesPool*   open_files_pool;
     struct fuse_operations* fuse_operations;
     struct MountSpecificPublicInterface* mount_specific_interface;
+    int fusever;
 };
 
+#ifdef FUSEGLUE_EXT
 
 /*wraper implementation
  All checks on zfs top level will be skipped, because it does in lowlevel*/
@@ -165,6 +173,7 @@ static int fuse_operations_mount_statvfs(struct MountsPublicInterface* this_, co
 
     CHECK_FUNC_ENSURE_EXIST(fs, statfs);
 
+    //if ( this_->fusever == 25 )
     if ( (ret=fs->fuse_operations->statfs(path, buf)) < 0){
 	SET_ERRNO(-ret);
 	return -1;
@@ -793,10 +802,13 @@ static struct MountsPublicInterface KFuseOperationsMount = {
     NULL
 };
 
+#endif //FUSEGLUE_STUB
+
 struct MountsPublicInterface* 
-CONSTRUCT_L(FUSE_OPERATIONS_MOUNT)( struct HandleAllocator* handle_allocator,
-				   struct OpenFilesPool* open_files_pool,
-				   struct fuse_operations* fuse_operations){
+fuse_operations_mount_construct( struct HandleAllocator* handle_allocator,
+                                 struct OpenFilesPool* open_files_pool,
+                                 struct fuse_operations* fuse_operations){
+#ifdef FUSEGLUE_EXT
     /*use malloc and not new, because it's external c object*/
     struct FuseOperationsMount* this_ = (struct FuseOperationsMount*)malloc( sizeof(struct FuseOperationsMount) );
 
@@ -807,5 +819,8 @@ CONSTRUCT_L(FUSE_OPERATIONS_MOUNT)( struct HandleAllocator* handle_allocator,
     this_->open_files_pool = open_files_pool; /*use existing open files pool*/
     this_->fuse_operations = fuse_operations;
     return (struct MountsPublicInterface*)this_;
+#else
+    return NULL;
+#endif //FUSEGLUE_EXT
 }
 

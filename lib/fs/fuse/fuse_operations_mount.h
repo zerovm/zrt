@@ -35,6 +35,5 @@ struct MountsPublicInterface*
 fuse_operations_mount_construct( struct HandleAllocator* handle_allocator,
 				 struct OpenFilesPool* open_files_pool,
 				 struct fuse_operations* fuse_operations);
-    
 
 #endif /* __FUSE_OPERATIONS_MOUNT_H__ */

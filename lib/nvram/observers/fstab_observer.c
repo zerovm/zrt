@@ -29,7 +29,7 @@
 #include "unpack_tar.h" //tar unpacker
 #include "mounts_reader.h"
 #include "fstab_observer.h"
-#include "fuse.h"
+#include "fuseglue.h"
 #include "nvram.h"
 #include "image_engine.h"
 #include "conf_parser.h"
@@ -104,12 +104,6 @@ void handle_fstab_record(struct MNvramObserver* observer,
     record_container->mount_status = EFstabMountWaiting;
     copy_record(record, &record_container->mount);
 
-    /*For first fstab handling (s_updated_fstab_records=0) after
-      checks try mount channel with keys access=ro, removable=no*/
-    if ( !s_updated_fstab_records  ){
-	fobserver->mount_import(fobserver, record_container);
-    }
-
     /*get all params*/
     char* channel_alias = NULL;
     char* mount_path = NULL;
@@ -117,19 +111,53 @@ void handle_fstab_record(struct MNvramObserver* observer,
     char* removable = NULL;
     char* fsname = NULL;
     GET_FSTAB_PARAMS(record, &channel_alias, &mount_path, &access, &removable, &fsname);
-    
-    int    fs_argc;
-    char **fs_argv;
-    fs_main fs_entrypoint =
-	fusefs_entrypoint_get_args_by_fsname(fsname, &fs_argc, &fs_argv);
 
-    if ( fs_entrypoint != NULL ){
-        /*mount fusefs*/
-        int mount_res = mount_fusefs(fs_entrypoint, mount_path, fs_argc, fs_argv);
-        if (mount_res!=0){
-            ZRT_LOG(L_ERROR, "mount_fusefs err=%d", mount_res);
+    int write=0;     
+    if ( !strcmp(access, FSTAB_VAL_ACCESS_WRITE) )  write =1;
+
+    /*if archivemount is available and want mount tar in read-only mode*/
+    if ( !strcasecmp( fsname, "tar") && !strcmp(access, FSTAB_VAL_ACCESS_READ) ){
+        int    archivemount_argc;
+        char **archivemount_argv;
+        fs_main archivemount_entrypoint =
+            fusefs_entrypoint_get_args_by_fsname("archivemount", write, 
+                                                 channel_alias, mount_path,
+                                             &archivemount_argc, &archivemount_argv);
+        /*If archivemount is available then use it for tar mounting*/
+        if ( archivemount_entrypoint ){
+            /*mount fusefs*/
+            int mount_res = fuse_main_wrapper(mount_path, archivemount_entrypoint,
+                                              archivemount_argc, archivemount_argv);
+            if (mount_res!=0){
+                ZRT_LOG(L_ERROR, "fuse_main_wrapper err=%d", mount_res);
+            }
+        }
+        /*If no archimemount available and for compatibility use old approach.
+          For first fstab handling (s_updated_fstab_records=0) after
+          checks try mount channel with keys access=ro, removable=no*/
+        else if ( !s_updated_fstab_records  ){
+            fobserver->mount_import(fobserver, record_container);
         }
     }
+    /*Mount all another file systems*/
+    else{
+        int    fs_argc=0;
+        char **fs_argv;
+        fs_main fs_entrypoint =
+            fusefs_entrypoint_get_args_by_fsname(fsname, write, 
+                                                 channel_alias, mount_path,
+                                                 &fs_argc, &fs_argv);
+
+        /*If fuse extensions are available and trying mount tar archive then use archivemount*/
+        if (   fs_entrypoint != NULL ){
+            /*mount fusefs*/
+            int mount_res = fuse_main_wrapper(mount_path, fs_entrypoint, fs_argc, fs_argv);
+            if (mount_res!=0){
+                ZRT_LOG(L_ERROR, "fuse_main_wrapper err=%d", mount_res);
+            }
+        }
+    }
+
 
     ZRT_LOG(L_SHORT, "fstab record channel=%s, mount_path=%s, access=%s, removable=%s, fsname=%s",
 	    channel_alias, mount_path, access, removable, fsname);

@@ -44,7 +44,6 @@ lib/nvram/observers/precache_observer.c \
 lib/fs/dirent_engine.c \
 lib/fs/fcntl_implem.c \
 lib/fs/mounts_manager.c \
-lib/fs/fuse_operations_mount.c \
 lib/fs/user_space_fs.c \
 lib/fs/handle_allocator.c \
 lib/fs/open_file_description.c \
@@ -64,15 +63,15 @@ ifndef __NO_MEMORY_FS
 LIBZRT_SOURCES += lib/fs/mem_mount_wraper.cc
 endif
 
-LIBFUSE=lib/libfuse.a
-LIBFUSE_SOURCES=lib/fs/fuse.c
+LIBFUSE_GLUE=lib/libfuseglue.a
+LIBFUSE_GLUE_SOURCES=lib/fs/fuse/fuseglue.c lib/fs/fuse/fuse_operations_mount.c
 
 LIBDEP_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBDEP_SOURCES) ) )
 LIBDEP_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBDEP_OBJECTS_NO_PREFIX))
 LIBZRT_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBZRT_SOURCES) ) )
 LIBZRT_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBZRT_OBJECTS_NO_PREFIX))
-LIBFUSE_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBFUSE_SOURCES) ) )
-LIBFUSE_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBFUSE_OBJECTS_NO_PREFIX))
+LIBFUSE_GLUE_OBJECTS_NO_PREFIX=$(addsuffix .o, $(basename $(LIBFUSE_GLUE_SOURCES) ) )
+LIBFUSE_GLUE_OBJECTS=$(addprefix $(ZRT_ROOT)/, $(LIBFUSE_GLUE_OBJECTS_NO_PREFIX))
 
 ############## zrtlibs and ported libraries build
 LIBS= lib/mapreduce/libmapreduce.a \
@@ -157,11 +156,11 @@ zrt_test_suite: build
 autotests possible_slow_autotests: build
 	@echo ------------- RUN zrt $@ ------------
 	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite clean prepare
-	@TESTS_ROOT=tests/$@ make  -Ctests/zrt_test_suite -j4 $(TEST_PARAM)
+	@TESTS_ROOT=tests/$@ make -Ctests/zrt_test_suite -j4 $(TEST_PARAM)
 	@./kill_daemons.sh
 
 build: ${PTH}
-build: doc  ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} ${LIBFUSE}
+build: doc  ${LIBS} ${LIBPORTS} ${LIBDEP_OBJECTS} ${LIBZRT} ${LIBFUSE_GLUE}
 ifndef __ZRT_HOST
 	@make -C locale/locale_patched
 endif
@@ -174,8 +173,8 @@ ${LIBZRT} : $(LIBZRT_OBJECTS)
 	$(AR) rcs $@ $(LIBZRT_OBJECTS)
 	@echo $@ updated
 
-${LIBFUSE} : $(LIBFUSE_OBJECTS)
-	$(AR) rcs $@ $(LIBFUSE_OBJECTS)
+${LIBFUSE_GLUE} : $(LIBFUSE_GLUE_OBJECTS)
+	$(AR) rcs $@ $(LIBFUSE_GLUE_OBJECTS)
 	@echo $@ updated
 
 ############## Build libs, invoke nested Makefiles
@@ -236,8 +235,8 @@ endif
 
 libclean: ${LIBS_CLEAN} testclean libportsclean pthclean
 ${LIBS_CLEAN}: cleandep
-	@rm -f $(LIBZRT_OBJECTS) $(LIBFUSE_OBJECTS)
-	@rm -f $(LIBS) $(LIBZRT) $(LIBFUSE)
+	@rm -f $(LIBZRT_OBJECTS) $(LIBFUSE_GLUE_OBJECTS)
+	@rm -f $(LIBS) $(LIBZRT) $(LIBFUSE_GLUE)
 	@make -C$(dir $@) clean
 
 pthclean: ${PTH_CLEAN}
@@ -293,10 +292,11 @@ endif
 ifndef __NO_MEMORY_FS
 	install -m 0644 lib/libfs.a $(INSTALL_LIB_DIR)
 endif
+	install -d $(INSTALL_INCLUDE_DIR)/fuse
 	install -d $(INSTALL_INCLUDE_DIR)/networking $(INSTALL_INCLUDE_DIR)/mapreduce $(INSTALL_LIB_DIR) \
 	$(INSTALL_INCLUDE_DIR)/helpers $(INSTALL_INCLUDE_DIR)/fs $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libzrt.a $(INSTALL_LIB_DIR)
-	install -m 0644 lib/libfuse.a $(INSTALL_LIB_DIR)
+	install -m 0644 lib/libfuseglue.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libmapreduce.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libnetworking.a $(INSTALL_LIB_DIR)
 	install -m 0644 lib/libtar.a $(INSTALL_LIB_DIR)
@@ -315,7 +315,12 @@ endif
 	install -m 0644 lib/fs/user_space_fs.h $(INSTALL_INCLUDE_DIR)/fs
 	install -m 0644 lib/helpers/path_utils.h $(INSTALL_INCLUDE_DIR)/helpers
 	install -m 0644 lib/original_nonpth_syscalls.h $(INSTALL_INCLUDE_DIR)
-	install -m 0644 lib/fuse.h $(INSTALL_INCLUDE_DIR)
+	install -m 0644 lib/zrtstub.h $(INSTALL_INCLUDE_DIR)
+	install -m 0644 lib/fs/fuse/fuseglue.h $(INSTALL_INCLUDE_DIR)
+#install fuse stubs only if not installed previously, because stubs must be replaced by real headers
+	if [ ! -f $(INSTALL_INCLUDE_DIR)/fuse/archivemount.h ]; then \
+	install -m 0644 -T lib/fs/fuse/stub_archivemount.h $(INSTALL_INCLUDE_DIR)/fuse/archivemount.h; \
+	fi;
 
 .PHONY: install
 
