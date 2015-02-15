@@ -22,5 +22,6 @@ b CreateSession
 r
 add-symbol-file {NEXE_FULL_PATH} 0x440a00020000
 b main
+b abort
 c
 
