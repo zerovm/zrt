@@ -19,13 +19,14 @@
 #define MOUNTS_MANAGER_H_
 
 #include <linux/limits.h>
+#include "dyn_array.h" /*struct DynArray*/
 
 struct fuse_operations;
 struct MountsPublicInterface;
 struct OpenFilesPool;
 
 struct MountInfo{
-    char mount_path[PATH_MAX]; /*for example "/", "/dev" */
+    char *mount_path; /*for example "/", "/dev" */
     struct MountsPublicInterface* mount;
 };
 
@@ -42,7 +43,7 @@ struct MountsManager{
     int (*fusemount_add)( const char* path, struct fuse_operations* fuse_mount );
     int (*mount_remove)( const char* path );
 
-    struct MountInfo* (*mountinfo_bypath)(const char* path);
+    struct MountInfo* (*mountinfo_bypath)(const char* path, int *mount_index);
     struct MountsPublicInterface* (*mount_bypath)( const char* path );
     struct MountsPublicInterface* (*mount_byhandle)( int handle );
 
@@ -50,6 +51,7 @@ struct MountsManager{
 
     struct HandleAllocator* handle_allocator;
     struct OpenFilesPool* open_files_pool;
+    struct DynArray mount_items; /*array for struct MountInfo*/
 };
 
 

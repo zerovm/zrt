@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <linux/limits.h>
 #include <errno.h>
 #include <assert.h>
@@ -26,24 +27,25 @@
 #include "zrt_helper_macros.h" //SET_ERRNO
 #include "mounts_manager.h"
 #include "mounts_interface.h"
-#include "fuse_operations_mount.h"
+#include "fs/fuse/fuse_operations_mount.h"
 #include "handle_allocator.h"
 #include "open_file_description.h"
+#include "dyn_array.h"
 
 #ifndef MIN
 #  define MIN(a,b)( a<b?a:b )
 #endif
 
+#define MOUNT_ITEMS (&s_mounts_manager.mount_items)
+
 int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mount );
 int mm_fusemount_add( const char* path, struct fuse_operations* fuse_mount );
 int mm_mount_remove( const char* path );
-struct MountInfo* mm_mountinfo_bypath( const char* path );
-struct MountsPublicInterface* mm_mount_bypath( const char* path );
+struct MountInfo* mm_mountinfo_bypath( const char* path, int *mount_index );
+struct MountsPublicInterface* mm_mount_bypath( const char* path);
 struct MountsPublicInterface* mm_mount_byhandle( int handle );
 const char* mm_convert_path_to_mount(const char* full_path);
 
-static int s_mount_items_count;
-static struct MountInfo s_mount_items[EMountsCount];
 static struct MountsManager s_mounts_manager = {
         mm_mount_add,
 	mm_fusemount_add,
@@ -53,28 +55,29 @@ static struct MountsManager s_mounts_manager = {
         mm_mount_byhandle,
         mm_convert_path_to_mount,
         NULL,
-	NULL
+	NULL,
+        NULL
     };
 
 
 int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mount ){
-    assert( s_mount_items_count < EMountsCount );
-    /*if no empty slots*/
-    if ( s_mount_items_count >= EMountsCount ){
-	SET_ERRNO(ENOTEMPTY);
-	return -1; /*no empty slots*/
-    }
+    if ( MOUNT_ITEMS->ptr_array == NULL )
+        DynArrayCtor( MOUNT_ITEMS, 2 /*granularity*/ );
+
     /*check if the same mountpoint haven't used by another mount*/
-    struct MountInfo* existing_mount = mm_mountinfo_bypath( path );
+    int located_index;
+    struct MountInfo* existing_mount = mm_mountinfo_bypath( path, &located_index );
     if ( existing_mount && !strcmp(existing_mount->mount_path, path) ){
 	SET_ERRNO(EBUSY);
 	return -1;
     }
-    /*add mount*/
-    memcpy( s_mount_items[s_mount_items_count].mount_path, path, MIN( strlen(path), PATH_MAX ) );
-    s_mount_items[s_mount_items_count].mount = filesystem_mount;
-    ++s_mount_items_count;
-    return 0;
+    (void)located_index;
+    /*create mount*/
+    struct MountInfo *new_mount_info = malloc(sizeof(struct MountInfo));
+    new_mount_info->mount_path = strdup(path);
+    new_mount_info->mount = filesystem_mount;
+    /*add mount*/    
+    return ! DynArraySet( MOUNT_ITEMS, MOUNT_ITEMS->num_entries, new_mount_info );
 }
 
 
@@ -87,36 +90,53 @@ int mm_fusemount_add( const char* path, struct fuse_operations* fuse_mount ){
 }
 
 int mm_mount_remove( const char* path ){
+    int located_index;
+    struct MountInfo* mount = mm_mountinfo_bypath( path, &located_index );
+    if (mount!=NULL){
+        free(mount->mount);
+        free(mount->mount_path);
+        free(mount);
+        if ( DynArraySet(MOUNT_ITEMS, located_index, NULL) != 0 )
+            return 0;
+    }
     return -1; /*todo implement it*/
 }
 
 
-struct MountInfo* mm_mountinfo_bypath( const char* path ){
-    int most_long_mount=-1;
+struct MountInfo* mm_mountinfo_bypath( const char* path, int *mount_index ){
+    struct MountInfo *mount_info=NULL;
     int i;
-    for( i=0; i < s_mount_items_count; i++ ){
+    for( i=0; i < MOUNT_ITEMS->num_entries; i++ ){
         /*if matched path and mount path*/
-        const char* mount_path = s_mount_items[i].mount_path;
+        struct MountInfo *current_mount_info = (struct MountInfo *)DynArrayGet(MOUNT_ITEMS, i);
+        if ( current_mount_info == NULL ) continue;
+        const char* mount_path = current_mount_info->mount_path;
+        /*if path is matched, then check mountpoint*/
         if ( !strncmp( mount_path, path, strlen(mount_path) ) ){
-            if ( most_long_mount == -1 || 
-		 strlen(mount_path) > strlen(s_mount_items[most_long_mount].mount_path) ){
-                most_long_mount=i;
+            if ( mount_info == NULL ||
+                 strlen(mount_path) > strlen(mount_info->mount_path) ){
+                mount_info = current_mount_info;
+                *mount_index=i;
             }
         }
     }
 
-    if ( most_long_mount != -1 ){
-	ZRT_LOG(L_EXTRA, "mounted_on_path=%s", 
-		s_mount_items[most_long_mount].mount_path);
-        return &s_mount_items[most_long_mount];
+    if ( mount_info != NULL ){
+	ZRT_LOG(L_EXTRA, "located mount by path=%s: mountpoint=%s, mount_index=%d", 
+                path, mount_info->mount_path, *mount_index);
+        return mount_info;
     }
-    else
+    else{
+	ZRT_LOG(L_EXTRA, "didn't locate mount by path=%s", path);
         return NULL;
+    }
 }
 
 
-struct MountsPublicInterface* mm_mount_bypath( const char* path ){
-    struct MountInfo* mount_info = mm_mountinfo_bypath(path);
+struct MountsPublicInterface* mm_mount_bypath( const char* path){
+    int located_mount_index;
+    struct MountInfo* mount_info = mm_mountinfo_bypath(path, &located_mount_index);
+    (void)located_mount_index;
     if ( mount_info )
         return mount_info->mount;
     else
@@ -133,7 +153,8 @@ struct MountsPublicInterface* mm_mount_byhandle( int handle ){
 }
 
 const char* mm_convert_path_to_mount(const char* full_path){
-    struct MountInfo* mount_info = mm_mountinfo_bypath( full_path );
+    int located_mount_index;
+    struct MountInfo* mount_info = mm_mountinfo_bypath( full_path, &located_mount_index );
     if ( mount_info ){
 	if ( mount_info->mount->mount_id == EChannelsMountId ){
 	    /*for channels mount do not use path transformation*/
