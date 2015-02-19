@@ -27,6 +27,7 @@
 #include "zrtlog.h"
 #include "unpack_interface.h"
 #include "mounts_reader.h"
+#include "path_utils.h" //mkpath_recursively
 #include "parse_path.h"
 #include "mounts_interface.h"
 #include "image_engine.h"

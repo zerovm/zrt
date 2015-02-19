@@ -38,3 +38,6 @@ int test_path_utils();
   is related;
   @return 1 relative, 0 not relative*/
 int is_relative_path(const char *path);
+
+/*@return 0 if success, return -1 on error, set errno EEXIST if path exist*/
+int mkpath_recursively(const char* file_path, mode_t mode);

@@ -33,31 +33,6 @@
 static char s_cached_full_path[4096] = "";
 
 
-int mkpath_recursively(const char* file_path, mode_t mode) {
-    assert(file_path && *file_path);
-    struct stat st;
-
-    if ( stat(file_path, &st) != 0 ){
-	int temp_cursor, result_len, mkdirerr;
-	const char* subpath;
-	INIT_TEMP_CURSOR(&temp_cursor);
-
-	errno=0;
-	while( (subpath=path_subpath_forward(&temp_cursor, file_path, &result_len)) != NULL ){
-	    if ( result_len>1 ){
-		if ( (mkdirerr=mkdir( strndupa(subpath, result_len), mode)) == 0 || 
-		     mkdirerr==-1&&errno==EEXIST )
-		    continue;
-	    }
-	}
-	return mkdirerr;
-    }
-    else{
-	errno = EEXIST;
-	return -1;
-    }
-}
-
 /* check path directory is cached or not.
  * it's extract part related to full directory name from path and compare it
  * to previously cached dir name that's already created on filesystem.
