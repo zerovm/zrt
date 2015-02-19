@@ -126,10 +126,10 @@ void handle_fstab_record(struct MNvramObserver* observer,
         /*If archivemount is available then use it for tar mounting*/
         if ( archivemount_entrypoint ){
             /*mount fusefs*/
-            int mount_res = fuse_main_wrapper(mount_path, archivemount_entrypoint,
-                                              archivemount_argc, archivemount_argv);
+            int mount_res = exec_fuse_main(mount_path, archivemount_entrypoint,
+                                           archivemount_argc, archivemount_argv);
             if (mount_res!=0){
-                ZRT_LOG(L_ERROR, "fuse_main_wrapper err=%d", mount_res);
+                ZRT_LOG(L_ERROR, "exec_fuse_main err=%d", mount_res);
             }
         }
         /*If no archimemount available and for compatibility use old approach.
@@ -151,9 +151,9 @@ void handle_fstab_record(struct MNvramObserver* observer,
         /*If fuse extensions are available and trying mount tar archive then use archivemount*/
         if (   fs_entrypoint != NULL ){
             /*mount fusefs*/
-            int mount_res = fuse_main_wrapper(mount_path, fs_entrypoint, fs_argc, fs_argv);
+            int mount_res = exec_fuse_main(mount_path, fs_entrypoint, fs_argc, fs_argv);
             if (mount_res!=0){
-                ZRT_LOG(L_ERROR, "fuse_main_wrapper err=%d", mount_res);
+                ZRT_LOG(L_ERROR, "exec_fuse_main err=%d", mount_res);
             }
         }
     }
