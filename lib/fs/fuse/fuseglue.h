@@ -41,12 +41,19 @@ fusefs_entrypoint_get_args_by_fsname(const char *fsname, int write_mode,
                                      const char *mntfile, const char *mntpoint,
 				     int *argc, char ***argv);
 
-/*Run userfs prefix_main() as part of zrt infrastructure.*/
-int fuse_main_wrapper(const char *mount_point, 
-                      int (*fs_main)(int, char**), int fs_argc, char **fs_argv);
-/*Initiate mount close, actually it releases cond lock in fuse_main*/
-void mount_exit();
+/*this a wraper around filesystem's main() entry point, which is executing 
+inside of zrt infratructure;
+@param mount_point This param just doubles mountpoint passed among arguments, 
+and needed here just to avoid parsing*/
+int exec_fuse_main(const char *mount_point, 
+                   int (*fs_main)(int, char**), int fs_argc, char **fs_argv);
 
+/* must replace exit() invocation from fuse fs implementation by this
+  function.  terminate calling thread, returns to main thread*/
+void exit_fuse_main(int retcode);
+
+/*Initiate mount close, actually it releases cond lock in fuse_main*/
+void terminate_fuse_mounts();
 
 #endif //__FUSE_INTERFACE_H__
 

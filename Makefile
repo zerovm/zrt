@@ -321,6 +321,9 @@ endif
 	if [ ! -f $(INSTALL_INCLUDE_DIR)/fuse/archivemount.h ]; then \
 	install -m 0644 -T lib/fs/fuse/stub_archivemount.h $(INSTALL_INCLUDE_DIR)/fuse/archivemount.h; \
 	fi;
+	if [ ! -f $(INSTALL_INCLUDE_DIR)/fuse/unionfs.h ]; then \
+	install -m 0644 -T lib/fs/fuse/stub_unionfs.h $(INSTALL_INCLUDE_DIR)/fuse/unionfs.h; \
+	fi;
 
 .PHONY: install
 
