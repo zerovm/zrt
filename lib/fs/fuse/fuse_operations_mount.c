@@ -249,10 +249,11 @@ fuse_operations_mount_pread(struct MountsPublicInterface* this_,
     const struct HandleItem *entry = fs->handle_allocator->entry(fd);
     const struct OpenFileDescription* ofd = fs->handle_allocator->ofd(fd);
     if (ofd==NULL){
-	SET_ERRNO(ENOENT);
+	SET_ERRNO(EBADF);
 	return -1;
     }
     struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+    assert(fdata!=NULL);
 
     CHECK_FUNC_ENSURE_EXIST(fs, read);
 
@@ -277,10 +278,11 @@ fuse_operations_mount_pwrite(struct MountsPublicInterface* this_,
     const struct HandleItem* entry = fs->handle_allocator->entry(fd);
     const struct OpenFileDescription* ofd = fs->open_files_pool->entry(entry->open_file_description_id);
     if (ofd==NULL){
-	SET_ERRNO(ENOENT);
+	SET_ERRNO(EBADF);
 	return -1;
     }
     struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+    assert(fdata!=NULL);
 
     CHECK_FUNC_ENSURE_EXIST(fs, write);
 
@@ -302,10 +304,11 @@ static int fuse_operations_mount_fchown(struct MountsPublicInterface* this_, int
     struct FuseOperationsMount* fs = (struct FuseOperationsMount*)this_;
     const struct OpenFileDescription* ofd = fs->handle_allocator->ofd(fd);
     if (ofd==NULL){
-	SET_ERRNO(ENOENT);
+	SET_ERRNO(EBADF);
 	return -1;
     }
     struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+    assert(fdata!=NULL);
 
     CHECK_FUNC_ENSURE_EXIST(fs, chown);
 
@@ -322,10 +325,11 @@ static int fuse_operations_mount_fchmod(struct MountsPublicInterface* this_, int
     struct FuseOperationsMount* fs = (struct FuseOperationsMount*)this_;
     const struct OpenFileDescription* ofd = fs->handle_allocator->ofd(fd);
     if (ofd==NULL){
-	SET_ERRNO(ENOENT);
+	SET_ERRNO(EBADF);
 	return -1;
     }
     struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+    assert(fdata!=NULL);
 
     CHECK_FUNC_ENSURE_EXIST(fs, chmod);
 
@@ -341,12 +345,13 @@ static int fuse_operations_mount_fchmod(struct MountsPublicInterface* this_, int
 static int fuse_operations_mount_fstat(struct MountsPublicInterface* this_, int fd, struct stat *buf){
     struct FuseOperationsMount* fs = (struct FuseOperationsMount*)this_;
     const struct OpenFileDescription* ofd = fs->handle_allocator->ofd(fd);
-    if (ofd==NULL){
+    if (ofd!=NULL){
 	struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+        assert(fdata!=NULL);
 	GET_STAT_ENSURE_EXIST(fs, fdata->path, buf);
     }
     else{
-	SET_ERRNO(ENOENT);
+	SET_ERRNO(EBADF);
 	return -1;
     }
     return 0;
@@ -381,10 +386,11 @@ static int fuse_operations_mount_getdents(struct MountsPublicInterface* this_, i
     const struct HandleItem* entry = fs->handle_allocator->entry(fd);
     const struct OpenFileDescription* ofd = fs->open_files_pool->entry(entry->open_file_description_id);
     if ( ofd==NULL ){
-	SET_ERRNO(ENOENT);
+	SET_ERRNO(EBADF);
 	return -1;
     }
     struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+    assert(fdata!=NULL);
 
     /*prepare buffer to be able determine size in filler function*/
     memset(buf, '\0', count-1);
@@ -427,23 +433,25 @@ static int fuse_operations_mount_close(struct MountsPublicInterface* this_, int 
     const struct HandleItem* entry = fs->handle_allocator->entry(fd);
     const struct OpenFileDescription* ofd = fs->open_files_pool->entry(entry->open_file_description_id);
     if (ofd==NULL){
-	SET_ERRNO(ENOENT);
+	SET_ERRNO(EBADF);
 	return -1;
     }
     struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+    assert(fdata!=NULL);
 
     CHECK_FUNC_ENSURE_EXIST(fs, flush);
 
-    if ( (ret=fs->fuse_operations->flush( fdata->path, fdata->finfo)) <0 ){
-	SET_ERRNO(-ret);
-	return -1;
+    if ( fs->fuse_operations->flush != NULL ){
+        /*do not handle flush retcode, because it's not mandatory to
+          have flush and successful invocation */
+        fs->fuse_operations->flush( fdata->path, fdata->finfo);
     }
 
-    if ( (ret=fs->fuse_operations->release( fdata->path, fdata->finfo)) <0 ){
-	SET_ERRNO(-ret);
-	return -1;
+    if ( fs->fuse_operations->release != NULL ){
+        fs->fuse_operations->release( fdata->path, fdata->finfo);
     }
 
+    fs->open_files_pool->set_optional_data( entry->open_file_description_id, 0 );
     ret=fs->open_files_pool->release_ofd(entry->open_file_description_id);    
     assert( ret == 0 );
     ret = fs->handle_allocator->free_handle(fd);
@@ -459,10 +467,11 @@ static off_t fuse_operations_mount_lseek(struct MountsPublicInterface* this_, in
     const struct HandleItem* entry = fs->handle_allocator->entry(fd);
     const struct OpenFileDescription* ofd = fs->open_files_pool->entry(entry->open_file_description_id);
     if (ofd==NULL){
-	SET_ERRNO(ENOENT);
+	SET_ERRNO(EBADF);
 	return -1;
     }
     struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+    assert(fdata!=NULL);
 
     GET_STAT_ENSURE_EXIST(fs, fdata->path, &st);
 
@@ -512,12 +521,6 @@ static int fuse_operations_mount_open(struct MountsPublicInterface* this_, const
     CHECK_FUNC_ENSURE_EXIST(fs, open);
 
     file_exist=fs->fuse_operations->getattr(path, &st);
-    /*if trying top open existing directoy*/
-    if ( !file_exist || !S_ISDIR(st.st_mode) ){
-	/*not suitable for opening dirs*/
-	SET_ERRNO(EBADF);
-	return -1;
-    }
 
     /*get & check parent directory*/
     int cursor_path;
@@ -576,13 +579,13 @@ static int fuse_operations_mount_open(struct MountsPublicInterface* this_, const
 
     /*allocate global - zrt file handle*/
     int open_file_description_id = get_open_files_pool()->getnew_ofd(oflag);
-    int global_fd = get_handle_allocator()->allocate_handle(this_, 
-							    st.st_ino, st_parent.st_ino,
-							    open_file_description_id);
+    int global_fd = fs->handle_allocator->allocate_handle(this_, 
+                                                          st.st_ino, st_parent.st_ino,
+                                                          open_file_description_id);
     if ( global_fd < 0 ){
 	/*it's hipotetical but possible case if amount of open files 
 	  are exceeded an maximum value.*/
-	get_open_files_pool()->release_ofd(open_file_description_id);
+	fs->open_files_pool->release_ofd(open_file_description_id);
 	/*also free fuse object*/
 	free(finfo);
 	SET_ERRNO(ENFILE);
@@ -590,8 +593,10 @@ static int fuse_operations_mount_open(struct MountsPublicInterface* this_, const
     }
 
     /*Now file has a global file descriptor, will use ofd to save fuse object there*/
-    const struct OpenFileDescription* ofd = fs->handle_allocator->ofd(global_fd);
-    struct FuseFileOptionalData *fdata = (struct FuseFileOptionalData *)ofd->optional_data;
+    //const struct OpenFileDescription* ofd = fs->handle_allocator->ofd(global_fd);
+    /*setup fuse data*/
+    struct FuseFileOptionalData *fdata = malloc( sizeof(struct FuseFileOptionalData) );
+    fs->open_files_pool->set_optional_data( open_file_description_id, (intptr_t)fdata );
     fdata->path = strdup(path);
     fdata->finfo = finfo;
 
