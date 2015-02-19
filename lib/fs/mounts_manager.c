@@ -36,79 +36,14 @@
 #  define MIN(a,b)( a<b?a:b )
 #endif
 
-#define MOUNT_ITEMS (&s_mounts_manager.mount_items)
-
-int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mount );
-int mm_fusemount_add( const char* path, struct fuse_operations* fuse_mount );
-int mm_mount_remove( const char* path );
-struct MountInfo* mm_mountinfo_bypath( const char* path, int *mount_index );
-struct MountsPublicInterface* mm_mount_bypath( const char* path);
-struct MountsPublicInterface* mm_mount_byhandle( int handle );
-const char* mm_convert_path_to_mount(const char* full_path);
-
-static struct MountsManager s_mounts_manager = {
-        mm_mount_add,
-	mm_fusemount_add,
-        mm_mount_remove,
-        mm_mountinfo_bypath,
-        mm_mount_bypath,
-        mm_mount_byhandle,
-        mm_convert_path_to_mount,
-        NULL,
-	NULL,
-        NULL
-    };
-
-
-int mm_mount_add( const char* path, struct MountsPublicInterface* filesystem_mount ){
-    if ( MOUNT_ITEMS->ptr_array == NULL )
-        DynArrayCtor( MOUNT_ITEMS, 2 /*granularity*/ );
-
-    /*check if the same mountpoint haven't used by another mount*/
-    int located_index;
-    struct MountInfo* existing_mount = mm_mountinfo_bypath( path, &located_index );
-    if ( existing_mount && !strcmp(existing_mount->mount_path, path) ){
-	SET_ERRNO(EBUSY);
-	return -1;
-    }
-    (void)located_index;
-    /*create mount*/
-    struct MountInfo *new_mount_info = malloc(sizeof(struct MountInfo));
-    new_mount_info->mount_path = strdup(path);
-    new_mount_info->mount = filesystem_mount;
-    /*add mount*/    
-    return ! DynArraySet( MOUNT_ITEMS, MOUNT_ITEMS->num_entries, new_mount_info );
-}
-
-
-int mm_fusemount_add( const char* path, struct fuse_operations* fuse_mount ){
-    struct MountsPublicInterface* fs 
-	= CONSTRUCT_L(FUSE_OPERATIONS_MOUNT)( get_handle_allocator(),
-					      get_open_files_pool(),
-					      fuse_mount );
-    return mm_mount_add( path, fs );
-}
-
-int mm_mount_remove( const char* path ){
-    int located_index;
-    struct MountInfo* mount = mm_mountinfo_bypath( path, &located_index );
-    if (mount!=NULL){
-        free(mount->mount);
-        free(mount->mount_path);
-        free(mount);
-        if ( DynArraySet(MOUNT_ITEMS, located_index, NULL) != 0 )
-            return 0;
-    }
-    return -1; /*todo implement it*/
-}
-
-
-struct MountInfo* mm_mountinfo_bypath( const char* path, int *mount_index ){
+struct MountInfo* mm_mountinfo_bypath( struct MountsManager *mounts_manager,
+                                       const char* path, int *mount_index ){
     struct MountInfo *mount_info=NULL;
     int i;
-    for( i=0; i < MOUNT_ITEMS->num_entries; i++ ){
+    for( i=0; i < mounts_manager->mount_items.num_entries; i++ ){
         /*if matched path and mount path*/
-        struct MountInfo *current_mount_info = (struct MountInfo *)DynArrayGet(MOUNT_ITEMS, i);
+        struct MountInfo *current_mount_info 
+            = (struct MountInfo *)DynArrayGet(&mounts_manager->mount_items, i);
         if ( current_mount_info == NULL ) continue;
         const char* mount_path = current_mount_info->mount_path;
         /*if path is matched, then check mountpoint*/
@@ -132,10 +67,54 @@ struct MountInfo* mm_mountinfo_bypath( const char* path, int *mount_index ){
     }
 }
 
+int mm_mount_add( struct MountsManager *mounts_manager,
+                  const char* path, struct MountsPublicInterface* filesystem_mount ){
+    /*check if the same mountpoint haven't used by another mount*/
+    int located_index;
+    struct MountInfo* existing_mount = mm_mountinfo_bypath( mounts_manager, path, &located_index );
+    if ( existing_mount && !strcmp(existing_mount->mount_path, path) ){
+	SET_ERRNO(EBUSY);
+	return -1;
+    }
+    (void)located_index;
+    /*create mount*/
+    struct MountInfo *new_mount_info = malloc(sizeof(struct MountInfo));
+    new_mount_info->mount_path = strdup(path);
+    new_mount_info->mount = filesystem_mount;
+    /*add mount*/    
+    return ! DynArraySet( &mounts_manager->mount_items, 
+                          mounts_manager->mount_items.num_entries, new_mount_info );
+}
 
-struct MountsPublicInterface* mm_mount_bypath( const char* path){
+
+int mm_fusemount_add( struct MountsManager *mounts_manager,
+                      const char* path, struct fuse_operations* fuse_mount ){
+    struct MountsPublicInterface* fs 
+	= CONSTRUCT_L(FUSE_OPERATIONS_MOUNT)( get_handle_allocator(),
+					      get_open_files_pool(),
+					      fuse_mount );
+    return mm_mount_add( mounts_manager, path, fs );
+}
+
+int mm_mount_remove( struct MountsManager *mounts_manager,
+                     const char* path ){
+    int located_index;
+    struct MountInfo* mount = mm_mountinfo_bypath( mounts_manager, path, &located_index );
+    if (mount!=NULL){
+        free(mount->mount);
+        free(mount->mount_path);
+        free(mount);
+        if ( DynArraySet(&mounts_manager->mount_items, located_index, NULL) != 0 )
+            return 0;
+    }
+    return -1; /*todo implement it*/
+}
+
+
+struct MountsPublicInterface* mm_mount_bypath( struct MountsManager *mounts_manager,
+                                               const char* path){
     int located_mount_index;
-    struct MountInfo* mount_info = mm_mountinfo_bypath(path, &located_mount_index);
+    struct MountInfo* mount_info = mm_mountinfo_bypath(mounts_manager, path, &located_mount_index);
     (void)located_mount_index;
     if ( mount_info )
         return mount_info->mount;
@@ -143,18 +122,20 @@ struct MountsPublicInterface* mm_mount_bypath( const char* path){
         return NULL;
 }
 
-struct MountsPublicInterface* mm_mount_byhandle( int handle ){
-    const struct HandleItem* entry = s_mounts_manager.handle_allocator->entry(handle);
+struct MountsPublicInterface* mm_mount_byhandle( struct MountsManager *mounts_manager,
+                                                 int handle ){
+    const struct HandleItem* entry = get_handle_allocator()->entry(handle);
     /*if handle exist and related to opened file*/
-    if ( entry && s_mounts_manager.open_files_pool
-	 ->entry(entry->open_file_description_id) != NULL ) 
+    if ( entry && NULL != 
+         get_open_files_pool()->entry(entry->open_file_description_id) ) 
 	return entry->mount_fs;
     else return NULL;
 }
 
-const char* mm_convert_path_to_mount(const char* full_path){
+const char* mm_convert_path_to_mount(struct MountsManager *mounts_manager,
+                                     const char* full_path){
     int located_mount_index;
-    struct MountInfo* mount_info = mm_mountinfo_bypath( full_path, &located_mount_index );
+    struct MountInfo* mount_info = mm_mountinfo_bypath( mounts_manager, full_path, &located_mount_index );
     if ( mount_info ){
 	if ( mount_info->mount->mount_id == EChannelsMountId ){
 	    /*for channels mount do not use path transformation*/
@@ -174,14 +155,15 @@ const char* mm_convert_path_to_mount(const char* full_path){
 	return NULL;
 }
 
-struct MountsManager* mounts_manager(){
-    return &s_mounts_manager;    
+struct MountsManager* alloc_mounts_manager(){
+    struct MountsManager *self = malloc(sizeof(struct MountsManager));
+    self->mount_add               = mm_mount_add;
+    self->fusemount_add           = mm_fusemount_add;
+    self->mount_remove            = mm_mount_remove;
+    self->mountinfo_bypath        = mm_mountinfo_bypath;
+    self->mount_bypath            = mm_mount_bypath;
+    self->mount_byhandle          = mm_mount_byhandle;
+    self->convert_path_to_mount   = mm_convert_path_to_mount;
+    DynArrayCtor( &self->mount_items, 2 /*granularity*/ );
+    return self;
 }
-
-struct MountsManager* get_mounts_manager(){
-    s_mounts_manager.handle_allocator = get_handle_allocator();
-    s_mounts_manager.open_files_pool = get_open_files_pool();
-    return &s_mounts_manager;
-}
-
-

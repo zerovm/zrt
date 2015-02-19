@@ -38,25 +38,28 @@ struct MountsManager{
       *@return 0 if OK, on error it returns -1 and set errno:
       *ENOTEMPTY - no empty slots to add mount; 
       *EBUSY - mount with specified mountpoint already exist*/
-    int (*mount_add)( const char* path, struct MountsPublicInterface* filesystem_mount );
+    int (*mount_add)( struct MountsManager *mounts_manager, 
+                      const char* path, struct MountsPublicInterface* filesystem_mount );
     /*fuse support, the same as mount_add*/
-    int (*fusemount_add)( const char* path, struct fuse_operations* fuse_mount );
-    int (*mount_remove)( const char* path );
+    int (*fusemount_add)( struct MountsManager *mounts_manager,
+                          const char* path, struct fuse_operations* fuse_mount );
+    int (*mount_remove)( struct MountsManager *mounts_manager,
+                         const char* path );
 
-    struct MountInfo* (*mountinfo_bypath)(const char* path, int *mount_index);
-    struct MountsPublicInterface* (*mount_bypath)( const char* path );
-    struct MountsPublicInterface* (*mount_byhandle)( int handle );
+    struct MountInfo* (*mountinfo_bypath)(struct MountsManager *mounts_manager,
+                                          const char* path, int *mount_index);
+    struct MountsPublicInterface* (*mount_bypath)( struct MountsManager *mounts_manager,
+                                                   const char* path );
+    struct MountsPublicInterface* (*mount_byhandle)( struct MountsManager *mounts_manager,
+                                                     int handle );
 
-    const char* (*convert_path_to_mount)(const char* full_path);
-
-    struct HandleAllocator* handle_allocator;
-    struct OpenFilesPool* open_files_pool;
+    const char* (*convert_path_to_mount)(struct MountsManager *mounts_manager,
+                                         const char* full_path);
+    /*data*/
     struct DynArray mount_items; /*array for struct MountInfo*/
 };
 
-
-struct MountsManager* get_mounts_manager();
-struct MountsManager* mounts_manager(); /*accessor*/
+struct MountsManager* alloc_mounts_manager();
 
 
 #endif /* MOUNTS_MANAGER_H_ */

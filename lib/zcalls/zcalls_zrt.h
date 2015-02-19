@@ -30,4 +30,6 @@ void*                   static_prolog_brk();
 /*get static object from zrtsyscalls.c*/
 struct MountsPublicInterface* transparent_mount();
 
+struct MountsManager* get_system_mounts_manager();
+
 #endif //__ZCALLS_ZRT_H__
