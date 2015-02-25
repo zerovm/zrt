@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <utime.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <dirent.h>
@@ -34,6 +35,7 @@
 
 #include <fuseglue.h>
 #include <fs/mounts_interface.h>
+#include <fs/mounts_manager.h> /*EFuseProxyModeEnabled, EFuseProxyModeDisabled*/
 #include <helpers/path_utils.h>
 #include "handle_allocator.h" //struct HandleAllocator, struct HandleItem
 #include "open_file_description.h" //struct OpenFilesPool, struct OpenFileDescription
@@ -58,7 +60,7 @@
 	SET_ERRNO(ENOSYS);						\
 	return -1;							\
     }									\
-    else if ( (fs)->fuse_operations->getattr(path, stat_p) != 0 ){	\
+    else if ( (fs)->fuse_operations->getattr(path, stat_p) < 0 ){	\
 	SET_ERRNO(ENOENT);						\
 	return -1;							\
     }									\
@@ -66,11 +68,16 @@
 #define GET_PARENT_STAT_ENSURE_EXIST(fs, path, stat_p){			\
 	int cursor_path;						\
 	int parent_dir_len;						\
+        char *parent_dir=NULL;                                          \
 	INIT_TEMP_CURSOR(&cursor_path);					\
-	const char *parent_dir = path_subpath_backward(&cursor_path, path, &parent_dir_len); \
-	if ( parent_dir != NULL &&					\
-	     (fs)->fuse_operations->getattr(parent_dir, stat_p ) != 0 && \
-	     S_ISDIR((stat_p)->st_mode) ){				\
+        /*skip first time, now it returns full path*/                   \
+        path_subpath_backward(&cursor_path, path, &parent_dir_len);     \
+	const char *foo = path_subpath_backward(&cursor_path, path, &parent_dir_len); \
+        if (foo!=NULL)                                                  \
+            parent_dir = strndupa(foo, parent_dir_len);                 \
+	if ( !(parent_dir != NULL &&					\
+               (fs)->fuse_operations->getattr(parent_dir, stat_p ) >=0 && \
+               S_ISDIR((stat_p)->st_mode)) ){				\
 	    ZRT_LOG(L_ERROR, "%s: %s parent_dir can't be obtained", __FILE__, path); \
 	    SET_ERRNO(ENOTDIR);						\
 	    return -1;							\
@@ -99,6 +106,7 @@ struct FuseOperationsMount{
     struct OpenFilesPool*   open_files_pool;
     struct fuse_operations* fuse_operations;
     struct MountSpecificPublicInterface* mount_specific_interface;
+    char proxy_mode;
     int fusever;
 };
 
@@ -475,7 +483,7 @@ static off_t fuse_operations_mount_lseek(struct MountsPublicInterface* this_, in
 
     GET_STAT_ENSURE_EXIST(fs, fdata->path, &st);
 
-    if ( !S_ISDIR(st.st_mode) ){
+    if ( S_ISDIR(st.st_mode) ){
 	SET_ERRNO(EBADF);
 	return -1;
     }
@@ -513,6 +521,7 @@ static off_t fuse_operations_mount_lseek(struct MountsPublicInterface* this_, in
 
 static int fuse_operations_mount_open(struct MountsPublicInterface* this_, const char* path, int oflag, uint32_t mode){
     int ret=-1;
+    int fd=-1;
     struct FuseOperationsMount* fs = (struct FuseOperationsMount*)this_;
     struct stat st;
     struct stat st_parent;
@@ -522,24 +531,11 @@ static int fuse_operations_mount_open(struct MountsPublicInterface* this_, const
 
     file_exist=fs->fuse_operations->getattr(path, &st);
 
-    /*get & check parent directory*/
-    int cursor_path;
-    int parent_dir_len;
-    INIT_TEMP_CURSOR(&cursor_path);
-    const char *parent_dir = path_subpath_backward(&cursor_path, path, &parent_dir_len);
-    if ( parent_dir != NULL && fs->fuse_operations->getattr(parent_dir, &st_parent) != 0 ){
-	/*it seems that trYing to open a root directory, folder
-	  opening error is already handled*/
-	ZRT_LOG(L_ERROR, "%s: parent_dir can't be obtained", __FILE__);
-	assert(0);
-    }
-
     /*file exist, do checks of O_CREAT, O_EXCL flags*/
     if ( !file_exist && CHECK_FLAG(oflag, O_CREAT) && CHECK_FLAG(oflag, O_EXCL) ){
 	SET_ERRNO(EEXIST);
 	return -1;
     }
-
     /*truncate existing writable file*/
     if ( !file_exist && CHECK_FLAG(oflag, O_TRUNC) && 
 	 (CHECK_FLAG(oflag, O_WRONLY) || CHECK_FLAG(oflag, O_RDWR)) ){
@@ -560,9 +556,7 @@ static int fuse_operations_mount_open(struct MountsPublicInterface* this_, const
     /*is file exist?*/
     if (!file_exist){
 	if ( (ret=fs->fuse_operations->open(path, finfo)) <0 ){
-	    free(finfo);
 	    SET_ERRNO(-ret);
-	    return -1;
 	}
     }
     else{ 
@@ -570,39 +564,59 @@ static int fuse_operations_mount_open(struct MountsPublicInterface* this_, const
 	if ( CHECK_FLAG(oflag, O_CREAT) ){
 	    CHECK_FUNC_ENSURE_EXIST(fs, create);
 	    if ( (ret=fs->fuse_operations->create(path, mode, finfo)) <0 ){
-		free(finfo);
 		SET_ERRNO(-ret);
-		return -1;
 	    }
 	}
     }
 
-    /*allocate global - zrt file handle*/
-    int open_file_description_id = get_open_files_pool()->getnew_ofd(oflag);
-    int global_fd = fs->handle_allocator->allocate_handle(this_, 
-                                                          st.st_ino, st_parent.st_ino,
-                                                          open_file_description_id);
-    if ( global_fd < 0 ){
-	/*it's hipotetical but possible case if amount of open files 
-	  are exceeded an maximum value.*/
-	fs->open_files_pool->release_ofd(open_file_description_id);
-	/*also free fuse object*/
-	free(finfo);
-	SET_ERRNO(ENFILE);
-	return -1;
+    /*if path open/create success*/
+    if ( ! ret ){
+        int open_file_description_id;
+        if ( fs->proxy_mode == EFuseProxyModeDisabled ){
+            /*in case if fs works in generic mode it use own handles
+              stored in finfo->fh, so we need to issue a global fd
+              visible across system*/
+            open_file_description_id = get_open_files_pool()->getnew_ofd(oflag);
+            fd = fs->handle_allocator->allocate_handle(this_, 
+                                                           st.st_ino, st_parent.st_ino,
+                                                           open_file_description_id);
+            if ( fd < 0 ){
+                /*it's hipotetical but possible case if amount of open files 
+                  are exceeded an maximum value.*/
+                fs->open_files_pool->release_ofd(open_file_description_id);
+                SET_ERRNO(ENFILE);
+            }
+        }
+        else if ( fs->proxy_mode == EFuseProxyModeEnabled){
+            /*proxy mode is enabled, so open already returned actual
+              fd, therefore do not issue a new one and use returned*/
+            fd = finfo->fh;
+            const struct HandleItem *hentry = fs->handle_allocator->entry(finfo->fh);
+            if (hentry!=NULL)
+                open_file_description_id = hentry->open_file_description_id;
+            else{
+                ZRT_LOG(L_ERROR, 
+                        "can't open '%s' due to handle=%lld returned from fuse fs has no HandleEntry", 
+                        path, finfo->fh );
+                SET_ERRNO(EINVAL);
+            }
+        }
+        else{
+            assert(0);
+        }
+
+        /*successfully opened, save fuse data*/
+        struct FuseFileOptionalData *fdata = malloc( sizeof(struct FuseFileOptionalData) );
+        fs->open_files_pool->set_optional_data( open_file_description_id, (intptr_t)fdata );
+        fdata->path = strdup(path);
+        fdata->finfo = finfo;
+
+        return fd;
     }
-
-    /*Now file has a global file descriptor, will use ofd to save fuse object there*/
-    //const struct OpenFileDescription* ofd = fs->handle_allocator->ofd(global_fd);
-    /*setup fuse data*/
-    struct FuseFileOptionalData *fdata = malloc( sizeof(struct FuseFileOptionalData) );
-    fs->open_files_pool->set_optional_data( open_file_description_id, (intptr_t)fdata );
-    fdata->path = strdup(path);
-    fdata->finfo = finfo;
-
-    /*success*/
-
-    return ret;
+    else{
+        free(finfo);
+        return -1;
+    }
 }
 
 
@@ -770,6 +784,29 @@ static int fuse_operations_mount_rename(struct MountsPublicInterface* this_, con
     return ret;
 }
 
+static int fuse_operations_mount_utime(struct MountsPublicInterface* this_,
+                                const char *filename, const struct utimbuf *times){
+    int ret;
+    struct FuseOperationsMount* fs = (struct FuseOperationsMount*)this_;
+    struct stat st;
+
+    CHECK_FUNC_ENSURE_EXIST(fs, utimens);
+    GET_STAT_ENSURE_EXIST(fs, filename, &st);
+
+    struct timespec ts[2];
+    ts[0].tv_sec = times[0].actime;
+    ts[0].tv_nsec = 0;
+    ts[1].tv_sec = times[1].modtime;
+    ts[1].tv_nsec = 0;
+    if ( (ret=fs->fuse_operations->utimens( filename, ts )) < 0 ){
+	SET_ERRNO(-ret);
+	return -1;
+    }
+
+    return ret;
+}
+
+
 
 static struct MountsPublicInterface KFuseOperationsMount = {
     fuse_operations_mount_readlink,
@@ -803,7 +840,7 @@ static struct MountsPublicInterface KFuseOperationsMount = {
     fuse_operations_mount_dup,
     fuse_operations_mount_dup2,
     fuse_operations_mount_link,
-    EUserFsId,
+    fuse_operations_mount_utime,
     NULL
 };
 
@@ -812,7 +849,8 @@ static struct MountsPublicInterface KFuseOperationsMount = {
 struct MountsPublicInterface* 
 fuse_operations_mount_construct( struct HandleAllocator* handle_allocator,
                                  struct OpenFilesPool* open_files_pool,
-                                 struct fuse_operations* fuse_operations){
+                                 struct fuse_operations* fuse_operations,
+                                 char proxy_mode){
 #ifdef FUSEGLUE_EXT
     /*use malloc and not new, because it's external c object*/
     struct FuseOperationsMount* this_ = (struct FuseOperationsMount*)malloc( sizeof(struct FuseOperationsMount) );
@@ -823,6 +861,7 @@ fuse_operations_mount_construct( struct HandleAllocator* handle_allocator,
     this_->handle_allocator = handle_allocator; /*use existing handle allocator*/
     this_->open_files_pool = open_files_pool; /*use existing open files pool*/
     this_->fuse_operations = fuse_operations;
+    this_->proxy_mode = proxy_mode;
     return (struct MountsPublicInterface*)this_;
 #else
     return NULL;
