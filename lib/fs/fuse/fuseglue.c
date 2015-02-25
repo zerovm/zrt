@@ -38,10 +38,21 @@
 #  include <fuse.h>
 #  include <fuse/archivemount.h>
 #  include <fuse/unionfs.h>
-#endif
+#endif /*FUSEGLUE_EXT*/
+
+enum { 
+    EConditionWaitingInitialization=0,
+    EConditionInitializationError=1,
+    EConditionInitialized=2,
+    EConditionWaitingFinalization=3 
+};
+
+struct fuse_conn_info;
 
 struct mount_args{
-    char   mount_point[100];
+    int    expect_absolute_path;
+    char   proxy_mode;
+    char   mountpoint[100];
     int    mount_argc;
     char **mount_argv;
     int  (*mount_main)(int, char**);
@@ -53,9 +64,54 @@ struct async_lock_data{
     int                cond_value;
     char               name[20];
     struct mount_args  args;
+    struct fuse_conn_info *conn; /*for compatibility only*/
+    int index; /*index in storage array*/
 };
 
+/*Array for saving multiple fuse file systems, it's needed for
+  asynch engine*/
 struct DynArray *s_fuse_mount_data=NULL;
+
+/*Specify here all file systems supported by zrt core*/
+fs_main
+fusefs_entrypoint_get_args_by_fsname(const char *fsname, int write_mode, 
+                                     const char *mntfile, const char *mntpoint,
+                                     int *expect_absolute_path, char *proxy_mode,
+				     int *argc, char ***argv)
+{
+#ifdef FUSE_ARCHIVEMOUNT_NAME
+    if ( !strcasecmp(fsname, FUSE_ARCHIVEMOUNT_NAME) ){
+        /*handle args and wrap it into argc, argv. Note: mountpoint -d
+          param is not needed and will be ignored*/
+        if (write_mode){
+            FUSE_ARCHIVEMOUNT_ARGS_FILL_WRITE(argc, argv, mntfile, mntpoint);
+        }
+        else{
+            FUSE_ARCHIVEMOUNT_ARGS_FILL_RONLY(argc, argv, mntfile, mntpoint);
+        }
+        *expect_absolute_path = EAbsolutePathNotExpected;
+        *proxy_mode = EFuseProxyModeDisabled;
+	return archivemount_main;
+    }
+#endif
+#ifdef FUSE_UNIONFS_NAME
+    if ( !strcasecmp(fsname, FUSE_UNIONFS_NAME) ){
+        /*handle args and wrap it into argc, argv. Note: mountpoint -d
+          param is not needed and will be ignored*/
+        if (write_mode){
+            FUSE_UNIONFS_ARGS_FILL_WRITE(argc, argv, mntfile, mntpoint);
+        }
+        else{
+            FUSE_UNIONFS_ARGS_FILL_RONLY(argc, argv, mntfile, mntpoint);
+        }
+        *expect_absolute_path = EAbsolutePathNotExpected;
+        *proxy_mode = EFuseProxyModeEnabled;
+	return unionfs_main;
+    }
+#endif
+    return NULL;
+}
+
 
 /********************************************/
 /*functions provides waiting for condition*/
@@ -103,7 +159,7 @@ match_mount_data_by_mountpoint(const char *mountpoint)
     /*look lock_data matching it by mountpoint*/
     for (i=0; i < s_fuse_mount_data->num_entries; i++){
         lock_data = DynArrayGet( s_fuse_mount_data, i);
-        if (lock_data!=NULL && !strcmp(lock_data->args.mount_point, mountpoint)){
+        if (lock_data!=NULL && !strcmp(lock_data->args.mountpoint, mountpoint)){
             break;
         }
         else
@@ -130,51 +186,60 @@ match_mount_data_by_condition_value(int condition_value)
     return lock_data;
 }
 
+
 /********************************************/
 
+/*fuse must use this function in own implementation, it's should
+  always exist at least as stub, to get fuse library compiled*/
+int fuse_main_common_implem(struct fuse_operations *op, const char *mountpoint, void *user_data){
+    #ifdef FUSEGLUE_EXT
+    ZRT_LOG(L_SHORT, "Perform fuse mount and wait in thread, path=%s", mountpoint );
+    assert(s_fuse_mount_data!=NULL);
+    struct async_lock_data *lock_data = match_mount_data_by_mountpoint(mountpoint);
+    if (lock_data==NULL){
+        ZRT_LOG(L_ERROR, "Can't find fuse fs lock_data for mountpoint=%s", mountpoint );
+        assert(0);
+    }
 
-/*Specify here all file systems supported by zrt core*/
-fs_main
-fusefs_entrypoint_get_args_by_fsname(const char *fsname, int write_mode, 
-                                     const char *mntfile, const char *mntpoint,
-				     int *argc, char ***argv)
-{
-#ifdef FUSE_ARCHIVEMOUNT_NAME
-    if ( !strcasecmp(fsname, FUSE_ARCHIVEMOUNT_NAME) ){
-        /*handle args and wrap it into argc, argv. Note: mountpoint -d
-          param is not needed and will be ignored*/
-        if (write_mode){
-            FUSE_ARCHIVEMOUNT_ARGS_FILL_WRITE(argc, argv, mntfile, mntpoint);
-        }
-        else{
-            FUSE_ARCHIVEMOUNT_ARGS_FILL_RONLY(argc, argv, mntfile, mntpoint);
-        }
-	return archivemount_main;
+    /*perform filesystem mount here*/
+    int res = mount_fuse_fs(op, mountpoint, lock_data->args.expect_absolute_path,
+                            lock_data->args.proxy_mode);
+    if (res != 0){
+        ZRT_LOG(L_ERROR, "Fuse fs mount error %d", res );
+        update_cond_value(lock_data, EConditionInitializationError);
     }
-#endif
-#ifdef FUSE_UNIONFS_NAME
-    if ( !strcasecmp(fsname, FUSE_UNIONFS_NAME) ){
-        /*handle args and wrap it into argc, argv. Note: mountpoint -d
-          param is not needed and will be ignored*/
-        if (write_mode){
-            FUSE_UNIONFS_ARGS_FILL_WRITE(argc, argv, mntfile, mntpoint);
+    else{
+        /*fuse init function*/
+        if ( op->init ){
+            lock_data->conn = calloc(1, sizeof(struct fuse_conn_info));
+            op->init(lock_data->conn);
         }
-        else{
-            FUSE_UNIONFS_ARGS_FILL_RONLY(argc, argv, mntfile, mntpoint);
-        }
-	return unionfs_main;
+        /*when it finishes, update cond to continue zrt running*/
+        update_cond_value(lock_data, EConditionInitialized);
+
+        /*wait here until exit*/
+        wait_cond_value_less_than_expected(lock_data, EConditionWaitingFinalization);
     }
-#endif
-    return NULL;
+    ZRT_LOG(L_SHORT, "Finalize fuse mount, err=%d, path=%s", res, mountpoint );
+    return res;
+#else
+    return -1;
+#endif /*FUSEGLUE_EXT*/
 }
 
-/*thread asynchronous func, called from mount_fuse*/
+/********/
+
+
+#ifdef FUSEGLUE_EXT
+
+/*Support for calling fuse file system entrypoints in separate threads
+  and for these threads cleanup*/
 static void *exec_fuse_main_async(void *arg)
 {
     struct async_lock_data *lock_data = (struct async_lock_data *)arg;
 
     /*fuse waiting an existing dir, create it if not yet exist*/
-    mkpath_recursively(lock_data->args.mount_point, 0666);
+    mkpath_recursively(lock_data->args.mountpoint, 0666);
 
     /*run fusefs's entry point, while main() is running then
       filesystem interface is alive, wait here until main do exit with
@@ -194,8 +259,8 @@ static void *exec_fuse_main_async(void *arg)
     return NULL;
 }
 
-int exec_fuse_main(const char *mount_point,
-                      int (*fs_main)(int, char**), int fs_argc, char **fs_argv){
+int exec_fuse_main(const char *mountpoint, int expect_absolute_path, char proxy_mode,
+                   int (*fs_main)(int, char**), int fs_argc, char **fs_argv){
     int res=0;
     /*create mounts data array*/
     if ( s_fuse_mount_data == NULL ){
@@ -205,8 +270,10 @@ int exec_fuse_main(const char *mount_point,
 
     /*prepare parameters for thread function*/
     struct async_lock_data *lock_data = calloc(1, sizeof(struct async_lock_data));
-    strncpy(lock_data->args.mount_point, mount_point, sizeof(lock_data->args.mount_point) );
-    strncpy(lock_data->name, mount_point, sizeof(lock_data->name) );
+    strncpy(lock_data->args.mountpoint, mountpoint, sizeof(lock_data->args.mountpoint) );
+    strncpy(lock_data->name, mountpoint, sizeof(lock_data->name) );
+    lock_data->args.expect_absolute_path = expect_absolute_path;
+    lock_data->args.proxy_mode = proxy_mode;
     lock_data->args.mount_argc = fs_argc;
     lock_data->args.mount_argv = fs_argv;
     lock_data->args.mount_main = fs_main;
@@ -218,10 +285,12 @@ int exec_fuse_main(const char *mount_point,
     if (! DynArraySet( s_fuse_mount_data, s_fuse_mount_data->num_entries, lock_data )){
         /*error adding to array*/
         ZRT_LOG(L_ERROR, "Error adding fuse mount data with mountpoint %s", 
-                mount_point ); 
+                mountpoint ); 
         free(lock_data);
         return -1;
     }
+    /*save array index of just added lock_data*/
+    lock_data->index = s_fuse_mount_data->num_entries-1;
 
     pthread_t thread_create_fuse;
     if (pthread_create(&thread_create_fuse, NULL, exec_fuse_main_async, lock_data) != 0){
@@ -244,42 +313,25 @@ int exec_fuse_main(const char *mount_point,
         ZRT_LOG(L_INFO, "%s", "fuse fs initializer finished" ); 
         res=0;
     }
-    /*erase data*/
-    free(lock_data);
-    DynArraySet( s_fuse_mount_data, s_fuse_mount_data->num_entries-1, NULL );
+
+    /*keep all data allocated until EConditionWaitingFinalization*/
     return res;
 }
 
-/*section for functions used by fuse / fuse fs*/
-
-/*fuse must use this function in own implementation*/
-int fuse_main_common_implem(struct fuse_operations *op, const char *mountpoint, void *user_data){
-    assert(s_fuse_mount_data!=NULL);
-    struct async_lock_data *lock_data = match_mount_data_by_mountpoint(mountpoint);
-    if (lock_data==NULL){
-        ZRT_LOG(L_ERROR, "Can't find fuse fs lock_data for mountpoint=%s", mountpoint );
-        assert(0);
+static void free_lock_data_remove_from_array(struct async_lock_data *lock_data){
+    if ( lock_data != NULL ){
+        /*erase data*/
+        free(lock_data->conn);
+        free(lock_data);
+        DynArraySet( s_fuse_mount_data, lock_data->index, NULL );
     }
+ }
 
-    /*perform filesystem mount here*/
-    int res = mount_fuse_fs(op, mountpoint);
-    if (res != 0){
-        ZRT_LOG(L_ERROR, "Fuse fs mount error %d", res );
-        update_cond_value(lock_data, EConditionInitializationError);
-    }
-    else{
-        /*when it finishes, update cond to continue zrt running*/
-        update_cond_value(lock_data, EConditionInitialized);
-
-        /*wait here until exit*/
-        wait_cond_value_less_than_expected(lock_data, EConditionWaitingFinalization);
-    }
-    return res;
-}
-
+/**/
 void exit_fuse_main(int retcode){
-    /*As fuse filesystem initializes continously one by one then first
-      mount which have initialization state is the right mount*/
+    /*As fuse filesystems initializes continously one by one, it is
+      exist in one moment of time only one file system instance in
+      initialization state*/
     struct async_lock_data *lock_data =
         match_mount_data_by_condition_value(EConditionWaitingInitialization);
     if (lock_data!=NULL){
@@ -289,6 +341,9 @@ void exit_fuse_main(int retcode){
             update_cond_value(lock_data, EConditionWaitingFinalization);
         else
             update_cond_value(lock_data, EConditionInitializationError);
+
+        free_lock_data_remove_from_array(lock_data);
+        /*terminate thread*/
         int retval;
         pthread_exit(&retval);
     }
@@ -297,8 +352,6 @@ void exit_fuse_main(int retcode){
       main(), so silently ignore this situation */
 
 }
-
-/********/
 
 void terminate_fuse_mounts(){
     int i;
@@ -312,15 +365,14 @@ void terminate_fuse_mounts(){
                 /*release waiting fuse_main, continue exiting*/
                 update_cond_value(lock_data, EConditionWaitingFinalization);
             }
-            /*remove mount from mounts list*/
+            /*remove mount from mounts list, and free all memories*/
             get_system_mounts_manager()->mount_remove( get_system_mounts_manager(),
-                                                       lock_data->args.mount_point );
+                                                       lock_data->args.mountpoint );
             /*remove asynch data of fuse mount*/
-            free(lock_data);
-            DynArraySet( s_fuse_mount_data, i, NULL );
-            /*free fuse_operations*/
+            free_lock_data_remove_from_array(lock_data);
         }
     }
     DynArrayDtor(s_fuse_mount_data);
 }
 
+#endif /*FUSEGLUE_EXT*/
