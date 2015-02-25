@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "utils.h" /*zrealpath*/
 #include "path_utils.h"
 
 int is_relative_path(const char *path){
@@ -35,6 +36,18 @@ int is_relative_path(const char *path){
     }
     return 0;
     
+}
+
+const char *ensure_path_is_absolute(const char *path, char *path_tmp){
+    const char* absolute_path = path;
+    if ( is_relative_path(path) != 0 ){
+	if ( (absolute_path=zrealpath(path, path_tmp)) == NULL ){
+            /*return empty string instead of NULL, to avoid crashes in
+              file system functions*/
+	    return ""; 
+        }
+    }
+    return absolute_path;
 }
 
 int mkpath_recursively(const char* file_path, mode_t mode) {
