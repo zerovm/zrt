@@ -25,24 +25,50 @@ struct fuse_operations;
 struct MountsPublicInterface;
 struct OpenFilesPool;
 
+enum { 
+    EAbsolutePathNotExpected = 0,
+    EAbsolutePathExpected
+};
+
+enum {
+    EFuseProxyModeEnabled = 0,
+    EFuseProxyModeDisabled
+};
+
 struct MountInfo{
     char *mount_path; /*for example "/", "/dev" */
+    char expect_absolute_path;
     struct MountsPublicInterface* mount;
 };
 
 
 struct MountsManager{
-    /*Add to list of mounts the new one, caller should not destroy
-      filesystem_mount upon delete; Slots count is limited by
-      EMountsCount.  
+    /*Add to dynamic list of mounts the new one, caller 
+      should not destroy filesystem_mount until exit;
+      @param expect_absolute_path 1-path will be passed  into
+      fs as is, without transformation, 0 will cut first part of path 
+      which is actually is mount path;
       *@return 0 if OK, on error it returns -1 and set errno:
       *ENOTEMPTY - no empty slots to add mount; 
       *EBUSY - mount with specified mountpoint already exist*/
     int (*mount_add)( struct MountsManager *mounts_manager, 
-                      const char* path, struct MountsPublicInterface* filesystem_mount );
-    /*fuse support, the same as mount_add*/
+                      const char* path, 
+                      struct MountsPublicInterface* filesystem_mount,
+                      char expect_absolute_path);
+
+    /*fuse support, the same as mount_add
+      @param expect_absolute_path 1-path will be passed  into
+      fs as is, without transformation, 0 will cut first part of path 
+      which is actually is mount path;
+      @param proxy_mode Set to EFuseProxyModeEnabled if mount is implements 
+      own file system calls by using standard file system function, otherwise 
+      set to EFuseProxyModeDisabled; This is only actual for fuse.
+    */
     int (*fusemount_add)( struct MountsManager *mounts_manager,
-                          const char* path, struct fuse_operations* fuse_mount );
+                          const char* path, 
+                          struct fuse_operations* fuse_mount,
+                          char expect_absolute_path,
+                          char proxy_mode);
     int (*mount_remove)( struct MountsManager *mounts_manager,
                          const char* path );
 

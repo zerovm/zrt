@@ -23,14 +23,16 @@
 #include "mounts_manager.h"
 
 
-int mount_user_fs(struct MountsPublicInterface* fs, const char *mountpoint){
+int mount_user_fs(struct MountsPublicInterface* fs, const char *mountpoint, 
+                  char expect_absolute_path){
     struct MountsManager *man = get_system_mounts_manager();
     assert(man!=NULL);
-    return man->mount_add(man, mountpoint, fs);
+    return man->mount_add(man, mountpoint, fs, expect_absolute_path);
 }
 
-int mount_fuse_fs(struct fuse_operations* fuse_op, const char *mountpoint){
+int mount_fuse_fs(struct fuse_operations* fuse_op, const char *mountpoint, 
+                  char expect_absolute_path, char proxy_mode){
     struct MountsManager *man = get_system_mounts_manager();
     assert(man!=NULL);
-    return man->fusemount_add(man, mountpoint, fuse_op);
+    return man->fusemount_add(man, mountpoint, fuse_op, expect_absolute_path, proxy_mode);
 }

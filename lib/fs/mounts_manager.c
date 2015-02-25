@@ -68,7 +68,9 @@ struct MountInfo* mm_mountinfo_bypath( struct MountsManager *mounts_manager,
 }
 
 int mm_mount_add( struct MountsManager *mounts_manager,
-                  const char* path, struct MountsPublicInterface* filesystem_mount ){
+                  const char* path, 
+                  struct MountsPublicInterface* filesystem_mount,
+                  char expect_absolute_path){
     /*check if the same mountpoint haven't used by another mount*/
     int located_index;
     struct MountInfo* existing_mount = mm_mountinfo_bypath( mounts_manager, path, &located_index );
@@ -80,6 +82,7 @@ int mm_mount_add( struct MountsManager *mounts_manager,
     /*create mount*/
     struct MountInfo *new_mount_info = malloc(sizeof(struct MountInfo));
     new_mount_info->mount_path = strdup(path);
+    new_mount_info->expect_absolute_path = expect_absolute_path;
     new_mount_info->mount = filesystem_mount;
     /*add mount*/    
     return ! DynArraySet( &mounts_manager->mount_items, 
@@ -88,12 +91,16 @@ int mm_mount_add( struct MountsManager *mounts_manager,
 
 
 int mm_fusemount_add( struct MountsManager *mounts_manager,
-                      const char* path, struct fuse_operations* fuse_mount ){
+                      const char* path, 
+                      struct fuse_operations* fuse_mount,
+                      char expect_absolute_path,
+                      char proxy_mode){
     struct MountsPublicInterface* fs 
 	= CONSTRUCT_L(FUSE_OPERATIONS_MOUNT)( get_handle_allocator(),
 					      get_open_files_pool(),
-					      fuse_mount );
-    return mm_mount_add( mounts_manager, path, fs );
+					      fuse_mount,
+                                              proxy_mode);
+    return mm_mount_add( mounts_manager, path, fs, expect_absolute_path );
 }
 
 int mm_mount_remove( struct MountsManager *mounts_manager,
@@ -137,8 +144,8 @@ const char* mm_convert_path_to_mount(struct MountsManager *mounts_manager,
     int located_mount_index;
     struct MountInfo* mount_info = mm_mountinfo_bypath( mounts_manager, full_path, &located_mount_index );
     if ( mount_info ){
-	if ( mount_info->mount->mount_id == EChannelsMountId ){
-	    /*for channels mount do not use path transformation*/
+	if ( mount_info->expect_absolute_path == EAbsolutePathExpected ){
+	    /*for mounts which do not use path transformation*/
 	    return full_path;
 	}
 	else{

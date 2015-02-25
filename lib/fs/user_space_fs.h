@@ -24,9 +24,12 @@
 struct fuse_operations;
 
 /*original zrt fs*/
-int mount_user_fs(struct MountsPublicInterface* fs, const char *mountpoint);
+int mount_user_fs(struct MountsPublicInterface* fs, 
+                  const char *mountpoint, char expect_absolute_path);
 
-/*fuse fs*/
-int mount_fuse_fs(struct fuse_operations* fs, const char *mountpoint);
+/*fuse fs
+  @param proxy_mode - See MountsManager*/
+int mount_fuse_fs(struct fuse_operations* fs, 
+                  const char *mountpoint, char expect_absolute_path, char proxy_mode);
 
 #endif //__USER_SPACE_FS_H__
