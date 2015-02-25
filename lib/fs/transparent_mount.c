@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <utime.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -45,20 +46,6 @@ static struct MountsManager* s_mounts_manager;
 #define CONVERT_PATH_TO_MOUNT(full_path)			\
     s_mounts_manager->convert_path_to_mount( s_mounts_manager, full_path )
 
-#define TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, absolute_path_p, temp_path) \
-    /*if provided path is relative then do heavy call zrealpath to*/	\
-    /*prepare path for lazy_mount */					\
-    if ( check_path_is_relative(path) )					\
-    *(absolute_path_p) = zrealpath(path, temp_path);			\
-    if ( *(absolute_path_p) != NULL ) lazy_mount(*(absolute_path_p));	\
-    else if ( lazy_mount(path) == 0 ){					\
-	/*lazymount successfull now absolute_path should be exist*/	\
-	if ( (*(absolute_path_p) = zrealpath(path, temp_path)) == NULL ) \
-	    return -1;							\
-    }else if ( *(absolute_path_p) == NULL){				\
-	return -1;							\
-    }
-
 /*Try to mount postponed mount, in case if sub path matched.
   @return 0 if success, -1 if we don't need to mount*/
 static int lazy_mount(const char* path){
@@ -80,13 +67,8 @@ static int lazy_mount(const char* path){
 /*normalize path and if path related to removable channel then do lazy_mount*/
 const char *try_lazy_mount_verify_absolute_path(const char *path, char *temp_path_max)
 {
-    const char* abs_path = path;
-    /*if provided path is relative then do heavy call zrealpath to
-      prepare path for lazy_mount */
-    if ( is_relative_path(path) != 0 ){
-	if ( (abs_path=zrealpath(path, temp_path_max)) == NULL )
-	    return NULL;
-    }
+    const char *abs_path = ensure_path_is_absolute(path, temp_path_max);
+    if (abs_path==NULL) return NULL;
     lazy_mount(abs_path);
     return abs_path;
 }
@@ -574,6 +556,16 @@ static int transparent_link(struct MountsPublicInterface *this,
     }
 }
 
+static int transparent_utime(struct MountsPublicInterface *this,
+                             const char *filename, const struct utimbuf *times){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager, filename); 
+    if ( mount )
+	return mount->utime( mount, CONVERT_PATH_TO_MOUNT(filename), times);
+    else{
+        SET_ERRNO(ENOENT);
+        return -1;
+    }
+}
 
 static struct MountsPublicInterface s_transparent_mount = {
         transparent_readlink,
@@ -606,7 +598,8 @@ static struct MountsPublicInterface s_transparent_mount = {
         transparent_isatty,
         transparent_dup,
         transparent_dup2,
-        transparent_link
+        transparent_link,
+        transparent_utime
 };
 
 struct MountsPublicInterface* alloc_transparent_mount( struct MountsManager* mounts_manager ){

@@ -33,7 +33,7 @@ struct dirent;
 struct timeval;
 struct timespec;
 struct NvramLoader;
-
+struct utimbuf;
 
 #define ZCALLS_INIT 1   /*use as type param in __query_zcalls*/
 struct zcalls_init_t{
@@ -128,6 +128,10 @@ struct zcalls_nonsyscalls_t{
     int (*get_phys_pages)(void);
     int (*get_avphys_pages)(void);
     int (*fchdir)(int fd);
+    int (*utime)(const char *filename, const struct utimbuf *times);
+    int (*utimes)(const char *filename, const struct timeval times[2]);
+    int (*utimensat)(int dirfd, const char *pathname,
+                     const struct timespec times[2], int flags);
 };
 
 #define ZCALLS_ENV_ARGS_INIT 4         /*use as type param in __query_zcalls*/

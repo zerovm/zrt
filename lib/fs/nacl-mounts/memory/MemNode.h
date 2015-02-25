@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <list>
 #include <string>
@@ -61,6 +62,8 @@ class MemData {
     uint32_t uid_;
     uint32_t gid_;
     int hardinode_; //inode the same for all hardlinks
+    struct timespec atime_;   /* time of last access */
+    struct timespec mtime_;   /* time of last modification */
     struct flock flock_;
     std::list<int> children_;
 };
@@ -190,6 +193,18 @@ class MemNode {
     void TryUnlink(){ nodedata_->want_unlink_=1; }
     int  UnlinkisTrying()const{ return nodedata_->want_unlink_; }
     void UnlinkOkResetFlag(){ nodedata_->want_unlink_ = 0; }
+
+    void set_utime(struct timespec *atime, struct timespec *mtime){
+        nodedata_->atime_ = *atime;
+        nodedata_->mtime_ = *mtime;
+    }
+    void set_utime_to_current(){
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        struct timespec ts;
+        TIMEVAL_TO_TIMESPEC(&tv, &ts);
+        set_utime(&ts, &ts);
+    }
 
  private:
     int slot_;

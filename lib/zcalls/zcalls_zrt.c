@@ -33,6 +33,7 @@
 #include <stdlib.h> //atoi
 #include <stddef.h> //size_t
 #include <stdarg.h>
+#include <utime.h>
 #include <unistd.h> //STDIN_FILENO
 #include <fcntl.h> //file flags, O_ACCMODE
 #include <errno.h>
@@ -138,7 +139,9 @@ void set_home_dir(const char *home)
 void zrt_zcall_enhanced_exit(int status){
     ZRT_LOG(L_SHORT, "status %d exiting...", status);
     get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
+#ifdef FUSEGLUE_EXT
     terminate_fuse_mounts();
+#endif /*FUSEGLUE_EXT*/
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
     return; 
@@ -428,6 +431,32 @@ int zrt_zcall_select(int nfds, fd_set *readfds,
     return ret;
 }
 
+int zrt_zcall_utime(const char *filename, const struct utimbuf *times){
+    int ret;
+    LOG_SYSCALL_START("filename=%s", filename );
+    if (times!=NULL){
+        LOG_DEBUG(ELogTime, ctime(&times->actime), "utime actime" );
+        LOG_DEBUG(ELogTime, ctime(&times->modtime), "utime modtime" );
+    }
+    errno = 0;
+    ret = s_transparent_mount->utime(s_transparent_mount, filename, times);
+
+    LOG_SHORT_SYSCALL_FINISH( ret, P_TEXT, "");
+    return ret;
+}
+
+int zrt_zcall_utimes(const char *filename, const struct timeval times[2]){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+int zrt_zcall_utimensat(int dirfd, const char *pathname,
+                        const struct timespec times[2], int flags){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+
 /***********************************************************
  *ZRT initializators
  ***********************************************************/
@@ -563,10 +592,12 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
 #endif //__NO_MEMORY_FS
     /*Mount filesystems*/
     s_system_mounts_manager->mount_add( get_system_mounts_manager(),
-                                        "/dev", s_channels_mount );
+                                        "/dev", s_channels_mount, 
+                                        EAbsolutePathExpected );
 #ifndef __NO_MEMORY_FS
     s_system_mounts_manager->mount_add( get_system_mounts_manager(),
-                                        "/", s_mem_mount );
+                                        "/", s_mem_mount,
+                                        EAbsolutePathNotExpected);
 
     /*explicitly create /dev directory in memmount, it's required for consistent
       FS structure, readdir from now can list /dev dir recursively from root */

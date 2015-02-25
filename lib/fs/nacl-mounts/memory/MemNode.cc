@@ -79,9 +79,10 @@ int MemNode::stat(struct stat *buf) {
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
+
     /* files are not allowed to have real date/time */
-    buf->st_atime = tv.tv_sec;      /* time of the last access */
-    buf->st_mtime = tv.tv_sec;      /* time of the last modification */
+    buf->st_atime = nodedata_->atime_.tv_sec;      /* time of the last access */
+    buf->st_mtime = nodedata_->mtime_.tv_sec;      /* time of the last modification */
     buf->st_ctime = tv.tv_sec;      /* time of the last status change */
 
     ZRT_LOG(L_EXTRA, "stat st_atime=%lld", buf->st_atime);

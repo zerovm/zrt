@@ -1235,6 +1235,13 @@ static int channels_fchown(struct MountsPublicInterface* this,int f, uid_t u, gi
     return -1;
 }
 
+static int channels_utime(struct MountsPublicInterface *this,
+                          const char *filename, const struct utimbuf *times){
+    SET_ERRNO( ENOSYS );
+    return -1;
+}
+
+
 struct MountSpecificPublicInterface* channels_implem(struct MountsPublicInterface* this_){
     struct ChannelMounts *this = (struct ChannelMounts *)this_;
     return this->mount_specific_interface;
@@ -1274,7 +1281,7 @@ static struct MountsPublicInterface KChannels_mount = {
     channels_dup,
     channels_dup2,
     channels_link,
-    EChannelsMountId,
+    channels_utime,
     channels_implem  /*mount_specific_interface*/
 };
 
