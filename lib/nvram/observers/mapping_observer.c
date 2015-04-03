@@ -89,10 +89,10 @@ struct MNvramObserver* get_mapping_observer(){
     /*add keys and check returned key indexes that are the same as expected*/
     int key_index;
     /*check parameters*/
-    key_index = self->keys.add_key(&self->keys, MAPPING_PARAM_CHANNEL_KEY);
+    key_index = self->keys.add_key(&self->keys, MAPPING_PARAM_CHANNEL_KEY, NULL);
     assert(MAPPING_PARAM_CHANNEL_KEY_INDEX==key_index);
     /*check parameters*/
-    key_index = self->keys.add_key(&self->keys, MAPPING_PARAM_TYPE_KEY);
+    key_index = self->keys.add_key(&self->keys, MAPPING_PARAM_TYPE_KEY, NULL);
     assert(MAPPING_PARAM_TYPE_KEY_INDEX==key_index);
 
     /*setup functions*/

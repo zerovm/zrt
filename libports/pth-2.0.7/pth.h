@@ -189,6 +189,8 @@ struct pth_event_st;
 #define PTH_EVENT_COND               _BIT(7)
 #define PTH_EVENT_TID                _BIT(8)
 #define PTH_EVENT_FUNC               _BIT(9)
+#define PTH_EVENT_SEM                _BIT(10)
+#define PTH_EVENT_RTIME              (PTH_EVENT_TIME | PTH_TIME_REL)
 
     /* event occurange restrictions */
 #define PTH_UNTIL_OCCURRED           _BIT(11)
@@ -199,6 +201,9 @@ struct pth_event_st;
 #define PTH_UNTIL_TID_READY          _BIT(16)
 #define PTH_UNTIL_TID_WAITING        _BIT(17)
 #define PTH_UNTIL_TID_DEAD           _BIT(18)
+#define PTH_UNTIL_DECREMENT          _BIT(19)
+#define PTH_UNTIL_COUNT  	     _BIT(23)
+#define PTH_TIME_REL  	    	     _BIT(24)
 
     /* event structure handling modes */
 #define PTH_MODE_REUSE               _BIT(20)
@@ -266,6 +271,10 @@ enum { PTH_RWLOCK_RD, PTH_RWLOCK_RW };
 #define PTH_COND_HANDLED             _BIT(3)
 #define PTH_COND_INIT                { PTH_COND_INITIALIZED, 0 }
 
+   /* semaphore variable values */
+#define PTH_SEM_INITIALIZED          _BIT(0)
+#define PTH_SEM_INIT                 { PTH_SEM_INITIALIZED, 0 }
+
    /* barrier variable values */
 #define PTH_BARRIER_INITIALIZED      _BIT(0)
 #define PTH_BARRIER_INIT(threshold)  { PTH_BARRIER_INITIALIZED, \
@@ -311,6 +320,13 @@ typedef struct pth_cond_st pth_cond_t;
 struct pth_cond_st { /* not hidden to avoid destructor */
     unsigned long cn_state;
     unsigned int  cn_waiters;
+};
+
+    /* the semaphore variable structure */
+typedef struct pth_sem_st pth_sem_t;
+struct pth_sem_st { /* not hidden to avoid destructor */
+    unsigned long sem_state;
+    unsigned int  sem_count;
 };
 
     /* the barrier variable structure */
@@ -452,6 +468,7 @@ extern void           pth_exit(void *);
 extern int            pth_fdmode(int, int);
 extern pth_time_t     pth_time(long, long);
 extern pth_time_t     pth_timeout(long, long);
+extern void           pth_int_time(struct timespec *);
 
     /* cancellation functions */
 extern void           pth_cancel_state(int, int *);
@@ -503,6 +520,13 @@ extern int            pth_cond_await(pth_cond_t *, pth_mutex_t *, pth_event_t);
 extern int            pth_cond_notify(pth_cond_t *, int);
 extern int            pth_barrier_init(pth_barrier_t *, int);
 extern int            pth_barrier_reach(pth_barrier_t *);
+extern int            pth_sem_init(pth_sem_t *);
+extern int            pth_sem_dec(pth_sem_t *);
+extern int            pth_sem_dec_value(pth_sem_t *, unsigned);
+extern int            pth_sem_inc(pth_sem_t *, int);
+extern int            pth_sem_inc_value(pth_sem_t *, unsigned int, int);
+extern int            pth_sem_set_value(pth_sem_t *, unsigned int);
+extern int            pth_sem_get_value(pth_sem_t *, unsigned int*);
 
     /* user-space context functions */
 extern int            pth_uctx_create(pth_uctx_t *);

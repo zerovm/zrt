@@ -77,6 +77,9 @@ LDFLAGS+= -lm
 LDFLAGS+= -lcrypt
 #networking mapreduce
 LDFLAGS+= -lmapreduce -lnetworking
+ifdef FUSEGLUE_EXT
+LDFLAGS+=-larchive -lz -lbz2 -larchivemount -lunionfs -lfuse
+endif
 
 #uncomment below one if want to display removed files list during clean
 #VERBOSE_CLEAN=-v

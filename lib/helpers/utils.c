@@ -104,11 +104,12 @@ uint strtouint_nolocale(const char* str, int base, int *err ){
 int test_strtouint_nolocale(){
     int err=0;
     uint res;
+    const uint big_uint = 4294967295LL;
     res = strtouint_nolocale("0", 10, &err );
     if ( res!=0 || err!=0 ) return -1;
 
     res = strtouint_nolocale("4294967295", 10, &err );
-    if ( res!=4294967295 || err!=0 ) return -1;
+    if ( res!=big_uint || err!=0 ) return -1;
 
     res = strtouint_nolocale("4294967297", 10, &err );
     if ( res!=0 || err==0 ) return -1;

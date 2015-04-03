@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <utime.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -43,25 +44,13 @@
 static struct MountsManager* s_mounts_manager;
 
 #define CONVERT_PATH_TO_MOUNT(full_path)			\
-    s_mounts_manager->convert_path_to_mount( full_path )
-
-#define TRY_LAZY_MOUNT_VERIFY_ABSOLUTE_PATH(path, absolute_path_p, temp_path) \
-    /*if provided path is relative then do heavy call zrealpath to*/	\
-    /*prepare path for lazy_mount */					\
-    if ( check_path_is_relative(path) )					\
-    *(absolute_path_p) = zrealpath(path, temp_path);			\
-    if ( *(absolute_path_p) != NULL ) lazy_mount(*(absolute_path_p));	\
-    else if ( lazy_mount(path) == 0 ){					\
-	/*lazymount successfull now absolute_path should be exist*/	\
-	if ( (*(absolute_path_p) = zrealpath(path, temp_path)) == NULL ) \
-	    return -1;							\
-    }else if ( *(absolute_path_p) == NULL){				\
-	return -1;							\
-    }
+    s_mounts_manager->convert_path_to_mount( s_mounts_manager, full_path )
 
 /*Try to mount postponed mount, in case if sub path matched.
   @return 0 if success, -1 if we don't need to mount*/
 static int lazy_mount(const char* path){
+    /*lazy mount is not supported under modern file system*/
+#ifndef FUSEGLUE_EXT
     /*if it's time to do mount, then do all waiting mounts*/
     struct FstabObserver* observer = get_fstab_observer();
     struct FstabRecordContainer* record;
@@ -70,6 +59,7 @@ static int lazy_mount(const char* path){
 	observer->mount_import(observer, record);
 	return 0;
     }
+#endif //FUSEGLUE_EXT
     return -1;
 }
 
@@ -77,13 +67,8 @@ static int lazy_mount(const char* path){
 /*normalize path and if path related to removable channel then do lazy_mount*/
 const char *try_lazy_mount_verify_absolute_path(const char *path, char *temp_path_max)
 {
-    const char* abs_path = path;
-    /*if provided path is relative then do heavy call zrealpath to
-      prepare path for lazy_mount */
-    if ( is_relative_path(path) != 0 ){
-	if ( (abs_path=zrealpath(path, temp_path_max)) == NULL )
-	    return NULL;
-    }
+    const char *abs_path = ensure_path_is_absolute(path, temp_path_max);
+    if (abs_path==NULL) return NULL;
     lazy_mount(abs_path);
     return abs_path;
 }
@@ -116,7 +101,7 @@ static int transparent_chown(struct MountsPublicInterface *this,
 							    alloca(PATH_MAX))) == NULL ){
 	return -1;
     }
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,absolute_path); 
     if ( mount )
 	return mount->chown( mount, CONVERT_PATH_TO_MOUNT(absolute_path), owner, group);
     else{
@@ -132,7 +117,7 @@ static int transparent_chmod(struct MountsPublicInterface *this,
 							    alloca(PATH_MAX))) == NULL ){
 	return -1;
     }
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,absolute_path); 
     if ( mount )
 	return mount->chmod( mount, CONVERT_PATH_TO_MOUNT(absolute_path), mode);
     else{
@@ -156,7 +141,7 @@ static int transparent_stat(struct MountsPublicInterface *this,
 							    alloca(PATH_MAX))) == NULL ){
 	return -1;
     }
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,absolute_path); 
     if ( mount )
 	return mount->stat( mount, CONVERT_PATH_TO_MOUNT(absolute_path), buf);
     else{
@@ -172,7 +157,7 @@ static int transparent_mkdir(struct MountsPublicInterface *this,
 							    alloca(PATH_MAX))) == NULL ){
 	return -1;
     }
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,absolute_path); 
     if ( mount )
 	return mount->mkdir( mount, CONVERT_PATH_TO_MOUNT(absolute_path), mode);
     else{
@@ -188,7 +173,7 @@ static int transparent_rmdir(struct MountsPublicInterface *this,
 							    alloca(PATH_MAX))) == NULL ){
 	return -1;
     }
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,absolute_path); 
     if ( mount )
 	return mount->rmdir( mount, CONVERT_PATH_TO_MOUNT(absolute_path) );
     else{
@@ -200,7 +185,7 @@ static int transparent_rmdir(struct MountsPublicInterface *this,
 static ssize_t __NON_INSTRUMENT_FUNCTION__
 transparent_read(struct MountsPublicInterface *this,
 				int fd, void *buf, size_t nbyte){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->read( mount, fd, buf, nbyte);
     else{
@@ -212,7 +197,7 @@ transparent_read(struct MountsPublicInterface *this,
 static ssize_t __NON_INSTRUMENT_FUNCTION__
 transparent_write(struct MountsPublicInterface *this,
 				 int fd, const void *buf, size_t nbyte){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->write( mount, fd, buf, nbyte);
     else{
@@ -224,7 +209,7 @@ transparent_write(struct MountsPublicInterface *this,
 static ssize_t __NON_INSTRUMENT_FUNCTION__
 transparent_pread(struct MountsPublicInterface *this,
 				int fd, void *buf, size_t nbyte, off_t offset){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->pread( mount, fd, buf, nbyte, offset);
     else{
@@ -236,7 +221,7 @@ transparent_pread(struct MountsPublicInterface *this,
 static ssize_t __NON_INSTRUMENT_FUNCTION__
 transparent_pwrite(struct MountsPublicInterface *this,
 				  int fd, const void *buf, size_t nbyte, off_t offset){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->pwrite( mount, fd, buf, nbyte, offset);
     else{
@@ -247,7 +232,7 @@ transparent_pwrite(struct MountsPublicInterface *this,
 
 static int transparent_fchown(struct MountsPublicInterface *this,
 			      int fd, uid_t owner, gid_t group){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->fchown( mount, fd, owner, group);
     else{
@@ -258,7 +243,7 @@ static int transparent_fchown(struct MountsPublicInterface *this,
 
 static int transparent_fchmod(struct MountsPublicInterface *this,
 			      int fd, mode_t mode){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->fchmod( mount, fd, mode);
     else{
@@ -269,7 +254,7 @@ static int transparent_fchmod(struct MountsPublicInterface *this,
 
 static int transparent_fstat(struct MountsPublicInterface *this,
 			     int fd, struct stat *buf){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount ){
         return mount->fstat( mount, fd, buf);
     }
@@ -281,7 +266,7 @@ static int transparent_fstat(struct MountsPublicInterface *this,
 
 static int transparent_getdents(struct MountsPublicInterface *this,
 				int fd, void *buf, unsigned int count){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->getdents( mount, fd, buf, count);
     else{
@@ -291,7 +276,7 @@ static int transparent_getdents(struct MountsPublicInterface *this,
 }
 
 static int transparent_fsync(struct MountsPublicInterface *this, int fd){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->fsync(mount, fd);
     else{
@@ -301,7 +286,7 @@ static int transparent_fsync(struct MountsPublicInterface *this, int fd){
 }
 
 static int transparent_close(struct MountsPublicInterface *this, int fd){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->close(mount, fd);
     else{
@@ -312,7 +297,7 @@ static int transparent_close(struct MountsPublicInterface *this, int fd){
 
 static off_t transparent_lseek(struct MountsPublicInterface *this,
 			       int fd, off_t offset, int whence){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount ){
         struct stat st;
         int ret = mount->fstat(mount, fd, &st );
@@ -336,7 +321,7 @@ static int transparent_open(struct MountsPublicInterface *this,
 							    alloca(PATH_MAX))) == NULL ){
 	return -1;
     }
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(absolute_path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,absolute_path); 
     if ( mount )
 	return mount->open( mount, CONVERT_PATH_TO_MOUNT(absolute_path), oflag, mode );
     else{
@@ -351,7 +336,7 @@ static int transparent_open(struct MountsPublicInterface *this,
 static int transparent_fcntl(struct MountsPublicInterface *this,
 			     int fd, int cmd, ...){
     int ret=0;
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount ){
 	va_list args;
 	/*operating with file locks*/
@@ -395,7 +380,7 @@ static int transparent_fcntl(struct MountsPublicInterface *this,
 
 static int transparent_remove(struct MountsPublicInterface *this,
 			      const char* path){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,path); 
     if ( mount )
 	return mount->remove( mount, CONVERT_PATH_TO_MOUNT(path) );
     else{
@@ -406,7 +391,7 @@ static int transparent_remove(struct MountsPublicInterface *this,
 
 static int transparent_unlink(struct MountsPublicInterface *this,
 			      const char* path){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,path); 
     if ( mount )
 	return mount->unlink( mount, CONVERT_PATH_TO_MOUNT(path) );
     else{
@@ -417,7 +402,7 @@ static int transparent_unlink(struct MountsPublicInterface *this,
 
 static int transparent_rename(struct MountsPublicInterface *this,
 			      const char* oldpath, const char* newpath){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(oldpath); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,oldpath); 
     if ( mount )
 	return mount->rename( mount, CONVERT_PATH_TO_MOUNT(oldpath), CONVERT_PATH_TO_MOUNT(newpath) );
     else{
@@ -429,7 +414,7 @@ static int transparent_rename(struct MountsPublicInterface *this,
 
 static int transparent_access(struct MountsPublicInterface *this,
 			      const char* path, int amode){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,path); 
     if ( mount )
 	return mount->access( mount, CONVERT_PATH_TO_MOUNT(path), amode );
     else{
@@ -440,7 +425,7 @@ static int transparent_access(struct MountsPublicInterface *this,
 
 static int transparent_ftruncate_size(struct MountsPublicInterface *this,
 				      int fd, off_t length){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
 	return mount->ftruncate_size( mount, fd, length );
     else{
@@ -451,7 +436,7 @@ static int transparent_ftruncate_size(struct MountsPublicInterface *this,
 
 static int transparent_truncate_size(struct MountsPublicInterface *this,
 				     const char* path, off_t length){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(path); 
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager,path); 
     if ( mount )
 	return mount->truncate_size( mount, CONVERT_PATH_TO_MOUNT(path), length );
     else{
@@ -462,7 +447,7 @@ static int transparent_truncate_size(struct MountsPublicInterface *this,
 
 
 static int transparent_isatty(struct MountsPublicInterface *this, int fd){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(fd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,fd);
     if ( mount )
         return mount->isatty(mount, fd);
     else{
@@ -472,7 +457,7 @@ static int transparent_isatty(struct MountsPublicInterface *this, int fd){
 }
 
 static int transparent_dup(struct MountsPublicInterface *this, int oldfd){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(oldfd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,oldfd);
     if ( mount ){
 	const struct HandleItem* hentry;
 	errno = 0;
@@ -506,7 +491,7 @@ static int transparent_dup(struct MountsPublicInterface *this, int oldfd){
 }
 
 static int transparent_dup2(struct MountsPublicInterface *this, int oldfd, int newfd){
-    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(oldfd);
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_byhandle(s_mounts_manager,oldfd);
     if ( mount ){
 	const struct HandleItem* hentry;
 	errno = 0;
@@ -519,7 +504,7 @@ static int transparent_dup2(struct MountsPublicInterface *this, int oldfd, int n
 	if ( oldfd == newfd ) return newfd; /*does nothing*/
 	    
 	/*close newfd if it's opened in any fs*/
-	struct MountsPublicInterface* mount2 = s_mounts_manager->mount_byhandle(newfd);
+	struct MountsPublicInterface* mount2 = s_mounts_manager->mount_byhandle(s_mounts_manager,newfd);
 	if (mount2){
 	    if ( get_handle_allocator()->check_handle_is_related_to_filesystem(newfd, mount2) == 0 ){
 		mount2->close(mount2, newfd);
@@ -559,8 +544,8 @@ static int transparent_link(struct MountsPublicInterface *this,
 							       alloca(PATH_MAX))) == NULL ){
 	return -1;
     }
-    struct MountsPublicInterface* mount1 = s_mounts_manager->mount_bypath(absolute_oldpath); 
-    struct MountsPublicInterface* mount2 = s_mounts_manager->mount_bypath(absolute_newpath); 
+    struct MountsPublicInterface* mount1 = s_mounts_manager->mount_bypath(s_mounts_manager,absolute_oldpath); 
+    struct MountsPublicInterface* mount2 = s_mounts_manager->mount_bypath(s_mounts_manager,absolute_newpath); 
     if ( mount1 == mount2 && mount1 != NULL ){
 	return mount1->link(mount1, CONVERT_PATH_TO_MOUNT(absolute_oldpath),
 			    CONVERT_PATH_TO_MOUNT(absolute_newpath) );
@@ -571,6 +556,16 @@ static int transparent_link(struct MountsPublicInterface *this,
     }
 }
 
+static int transparent_utime(struct MountsPublicInterface *this,
+                             const char *filename, const struct utimbuf *times){
+    struct MountsPublicInterface* mount = s_mounts_manager->mount_bypath(s_mounts_manager, filename); 
+    if ( mount )
+	return mount->utime( mount, CONVERT_PATH_TO_MOUNT(filename), times);
+    else{
+        SET_ERRNO(ENOENT);
+        return -1;
+    }
+}
 
 static struct MountsPublicInterface s_transparent_mount = {
         transparent_readlink,
@@ -603,7 +598,8 @@ static struct MountsPublicInterface s_transparent_mount = {
         transparent_isatty,
         transparent_dup,
         transparent_dup2,
-        transparent_link
+        transparent_link,
+        transparent_utime
 };
 
 struct MountsPublicInterface* alloc_transparent_mount( struct MountsManager* mounts_manager ){

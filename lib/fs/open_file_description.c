@@ -97,6 +97,11 @@ static int set_flags(int id_ofd, int flags ){
     return 0;
 }
 
+static int set_optional_data(int id_ofd, intptr_t data ){
+    if ( !VERIFY_OFD(id_ofd) ) return -1;
+    s_open_files_array[id_ofd].public_.optional_data = data;
+    return 0;
+}
 
 static struct OpenFilesPool s_open_files_pool = {
     getnew_ofd,
@@ -105,7 +110,8 @@ static struct OpenFilesPool s_open_files_pool = {
     entry,
     set_offset_sequential_channel,
     set_offset,
-    set_flags
+    set_flags,
+    set_optional_data
 };
 
 

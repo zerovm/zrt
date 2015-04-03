@@ -383,3 +383,84 @@ int pth_barrier_reach(pth_barrier_t *barrier)
     return rv;
 }
 
+/*
+**  Semaphore Variables
+*/
+
+int pth_sem_init(pth_sem_t *sem)
+{
+    if (sem == NULL)
+        return pth_error(FALSE, EINVAL);
+    sem->sem_state   = PTH_SEM_INITIALIZED;
+    sem->sem_count = 0;
+    return TRUE;
+}
+
+int pth_sem_dec(pth_sem_t * sem)
+{
+  return pth_sem_dec_value(sem, 1);
+}
+
+int pth_sem_dec_value(pth_sem_t * sem, unsigned int count)
+{
+    static pth_key_t ev_key = PTH_KEY_INIT;
+    pth_event_t ev;
+    /* consistency checks */
+    if (sem == NULL)
+        return pth_error(FALSE, EINVAL);
+    if (!(sem->sem_state & PTH_SEM_INITIALIZED))
+        return pth_error(FALSE, EDEADLK);
+
+    ev = pth_event(PTH_EVENT_SEM|PTH_UNTIL_DECREMENT|PTH_UNTIL_COUNT|PTH_MODE_STATIC, &ev_key, sem,count);
+    pth_wait(ev);
+    return TRUE;
+}
+
+int pth_sem_inc(pth_sem_t * sem, int yield)
+{
+  return pth_sem_inc_value(sem, 1, yield);
+}
+
+int pth_sem_inc_value(pth_sem_t * sem, unsigned int count, int yield)
+{
+    /* consistency checks */
+    if (sem == NULL)
+        return pth_error(FALSE, EINVAL);
+    if (!(sem->sem_state & PTH_SEM_INITIALIZED))
+        return pth_error(FALSE, EDEADLK);
+
+    sem->sem_count+=count;
+    if(yield)
+      pth_yield(NULL);
+    return TRUE;
+}
+
+int pth_sem_set_value(pth_sem_t * sem, unsigned int value)
+{
+    /* consistency checks */
+    if (sem == NULL)
+        return pth_error(FALSE, EINVAL);
+    if (!(sem->sem_state & PTH_SEM_INITIALIZED))
+        return pth_error(FALSE, EDEADLK);
+
+    sem->sem_count = value;
+    return TRUE;
+}
+
+int pth_sem_get_value(pth_sem_t * sem, unsigned int*value)
+{
+    /* consistency checks */
+    if (sem == NULL)
+        return pth_error(FALSE, EINVAL);
+    if (!(sem->sem_state & PTH_SEM_INITIALIZED))
+        return pth_error(FALSE, EDEADLK);
+
+    if (value == NULL)
+        return pth_error(FALSE, EINVAL);
+
+    *value = sem->sem_count;
+    return TRUE;
+}
+
+
+

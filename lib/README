@@ -4,22 +4,22 @@ ZRT - ZeroVM runtime library
 {DOCPATH}
 
 1. ZRT it is an environment for user application, simple POSIX
-Operating System that itself implements system calls handlers. ZRT is a
-part of GNU libc that using plaggable interface to access syscall
+Operating System that itself implements system call handlers. ZRT is a
+part of GNU libc that using pluggable interface to access syscall
 handlers implemented on side of ZRT environment. Direct syscalls from
 user code to host system are not allowed, untrusted code at all should
 be prevalidated by ZeroVM before execution, see ZeroVM docs.
 Untrusted code - it's an any code running under ZeroVM. Both zerovm
 environment and user code running in the same address space.
 2. ZRT API functions: zfork(), is_ptrace_allowed();
-2.1. Function zfork() is actually an extension for ZVM API. It's
-calling zvm_fork() and after it returns an execution context into a
-forked session, function returns zvm_fork's retcode value; it will
-re-read nvram config and will handle sections :
-2.1.1. [fstab] it performs mount of new records and remount of
-existing. The channels wanted to be remount must have a seekable
-type=1 or type=3 to be able to read a channel again from beginning.
-2.1.2. [env] add new environment variables and rewrite existing;
+2.1. Function zfork() is actually an extension of ZVM API. This is
+doing call of zvm_fork() and returns zvm_fork's retcode into forked
+session. As contents of /dev/nvram can be updated it causes zrt to do
+re-read /dev/nvram config and handle following sections:
+2.1.1. [fstab] mount new sources or remount existing. The channels
+wanted to be remounted must have a seekable type=1 or type=3 to be able
+to read corresponding channel again starting from beginning.
+2.1.2. [env] add new environment variables, rewrite existing;
 2.1.3. [mapping] updates channels mappings.
 2.1.4. [debug] sections also will be handled;
 2.1.5. [time] section handling only once - at session startup, and not
@@ -93,7 +93,7 @@ Keywords are valid for fstab:
   'wo' is for saving contents of filesystem into tar archive, but
   don't specify mountpoint=/, because the saving into TAR image of
   entire filesystem is not supported;
-- removable : (yes / no)
+- removable : (yes / no), optional parameter, 'no' - by default
   'no' with it do complete mount at session start, can't be remounted
   at zfork();
   'yes' means that the mounting of image must be initiated at session
@@ -187,3 +187,7 @@ types FIFO, CHR and for emulated channels;
 append only files and should be opened with flag O_APPEND;
 6.3. Error message "Only wrote xxx of 10240 bytes to
 /dev/mount/export", reproducable with zerovm-samples/tarimage.
+7. FUSE extension for zrt is available, at first build toolchain and
+then run build_zrt_fs_extensions.sh from toolchain repository. There
+are added support for some FUSE filesystems, see
+zerovm-samples/unionfs.

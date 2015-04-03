@@ -33,6 +33,7 @@
 #include <stdlib.h> //atoi
 #include <stddef.h> //size_t
 #include <stdarg.h>
+#include <utime.h>
 #include <unistd.h> //STDIN_FILENO
 #include <fcntl.h> //file flags, O_ACCMODE
 #include <errno.h>
@@ -57,7 +58,7 @@
 #include "settime_observer.h"
 #include "original_nonpth_syscalls.h"
 #include "precache_observer.h"
-#include "parse_path.h"
+#include "path_utils.h"
 #include "nvram_loader.h"
 #include "nacl_struct.h"
 #include "memory_syscall_handlers.h"
@@ -68,6 +69,7 @@
 #include "image_engine.h"
 #include "handle_allocator.h"
 #include "fstab_observer.h"
+#include "fuseglue.h"
 #include "enum_strings.h"
 #include "environment_observer.h"
 #include "debug_observer.h"
@@ -87,20 +89,23 @@ static struct ZVMChannel s_emu_channels[]
     {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/random"},
     {{CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT,CHANNEL_OPS_LIMIT, CHANNEL_SIZE_LIMIT},0,SGetSPut,"/dev/urandom"}};
 
-struct MountsPublicInterface*        s_channels_mount;
+static struct MountsPublicInterface *s_channels_mount;
 #ifndef __NO_MEMORY_FS
-struct MountsPublicInterface*        s_mem_mount;
+static struct MountsPublicInterface *s_mem_mount;
 #endif //__NO_MEMORY_FS
-static struct MountsManager*   s_mounts_manager;
-static struct MountsPublicInterface* s_transparent_mount;
-static int                     s_zrt_ready;
-static int                     s_is_user_main_executing;
+/*There are in zrt at least two mounts_manager objects, and pointer to
+  one of them is stored in static variable here*/
+static struct MountsManager         *s_system_mounts_manager;
+static struct MountsPublicInterface *s_transparent_mount;
+static int                           s_zrt_ready;
+static int                           s_is_user_main_executing;
 /****************** */
 
 
 int is_user_main_executing() { return s_is_user_main_executing; }
 
 struct MountsPublicInterface* transparent_mount() { return s_transparent_mount; }
+struct MountsManager* get_system_mounts_manager() { return s_system_mounts_manager; }
 
 /*internal functions to be used in this module*/
 void zrt_internal_session_info();
@@ -134,6 +139,9 @@ void set_home_dir(const char *home)
 void zrt_zcall_enhanced_exit(int status){
     ZRT_LOG(L_SHORT, "status %d exiting...", status);
     get_fstab_observer()->mount_export(HANDLE_ONLY_FSTAB_SECTION);
+#ifdef FUSEGLUE_EXT
+    terminate_fuse_mounts();
+#endif /*FUSEGLUE_EXT*/
     zvm_exit(status); /*get controls into zerovm*/
     /* unreachable code*/
     return; 
@@ -405,8 +413,13 @@ int  zrt_zcall_enhanced_munmap(void *addr, size_t len){
 int zrt_zcall_select(int nfds, fd_set *readfds,
 		     fd_set *writefds, fd_set *exceptfds,
 		     const struct timeval *timeout, int *count){
-    LOG_SYSCALL_START("nfds=%d, timeout.sec=%lld, timeout.usec=%lld",
-    		      nfds, (int64_t)timeout->tv_sec, (int64_t)timeout->tv_usec);
+    if (timeout!=NULL){
+        LOG_SYSCALL_START("nfds=%d, timeout.sec=%lld, timeout.usec=%lld",
+                          nfds, (int64_t)timeout->tv_sec, (int64_t)timeout->tv_usec);
+    }
+    else{
+        LOG_SYSCALL_START("nfds=%d, timeout=NULL", nfds);
+    }
     int ret=-1;
     errno = 0;
     if ( timeout != NULL ){
@@ -417,6 +430,32 @@ int zrt_zcall_select(int nfds, fd_set *readfds,
     }
     return ret;
 }
+
+int zrt_zcall_utime(const char *filename, const struct utimbuf *times){
+    int ret;
+    LOG_SYSCALL_START("filename=%s", filename );
+    if (times!=NULL){
+        LOG_DEBUG(ELogTime, ctime(&times->actime), "utime actime" );
+        LOG_DEBUG(ELogTime, ctime(&times->modtime), "utime modtime" );
+    }
+    errno = 0;
+    ret = s_transparent_mount->utime(s_transparent_mount, filename, times);
+
+    LOG_SHORT_SYSCALL_FINISH( ret, P_TEXT, "");
+    return ret;
+}
+
+int zrt_zcall_utimes(const char *filename, const struct timeval times[2]){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
+int zrt_zcall_utimensat(int dirfd, const char *pathname,
+                        const struct timespec times[2], int flags){
+    SET_ERRNO(ENOSYS);
+    return -1;
+}
+
 
 /***********************************************************
  *ZRT initializators
@@ -521,15 +560,15 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
 				  static_prolog_brk() );
 
     /*manage mounted filesystems*/
-    s_mounts_manager = get_mounts_manager();
+    s_system_mounts_manager = alloc_mounts_manager();
 
     /*alloc filesystem based on channels*/
     struct ChannelsModeUpdaterPublicInterface *nvram_mode_setting_updater;
 
     s_channels_mount = 
 	CONSTRUCT_L(CHANNELS_FILESYSTEM)( &nvram_mode_setting_updater,
-					  s_mounts_manager->handle_allocator,
-					  s_mounts_manager->open_files_pool,
+					  get_handle_allocator(),
+					  get_open_files_pool(),
 					  manifest->channels, 
 					  manifest->channels_count,
 					  s_emu_channels, 
@@ -537,7 +576,7 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
     set_mapping_channels_settings_updater( nvram_mode_setting_updater ); 
 
     /*alloc main filesystem that combines all filesystems mounts*/
-    s_transparent_mount = alloc_transparent_mount( s_mounts_manager );
+    s_transparent_mount = alloc_transparent_mount( s_system_mounts_manager );
 
     s_zrt_ready = 1;
 
@@ -548,13 +587,17 @@ void zrt_internal_init( const struct UserManifest const* manifest ){
 
     /*create mem mount*/
 #ifndef __NO_MEMORY_FS
-    s_mem_mount = CONSTRUCT_L(INMEMORY_FILESYSTEM)( s_mounts_manager->handle_allocator,
-						    s_mounts_manager->open_files_pool);
+    s_mem_mount = CONSTRUCT_L(INMEMORY_FILESYSTEM)( get_handle_allocator(),
+						    get_open_files_pool() );
 #endif //__NO_MEMORY_FS
     /*Mount filesystems*/
-    s_mounts_manager->mount_add( "/dev", s_channels_mount );
+    s_system_mounts_manager->mount_add( get_system_mounts_manager(),
+                                        "/dev", s_channels_mount, 
+                                        EAbsolutePathExpected );
 #ifndef __NO_MEMORY_FS
-    s_mounts_manager->mount_add( "/", s_mem_mount );
+    s_system_mounts_manager->mount_add( get_system_mounts_manager(),
+                                        "/", s_mem_mount,
+                                        EAbsolutePathNotExpected);
 
     /*explicitly create /dev directory in memmount, it's required for consistent
       FS structure, readdir from now can list /dev dir recursively from root */

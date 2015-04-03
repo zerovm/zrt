@@ -64,7 +64,7 @@ struct MNvramObserver* get_debug_observer(){
     /*add keys and check returned key indexes that are the same as expected*/
     int key_index;
     /*check parameters*/
-    key_index = self->keys.add_key(&self->keys, DEBUG_PARAM_VERBOSITY_KEY);
+    key_index = self->keys.add_key(&self->keys, DEBUG_PARAM_VERBOSITY_KEY, NULL);
     assert(DEBUG_PARAM_VERBOSITY_KEY_INDEX==key_index);
 
     /*setup functions*/

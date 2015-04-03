@@ -19,39 +19,73 @@
 #define MOUNTS_MANAGER_H_
 
 #include <linux/limits.h>
+#include "dyn_array.h" /*struct DynArray*/
 
+struct fuse_operations;
 struct MountsPublicInterface;
 struct OpenFilesPool;
 
+enum { 
+    EAbsolutePathNotExpected = 0,
+    EAbsolutePathExpected
+};
+
+enum {
+    EFuseProxyModeEnabled = 0,
+    EFuseProxyModeDisabled
+};
+
 struct MountInfo{
-    char mount_path[PATH_MAX]; /*for example "/", "/dev" */
+    char *mount_path; /*for example "/", "/dev" */
+    char expect_absolute_path;
     struct MountsPublicInterface* mount;
 };
 
 
 struct MountsManager{
-    /*Add to list of mounts the new one, caller should not destroy
-      filesystem_mount upon delete; Slots count is limited by
-      EMountsCount.  
+    /*Add to dynamic list of mounts the new one, caller 
+      should not destroy filesystem_mount until exit;
+      @param expect_absolute_path 1-path will be passed  into
+      fs as is, without transformation, 0 will cut first part of path 
+      which is actually is mount path;
       *@return 0 if OK, on error it returns -1 and set errno:
       *ENOTEMPTY - no empty slots to add mount; 
       *EBUSY - mount with specified mountpoint already exist*/
-    int (*mount_add)( const char* path, struct MountsPublicInterface* filesystem_mount );
-    int (*mount_remove)( const char* path );
+    int (*mount_add)( struct MountsManager *mounts_manager, 
+                      const char* path, 
+                      struct MountsPublicInterface* filesystem_mount,
+                      char expect_absolute_path);
 
-    struct MountInfo* (*mountinfo_bypath)(const char* path);
-    struct MountsPublicInterface* (*mount_bypath)( const char* path );
-    struct MountsPublicInterface* (*mount_byhandle)( int handle );
+    /*fuse support, the same as mount_add
+      @param expect_absolute_path 1-path will be passed  into
+      fs as is, without transformation, 0 will cut first part of path 
+      which is actually is mount path;
+      @param proxy_mode Set to EFuseProxyModeEnabled if mount is implements 
+      own file system calls by using standard file system function, otherwise 
+      set to EFuseProxyModeDisabled; This is only actual for fuse.
+    */
+    int (*fusemount_add)( struct MountsManager *mounts_manager,
+                          const char* path, 
+                          struct fuse_operations* fuse_mount,
+                          char expect_absolute_path,
+                          char proxy_mode);
+    int (*mount_remove)( struct MountsManager *mounts_manager,
+                         const char* path );
 
-    const char* (*convert_path_to_mount)(const char* full_path);
+    struct MountInfo* (*mountinfo_bypath)(struct MountsManager *mounts_manager,
+                                          const char* path, int *mount_index);
+    struct MountsPublicInterface* (*mount_bypath)( struct MountsManager *mounts_manager,
+                                                   const char* path );
+    struct MountsPublicInterface* (*mount_byhandle)( struct MountsManager *mounts_manager,
+                                                     int handle );
 
-    struct HandleAllocator* handle_allocator;
-    struct OpenFilesPool* open_files_pool;
+    const char* (*convert_path_to_mount)(struct MountsManager *mounts_manager,
+                                         const char* full_path);
+    /*data*/
+    struct DynArray mount_items; /*array for struct MountInfo*/
 };
 
-
-struct MountsManager* get_mounts_manager();
-struct MountsManager* mounts_manager(); /*accessor*/
+struct MountsManager* alloc_mounts_manager();
 
 
 #endif /* MOUNTS_MANAGER_H_ */

@@ -21,11 +21,13 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <stdint.h>
 
 struct OpenFileDescription{
-    off_t channel_sequential_offset; /*sequential read, sequential write*/
-    off_t offset; /*used by read, write; also for channels random read, random write*/
-    int   flags; /*opened file's flags*/
+    off_t    channel_sequential_offset; /*sequential read, sequential write*/
+    off_t    offset; /*used by read, write; also for channels random read, random write*/
+    int      flags; /*opened file's flags*/
+    intptr_t optional_data;
 };
 
 
@@ -54,6 +56,10 @@ struct OpenFilesPool{
     /* set opened file flags
      * @return errcode, 0 ok, -1 not found*/
     int (*set_flags)(int id_ofd, int flags );
+
+    /* set opened file optional data
+     * @return errcode, 0 ok, -1 not found*/
+    int (*set_optional_data)(int id_ofd, intptr_t data );
 };
 
 

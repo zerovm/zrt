@@ -65,7 +65,7 @@ struct MNvramObserver* get_precache_observer(){
     /*add keys and check returned key indexes that are the same as expected*/
     int key_index;
     /*check parameters*/
-    key_index = self->keys.add_key(&self->keys, PRECACHE_PARAM_PRECACHE_KEY);
+    key_index = self->keys.add_key(&self->keys, PRECACHE_PARAM_PRECACHE_KEY, NULL);
     assert(PRECACHE_PARAM_PRECACHE_KEY_INDEX==key_index);
 
     /*setup functions*/

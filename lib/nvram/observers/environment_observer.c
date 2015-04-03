@@ -129,9 +129,9 @@ struct MNvramObserver* get_env_observer(){
     /*add keys and check returned key indexes that are the same as expected*/
     int key_index;
     /*check parameters*/
-    key_index = self->keys.add_key(&self->keys, ENVIRONMENT_PARAM_NAME_KEY);
+    key_index = self->keys.add_key(&self->keys, ENVIRONMENT_PARAM_NAME_KEY, NULL);
     assert(ENV_PARAM_NAME_KEY_INDEX==key_index);
-    key_index = self->keys.add_key(&self->keys, ENVIRONMENT_PARAM_VALUE_KEY);
+    key_index = self->keys.add_key(&self->keys, ENVIRONMENT_PARAM_VALUE_KEY, NULL);
     assert(ENV_PARAM_VALUE_KEY_INDEX==key_index);
 
     /*setup functions*/

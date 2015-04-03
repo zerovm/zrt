@@ -29,7 +29,7 @@
 #include "conf_parser.h"
 #include "conf_keys.h"
 
-//#define PARSER_DEBUG_LOG
+#define PARSER_DEBUG_LOG
 
 #define IS_IT_CHAR_TO_STRIP(chr) strchr(STRIPING_CHARS, chr)
 
@@ -117,6 +117,51 @@ get_parsed_record(struct ParsedRecord* record,
 	}
     }
     return record;
+}
+
+static void handle_parsed_params(struct ParsedRecords* records,
+                                 const struct KeyList *key_list, 
+                                 struct internal_parse_data *temp_keys_parsed_array,
+                                 int *parsed_params_count)
+{
+    /*record must have at least one param*/
+    if (*parsed_params_count > 0){
+        int i;
+        for (i=0; i < key_list->count; i++){
+            /*if detected an optional record is absent then assign default value internally*/
+            if ( key_list->optional_default_values[i] != NULL && 
+                 (temp_keys_parsed_array[i].key == NULL || temp_keys_parsed_array[i].val == NULL) ){
+                temp_keys_parsed_array[i].key = (char*)key_list->keys[i];
+                temp_keys_parsed_array[i].keylen = strlen(key_list->keys[i]);
+                temp_keys_parsed_array[i].val = (char*)key_list->optional_default_values[i];
+                temp_keys_parsed_array[i].vallen = strlen(key_list->optional_default_values[i]);
+                (*parsed_params_count)++;
+            }
+        }
+
+        /*If parsed an expected count of record's parameters*/
+        if ( key_list->count == *parsed_params_count ){
+#ifdef PARSER_DEBUG_LOG
+            ZRT_LOG(L_INFO, "key_list->count =%d", *parsed_params_count);
+#endif
+            /*parsed params count is enough to save it as single record.
+             *add it to parsed records array*/
+            struct ParsedRecord record;
+            if ( get_parsed_record(&record,
+                                   key_list, temp_keys_parsed_array, *parsed_params_count) ){
+                /*record parsed OK*/
+#ifdef PARSER_DEBUG_LOG
+                ZRT_LOG(L_INFO, "save record #%d OK", records->count);
+#endif
+                records->records[records->count++] = record;
+            }
+        }
+    }
+    /* current record handled, reset params count anyway
+     * to be able parse new record*/
+    *parsed_params_count=0;
+    memset(temp_keys_parsed_array, '\0', 
+           sizeof(struct internal_parse_data)*NVRAM_MAX_KEYS_COUNT_IN_RECORD );
 }
 
 
@@ -276,35 +321,11 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
 		    ZRT_LOG(L_ERROR, P_TEXT, "last token parsing error");
 #endif
 		}
-
-		    
-		/*If get waiting count of record parameters*/
-		if ( key_list->count == parsed_params_count ){
-#ifdef PARSER_DEBUG_LOG
-		    ZRT_LOG(L_INFO, "key_list->count =%d", parsed_params_count);
-#endif
-		    /*parsed params count is enough to save it as single record.
-		     *add it to parsed records array*/
-		    struct ParsedRecord record;
-		    if ( get_parsed_record(&record,
-					   key_list, temp_keys_parsed, parsed_params_count) ){
-			/*record parsed OK*/
-#ifdef PARSER_DEBUG_LOG
-			ZRT_LOG(L_INFO, "save record #%d OK", records->count);
-#endif
-			records->records[records->count++] = record;
-		    }
-		    /* current record parsed, reset params count 
-		     * to be able parse new record*/
-		    parsed_params_count=0;
-		    memset(&temp_keys_parsed, '\0', sizeof(temp_keys_parsed) );
-                }
             }
 	    if ( new_record_flag ){
+                handle_parsed_params(records, key_list, 
+                                     temp_keys_parsed, &parsed_params_count);
 		new_record_flag=0;
-		/*free previosly parsed results, new record start*/
-		parsed_params_count=0;
-		memset(&temp_keys_parsed, '\0', sizeof(temp_keys_parsed) );
 	    }
 	    /*restore processing state*/
 	    st = st_new;
@@ -321,6 +342,8 @@ struct ParsedRecords* get_parsed_records(struct ParsedRecords* records,
         }
 
     }while( cursor < len );
+    handle_parsed_params(records, key_list, 
+                         temp_keys_parsed, &parsed_params_count);
 #ifdef PARSER_DEBUG_LOG
     ZRT_LOG(L_INFO, P_TEXT, "Section parsed");
 #endif

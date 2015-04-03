@@ -160,6 +160,11 @@ int zrt_zcall_select(int nfds, fd_set *readfds,
 		     fd_set *writefds, fd_set *exceptfds,
 		     const struct timeval *timeout,
 		     int *count);
+int zrt_zcall_utime(const char *filename, const struct utimbuf *times);
+int zrt_zcall_utimes(const char *filename, const struct timeval times[2]);
+int zrt_zcall_utimensat(int dirfd, const char *pathname,
+                        const struct timespec times[2], int flags);
+
 
 #endif //__ZCALLS_H__
 

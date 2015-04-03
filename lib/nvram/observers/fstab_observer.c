@@ -29,22 +29,26 @@
 #include "unpack_tar.h" //tar unpacker
 #include "mounts_reader.h"
 #include "fstab_observer.h"
+#include "fuseglue.h"
 #include "nvram.h"
 #include "image_engine.h"
 #include "conf_parser.h"
 #include "conf_keys.h"
+#include "args_observer.h" /*prepare fusefs two-dimensional array with arguments*/
 
 
 #define FSTAB_PARAM_CHANNEL_KEY_INDEX    0
 #define FSTAB_PARAM_MOUNTPOINT_KEY_INDEX 1
 #define FSTAB_PARAM_ACCESS_KEY_INDEX     2
 #define FSTAB_PARAM_REMOVABLE_KEY_INDEX  3
+#define FSTAB_PARAM_FSNAME_KEY_INDEX     4
 
-#define GET_FSTAB_PARAMS(record, alias_p, mountpath_p, access_p, removable_p) \
+#define GET_FSTAB_PARAMS(record, alias_p, mountpath_p, access_p, removable_p, fsname_p) \
     GET_PARAM_VALUE(record, FSTAB_PARAM_CHANNEL_KEY_INDEX,    alias_p); \
     GET_PARAM_VALUE(record, FSTAB_PARAM_MOUNTPOINT_KEY_INDEX, mountpath_p); \
     GET_PARAM_VALUE(record, FSTAB_PARAM_ACCESS_KEY_INDEX,     access_p); \
-    GET_PARAM_VALUE(record, FSTAB_PARAM_REMOVABLE_KEY_INDEX,  removable_p);
+    GET_PARAM_VALUE(record, FSTAB_PARAM_REMOVABLE_KEY_INDEX,  removable_p); \
+    GET_PARAM_VALUE(record, FSTAB_PARAM_FSNAME_KEY_INDEX,     fsname_p);
 
 /*save directory contents into tar archive
  *Function taken from libports/tar-1.11.8 */
@@ -64,7 +68,8 @@ int handle_is_valid_record(struct MNvramObserver* observer, struct ParsedRecord*
     char* mount_path = NULL;
     char* access = NULL;
     char* removable = NULL;
-    GET_FSTAB_PARAMS(record, &channel_alias, &mount_path, &access, &removable);
+    char* fsname = NULL;
+    GET_FSTAB_PARAMS(record, &channel_alias, &mount_path, &access, &removable, &fsname);
 
     if ( ( !strcmp(access, FSTAB_VAL_ACCESS_WRITE) || !strcmp(access, FSTAB_VAL_ACCESS_READ) ) &&
 	 ( !strcmp(removable, FSTAB_VAL_REMOVABLE_YES) || !strcmp(removable, FSTAB_VAL_REMOVABLE_NO) ))
@@ -88,7 +93,7 @@ void handle_fstab_record(struct MNvramObserver* observer,
     }
 
     /*extend array & add record to mounts array
-     no checks for duplicated items doing*/
+      no checks for duplicated items doing*/
     ++fobserver->postpone_mounts_count;
     fobserver->postpone_mounts_array 
 	= realloc(fobserver->postpone_mounts_array, 
@@ -99,21 +104,75 @@ void handle_fstab_record(struct MNvramObserver* observer,
     record_container->mount_status = EFstabMountWaiting;
     copy_record(record, &record_container->mount);
 
-    /*For first fstab handling (s_updated_fstab_records=0) after
-      checks try mount channel with keys access=ro, removable=no*/
-    if ( !s_updated_fstab_records  ){
-	fobserver->mount_import(fobserver, record_container);
-    }
-    
     /*get all params*/
     char* channel_alias = NULL;
     char* mount_path = NULL;
     char* access = NULL;
     char* removable = NULL;
-    GET_FSTAB_PARAMS(record, &channel_alias, &mount_path, &access, &removable);
+    char* fsname = NULL;
+    GET_FSTAB_PARAMS(record, &channel_alias, &mount_path, &access, &removable, &fsname);
 
-    ZRT_LOG(L_SHORT, "fstab record channel=%s, mount_path=%s, access=%s, removable=%s",
-	    channel_alias, mount_path, access, removable);
+    int write=0;     
+    if ( !strcmp(access, FSTAB_VAL_ACCESS_WRITE) )  write =1;
+
+    /*if archivemount is available and want mount tar in read-only mode*/
+    if ( !strcasecmp( fsname, "tar") && !strcmp(access, FSTAB_VAL_ACCESS_READ) ){
+#ifdef FUSEGLUE_EXT
+        int    expect_absolute_path;
+        char   proxy_mode;
+        int    archivemount_argc;
+        char **archivemount_argv;
+        fs_main archivemount_entrypoint =
+            fusefs_entrypoint_get_args_by_fsname("archivemount", write, 
+                                                 channel_alias, mount_path,
+                                                 &expect_absolute_path, &proxy_mode,
+                                                 &archivemount_argc, &archivemount_argv);
+        /*If archivemount is available then use it for tar mounting*/
+        if ( archivemount_entrypoint ){
+            /*mount fusefs*/
+            int mount_res = exec_fuse_main(mount_path, expect_absolute_path, proxy_mode,
+                                           archivemount_entrypoint,
+                                           archivemount_argc, archivemount_argv);
+            if (mount_res!=0){
+                ZRT_LOG(L_ERROR, "exec_fuse_main err=%d", mount_res);
+            }
+        }
+        else
+#endif /*FUSEGLUE_EXT*/
+        /*If no archimemount available and for compatibility use old approach.
+          For first fstab handling (s_updated_fstab_records=0) after
+          checks try mount channel with keys access=ro, removable=no*/
+            if ( !s_updated_fstab_records  ){
+                fobserver->mount_import(fobserver, record_container);
+        }
+    }
+#ifdef FUSEGLUE_EXT
+    /*Mount all another file systems*/
+    else{
+        int    fs_expect_absolute_path;
+        int    fs_proxy_mode;
+        int    fs_argc=0;
+        char **fs_argv;
+        fs_main fs_entrypoint =
+            fusefs_entrypoint_get_args_by_fsname(fsname, write, 
+                                                 channel_alias, mount_path,
+                                                 &fs_expect_absolute_path, &fs_proxy_mode,
+                                                 &fs_argc, &fs_argv);
+
+        /*If fuse extensions are available and trying mount tar archive then use archivemount*/
+        if (   fs_entrypoint != NULL ){
+            /*mount fusefs*/
+            int mount_res = exec_fuse_main(mount_path, fs_expect_absolute_path, fs_proxy_mode,
+                                           fs_entrypoint, fs_argc, fs_argv);
+            if (mount_res!=0){
+                ZRT_LOG(L_ERROR, "exec_fuse_main err=%d", mount_res);
+            }
+        }
+    }
+#endif /*FUSEGLUE_EXT*/
+
+    ZRT_LOG(L_SHORT, "fstab record channel=%s, mount_path=%s, access=%s, removable=%s, fsname=%s",
+	    channel_alias, mount_path, access, removable, fsname);
 }
 
 void handle_mount_export(struct FstabObserver* observer){
@@ -127,7 +186,8 @@ void handle_mount_export(struct FstabObserver* observer){
 	char* mount_path = NULL;
 	char* access = NULL;
 	char* removable = NULL;
-	GET_FSTAB_PARAMS(&record->mount, &channel_alias, &mount_path, &access, &removable);
+	char* fsname = NULL;
+	GET_FSTAB_PARAMS(&record->mount, &channel_alias, &mount_path, &access, &removable, &fsname);
 
 	/*save files located at mount_path into tar archive*/
 	if ( !strcmp(access, FSTAB_VAL_ACCESS_WRITE) ){
@@ -142,37 +202,38 @@ void handle_mount_import(struct FstabObserver* observer, struct FstabRecordConta
     assert(s_channels_mount != NULL);
     assert(s_transparent_mount != NULL);
     if ( record != NULL ){
-	/*get all params*/
-	char* channel_alias = NULL;
-	char* mount_path = NULL;
-	char* access = NULL;
-	char* removable = NULL;
-	GET_FSTAB_PARAMS(&record->mount, &channel_alias, &mount_path, &access, &removable);
-	int removable_record = !strcasecmp( removable, FSTAB_VAL_REMOVABLE_YES);
+        /*get all params*/
+        char* channel_alias = NULL;
+        char* mount_path = NULL;
+        char* access = NULL;
+        char* removable = NULL;
+        char* fsname = NULL;
+        GET_FSTAB_PARAMS(&record->mount, &channel_alias, &mount_path, &access, &removable, &fsname);
+        int removable_record = !strcasecmp( removable, FSTAB_VAL_REMOVABLE_YES);
 
-	/* In case if we need to inject files into FS.*/
-	if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) && 
-	     EFstabMountWaiting == record->mount_status &&
-	     ( removable_record || (!s_updated_fstab_records && !removable_record) ) ){
-	    /*
-	     * inject tar contents related to record into mount_path folder of filesystem;
-	     * Content of filesystem is reading from supported archive type linked to channel, 
-	     * currently TAR can be mounted, into MemMount filesystem
-	     */
-	    ZRT_LOG(L_SHORT, "mount now: channel=%s, mount_path=%s, access=%s, removable=%s",
-		    channel_alias, mount_path, access, removable);
-	    record->mount_status = EFstabMountProcessing;	    
-	    /*create mounts reader linked to tar archive that contains filesystem image,
-	      it call "read" from MountsPublicInterface and don't call "read" function from posix layer*/
-	    struct MountsReader* mounts_reader =
-		alloc_mounts_reader( s_channels_mount, channel_alias );
+        /* In case if we need to inject files into FS.*/
+        if ( !strcmp(access, FSTAB_VAL_ACCESS_READ) && 
+             EFstabMountWaiting == record->mount_status &&
+             ( removable_record || (!s_updated_fstab_records && !removable_record) ) ){
+            /*
+             * inject tar contents related to record into mount_path folder of filesystem;
+             * Content of filesystem is reading from supported archive type linked to channel, 
+             * currently TAR can be mounted, into MemMount filesystem
+             */
+            ZRT_LOG(L_SHORT, "mount now: channel=%s, mount_path=%s, access=%s, removable=%s, fsname=%s",
+                    channel_alias, mount_path, access, removable, fsname);
+            record->mount_status = EFstabMountProcessing;
+            /*create mounts reader linked to tar archive that contains filesystem image,
+              it call "read" from MountsPublicInterface and don't call "read" function from posix layer*/
+            struct MountsReader* mounts_reader =
+                alloc_mounts_reader( s_channels_mount, channel_alias );
 
-	    if ( mounts_reader ){
-		/*create image loader, passed 1st param: image alias, 2nd param: Root filesystem;
-		 * Root filesystem passed instead MemMount to reject adding of files into /dev folder;
-		 * For example if archive contains non empty /dev folder that contents will be ignored*/
-		struct ImageInterface* image_loader =
-		    alloc_image_loader( s_transparent_mount );
+            if ( mounts_reader ){
+                /*create image loader, passed 1st param: image alias, 2nd param: Root filesystem;
+                 * Root filesystem passed instead MemMount to reject adding of files into /dev folder;
+                 * For example if archive contains non empty /dev folder that contents will be ignored*/
+                struct ImageInterface* image_loader =
+                    alloc_image_loader( s_transparent_mount );
 		/*create archive unpacker*/
 		struct UnpackInterface* tar_unpacker =
 		    alloc_unpacker_tar( mounts_reader, image_loader->observer_implementation );
@@ -214,13 +275,14 @@ void handle_reset_removable(struct FstabObserver* observer){
 	    char* mount_path = NULL;
 	    char* access = NULL;
 	    char* removable = NULL;
-	    GET_FSTAB_PARAMS(&record_container->mount, &channel_alias, &mount_path, &access, &removable);
+	    char* fsname = NULL;
+	    GET_FSTAB_PARAMS(&record_container->mount, &channel_alias, &mount_path, &access, &removable, &fsname);
 	    int removable_record = !strcasecmp( removable, FSTAB_VAL_REMOVABLE_YES);
 
 	    /* In case if we need to inject files into FS.  
-	     case 1: do it always at session start (flag s_updated_fstab_records=0); 
-	     case 2: do it for records with flag removable=yes if nvram
-	     re-readed (flag s_updated_fstab_records=1)*/
+               case 1: do it always at session start (flag s_updated_fstab_records=0); 
+               case 2: do it for records with flag removable=yes if nvram
+               re-readed (flag s_updated_fstab_records=1)*/
 	    if ( !s_updated_fstab_records ||
 		 (!strcmp(access, FSTAB_VAL_ACCESS_READ) && removable_record != 0) ){
 		record_container->mount_status = EFstabMountWaiting;
@@ -263,14 +325,16 @@ struct FstabObserver* get_fstab_observer(){
     /*add keys and check returned key indexes that are the same as expected*/
     int key_index;
     /*check parameters*/
-    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_CHANNEL_KEY);
+    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_CHANNEL_KEY, NULL);
     assert(FSTAB_PARAM_CHANNEL_KEY_INDEX==key_index);
-    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_MOUNTPOINT_KEY);
+    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_MOUNTPOINT_KEY, NULL);
     assert(FSTAB_PARAM_MOUNTPOINT_KEY_INDEX==key_index);
-    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_ACCESS_KEY);
+    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_ACCESS_KEY, NULL);
     assert(FSTAB_PARAM_ACCESS_KEY_INDEX==key_index);
-    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_REMOVABLE);
+    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_REMOVABLE, FSTAB_VAL_REMOVABLE_NO);
     assert(FSTAB_PARAM_REMOVABLE_KEY_INDEX==key_index);
+    key_index = self->base.keys.add_key(&self->base.keys, FSTAB_PARAM_FSNAME_KEY, FSTAB_VAL_FSNAME_DEFAULT);
+    assert(FSTAB_PARAM_FSNAME_KEY_INDEX==key_index);
 
     /*setup functions*/
     s_fstab_observer.base.handle_nvram_record = handle_fstab_record;

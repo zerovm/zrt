@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <utime.h>
 #include <fcntl.h>
 #include <stdarg.h>
 
@@ -58,7 +59,9 @@ extern "C" {
     ((struct InMemoryMounts*)((struct MountSpecificImplem*)(mount_specific_interface_p))->mount)->open_files_pool
 
 #define MOUNT_INTERFACE_BY_MOUNT_SPECIF(mount_specific_interface_p)	\
-    ((struct MountsPublicInterface*)((struct MountSpecificImplem*)(mount_specific_interface_p))->mount)
+    (                                                                   \
+     (struct MountsPublicInterface*)(                                   \
+                                     (struct MountSpecificImplem*)(mount_specific_interface_p) )->mount)
 
 #define MEMOUNT_BY_MOUNT_SPECIF(mount_specific_interface_p)		\
     MEMOUNT_BY_MOUNT( MOUNT_INTERFACE_BY_MOUNT_SPECIF(mount_specific_interface_p) )
@@ -87,6 +90,36 @@ struct InMemoryMounts{
     MemMount*               mem_mount_cpp;
     struct MountSpecificPublicInterface* mount_specific_interface;
 };
+
+
+struct MemNode *mnode_by_handle_get_ofd_hentry(struct MountsPublicInterface *mif, 
+                                               int fd, 
+                                               const struct OpenFileDescription **ofd,
+                                               const struct HandleItem **hentry){
+    struct InMemoryMounts *mem_mount = (struct InMemoryMounts *)mif;
+    if ( mem_mount->handle_allocator
+         ->check_handle_is_related_to_filesystem(fd, &mem_mount->public_) == 0 ){
+	*hentry = mem_mount->handle_allocator->entry(fd);
+        *ofd = mem_mount->open_files_pool->entry((*hentry)->open_file_description_id);
+    	return mem_mount->mem_mount_cpp->ToMemNode((*hentry)->inode);
+    }
+    else
+        return NULL;
+}
+
+
+struct MemNode *mnode_by_handle(struct MountsPublicInterface *mif, int fd)
+{
+    struct InMemoryMounts *mem_mount = (struct InMemoryMounts *)mif;
+    if ( mem_mount->handle_allocator
+         ->check_handle_is_related_to_filesystem(fd, &mem_mount->public_) == 0 ){
+	const struct HandleItem *hentry = mem_mount->handle_allocator->entry(fd);
+    	return mem_mount->mem_mount_cpp->ToMemNode(hentry->inode);
+    }
+    else
+        return NULL;
+}
+
 
 
 static const char* name_from_path( std::string path ){
@@ -118,6 +151,10 @@ static ssize_t get_file_len( struct MountsPublicInterface* this_, ino_t node) {
     return (ssize_t) st.st_size;
 }
 
+static void utime_update(struct MemNode *node){
+    if (node != NULL)
+        node->set_utime_to_current();
+}
 
 /***********************************************************************
    implementation of MountSpecificPublicInterface as part of
@@ -131,27 +168,17 @@ struct MountSpecificImplem{
 /*return 0 if handle not valid, or 1 if handle is correct*/
 static int check_handle(struct MountSpecificPublicInterface* this_, int handle){
     return !HALLOCATOR_BY_MOUNT_SPECIF(this_)
-	 ->check_handle_is_related_to_filesystem(handle, 
-						 &((struct MountSpecificImplem*)this_)->mount->public_);
+        ->check_handle_is_related_to_filesystem(handle, 
+                                                &((struct MountSpecificImplem*)this_)->mount->public_);
 }
 
 static const char* path_handle(struct MountSpecificPublicInterface* this_, int handle){
-    if ( HALLOCATOR_BY_MOUNT_SPECIF(this_)
-	 ->check_handle_is_related_to_filesystem(handle, 
-						 &((struct MountSpecificImplem*)this_)->mount->public_) == 0 ){
-	const struct HandleItem* hentry;
-	hentry = HALLOCATOR_BY_MOUNT_SPECIF(this_)->entry(handle);
-
-	/*get runtime information related to channel*/
-	MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), hentry->inode);
-	if ( mnode ){
-	    return mnode->name().c_str();
-	}
-	else
-	    return NULL;
+    struct MemNode *mnode = mnode_by_handle(MOUNT_INTERFACE_BY_MOUNT_SPECIF(this_), handle);
+    if ( mnode ){
+        return mnode->name().c_str();
     }
     else
-	return NULL;
+        return NULL;
 }
 
 static int file_status_flags(struct MountSpecificPublicInterface* this_, int fd){
@@ -188,18 +215,9 @@ static int set_file_status_flags(struct MountSpecificPublicInterface* this_, int
 
 /*return pointer at success, NULL if fd didn't found or flock structure has not been set*/
 static const struct flock* flock_data(struct MountSpecificPublicInterface* this_, int fd ){
-    if ( HALLOCATOR_BY_MOUNT_SPECIF(this_)
-	 ->check_handle_is_related_to_filesystem(fd, 
-						 &((struct MountSpecificImplem*)this_)->mount->public_) == 0 ){
-	MemNode* mnode;	
-	const struct HandleItem* hentry;
-	hentry = HALLOCATOR_BY_MOUNT_SPECIF(this_)->entry(fd);
-
-	/*get runtime information related to channel*/
-    	mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), hentry->inode);
-	assert(mnode);
-	return mnode->flock();
-    }
+    struct MemNode *mnode = mnode_by_handle(MOUNT_INTERFACE_BY_MOUNT_SPECIF(this_), fd);
+    if (mnode!=NULL) 
+        return mnode->flock();
     else{
 	SET_ERRNO(EBADF);
 	return NULL;
@@ -208,22 +226,15 @@ static const struct flock* flock_data(struct MountSpecificPublicInterface* this_
 
 /*return 0 if success, -1 if fd didn't found*/
 static int set_flock_data(struct MountSpecificPublicInterface* this_, int fd, const struct flock* flock_data ){
-    if ( HALLOCATOR_BY_MOUNT_SPECIF(this_)
-	 ->check_handle_is_related_to_filesystem(fd, 
-						 &((struct MountSpecificImplem*)this_)->mount->public_) == 0 ){
-	MemNode* mnode;	
-	const struct HandleItem* hentry;
-	hentry = HALLOCATOR_BY_MOUNT_SPECIF(this_)->entry(fd);
-
-	/*get runtime information related to channel*/
-    	mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT_SPECIF(this_), hentry->inode);
-	assert(mnode);
-	mnode->set_flock(flock_data);
-	return 0;
+    struct MemNode *mnode = mnode_by_handle(MOUNT_INTERFACE_BY_MOUNT_SPECIF(this_), fd);
+    if (mnode){
+        utime_update( mnode );
+        mnode->set_flock(flock_data);
+        return 0;
     }
     else{
-	SET_ERRNO(EBADF);
-	return -1;
+        SET_ERRNO(EBADF);
+        return -1;
     }
 }
 
@@ -253,7 +264,7 @@ mount_specific_construct( struct MountSpecificPublicInterface* specific_implem_i
 /*wraper implementation*/
 
 static ssize_t mem_readlink(struct MountsPublicInterface* this_,
-			   const char *path, char *buf, size_t bufsize){
+                            const char *path, char *buf, size_t bufsize){
     (void)this_;
     (void)path;
     (void)buf;
@@ -263,7 +274,7 @@ static ssize_t mem_readlink(struct MountsPublicInterface* this_,
 }
  
 static int mem_symlink(struct MountsPublicInterface* this_,
-		      const char *oldpath, const char *newpath){
+                       const char *oldpath, const char *newpath){
     (void)this_;
     (void)oldpath;
     (void)newpath;
@@ -271,17 +282,24 @@ static int mem_symlink(struct MountsPublicInterface* this_,
     return -1;
 }
 
-
 static int mem_chown(struct MountsPublicInterface* this_, const char* path, uid_t owner, gid_t group){
+    int ret;
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
-    return MEMOUNT_BY_MOUNT(this_)->Chown( st.st_ino, owner, group);
+    ret = MEMOUNT_BY_MOUNT(this_)->Chown( st.st_ino, owner, group);
+    if ( !ret ) 
+        utime_update( NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), st.st_ino ) );
+    return ret;
 }
 
 static int mem_chmod(struct MountsPublicInterface* this_, const char* path, uint32_t mode){
+    int ret;
     struct stat st;
     GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), path, &st);
-    return MEMOUNT_BY_MOUNT(this_)->Chmod( st.st_ino, mode);
+    ret = MEMOUNT_BY_MOUNT(this_)->Chmod( st.st_ino, mode);
+    if ( !ret ) 
+        utime_update( NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), st.st_ino ) );
+    return ret;
 }
 
 static int mem_statvfs(struct MountsPublicInterface* this_, const char* path, struct statvfs *buf){
@@ -311,12 +329,14 @@ static int mem_stat(struct MountsPublicInterface* this_, const char* path, struc
 }
 
 static int mem_mkdir(struct MountsPublicInterface* this_, const char* path, uint32_t mode){
-    int ret = MEMOUNT_BY_MOUNT(this_)->GetNode( path, NULL);
-    if ( ret == 0 || (ret == -1&&errno==ENOENT) )
-	return MEMOUNT_BY_MOUNT(this_)->Mkdir( path, mode, NULL);
-    else{
-	return ret;
+    struct stat st;
+    int ret = MEMOUNT_BY_MOUNT(this_)->GetNode( path, &st);
+    if ( ret == 0 || (ret == -1&&errno==ENOENT) ){
+	ret = MEMOUNT_BY_MOUNT(this_)->Mkdir( path, mode, NULL);
+        if ( !ret ) 
+            utime_update( NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), st.st_ino ) );
     }
+    return ret;
 }
 
 
@@ -337,10 +357,15 @@ static int mem_rmdir(struct MountsPublicInterface* this_, const char* path){
 ssize_t __NON_INSTRUMENT_FUNCTION__ 
 mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte);
 ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
-	assert(ofd);
-	return this_->pread(this_, fd, buf, nbyte, ofd->offset);
+    ssize_t ret;
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
+	ret = this_->pread(this_, fd, buf, nbyte, ofd->offset);
+        if ( ret >= 0 ) 
+            utime_update( mnode );
+        return ret;
     }
     else{
 	SET_ERRNO(EBADF);
@@ -351,10 +376,15 @@ ssize_t mem_read(struct MountsPublicInterface* this_, int fd, void *buf, size_t 
 ssize_t __NON_INSTRUMENT_FUNCTION__
 mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte);
 ssize_t mem_write(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
-	assert(ofd);
-	return this_->pwrite(this_, fd, buf, nbyte, ofd->offset);
+    ssize_t ret;
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
+	ret = this_->pwrite(this_, fd, buf, nbyte, ofd->offset);
+        if ( ret >= 0 ) 
+            utime_update( mnode );
+        return ret;
     }
     else{
 	SET_ERRNO(EBADF);
@@ -366,15 +396,18 @@ ssize_t __NON_INSTRUMENT_FUNCTION__
 mem_pread(struct MountsPublicInterface* this_, int fd, void *buf, size_t nbyte, off_t offset);
 ssize_t mem_pread(struct MountsPublicInterface* this_, 
 		  int fd, void *buf, size_t nbyte, off_t offset){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
-	assert(ofd);
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
 	/*check if file was not opened for reading*/
 	CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_RDONLY, O_RDWR);
+
 	ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Read( hentry->inode, offset, buf, nbyte );
 	if ( readed >= 0 ){
 	    int ret;
+            utime_update( mnode );
 	    offset += readed;
 	    /*update offset*/
 	    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset( hentry->open_file_description_id, offset );
@@ -392,17 +425,19 @@ ssize_t mem_pread(struct MountsPublicInterface* this_,
 ssize_t __NON_INSTRUMENT_FUNCTION__
 mem_pwrite(struct MountsPublicInterface* this_, int fd, const void *buf, size_t nbyte, off_t offset);
 ssize_t mem_pwrite(struct MountsPublicInterface* this_, 
-			  int fd, const void *buf, size_t nbyte, off_t offset){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
-	assert(ofd);
+                   int fd, const void *buf, size_t nbyte, off_t offset){
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
 	/*check if file was not opened for writing*/
 	CHECK_FILE_OPEN_FLAGS_OR_RAISE_ERROR(ofd->flags&O_ACCMODE, O_WRONLY, O_RDWR);
 
 	ssize_t wrote = MEMOUNT_BY_MOUNT(this_)->Write( hentry->inode, offset, buf, nbyte );
 	if ( wrote != -1 ){
 	    int ret;
+            utime_update( mnode );
 	    offset += wrote;
 	    /*update offset*/
 	    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset( hentry->open_file_description_id, offset );
@@ -417,9 +452,16 @@ ssize_t mem_pwrite(struct MountsPublicInterface* this_,
 }
 
 static int mem_fchown(struct MountsPublicInterface* this_, int fd, uid_t owner, gid_t group){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	return MEMOUNT_BY_MOUNT(this_)->Chown( hentry->inode, owner, group);
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
+        int ret;
+	ret = MEMOUNT_BY_MOUNT(this_)->Chown( hentry->inode, owner, group);
+        if (!ret)
+            utime_update( mnode );
+        return ret;
     }
     else{
 	SET_ERRNO(EBADF);
@@ -428,9 +470,16 @@ static int mem_fchown(struct MountsPublicInterface* this_, int fd, uid_t owner, 
 }
 
 static int mem_fchmod(struct MountsPublicInterface* this_, int fd, uint32_t mode){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	return MEMOUNT_BY_MOUNT(this_)->Chmod( hentry->inode, mode);
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
+        int ret;
+	ret = MEMOUNT_BY_MOUNT(this_)->Chmod( hentry->inode, mode);
+        if (!ret)
+            utime_update( mnode );
+        return ret;
     }
     else{
 	SET_ERRNO(EBADF);
@@ -440,9 +489,16 @@ static int mem_fchmod(struct MountsPublicInterface* this_, int fd, uint32_t mode
 
 
 static int mem_fstat(struct MountsPublicInterface* this_, int fd, struct stat *buf){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	return MEMOUNT_BY_MOUNT(this_)->Stat( hentry->inode, buf);
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
+        int ret;
+	ret = MEMOUNT_BY_MOUNT(this_)->Stat( hentry->inode, buf);
+        if (!ret)
+            utime_update( mnode );
+        return  ret;
     }
     else{
 	SET_ERRNO(EBADF);
@@ -451,11 +507,11 @@ static int mem_fstat(struct MountsPublicInterface* this_, int fd, struct stat *b
 }
 
 static int mem_getdents(struct MountsPublicInterface* this_, int fd, void *buf, unsigned int count){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
-	assert(ofd);
-
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
 	off_t newoffset;
 	ssize_t readed = MEMOUNT_BY_MOUNT(this_)->Getdents( hentry->inode, 
 							    ofd->offset, &newoffset,
@@ -480,18 +536,18 @@ static int mem_fsync(struct MountsPublicInterface* this_, int fd){
 }
 
 static int mem_close(struct MountsPublicInterface* this_, int fd){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
 	int ret;	
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	MemNode* mnode = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), hentry->inode);
-	assert(mnode);
-
+        utime_update( mnode );
 	MEMOUNT_BY_MOUNT(this_)->Unref(mnode->slot()); /*decrement use count*/
 	if ( mnode->UnlinkisTrying() ){
 	    ret = MEMOUNT_BY_MOUNT(this_)->UnlinkInternal(mnode);
 	    assert( ret == 0 );	
 	}
-
 	ret=OFILESPOOL_BY_MOUNT(this_)->release_ofd(hentry->open_file_description_id);    
 	assert( ret == 0 );
 	ret = HALLOCATOR_BY_MOUNT(this_)->free_handle(fd);
@@ -505,10 +561,11 @@ static int mem_close(struct MountsPublicInterface* this_, int fd){
 }
 
 static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset, int whence){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
-	assert(ofd);
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
 	if ( !is_dir(this_, hentry->inode) ){
 	    off_t next = ofd->offset;
 	    int ret;
@@ -539,6 +596,7 @@ static off_t mem_lseek(struct MountsPublicInterface* this_, int fd, off_t offset
 	    // Go to the new offset.
 	    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset(hentry->open_file_description_id, next);
 	    assert( ret == 0 );
+            utime_update( mnode );
 	    return next;
 	}
     }
@@ -606,8 +664,11 @@ static int mem_open(struct MountsPublicInterface* this_, const char* path, int o
 }
 
 static int mem_fcntl(struct MountsPublicInterface* this_, int fd, int cmd, ...){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
 	ZRT_LOG(L_INFO, "fcntl cmd=%s", STR_FCNTL_CMD(cmd));
 	if ( is_dir(this_, hentry->inode) ){
 	    SET_ERRNO(EBADF);
@@ -658,48 +719,44 @@ static int mem_access(struct MountsPublicInterface* this_, const char* path, int
 }
 
 static int mem_ftruncate_size(struct MountsPublicInterface* this_, int fd, off_t length){
-    if ( HALLOCATOR_BY_MOUNT(this_)->check_handle_is_related_to_filesystem(fd, this_) == 0 ){
-	const struct HandleItem* hentry = HALLOCATOR_BY_MOUNT(this_)->entry(fd);
-	const struct OpenFileDescription* ofd = HALLOCATOR_BY_MOUNT(this_)->ofd(fd);
-	assert(ofd);
-
-	MemNode* node; 
+    const struct OpenFileDescription *ofd;
+    const struct HandleItem *hentry;
+    struct MemNode *mnode 
+        = mnode_by_handle_get_ofd_hentry(this_, fd, &ofd, &hentry);
+    if (mnode!=NULL){
 	if ( !is_dir(this_, hentry->inode) ){
-	    if ((node=NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), hentry->inode )) != NULL){
+            int flags = ofd->flags & O_ACCMODE;
+            /*check if file was not opened for writing*/
+            if ( flags!=O_WRONLY && flags!=O_RDWR ){
+                ZRT_LOG(L_ERROR, "file open flags=%s not allow write", 
+                        STR_FILE_OPEN_FLAGS(flags));
+                SET_ERRNO( EINVAL );
+                return -1;
+            }
+            /*set file length on related node and update new length in stat*/
+            mnode->set_len(length);
 
-		int flags = ofd->flags & O_ACCMODE;
-		/*check if file was not opened for writing*/
-		if ( flags!=O_WRONLY && flags!=O_RDWR ){
-		    ZRT_LOG(L_ERROR, "file open flags=%s not allow write", 
-			    STR_FILE_OPEN_FLAGS(flags));
-		    SET_ERRNO( EINVAL );
-		    return -1;
-		}
-		/*set file length on related node and update new length in stat*/
-		node->set_len(length);
-
-		/*in according to docs: if doing file size reduce then
-		  offset should not be changed, but on ubuntu linux
-		  host offset is not staying beyond of file bounds and
-		  assignes to max availibale pos. Just do it the same
-		  as on host */
+            /*in according to docs: if doing file size reduce then
+              offset should not be changed, but on ubuntu linux
+              host offset is not staying beyond of file bounds and
+              assignes to max availibale pos. Just do it the same
+              as on host */
 #define DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
 
 #ifdef DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
-		off_t offset = ofd->offset;
-		if ( length < offset ){
-		    int ret;
-		    offset = length+1;
-		    ret = OFILESPOOL_BY_MOUNT(this_)->set_offset(hentry->open_file_description_id,
-								 offset);
-		    assert( ret == 0 );
-		}
+            off_t offset = ofd->offset;
+            if ( length < offset ){
+                int ret;
+                offset = length+1;
+                ret = OFILESPOOL_BY_MOUNT(this_)->set_offset(hentry->open_file_description_id,
+                                                             offset);
+                assert( ret == 0 );
+            }
 #endif //DO_NOT_ALLOW_OFFSET_BEYOND_FILE_BOUNDS_IF_TRUNCATE_REDUCES_FILE_SIZE
 
-		ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d",
-			(int)length, get_file_len( this_, hentry->inode ));
-		/*file size truncated */
-	    }
+            ZRT_LOG(L_SHORT, "file truncated on %d len, updated st.size=%d",
+                    (int)length, get_file_len( this_, hentry->inode ));
+            /*file size truncated */
 	    return 0;
 	}
 	else{
@@ -741,6 +798,27 @@ static int mem_link(struct MountsPublicInterface* this_, const char* oldpath, co
     return 0;
 }
 
+static int mem_utime(struct MountsPublicInterface *this_,
+                     const char *filename, const struct utimbuf *times){
+
+    struct stat st;
+    GET_STAT_BYPATH_OR_RAISE_ERROR( MEMOUNT_BY_MOUNT(this_), filename, &st);
+    int ret = MEMOUNT_BY_MOUNT(this_)->Stat( st.st_ino, &st);
+    if ( ret == 0 ){
+	MemNode* node = NODE_OBJECT_BYINODE( MEMOUNT_BY_MOUNT(this_), st.st_ino);
+	assert(node!=NULL);
+        struct timespec ts_atime;
+        struct timespec ts_mtime;
+        ts_atime.tv_sec = times->actime;
+        ts_atime.tv_nsec = 0;
+        ts_mtime.tv_sec = times->modtime;
+        ts_mtime.tv_nsec = 0;
+        node->set_utime(&ts_atime, &ts_mtime);
+    }
+    return ret;
+}
+
+
 struct MountSpecificPublicInterface* mem_implem(struct MountsPublicInterface* this_){
     return ((struct InMemoryMounts*)this_)->mount_specific_interface;
 }
@@ -777,7 +855,7 @@ static struct MountsPublicInterface KInMemoryMountWraper = {
     mem_dup,
     mem_dup2,
     mem_link,
-    EMemMountId,
+    mem_utime,
     mem_implem  /*mount_specific_interface*/
 };
 

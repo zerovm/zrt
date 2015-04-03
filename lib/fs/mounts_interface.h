@@ -24,14 +24,8 @@
 #include <unistd.h> //ssize_t
 
 struct stat;
-
-/*Reserved filesystem ids, value to be used as mount_id*/
-typedef enum { 
-    EChannelsMountId=0, 
-    EMemMountId=1, 
-    EUserFsId=2, /*For filesystem added by user via user_space_fs API*/
-    EMountsCount /*Static count of filesystem slots that is supported*/
-} MountId;
+struct statvfs;
+struct utimbuf;
 
 struct MountsPublicInterface{
     ssize_t 
@@ -91,8 +85,9 @@ struct MountsPublicInterface{
     int (*dup)(struct MountsPublicInterface* this_,int oldfd);
     int (*dup2)(struct MountsPublicInterface* this_,int oldfd, int newfd);
     int (*link)(struct MountsPublicInterface* this_,const char *oldpath, const char *newpath);
-
-    /* const  */MountId mount_id;
+    int (*utime)(struct MountsPublicInterface* this_,
+                 const char *filename, const struct utimbuf *times);
+    
     struct MountSpecificPublicInterface* (*implem)(struct MountsPublicInterface* this_);
 };
 

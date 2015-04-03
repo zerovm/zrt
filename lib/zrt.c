@@ -83,7 +83,7 @@ static struct zcalls_init_t KZcalls_init = {
     zrt_zcall_prolog_gettime,
 
     (void*)zcall_stub, //chdir (seems it's not used)
-    zrt_zcall_select
+    zrt_zcall_select,
 };
 
 static struct zcalls_zrt_t KZcalls_zrt = {
@@ -115,7 +115,10 @@ static struct zcalls_nonsyscalls_t KZcalls_nonsyscalls = {
     zrt_zcall_stat_realpath,
     zrt_zcall_get_phys_pages,
     zrt_zcall_get_avphys_pages,
-    zrt_zcall_fchdir
+    zrt_zcall_fchdir,
+    zrt_zcall_utime,
+    zrt_zcall_utimes,
+    zrt_zcall_utimensat
 };
 
 #endif //ZLIBC_STUB

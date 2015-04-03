@@ -15,10 +15,15 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stddef.h>
 #include <string.h>
+#include <errno.h>
 #include <assert.h>
 
+#include "utils.h" /*zrealpath*/
 #include "path_utils.h"
 
 int is_relative_path(const char *path){
@@ -31,6 +36,43 @@ int is_relative_path(const char *path){
     }
     return 0;
     
+}
+
+const char *ensure_path_is_absolute(const char *path, char *path_tmp){
+    const char* absolute_path = path;
+    if ( is_relative_path(path) != 0 ){
+	if ( (absolute_path=zrealpath(path, path_tmp)) == NULL ){
+            /*return empty string instead of NULL, to avoid crashes in
+              file system functions*/
+	    return ""; 
+        }
+    }
+    return absolute_path;
+}
+
+int mkpath_recursively(const char* file_path, mode_t mode) {
+    assert(file_path && *file_path);
+    struct stat st;
+
+    if ( stat(file_path, &st) != 0 ){
+	int temp_cursor, result_len, mkdirerr;
+	const char* subpath;
+	INIT_TEMP_CURSOR(&temp_cursor);
+
+	errno=0;
+	while( (subpath=path_subpath_forward(&temp_cursor, file_path, &result_len)) != NULL ){
+	    if ( result_len>1 ){
+		if ( (mkdirerr=mkdir( strndupa(subpath, result_len), mode)) == 0 || 
+		     mkdirerr==-1&&errno==EEXIST )
+		    continue;
+	    }
+	}
+	return mkdirerr;
+    }
+    else{
+	errno = EEXIST;
+	return -1;
+    }
 }
 
 static const char* locate_last_occurence(const char *str, int len, char c ){
@@ -171,11 +213,6 @@ int test_function(const char *(*function)(int *temp_cursor, const char *path, in
 
 
 int test_path_utils(){
-    int temp_cursor, result_len;
-    char path[] = "/1/22/";
-    const char* result;
-    char *expected;
-
     const char *component_backward_test0[] = { "/", NULL };
     test_function(path_component_backward, "/", component_backward_test0, 2);
 

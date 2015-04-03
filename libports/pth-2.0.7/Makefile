@@ -103,7 +103,7 @@ LOBJS = pth_debug.lo pth_ring.lo pth_pqueue.lo pth_time.lo pth_errno.lo pth_mctx
 HSRCS = $(S)pth_compat.c $(S)pth_debug.c $(S)pth_syscall.c $(S)pth_errno.c $(S)pth_ring.c $(S)pth_mctx.c \
         $(S)pth_uctx.c $(S)pth_clean.c $(S)pth_time.c $(S)pth_tcb.c $(S)pth_util.c $(S)pth_pqueue.c $(S)pth_event.c \
         $(S)pth_sched.c $(S)pth_data.c $(S)pth_msg.c $(S)pth_cancel.c $(S)pth_sync.c $(S)pth_attr.c $(S)pth_lib.c \
-        $(S)pth_fork.c $(S)pth_high.c $(S)pth_ext.c $(S)pth_string.c $(S)pthread.c
+        $(S)pth_fork.c $(S)pth_high.c $(S)pth_ext.c $(S)pth_string.c $(S)pthread.c $(S)semaphore.c
 
 ##
 ##  ____ UTILITY DEFINITIONS _________________________________________
@@ -171,8 +171,8 @@ pth_p.h: $(S)pth_p.h.in
 libpth.la: $(LOBJS)
 	$(LIBTOOL) --mode=link --quiet $(CC) -o libpth.la $(LOBJS) \
 	-rpath $(libdir) -version-info `$(SHTOOL) version -lc -dlibtool $(_VERSION_FILE)`
-libpthread.la: pthread.lo $(LOBJS)
-	$(LIBTOOL) --mode=link --quiet $(CC) -o libpthread.la pthread.lo $(LOBJS) \
+libpthread.la: pthread.lo semaphore.lo $(LOBJS)
+	$(LIBTOOL) --mode=link --quiet $(CC) -o libpthread.la pthread.lo semaphore.lo $(LOBJS) \
 	-rpath $(libdir) -version-info `$(SHTOOL) version -lc -dlibtool $(_VERSION_FILE)`
 
 #   build the manual pages
@@ -217,7 +217,7 @@ test_pthread: test_pthread.o test_common.o libpthread.la
 
 #   install the package
 install: all-for-install
-	@$(MAKE) $(MKFLAGS) install-dirs install-pth install-pthread
+	@$(MAKE) $(MKFLAGS) install-dirs install-pth install-pthread install-semaphore
 	@touch .done-install >/dev/null 2>&1 || $(TRUE)
 	@$(MAKE) $(MKFLAGS) what-next
 install-dirs:
@@ -248,10 +248,12 @@ install-pthread:
 	$(SHTOOL) install -c -m 644 $(S)pthread.3 $(DESTDIR)$(mandir)/man3/pthread.3
 	@umask 022; $(LIBTOOL) --mode=install \
 	$(SHTOOL) install -c libpthread.la $(DESTDIR)$(libdir)/libpthread.la
+install-semaphore:
+	$(SHTOOL) install -c -m 644 semaphore.h $(DESTDIR)$(includedir)/semaphore.h
 
 #   uninstall the package
 uninstall:
-	@$(MAKE) $(MKFLAGS) uninstall-pthread uninstall-pth uninstall-dirs
+	@$(MAKE) $(MKFLAGS) uninstall-pthread uninstall-semaphore uninstall-pth uninstall-dirs
 	@touch .done-uninstall >/dev/null 2>&1 || $(TRUE)
 	@$(MAKE) $(MKFLAGS) what-next
 uninstall-pthread:
@@ -260,6 +262,8 @@ uninstall-pthread:
 	@$(RM) $(DESTDIR)$(includedir)/pthread.h
 	@$(RM) $(DESTDIR)$(mandir)/man3/pthread.3
 	@$(LIBTOOL) --mode=uninstall $(RM) $(DESTDIR)$(libdir)/libpthread.la
+uninstall-semaphore:
+	@$(RM) $(DESTDIR)$(includedir)/semaphore.h
 uninstall-pth:
 	@$(RM) $(DESTDIR)$(bindir)/pth-config
 	@$(RM) $(DESTDIR)$(mandir)/man1/pth-config.1
@@ -457,6 +461,7 @@ pth_time.lo: pth_time.c pth_p.h pth_vers.c pth.h pth_acdef.h pth_acmac.h
 pth_util.lo: pth_util.c pth_p.h pth_vers.c pth.h pth_acdef.h pth_acmac.h
 pth_vers.lo: pth_vers.c pth_vers.c
 pthread.o: pthread.c pthread.h pth_p.h pth_vers.c pth.h pth_acdef.h pth_acmac.h
+semaphore.o: semaphore.c semaphore.h pth_p.h
 test_common.o: test_common.c pth.h test_common.h
 test_httpd.o: test_httpd.c pth.h test_common.h
 test_misc.o: test_misc.c pth.h
