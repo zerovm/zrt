@@ -45,8 +45,9 @@ int main(int argc, char**argv){
     CHECK_PATH_EXISTANCE("/test/test.1234/test.1234");
     /*this is a file, one of tar image imports expected as failed,
       mountpoint not created, because of existing file*/
-    TEST_OPERATION_RESULT( stat("/test/test.1234/test.1234", &st), 
-			   &ret, ret==0&&S_ISREG(st.st_mode));
+    stat("/test/test.1234/test.1234", &st);
+    printf("st_mode=%o(octal)\n", st.st_mode);
+    TEST_OPERATION_RESULT( S_ISREG(st.st_mode), &ret, ret!=0);
     CHECK_PATH_NOT_EXIST("/test/test.1234/bad");
     
     CHECK_PATH_EXISTANCE("/warm");

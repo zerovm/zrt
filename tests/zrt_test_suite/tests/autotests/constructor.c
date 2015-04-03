@@ -30,7 +30,7 @@
 #include <assert.h>
 
 #include "macro_tests.h"
-#include "parse_path.h"
+#include "path_utils.h"
 
 static int s_test_value;
 
